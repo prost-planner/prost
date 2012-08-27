@@ -1,0 +1,39 @@
+#! /bin/bash
+#####################################################################
+## specifies the interpreting shell for this job file.
+#$ -S /bin/bash
+#####################################################################
+## Never send me an email. 
+#$ -m n
+#####################################################################
+## Execute the job from the current working directory.
+#$ -cwd
+#####################################################################
+## stderr and stdout go to these dirs. Do *not* forget to create these
+## directories before submitting the job file!!!!
+#$ -e stderr.log
+#$ -o stdout.log
+#####################################################################
+## set time out
+#if $timeout 
+#$ -l h_cpu=$timeout
+#end if 
+#####################################################################
+## set memory out
+#if $memout
+#$ -l h_vmem=$memout
+#end if 
+#####################################################################
+## use this queue. 
+#$ -q $queue
+#####################################################################
+## the number of tasks is this job file
+#$ -t 1-#echo len($tasks)
+#####################################################################
+
+#for task_id,task in zip(range(1, len($tasks)+1),$tasks) 
+if [ $task_id -eq \$SGE_TASK_ID ]; then
+    $task
+    exit \$?
+fi
+#end for 
