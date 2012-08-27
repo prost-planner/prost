@@ -1,0 +1,393 @@
+#ifndef PLANNING_TASK_H
+#define PLANNING_TASK_H
+
+#include <cstdlib>
+#include <bdd.h>
+#include <list>
+
+#include "caching_component.h"
+#include "learning_component.h"
+#include "state.h"
+#include "actions.h"
+#include "unprocessed_planning_task.h"
+#include "logical_expressions.h"
+#include "conditional_probability_functions.h"
+
+class ProstPlanner;
+class ActionFluent;
+
+class PlanningTask : public CachingComponent, public LearningComponent {
+public:
+    PlanningTask(ProstPlanner* _planner) :
+        CachingComponent(_planner),
+        LearningComponent(_planner),
+        planner(_planner),
+        numberOfActions(-1),
+        isDeterministic(false),
+        noopIsOptimalFinalAct(false),
+        isPruningEquivalentToDet(false),
+        firstProbabilisticVarIndex(-1),
+        numberOfConcurrentActions(-1),
+        horizon(-1),
+        discountFactor(-1),
+        stateSize(-1),
+        stateHashingPoss(false),
+        probStateHashingPoss(false),
+        randNum(0.0),
+        cachedDeadLocks(bddfalse),
+        cachedGoals(bddfalse),
+        useRewardLockDetection(false),
+        refReward(0.0),
+        rewardLockSuccStateReward(0.0),
+        actionsToExpandCache(),
+        cacheActionsToExpand(true), //TODO: MAKE THIS A PARAMETER
+        useReasonableActionPruning(true),
+        rewardCache() {}
+
+    PlanningTask(PlanningTask const& other) :
+        CachingComponent(other.planner),
+        LearningComponent(other.planner),
+        planner(other.planner),
+        actionFluents(other.actionFluents),
+        actionStates(other.actionStates),
+        numberOfActions(other.numberOfActions),
+        isDeterministic(other.isDeterministic),
+        noopIsOptimalFinalAct(other.noopIsOptimalFinalAct),
+        isPruningEquivalentToDet(other.isPruningEquivalentToDet),
+        initialState(other.initialState),
+        firstProbabilisticVarIndex(other.firstProbabilisticVarIndex),
+        numberOfConcurrentActions(other.numberOfConcurrentActions),
+        horizon(other.horizon),
+        discountFactor(other.discountFactor),
+        stateSize(other.stateSize),
+        stateHashingPoss(other.stateHashingPoss),
+        probStateHashingPoss(other.probStateHashingPoss),
+        randNum(0.0),
+        cachedDeadLocks(bddfalse),
+        cachedGoals(bddfalse),
+        useRewardLockDetection(true),
+        refReward(0.0),
+        rewardLockSuccStateReward(0.0),
+        actionsToExpandCache(),
+        cacheActionsToExpand(true), //TODO: MAKE THIS A PARAMETER
+        useReasonableActionPruning(true),
+        CPFs(other.CPFs),
+        rewardCPF(other.rewardCPF),
+        SACs(other.SACs),
+        indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
+        indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap),
+        rewardCache() {}   
+
+    void initialize(std::vector<ActionFluent*>& _actionFluents, std::vector<ConditionalProbabilityFunction*>& _CPFs, 
+                    std::vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
+                    int _horizon, double _discountFactor, std::map<std::string,int>& stateVariableIndices);
+
+    PlanningTask* determinizeMostLikely(UnprocessedPlanningTask* task);
+
+    void learn(std::vector<State> const& trainingSet);
+
+    //Calculate the whole state transition, including rewards
+    void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) {
+        calcSuccessorAsProbabilityDistribution(current, actionIndex, next);
+        sampleSuccessorStateFromProbabilityDistribution(next);
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
+        calcReward(current, actionIndex, next, reward);
+    }
+
+    //Calculate the whole state transition, including rewards and keep the used probability distribution
+    void calcStateTransitionAndProbabilityDistribution(State const& current, int const& actionIndex, State& next, State& nextAsProbDistr, double& reward) {
+        calcSuccessorAsProbabilityDistribution(current, actionIndex, nextAsProbDistr);
+        sampleSuccessorStateFromProbabilityDistribution(nextAsProbDistr, next);
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
+        calcReward(current, actionIndex, next, reward);
+    }
+
+    //calc probabiltity distribution that results in applying actions in current
+    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, State& nextAsProbDistr) const {
+        for(int i = 0; i < stateSize; ++i) {
+            CPFs[i]->evaluate(nextAsProbDistr[i], current, nextAsProbDistr, actionStates[actionIndex]);
+        }
+    }
+
+    //sample a successor distribution
+    void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
+        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+            generateRandomNumber(randNum);
+            next[i] = (MathUtils::doubleIsSmallerOrEqual(randNum,next[i]) ? 1.0 : 0.0);
+        }
+    }
+
+    void sampleSuccessorStateFromProbabilityDistribution(State const& nextAsProbDistr, State& next) const {
+        for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
+            next[i] = nextAsProbDistr[i];
+        }
+        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+            generateRandomNumber(randNum);
+            next[i] = (MathUtils::doubleIsSmallerOrEqual(randNum,nextAsProbDistr[i]) ? 1.0 : 0.0);
+        }
+    }
+
+    //calulate the reward
+    void calcReward(State const& current, int const& actionIndex, State const& next, double& reward) const {
+        rewardCPF->evaluate(reward, current, next, actionStates[actionIndex]);
+    }
+
+    //calculate the whoe state transition in Kleene logic
+    void calcKleeneStateTransition(State const& current, int const& actionIndex, State& next, double& reward) {
+        calcKleeneSuccessor(current, actionIndex, next);
+        calcKleeneStateFluentHashKeys(next);
+        calcKleeneReward(current, actionIndex, next, reward);
+    }
+
+    //calculate successor in Kleene logic
+    void calcKleeneSuccessor(State const& current, int const& actionIndex, State& next) const {
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(MathUtils::doubleIsMinusInfinity(current[i])) {
+                next[i] = -std::numeric_limits<double>::max();
+            } else {
+                CPFs[i]->evaluateToKleeneOutcome(next[i], current, next, actionStates[actionIndex]);
+            }
+        }
+    }
+
+    //merge two states in Kleene logic
+    void mergeKleeneStates(State const& state, State& res) {
+        assert(state.state.size() == res.state.size());
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(!MathUtils::doubleIsEqual(state[i], res[i])) {
+                res[i] = -std::numeric_limits<double>::max();
+            }
+        }
+    }
+
+    //create a Kleene state from a non-Kleene state
+    State toKleeneState(State const& state) {
+        State res(state);
+        res.hashKey = -1;
+        calcKleeneStateFluentHashKeys(res);
+        return res;
+    }
+
+    //calulate the reward in Kleene logic
+    void calcKleeneReward(State const& current, int const& actionIndex, State const& next, double& reward) const {
+        rewardCPF->evaluateToKleeneOutcome(reward, current, next, actionStates[actionIndex]);
+    }
+
+    //calculate the state fluent hash key for each state fluent
+    void calcStateFluentHashKeys(State& state) const {
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToStateFluentHashKeyMap[i][j].first] += indexToStateFluentHashKeyMap[i][j].second;
+                }                
+            }
+        }
+    }
+
+    //calculate the Kleene state fluent hash key for each state fluent
+    void calcKleeneStateFluentHashKeys(State& state) const {
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += indexToKleeneStateFluentHashKeyMap[i][j].second;
+                }                
+            } else if(MathUtils::doubleIsMinusInfinity(state[i])) {
+                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += (2*indexToKleeneStateFluentHashKeyMap[i][j].second);
+                } 
+            }
+        }
+    }
+
+    //calculate (bool) hash key and state fluent hash keys (if state hashing is possible)
+    void calcStateHashKey(State& state) const {
+        if(stateHashingPoss) {
+            state.hashKey = 0;
+            for(int i = 0; i < stateSize; ++i) {
+                if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                    assert(MathUtils::twoToThePowerOf(i) == CPFs[i]->hashKeyBase);
+                    state.hashKey += CPFs[i]->hashKeyBase;
+                }
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
+    }
+
+    //calculate hash key of states as probability distribution (if state hashing is possible)
+    void calcHashKeyOfProbabilityDistribution(State& state) {
+        if(probStateHashingPoss) {
+            state.hashKey = 0;
+            for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
+                if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                    state.hashKey += CPFs[i]->hashKeyBase;
+                }
+            }
+
+            for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+                assert(CPFs[i]->probDomainMap.find(state[i]) != CPFs[i]->probDomainMap.end());
+                state.hashKey += CPFs[i]->probDomainMap[state[i]];
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
+    }
+
+    bool const& stateHashingPossible() const {
+        return stateHashingPoss;
+    }
+
+    bool const& probabilisticStateHashingPossible() const {
+        return probStateHashingPoss;
+    }
+
+    ActionState const& actionState(int const& index) const {
+        assert(index < actionStates.size());
+        return actionStates[index];
+    }
+
+    int const& getNumberOfActions() const {
+        return numberOfActions;
+    }
+
+    bool isMinReward(double const& rew) const {
+        return MathUtils::doubleIsEqual(rew,rewardCPF->minVal);
+    }
+
+    double const& getMinReward() {
+        return rewardCPF->minVal;
+    }
+
+    bool isMaxReward(double const& rew) const {
+        return MathUtils::doubleIsEqual(rew,rewardCPF->maxVal);
+    }
+
+    double const& getMaxReward() {
+        return rewardCPF->maxVal;
+    }
+
+    State const& getInitialState() {
+        return initialState;
+    }
+
+    int const& getHorizon() {
+        return horizon;
+    }
+
+    int const& getFirstProbabilisticVarIndex() {
+        return firstProbabilisticVarIndex;
+    }
+
+    int const& getStateSize() {
+        return stateSize;
+    }
+
+    bool const& isPruningEquivalentToDeterminization() {
+        return isPruningEquivalentToDet;
+    }
+
+    bool const& noopIsOptimalFinalAction() {
+        return noopIsOptimalFinalAct;
+    }
+
+    bool rewardIsNextStateIndependent() {
+        return rewardCPF->isNextStateIndependent();
+    }
+
+    void setActionsToExpand(State const& state, std::vector<int>& res);
+    bool isARewardLock(State const& current) {
+        return isARewardLock(current, refReward);
+    }
+    bool isARewardLock(State const& current, double& referenceReward);
+
+    void disableCaching();
+
+    void print() const;
+    void printState(State const& s) const;
+    void printAction(int const& index) const;
+
+private:
+    void initializeCPFs(std::vector<ConditionalProbabilityFunction*>& _CPFs);
+    void initializeActions(std::vector<ActionFluent*>& _actionFluents);
+    void calcPossiblyLegalActionStates(int actionsToSchedule, std::list<std::vector<int> >& result,
+                                       std::vector<int> addTo = std::vector<int>());
+
+    void initializeStateFluentHashKeys();
+    void initializeStateHashKeys();
+    void initializeHashKeysOfStatesAsProbabilityDistributions();
+    void initializeOtherStuff();
+
+    //internal function for action pruning and reward lock detection
+    void checkForReasonableActions(State const& state, std::vector<int>& res);
+    bool checkDeadLock(State const& state, double const& referenceReward);
+    bool checkGoal(State const& state, double const& referenceReward);
+
+    //BDD related functions
+    void stateToBDD(State const& state, bdd& res);
+    bool BDDIncludes(bdd BDD, State const& state);
+
+    void generateRandomNumber(double& res) const {
+        res = ((double)(rand() % 1000001) / 1000000.0);
+    }
+
+    ProstPlanner* planner;
+
+    std::vector<ActionFluent*> actionFluents;
+    std::vector<ActionState> actionStates;
+    int numberOfActions;
+
+    bool isDeterministic;
+    bool noopIsOptimalFinalAct;
+    bool isPruningEquivalentToDet;
+
+    State initialState;
+
+    int firstProbabilisticVarIndex;
+    int numberOfConcurrentActions;
+    int horizon;
+    double discountFactor;
+    int stateSize;
+
+    bool stateHashingPoss;
+    //TODO: This is ugly as it only belongs to probabilistic task -> Maybe we should separate probabilistic 
+    //and deterministic planning task by creating two classes (might also be more efficient for state transition)
+    bool probStateHashingPoss;
+
+    mutable double randNum;
+
+    //reward lock detection related stuff
+    bdd cachedDeadLocks;
+    bdd cachedGoals;
+    bool useRewardLockDetection;
+    double refReward;
+    double rewardLockSuccStateReward;
+
+    //applicable and reasonable action stuff
+    std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> actionsToExpandCache;
+    bool cacheActionsToExpand;
+    bool useReasonableActionPruning;
+
+    //public:
+    std::vector<ConditionalProbabilityFunction*> CPFs;
+    ConditionalProbabilityFunction* rewardCPF;
+    std::vector<StateActionConstraint*> SACs;
+
+    //TODO: This is very very ugly, but cpfs, planning tasks and
+    //states are very tightly coupled. Nevertheless, there must be a
+    //way to get rid of this, even if it takes some work!
+    friend class ConditionalProbabilityFunction;
+
+    //the CPF indexToStateFluentHashKeyMap[i][j].first depends on variable i, and is updated with indexToStateFluentHashKeyMap[i][j].second
+    std::vector<std::vector<std::pair<int,int> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,int> > > indexToKleeneStateFluentHashKeyMap;
+
+public:
+    std::map<State, std::vector<double>, State::CompareConsideringRemainingSteps> rewardCache;
+};
+
+#endif
