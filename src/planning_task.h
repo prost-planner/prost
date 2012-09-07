@@ -95,6 +95,14 @@ public:
         calcReward(current, actionIndex, next, reward);
     }
 
+    //Calculate the successor state
+    void calcSuccessorState(State const& current, int const& actionIndex, State& next) {
+        calcSuccessorAsProbabilityDistribution(current, actionIndex, next);
+        sampleSuccessorStateFromProbabilityDistribution(next);
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
+    }
+
     //Calculate the whole state transition, including rewards and keep the used probability distribution
     void calcStateTransitionAndProbabilityDistribution(State const& current, int const& actionIndex, State& next, State& nextAsProbDistr, double& reward) {
         calcSuccessorAsProbabilityDistribution(current, actionIndex, nextAsProbDistr);
