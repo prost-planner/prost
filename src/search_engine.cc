@@ -76,6 +76,8 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 }
 
 void SearchEngine::run(State const& _rootState) {
+    //TODO: Implement this behaviour such that it works with all result types!
+    //if((_rootState.remainingSteps == 1) && task->noopIsOptimalFinalAction()) {...}
     rootState.setTo(_rootState);
     if(rootState.remainingSteps() > maxSearchDepth) {
         rootState.remainingSteps() = maxSearchDepth;

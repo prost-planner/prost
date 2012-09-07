@@ -233,10 +233,26 @@ void UCTSearch::search() {
 //static int counter = 0;
 
 double UCTSearch::rolloutDecisionNode(UCTNode* node) {
-    //++counter;
-    //cout << "current state has hash key " << currentState.getHashKey() << " (" << counter << ")" << endl;
-
     double reward = 0.0;
+
+    if(node != currentRootNode) {
+        task->calcReward(currentState, chosenActionIndex, nextState, reward);
+
+        //this node is a leaf -> return the reward
+        if((nextState.remainingSteps() == 1) && task->noopIsOptimalFinalAction()) {
+            //We can save the last decision, as the reward does not depend on next
+            //state (we use currentState as dummy) and not positively on running actions
+            double finalReward = 0.0;
+            task->calcReward(nextState, 0, nextState, finalReward);
+            reward += finalReward;
+            return reward;
+        } else if(nextState.remainingSteps() == 0) {
+            return reward;
+        }
+
+        //continue rollout
+        initRolloutStep();
+    }
 
     if(node->children.empty()) {
         initializeDecisionNode(node);
@@ -244,58 +260,48 @@ double UCTSearch::rolloutDecisionNode(UCTNode* node) {
 
     if(node->isARewardLock) {
         assert(task->rewardIsNextStateIndependent());
-        task->calcReward(currentState, 0, nextState, reward);
-        reward *= (task->getHorizon() - rootState.remainingSteps() + currentState.remainingSteps());
+
+        double rewardLockReward = 0.0;
+        task->calcReward(currentState, 0, nextState, rewardLockReward);
+        rewardLockReward *= (task->getHorizon() - rootState.remainingSteps() + nextState.remainingSteps());
+        reward += rewardLockReward;
     } else {
         chooseDecisionNodeSuccessor(node);
         assert(chosenChild != NULL);
         
-        reward = rolloutChanceNodes(chosenChild);
+        reward += rolloutChanceNodes(chosenChild);
     }
 
     node->accumulatedReward += reward;
-    ++node->numberOfVisits;
     ++node->numberOfChildrenVisits;
+    ++node->numberOfVisits;
 
     return reward;
 }
 
 double UCTSearch::rolloutChanceNodes(UCTNode* node) {
+    assert(task->getFirstProbabilisticVarIndex() != task->getStateSize());
+
     //sample successor state
-    double reward = 0.0;
-    task->calcStateTransition(currentState, chosenActionIndex, nextState, reward);
+    task->calcSuccessorState(currentState, chosenActionIndex, nextState);
 
-    if((nextState.remainingSteps() == 1) && task->noopIsOptimalFinalAction()) {
-        //We can save the last decision, as the reward does not depend on next
-        //state (we use currentState as dummy) and not positively on running actions
-        double finalReward = 0.0;
-        task->calcReward(nextState, 0, nextState, finalReward);
-        reward += finalReward;
-    } else if(nextState.remainingSteps() > 0) {
-        //choose corresponding UCTNode
-        chosenChild = node;
-        for(int i = task->getFirstProbabilisticVarIndex(); i < task->getStateSize(); ++i) {
-            if(chosenChild->children.empty()) {
-                chosenChild->children.resize(2,NULL);
-            }
-
-            if(!chosenChild->children[(unsigned int)nextState[i]]) {
-                chosenChild->children[(unsigned int)nextState[i]] = getUCTNode();
-            }
-            chosenChild = chosenChild->children[(unsigned int)nextState[i]];
+    chosenChild = node;
+    for(int i = task->getFirstProbabilisticVarIndex(); i < task->getStateSize(); ++i) {
+        if(chosenChild->children.empty()) {
+            chosenChild->children.resize(2,NULL);
         }
 
-        //continue rollout
-        initRolloutStep();
-
-        reward += rolloutDecisionNode(chosenChild);
+        if(!chosenChild->children[(unsigned int)nextState[i]]) {
+            chosenChild->children[(unsigned int)nextState[i]] = getUCTNode();
+        }
+        chosenChild = chosenChild->children[(unsigned int)nextState[i]];
     }
 
-    //update UCTNode
+    //update UCTNode (we only update those that are children of decision nodes, but that is sufficient)
+    double reward = rolloutDecisionNode(chosenChild);
     node->accumulatedReward += reward;
     ++node->numberOfVisits;
-    //This is commented as chance nodes don't use the numberOfChildrenVisits
-    //++node->numberOfChildrenVisits; 
+
     return reward;
 }
 
