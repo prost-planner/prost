@@ -29,8 +29,7 @@ ProstPlanner::ProstPlanner(string domain, string problem, int _numberOfRounds) :
     numberOfRounds(_numberOfRounds),
     cachingEnabled(true),
     ramLimit(2621440),
-    bitSize(sizeof(long)*8),
-    searchEngineResult() {
+    bitSize(sizeof(long)*8) {
 
     setSeed((int)time(NULL));
     unprocessedTask = new UnprocessedPlanningTask(domain, problem);
@@ -94,38 +93,62 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
 
     remainingSteps = probabilisticTask->getHorizon();
     currentState = State(probabilisticTask->getInitialState());
-    searchEngineResult = vector<double>(probabilisticTask->getNumberOfActions(),0);
+
+    setSearchEngine(SearchEngine::fromString(searchEngineDesc, this));
+
     cout << "...finished (" << t << ")." << endl;
 
+    cout << "Preprocessed tasks:" << endl;
+    probabilisticTask->print(cout);
+    //deterministicTask->print(cout);
+
     t.reset();
-    cout << "generating training set..." << endl;
+    cout << endl << endl << "generating training set..." << endl;
     StateSetGenerator* gen = new StateSetGenerator(this);
-    gen->run(currentState);
+    std::vector<State> trainingSet = gen->generateStateSet(currentState);
+    delete gen;
+
+    //We set the seed again if the training set is smaller than 200
+    //because we terminated because of the state set generator timeout
+    //in that case, making everything following this nondeterministic!
+    if(trainingSet.size() != 200) {
+        setSeed(seed);
+    }
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
     cout << "learning on training set..." << endl;
 
-    setSearchEngine(SearchEngine::fromString(searchEngineDesc, this, searchEngineResult));
 
-    std::vector<State> trainingSet = gen->getGeneratedStateSet();
-    for(unsigned int i = 0; i < learningComponents.size(); ++i) {
-        learningComponents[i]->learn(trainingSet);
+    int lastSize = learningComponents.size();
+    while(!learningComponents.empty()) {
+        for(unsigned int i = 0; i < learningComponents.size(); ++i) {
+            if(learningComponents[i]->learn(trainingSet)) {
+                swap(learningComponents[i], learningComponents[learningComponents.size()-1]);
+                learningComponents.pop_back();
+                --i;
+            }
+        }
+        if(!learningComponents.empty()) {
+            if(learningComponents.size() == lastSize) {
+                cout << "Some component(s) registered as LearningComponent but cannot learn!" << endl;
+                assert(false);
+            }
+            lastSize = learningComponents.size();
+        }
     }
-    cout << "...finished (" << t << ")." << endl << endl;
 
-    cout << "Preprocessed tasks:" << endl;
-    probabilisticTask->print();
-    deterministicTask->print();
+    assert(learningComponents.empty());
+    cout << "...finished (" << t << ")." << endl << endl;
 }
 
 vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     manageTimeouts();
-
     initNextStep(nextStateVec);
-    searchEngine->run(currentState);
 
-    int chosenActionIndex = combineResults();
+    searchEngine->estimateBestActions(currentState, bestActions);
+
+    chosenActionIndex = combineResults();
     printStep(chosenActionIndex);
     monitorRAMUsage();
 
@@ -154,40 +177,17 @@ void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
     currentState = State(nextStateVec, remainingSteps);
     probabilisticTask->calcStateFluentHashKeys(currentState);
     probabilisticTask->calcStateHashKey(currentState);
-    
-    for(unsigned int i = 0; i < searchEngineResult.size(); ++i) {
-        searchEngineResult[i] = 1.0;
-    }
+    bestActions.clear();
 }
 
 void ProstPlanner::initNextRound() {
     ++currentRound;
     remainingSteps = probabilisticTask->getHorizon();
+    chosenActionIndex = -1;
 }
 
 int ProstPlanner::combineResults() {
-    vector<int> bestIndices;
-    double bestRes = -numeric_limits<double>::max();
-    for(unsigned int i = 0; i < searchEngineResult.size(); ++i) {
-        if(MathUtils::doubleIsGreater(searchEngineResult[i], bestRes)) {
-            bestIndices.clear();
-            bestIndices.push_back(i);
-            bestRes = searchEngineResult[i];
-        } else if(MathUtils::doubleIsEqual(searchEngineResult[i], bestRes)) {
-            bestIndices.push_back(i);
-        }
-    }
-
-    /*
-    cout << "best actions:" << endl;
-    for(unsigned int i = 0; i <bestIndices.size(); ++i) {
-        probabilisticTask->actions[bestIndices[i]]->printLeaf();
-        cout << endl;
-    }
-    cout << "-----";
-    */
-
-    return bestIndices[rand() % bestIndices.size()];
+    return bestActions[rand() % bestActions.size()];
 }
 
 
@@ -213,35 +213,27 @@ void ProstPlanner::unregisterLearningComponent(LearningComponent* component) {
     }
 }
 
-void ProstPlanner::setSeed(int seed) {
+void ProstPlanner::setSeed(int _seed) {
+    seed = _seed;
     srand(seed);
 }
 
-void ProstPlanner::printStep(int result, bool printSearchEngineLogs, bool printSearchEngineResult) {
+void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
     cout << "------------------------------------------------------------------------------------------" << endl;
     cout << "Planning step " << (probabilisticTask->getHorizon() - remainingSteps + 1)
          << "/" << probabilisticTask->getHorizon() << " in round " << (currentRound+1)
          << "/" << numberOfRounds << " with state:" << endl << endl;
-    probabilisticTask->printState(currentState);
+    probabilisticTask->printState(cout, currentState);
     cout << endl;
 
     if(printSearchEngineLogs) {
-        searchEngine->print();
+        searchEngine->print(cout);
         cout << "------------------------------------------------------------------" << endl << endl;
     }
 
-    if(printSearchEngineResult) {
-        for(unsigned int i = 0; i < searchEngineResult.size(); ++i) {
-            if(!MathUtils::doubleIsMinusInfinity(searchEngineResult[i])) {
-                probabilisticTask->printAction(i);
-                cout << " : " << searchEngineResult[i] << endl;
-            }
-        }
-        cout << "------------------------------------------------------------------" << endl << endl;
-    }
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
     cout << "Sumitting Action: ";
-    probabilisticTask->printAction(result);
+    probabilisticTask->printAction(cout, result);
     cout << endl << "------------------------------------------------------------------" << endl << endl;
 
     /*

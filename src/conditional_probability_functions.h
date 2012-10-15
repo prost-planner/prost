@@ -87,12 +87,14 @@ public:
 
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions) {
         stateHashKey = current.stateFluentHashKey(index) + actionHashKeyMap[actions.index];
+        assert((current.stateFluentHashKey(index) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+
         if(cacheInVector) {
-            if(!MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
-                res = evaluationCacheVector[stateHashKey];
-            } else {
+            if(MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
                 body->evaluate(res, current, next, actions);
                 evaluationCacheVector[stateHashKey] = res;
+            } else {
+                res = evaluationCacheVector[stateHashKey];
             }
         } else {
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
@@ -110,6 +112,8 @@ public:
         assert((head->parent->valueType == BoolType::instance()) || (head == StateFluent::rewardInstance()));
 
         stateHashKey = current.stateFluentHashKey(index) + actionHashKeyMap[actions.index];
+        assert((current.stateFluentHashKey(index) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+
         if(kleeneCacheInVector) {
             if(!MathUtils::doubleIsMinusInfinity(kleeneEvaluationCacheVector[stateHashKey])) {
                 res = kleeneEvaluationCacheVector[stateHashKey];
@@ -166,7 +170,7 @@ public:
         return head;
     }
 
-    void print();
+    void print(std::ostream& out);
 
 private:
     void calculateActionHashKey(ActionState const& action, long& nextKey);
@@ -228,7 +232,7 @@ public:
                                                 PlanningTask* preprocessedPlanningTask, AtomicLogicalExpression* variable);
     void replaceQuantifier(UnprocessedPlanningTask* task, Instantiator* instantiator);
 
-    void print();
+    void print(std::ostream& out);
 
 private:
     ConditionalProbabilityFunctionDefinition(UninstantiatedVariable* _head, LogicalExpression* _body) :

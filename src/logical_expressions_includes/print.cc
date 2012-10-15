@@ -1,232 +1,214 @@
-void VariableDefinition::print() {
-    cout << name << "(";
+void VariableDefinition::print(ostream& out) {
+    out << name << "(";
     for(unsigned int i = 0; i < params.size(); ++i) {
-        cout << params[i]->name;
+        out << params[i]->name;
         if(i != params.size()-1) {
-            cout << ", ";
+            out << ", ";
         }
     }
-    cout << ") : " << "VariableType = ";
+    out << ") : " << "VariableType = ";
     switch(variableType) {
     case VariableDefinition::STATE_FLUENT:
-        cout << "state-fluent, ";
+        out << "state-fluent, ";
         break;
     case VariableDefinition::ACTION_FLUENT:
-        cout << "action-fluent, ";
+        out << "action-fluent, ";
         break;
     case VariableDefinition::INTERM_FLUENT:
-        cout << "interm-fluent, ";
+        out << "interm-fluent, ";
         break;
     case VariableDefinition::NON_FLUENT:
-        cout << "non-fluent, ";
+        out << "non-fluent, ";
         break;
     }
-    cout << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
+    out << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
 }
 
-/*
-void ConditionalProbabilityFunctionDefinition::print() {
-    head->print();
-    cout << " = ";
-    body->print();
-    cout << endl;
-}
-*/
-
-void StateActionConstraint::print() {
-    sac->print();
-    cout << endl;
+void StateActionConstraint::print(ostream& out) {
+    sac->print(out);
+    out << endl;
 }
 
-void ParameterDefinition::print() {
-    cout << "(";
-    cout << parameterName;
-    cout << " : ";
-    cout << parameterType->name;
-    cout << ") ";
+void ParameterDefinition::print(ostream& out) {
+    out << "(";
+    out << parameterName;
+    out << " : ";
+    out << parameterType->name;
+    out << ") ";
 }
 
-void ParameterDefinitionSet::print() {
-    cout << "(";
+void ParameterDefinitionSet::print(ostream& out) {
+    out << "(";
     for(unsigned int i = 0; i < parameterDefs.size(); ++i) {
-        parameterDefs[i]->print();
-        cout << " ";
+        parameterDefs[i]->print(out);
+        out << " ";
     }
-    cout << ") ";
+    out << ") ";
 }
 
-/*
-void ConditionalProbabilityFunction::print() {
-    head->print();
-    cout << " = ";
-    body->print();
-    cout << endl;
-}
-*/
-
-void UninstantiatedVariable::print() {
-    cout << name;
+void UninstantiatedVariable::print(ostream& out) {
+    out << name;
 }
 
-void AtomicLogicalExpression::print() {
-    cout << name;
+void AtomicLogicalExpression::print(ostream& out) {
+    out << name;
 }
 
-void NumericConstant::print() {
-    cout << value;
+void NumericConstant::print(ostream& out) {
+    out << value;
 }
 
-void Quantifier::print() {
-    parameterDefsSet->print();
-    expr->print();
+void Quantifier::print(ostream& out) {
+    parameterDefsSet->print(out);
+    expr->print(out);
 }
 
-void Sumation::print() {
-    cout << "(sum ";
-    Quantifier::print();
-    cout << ")";
+void Sumation::print(ostream& out) {
+    out << "(sum ";
+    Quantifier::print(out);
+    out << ")";
 }
 
-void Product::print() {
-    cout << "(prod ";
-    Quantifier::print();
-    cout << ")";
+void Product::print(ostream& out) {
+    out << "(prod ";
+    Quantifier::print(out);
+    out << ")";
 }
 
-void UniversalQuantification::print() {
-    cout << "(forall ";
-    Quantifier::print();
-    cout << ")";
+void UniversalQuantification::print(ostream& out) {
+    out << "(forall ";
+    Quantifier::print(out);
+    out << ")";
 }
 
-void ExistentialQuantification::print() {
-    cout << "(exists ";
-    Quantifier::print();
-    cout << ")";
+void ExistentialQuantification::print(ostream& out) {
+    out << "(exists ";
+    Quantifier::print(out);
+    out << ")";
 }
 
-void Connective::print() {
+void Connective::print(ostream& out) {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        cout << " ";
-        exprs[i]->print();
+        out << " ";
+        exprs[i]->print(out);
     }
 }
 
-void Conjunction::print() {
-    cout << "(and";
-    Connective::print();
-    cout << ") ";
+void Conjunction::print(ostream& out) {
+    out << "(and";
+    Connective::print(out);
+    out << ") ";
 }
 
-void Disjunction::print() {
-    cout << "(or";
-    Connective::print();
-    cout << ") ";
+void Disjunction::print(ostream& out) {
+    out << "(or";
+    Connective::print(out);
+    out << ") ";
 }
 
-void EqualsExpression::print() {
-    cout << "(=";
-    Connective::print();
-    cout << ") ";
+void EqualsExpression::print(ostream& out) {
+    out << "(=";
+    Connective::print(out);
+    out << ") ";
 }
 
-void GreaterExpression::print() {
+void GreaterExpression::print(ostream& out) {
     assert(exprs.size() == 2);
-    cout << "(> ";
-    Connective::print();
-    cout << ") ";
+    out << "(> ";
+    Connective::print(out);
+    out << ") ";
 }
 
-void LowerExpression::print() {
+void LowerExpression::print(ostream& out) {
     assert(exprs.size() == 2);
-    cout << "(< ";
-    Connective::print();
-    cout << ") ";
+    out << "(< ";
+    Connective::print(out);
+    out << ") ";
 }
 
-void GreaterEqualsExpression::print() {
+void GreaterEqualsExpression::print(ostream& out) {
     assert(exprs.size() == 2);
-    cout << "(>= ";
-    Connective::print();
-    cout << ") ";
+    out << "(>= ";
+    Connective::print(out);
+    out << ") ";
 }
 
-void LowerEqualsExpression::print() {
+void LowerEqualsExpression::print(ostream& out) {
     assert(exprs.size() == 2);
-    cout << "(<= ";
-    Connective::print();
-    cout << ") ";
+    out << "(<= ";
+    Connective::print(out);
+    out << ") ";
 }
 
-void Addition::print() {
-    cout << "(+";
-    Connective::print();
-    cout << ") ";
+void Addition::print(ostream& out) {
+    out << "(+";
+    Connective::print(out);
+    out << ") ";
 }
 
-void Subtraction::print() {
-    cout << "(-";
-    Connective::print();
-    cout << ") ";
+void Subtraction::print(ostream& out) {
+    out << "(-";
+    Connective::print(out);
+    out << ") ";
 }
 
-void Multiplication::print() {
-    cout << "(*";
-    Connective::print();
-    cout << ") ";
+void Multiplication::print(ostream& out) {
+    out << "(*";
+    Connective::print(out);
+    out << ") ";
 }
 
-void Division::print() {
-    cout << "(/";
-    Connective::print();
-    cout << ") ";
+void Division::print(ostream& out) {
+    out << "(/";
+    Connective::print(out);
+    out << ") ";
 }
 
-void BernoulliDistribution::print() {
-    cout << "Bernoulli(";
-    expr->print();
-    cout << ") ";
+void BernoulliDistribution::print(ostream& out) {
+    out << "Bernoulli(";
+    expr->print(out);
+    out << ") ";
 }
 
-void KronDeltaDistribution::print() {
-    cout << "KronDelta(";
-    expr->print();
-    cout << ") ";
+void KronDeltaDistribution::print(ostream& out) {
+    out << "KronDelta(";
+    expr->print(out);
+    out << ") ";
 }
 
-void IfThenElseExpression::print() {
-    cout << "(if ";
-    condition->print();
-    cout << " then ";
-    valueIfTrue->print();
-    cout << " else ";
-    valueIfFalse->print();
-    cout << ")";
+void IfThenElseExpression::print(ostream& out) {
+    out << "(if ";
+    condition->print(out);
+    out << " then ";
+    valueIfTrue->print(out);
+    out << " else ";
+    valueIfFalse->print(out);
+    out << ")";
 }
 
-void MultiConditionChecker::print() {
-    cout << " [ ";
+void MultiConditionChecker::print(ostream& out) {
+    out << " [ ";
     for(unsigned int i = 0; i < conditions.size(); ++i) {
         if(i == 0) {
-            cout << "(if ";
-            conditions[i]->print();
-            cout << " then ";
+            out << "(if ";
+            conditions[i]->print(out);
+            out << " then ";
         } else if(i == conditions.size() -1) {
-            cout << "(default ";
+            out << "(default ";
             assert(dynamic_cast<NumericConstant*>(conditions[i]) == NumericConstant::truth());
         } else {
-            cout << "(elif ";
-            conditions[i]->print();
-            cout << " then ";
+            out << "(elif ";
+            conditions[i]->print(out);
+            out << " then ";
         }
-        effects[i]->print();
-        cout << " ) ";
+        effects[i]->print(out);
+        out << " ) ";
     }
-    cout << " ] ";
+    out << " ] ";
 }
 
-void NegateExpression::print() {
-    cout << "(not ";
-    expr->print();
-    cout << ") ";
+void NegateExpression::print(ostream& out) {
+    out << "(not ";
+    expr->print(out);
+    out << ") ";
 }

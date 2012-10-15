@@ -6,18 +6,13 @@
 
 using namespace std;
 
-RandomSearch::RandomSearch(ProstPlanner* _planner, vector<double>& _result) :
-    SearchEngine("Random", _planner, _planner->getDeterministicTask(), _result) {}
+RandomSearch::RandomSearch(ProstPlanner* _planner) :
+    SearchEngine("Random", _planner, _planner->getDeterministicTask()) {}
 
-void RandomSearch::_run() {
-    switch(resultType) {
-    case SearchEngine::ESTIMATE:
-        for(unsigned int i = 0; i < result.size(); ++i) {
-            result[i] = 0.0;
-        }
-        break;
-    case SearchEngine::PRUNED_ESTIMATE:
-        task->setActionsToExpand(rootState, actionsToExpand);
+void RandomSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
+    if(pruneResult) {
+        vector<int> actionsToExpand(task->getNumberOfActions(),-1);
+        task->setActionsToExpand(_rootState, actionsToExpand);
         for(unsigned int i = 0; i < result.size(); ++i) {
             if(actionsToExpand[i] == i) {
                 result[i] = 0.0;
@@ -25,11 +20,9 @@ void RandomSearch::_run() {
                 result[i] = -std::numeric_limits<double>::max();
             }
         }
-        break;
-    default:
-        assert(false);
-        break;
+    } else {
+        for(unsigned int i = 0; i < result.size(); ++i) {
+            result[i] = 0.0;
+        }
     }
 }
-
-

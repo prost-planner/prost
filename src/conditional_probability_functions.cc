@@ -296,65 +296,65 @@ ConditionalProbabilityFunction* ConditionalProbabilityFunction::determinizeMostL
     return res;
 }
 
-void ConditionalProbabilityFunction::print() {
-    head->print();
-    cout << " (Index: " << head->index << ")";
+void ConditionalProbabilityFunction::print(ostream& out) {
+    head->print(out);
+    out << " (Index: " << head->index << ")";
     if(initialized) {
         if(!isProb) {
-            cout << " (deterministic,";
+            out << " (deterministic,";
         } else {
-            cout << " (probabilistic,";
+            out << " (probabilistic,";
         }
         if(isActionIndep) {
-            cout << " action independent,";
+            out << " action independent,";
         } else {
-            cout << " action dependent,";
+            out << " action dependent,";
         }
         if(cacheInVector) {
-            cout << " caching in vectors of size " << evaluationCacheVector.size() << ", ";
+            out << " caching in vectors of size " << evaluationCacheVector.size() << ", ";
         } else {
             if(cachingEnabled) {
-                cout << " caching in maps, ";
+                out << " caching in maps, ";
             } else {
-                cout << " no caching, ";
+                out << " no caching, ";
             }
         }
         if(kleeneCacheInVector) {
-            cout << " kleene caching in vectors of size " << kleeneEvaluationCacheVector.size() << ")" << endl;
+            out << " kleene caching in vectors of size " << kleeneEvaluationCacheVector.size() << ")" << endl;
         } else {
             if(kleeneCachingEnabled) {
-                cout << " kleene caching in maps)" << endl;
+                out << " kleene caching in maps)" << endl;
             } else {
-                cout << " no kleene caching)" << endl;
+                out << " no kleene caching)" << endl;
             }
         }
     }
-    body->print();
+    body->print(out);
 
     if(domainCalculated) {
-        cout << endl << endl << "Possible values (" << probDomainSize << "): " << endl;
+        out << endl << endl << "Possible values (" << probDomainSize << "): " << endl;
 
         for(map<double,int>::iterator it = probDomainMap.begin(); it != probDomainMap.end(); ++it) {
-            cout << it->first << " (" << it->second << ") ";
+            out << it->first << " (" << it->second << ") ";
         }
-        cout << endl;
+        out << endl;
 
         if(head != StateFluent::rewardInstance()) {
-            cout << "ProbHashKeyBase is " << probHashKeyBase << " and hashKeybase is " << hashKeyBase << endl;
+            out << "ProbHashKeyBase is " << probHashKeyBase << " and hashKeybase is " << hashKeyBase << endl;
         }
     }
 
     if(stateFluentHashKeysCalculated) {
-        cout << endl << endl << "Hash Keys of dependent Fluents: " << endl;
+        out << endl << endl << "Hash Keys of dependent Fluents: " << endl;
         for(unsigned int i = 0; i < actionHashKeyMap.size(); ++i) {
             if(actionHashKeyMap[i] != 0) {
-                cout << "Action Fluent ";
-                task->printAction(i);
-                cout << " : " << actionHashKeyMap[i] << endl;
+                out << "Action Fluent ";
+                task->printAction(out, i);
+                out << " : " << actionHashKeyMap[i] << endl;
             }
         }
     } else {
-        cout << endl << endl;
+        out << endl << endl;
     }
 }
 
@@ -425,9 +425,9 @@ ConditionalProbabilityFunction* ConditionalProbabilityFunctionDefinition::instan
     return new ConditionalProbabilityFunction(planner, preprocessedPlanningTask, tmp, newBody);
 }
 
-void ConditionalProbabilityFunctionDefinition::print() {
-    head->print();
-    cout << " = ";
-    body->print();
-    cout << endl;
+void ConditionalProbabilityFunctionDefinition::print(ostream& out) {
+    head->print(out);
+    out << " = ";
+    body->print(out);
+    out << endl;
 }

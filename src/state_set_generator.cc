@@ -10,42 +10,43 @@
 using namespace std;
 
 StateSetGenerator::StateSetGenerator(ProstPlanner* _planner) :
-    SearchEngine("StateSetGenerator", _planner, _planner->getProbabilisticTask(), resultDummy), 
-    numberOfStates(200),
-    inclusionProb(0.1),
-    applicableActions(vector<double>(task->getNumberOfActions(),0.0)) {
+    planner(_planner),
+    task(planner->getProbabilisticTask()) {
 }
 
-void StateSetGenerator::_run() {
-    set<State, State::CompareIgnoringRemainingSteps> res;
+vector<State> StateSetGenerator::generateStateSet(State const& rootState, int const& numberOfStates, double const& inclusionProb) {
     Timer t;
-    vector<int> actionsToExpandIndices;
-    int chosenActionIndex = 0;
-    double reward = 0.0;
+
+    set<State, State::CompareIgnoringRemainingSteps> stateSet;
 
     State nextState(task->getStateSize());
     nextState.reset(rootState.remainingSteps()-1);
-    currentState.setTo(rootState);
+    State currentState(rootState);
 
-    res.insert(currentState);
+    stateSet.insert(currentState);
 
-    while((res.size() < numberOfStates) && (t() < 2.0)) {
+    while((stateSet.size() < numberOfStates) && (MathUtils::doubleIsSmaller(t(), 2.0))) {
+        vector<int> actionsToExpand(task->getNumberOfActions(),0);
         task->setActionsToExpand(currentState, actionsToExpand);
 
+        vector<int> actionsToExpandIndices;
         for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {
-            if(!MathUtils::doubleIsMinusInfinity(actionsToExpand[i])) {
+            if(actionsToExpand[i] == i) {
                 actionsToExpandIndices.push_back(i);
             }
         }
-        chosenActionIndex = actionsToExpandIndices[rand() % actionsToExpandIndices.size()];
+
+        int chosenActionIndex = actionsToExpandIndices[std::rand() % actionsToExpandIndices.size()];
+        double reward = 0.0;
         task->calcStateTransition(currentState, chosenActionIndex, nextState, reward);
 
         if(task->isMinReward(reward) || task->isMaxReward(reward)) {
-            res.insert(nextState);
+            stateSet.insert(nextState);
         } else {
-            generateRandomNumber(randNum);
+            double randNum = 0.0;
+            task->generateRandomNumber(randNum);
             if(MathUtils::doubleIsSmallerOrEqual(randNum,inclusionProb)) {
-                res.insert(nextState);
+                stateSet.insert(nextState);
             }
         }
 
@@ -58,12 +59,10 @@ void StateSetGenerator::_run() {
         }
     }
 
-    for(set<State>::iterator it = res.begin(); it != res.end(); ++it) {
-        stateSet.push_back(*it);
-    }
-    cout << "created " << stateSet.size() << " states." << endl;
+    vector<State> result(stateSet.size());
+    std::copy(stateSet.begin(), stateSet.end(), result.begin());
+
+    cout << "created " << result.size() << " states." << endl;
+    return result;
 }
 
-inline void StateSetGenerator::generateRandomNumber(double& res) {
-    res = ((double)(rand() % 1000001) / 1000000.0);
-}

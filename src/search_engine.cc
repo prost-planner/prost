@@ -14,7 +14,7 @@
 
 using namespace std;
 
-SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner, vector<double>& searchEngineResult) {
+SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
     StringUtils::trim(desc);
     assert(desc[0] == '[' && desc[desc.size()-1] == ']');
     StringUtils::removeFirstAndLastCharacter(desc);
@@ -24,16 +24,16 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner, vect
 
     if(desc.find("UCT") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new UCTSearch(planner, searchEngineResult);
+        result = new UCTSearch(planner);
     } else if(desc.find("IDS") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new IterativeDeepeningSearch(planner, searchEngineResult);
+        result = new IterativeDeepeningSearch(planner);
     } else if(desc.find("DFS") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new DepthFirstSearch(planner, searchEngineResult);
+        result = new DepthFirstSearch(planner);
     } else if(desc.find("RAND") == 0) {
         desc = desc.substr(4,desc.size());
-        result = new RandomSearch(planner, searchEngineResult);
+        result = new RandomSearch(planner);
     } else {
         cout << "Unknown Search Engine: " << desc << endl;
         assert(false);
@@ -75,22 +75,22 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     return false;
 }
 
-void SearchEngine::run(State const& _rootState) {
-    //TODO: Implement this behaviour such that it works with all result types!
-    //if((_rootState.remainingSteps == 1) && task->noopIsOptimalFinalAction()) {...}
-    rootState.setTo(_rootState);
-    if(rootState.remainingSteps() > maxSearchDepth) {
-        rootState.remainingSteps() = maxSearchDepth;
+bool SearchEngine::learn(std::vector<State> const& trainingSet) {
+    if(!task->learningFinished()) {
+        return false;
     }
-    _run();
+    cout << name << ": learning..." << endl;
+    bool res = LearningComponent::learn(trainingSet);
+    cout << name << ": ...finished" << endl;
+    return res;
 }
 
-void SearchEngine::print() {
-    cout << outStream.str() << endl;
+void SearchEngine::print(ostream& out) {
+    out << outStream.str() << endl;
     outStream.str("");
 }
 
-void SearchEngine::printStats(string indent) {
-    outStream << indent << "Statisics of " << name << ":" << endl;
+void SearchEngine::printStats(ostream& out, string indent) {
+    out << indent << "Statisics of " << name << ":" << endl;
 }
 

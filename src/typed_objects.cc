@@ -39,8 +39,8 @@ void Type::parse(string& desc, UnprocessedPlanningTask* task) {
     }
 }
 
-void Type::print() {
-    cout << name << endl;
+void Type::print(ostream& out) {
+    out << name << endl;
 }
 
 double Type::valueStringToDouble(string& val) {
@@ -72,12 +72,12 @@ ObjectType::ObjectType(string Name, ObjectType* SuperType) :Type(Name, Type::OBJ
     assert(superType);
 }
 
-void ObjectType::print() {
+void ObjectType::print(ostream& out) {
     if(this != objectRootInstance() && this != enumRootInstance()) {
         assert(superType);
-        cout << name << " : " << superType->name << endl;
+        out << name << " : " << superType->name << endl;
     } else {
-        cout << name << endl;
+        out << name << endl;
     } 
 }
 
@@ -119,7 +119,7 @@ void Object::getObjectTypes(vector<ObjectType*>& objectTypes) {
     }
 }
 
-void Object::print() {
-    cout << name << " : " << type->name << endl;
+void Object::print(ostream& out) {
+    out << name << " : " << type->name << endl;
 }
 

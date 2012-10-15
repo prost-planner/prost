@@ -42,7 +42,7 @@ public:
         actionsToExpandCache(),
         cacheActionsToExpand(true), //TODO: MAKE THIS A PARAMETER
         useReasonableActionPruning(true),
-        rewardCache() {}
+        stateValueCache() {}
 
     PlanningTask(PlanningTask const& other) :
         CachingComponent(other.planner),
@@ -76,7 +76,7 @@ public:
         SACs(other.SACs),
         indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
         indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap),
-        rewardCache() {}   
+        stateValueCache() {}   
 
     void initialize(std::vector<ActionFluent*>& _actionFluents, std::vector<ConditionalProbabilityFunction*>& _CPFs, 
                     std::vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
@@ -84,7 +84,7 @@ public:
 
     PlanningTask* determinizeMostLikely(UnprocessedPlanningTask* task);
 
-    void learn(std::vector<State> const& trainingSet);
+    bool learn(std::vector<State> const& trainingSet);
 
     //Calculate the whole state transition, including rewards
     void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) {
@@ -114,7 +114,7 @@ public:
 
     //calc probabiltity distribution that results in applying actions in current
     void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, State& nextAsProbDistr) const {
-        for(int i = 0; i < stateSize; ++i) {
+        for(int i = 0; i < getStateSize(); ++i) {
             CPFs[i]->evaluate(nextAsProbDistr[i], current, nextAsProbDistr, actionStates[actionIndex]);
         }
     }
@@ -122,8 +122,12 @@ public:
     //sample a successor distribution
     void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
         for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            generateRandomNumber(randNum);
-            next[i] = (MathUtils::doubleIsSmallerOrEqual(randNum,next[i]) ? 1.0 : 0.0);
+            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
+                continue;
+            } else {
+                generateRandomNumber(randNum);
+                next[i] = (MathUtils::doubleIsSmaller(randNum, next[i]) ? 1.0 : 0.0);
+            }
         }
     }
 
@@ -132,8 +136,13 @@ public:
             next[i] = nextAsProbDistr[i];
         }
         for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            generateRandomNumber(randNum);
-            next[i] = (MathUtils::doubleIsSmallerOrEqual(randNum,nextAsProbDistr[i]) ? 1.0 : 0.0);
+            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
+                next[i] = nextAsProbDistr[i];
+                continue;
+            } else {
+                generateRandomNumber(randNum);
+                next[i] = (MathUtils::doubleIsSmaller(randNum, nextAsProbDistr[i]) ? 1.0 : 0.0);
+            }
         }
     }
 
@@ -212,7 +221,8 @@ public:
         }
     }
 
-    //calculate (bool) hash key and state fluent hash keys (if state hashing is possible)
+    //calculate (bool) hash key and state fluent hash keys (if state
+    //hashing is possible)
     void calcStateHashKey(State& state) const {
         if(stateHashingPoss) {
             state.hashKey = 0;
@@ -227,7 +237,8 @@ public:
         }
     }
 
-    //calculate hash key of states as probability distribution (if state hashing is possible)
+    //calculate hash key of states as probability distribution (if
+    //state hashing is possible)
     void calcHashKeyOfProbabilityDistribution(State& state) {
         if(probStateHashingPoss) {
             state.hashKey = 0;
@@ -267,7 +278,7 @@ public:
         return MathUtils::doubleIsEqual(rew,rewardCPF->minVal);
     }
 
-    double const& getMinReward() {
+    double const& getMinReward() const {
         return rewardCPF->minVal;
     }
 
@@ -275,49 +286,60 @@ public:
         return MathUtils::doubleIsEqual(rew,rewardCPF->maxVal);
     }
 
-    double const& getMaxReward() {
+    double const& getMaxReward() const {
         return rewardCPF->maxVal;
     }
 
-    State const& getInitialState() {
+    State const& getInitialState() const {
         return initialState;
     }
 
-    int const& getHorizon() {
+    int const& getHorizon() const {
         return horizon;
     }
 
-    int const& getFirstProbabilisticVarIndex() {
+    int const& getFirstProbabilisticVarIndex() const {
         return firstProbabilisticVarIndex;
     }
 
-    int const& getStateSize() {
+    int const& getStateSize() const {
         return stateSize;
     }
 
-    bool const& isPruningEquivalentToDeterminization() {
+    bool const& isPruningEquivalentToDeterminization() const {
         return isPruningEquivalentToDet;
     }
 
-    bool const& noopIsOptimalFinalAction() {
+    bool const& noopIsOptimalFinalAction() const {
         return noopIsOptimalFinalAct;
     }
 
-    bool rewardIsNextStateIndependent() {
+    bool rewardIsNextStateIndependent() const {
         return rewardCPF->isNextStateIndependent();
     }
 
+    bool rewardIsActionIndependent() const {
+        return rewardCPF->isActionIndependent();
+    }
+
+    //if res[index] == index, the action should be expanded, otherwise
+    //the action index leads to equivalent results as res[index] if
+    //the reward is action independent, and to worse results if
     void setActionsToExpand(State const& state, std::vector<int>& res);
     bool isARewardLock(State const& current) {
         return isARewardLock(current, refReward);
     }
     bool isARewardLock(State const& current, double& referenceReward);
 
+    void generateRandomNumber(double& res) const {
+        res = ((double)(rand() % 1000001) / 1000000.0);
+    }
+
     void disableCaching();
 
-    void print() const;
-    void printState(State const& s) const;
-    void printAction(int const& index) const;
+    void print(std::ostream& out) const;
+    void printState(std::ostream& out, State const& s) const;
+    void printAction(std::ostream& out, int const& index) const;
 
 private:
     void initializeCPFs(std::vector<ConditionalProbabilityFunction*>& _CPFs);
@@ -339,10 +361,6 @@ private:
     void stateToBDD(State const& state, bdd& res);
     bool BDDIncludes(bdd BDD, State const& state);
 
-    void generateRandomNumber(double& res) const {
-        res = ((double)(rand() % 1000001) / 1000000.0);
-    }
-
     ProstPlanner* planner;
 
     std::vector<ActionFluent*> actionFluents;
@@ -362,8 +380,10 @@ private:
     int stateSize;
 
     bool stateHashingPoss;
-    //TODO: This is ugly as it only belongs to probabilistic task -> Maybe we should separate probabilistic 
-    //and deterministic planning task by creating two classes (might also be more efficient for state transition)
+    //TODO: This is ugly as it only belongs to probabilistic task ->
+    //Maybe we should separate probabilistic and deterministic
+    //planning task by creating two classes (might also be more
+    //efficient for state transition)
     bool probStateHashingPoss;
 
     mutable double randNum;
@@ -380,7 +400,6 @@ private:
     bool cacheActionsToExpand;
     bool useReasonableActionPruning;
 
-    //public:
     std::vector<ConditionalProbabilityFunction*> CPFs;
     ConditionalProbabilityFunction* rewardCPF;
     std::vector<StateActionConstraint*> SACs;
@@ -390,12 +409,15 @@ private:
     //way to get rid of this, even if it takes some work!
     friend class ConditionalProbabilityFunction;
 
-    //the CPF indexToStateFluentHashKeyMap[i][j].first depends on variable i, and is updated with indexToStateFluentHashKeyMap[i][j].second
-    std::vector<std::vector<std::pair<int,int> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int,int> > > indexToKleeneStateFluentHashKeyMap;
+    //the CPF indexToStateFluentHashKeyMap[i][j].first depends on
+    //variable i, and is updated with
+    //indexToStateFluentHashKeyMap[i][j].second
+    std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
 
 public:
-    std::map<State, std::vector<double>, State::CompareConsideringRemainingSteps> rewardCache;
+    //Caches known state evaluations. Cache with care!
+    std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;
 };
 
 #endif

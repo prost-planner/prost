@@ -60,130 +60,130 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
     instanceDesc = nonFluentsAndInstance[1];
 }
 
-void UnprocessedPlanningTask::print() {
-    cout << "-----------------------------------------------Planning PlanningTask---------------------------------------------" << endl;
-    cout << "-----------------------------------Input---------------------------------" << endl;
-    cout << "-------------Domain Description-------------" << endl;
-    cout << domainDesc << endl << endl;
+void UnprocessedPlanningTask::print(ostream& out) {
+    out << "-----------------------------------------------Planning PlanningTask---------------------------------------------" << endl;
+    out << "-----------------------------------Input---------------------------------" << endl;
+    out << "-------------Domain Description-------------" << endl;
+    out << domainDesc << endl << endl;
 
-    cout << "-----------NonFluents Description-----------" << endl;
-    cout << nonFluentsDesc << endl << endl;
+    out << "-----------NonFluents Description-----------" << endl;
+    out << nonFluentsDesc << endl << endl;
 
-    cout << "------------Instance Description------------" << endl;
-    cout << instanceDesc << endl << endl;
+    out << "------------Instance Description------------" << endl;
+    out << instanceDesc << endl << endl;
 
-    cout << "-----------------------------------Parsed--------------------------------" << endl;
+    out << "-----------------------------------Parsed--------------------------------" << endl;
 
-    cout << "----------------Domain Name-----------------" << endl;
-    cout << domainName << endl << endl;
+    out << "----------------Domain Name-----------------" << endl;
+    out << domainName << endl << endl;
 
-    cout << "--------------NonFluents Name---------------" << endl;
-    cout << nonFluentsName << endl << endl;
+    out << "--------------NonFluents Name---------------" << endl;
+    out << nonFluentsName << endl << endl;
 
-    cout << "---------------Instance Name----------------" << endl;
-    cout << instanceName << endl << endl;
+    out << "---------------Instance Name----------------" << endl;
+    out << instanceName << endl << endl;
 
-    cout << "----------------Requirements----------------" << endl;
+    out << "----------------Requirements----------------" << endl;
     for(map<string, bool>::iterator it = requirements.begin(); it != requirements.end(); ++it) {
-        cout << it->first << ": " << (it->second ? "yes" : "no") << endl;
+        out << it->first << ": " << (it->second ? "yes" : "no") << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "--------------------Object Types-----------------" << endl;
+    out << "--------------------Object Types-----------------" << endl;
     for(map<string, ObjectType*>::iterator it = objectTypes.begin(); it != objectTypes.end(); ++it) {
-        it->second->print();
+        it->second->print(out);
     }
-    cout << endl;
+    out << endl;
 
-    cout << "-----------------Objects-------------------------" << endl;
+    out << "-----------------Objects-------------------------" << endl;
     for(map<string,Object*>::iterator it = objects.begin(); it != objects.end(); ++it) {
-        it->second->print();
+        it->second->print(out);
     }
-    cout << endl;
+    out << endl;
 
-    cout << "---------------Objects by Type-------------------" << endl;
+    out << "---------------Objects by Type-------------------" << endl;
     for(map<ObjectType*,vector<Object*> >::iterator it = objectsByType.begin(); it != objectsByType.end(); ++it) {
         if(!it->second.empty()) {
-            cout << it->first->name << " : ";
+            out << it->first->name << " : ";
             for(unsigned int i = 0; i < it->second.size(); ++i) {
-                cout << it->second[i]->name;
+                out << it->second[i]->name;
                 if(i != it->second.size()-1) {
-                    cout << ", ";
+                    out << ", ";
                 }
             }
-            cout << endl;
+            out << endl;
         }
     }
-    cout << endl;
+    out << endl;
 
-    cout << "---------------Variable Definitions--------------" << endl;
+    out << "---------------Variable Definitions--------------" << endl;
     for(unsigned int i = 0; i < variableDefinitionsVec.size(); ++i) {
-        variableDefinitionsVec[i]->print();
-        cout << endl;
+        variableDefinitionsVec[i]->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "-----------------CPF Definitions-----------------" << endl;
+    out << "-----------------CPF Definitions-----------------" << endl;
     for(unsigned int i = 0; i < CPFDefsVec.size(); ++i) {
-        CPFDefsVec[i]->print();
-        cout << endl;
+        CPFDefsVec[i]->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "--------------Reward CPF Definition--------------" << endl;
-    rewardCPFDef->print();
-    cout << endl;
+    out << "--------------Reward CPF Definition--------------" << endl;
+    rewardCPFDef->print(out);
+    out << endl;
 
-    cout << "--------------------Numbers----------------------" << endl;
-    cout << "Horizon: " << horizon << endl;
-    cout << "NumberOfConcurrentActions: " << numberOfConcurrentActions << endl;
-    cout << "DiscountFactor: " << discountFactor << endl;
-    cout << endl;
+    out << "--------------------Numbers----------------------" << endl;
+    out << "Horizon: " << horizon << endl;
+    out << "NumberOfConcurrentActions: " << numberOfConcurrentActions << endl;
+    out << "DiscountFactor: " << discountFactor << endl;
+    out << endl;
 
-    cout << "----------------Initial State---------------------" << endl;
+    out << "----------------Initial State---------------------" << endl;
     for(map<VariableDefinition*, vector<AtomicLogicalExpression*> >::iterator it = variablesBySchema.begin(); it != variablesBySchema.end(); ++it) {
         if(it->first->variableType != VariableDefinition::ACTION_FLUENT) {
             for(unsigned int i = 0; i < it->second.size(); ++i) {
-                it->second[i]->print();
-                cout << " = " << it->second[i]->initialValue << endl;
+                it->second[i]->print(out);
+                out << " = " << it->second[i]->initialValue << endl;
             }
         }
     }
-    cout << endl;
+    out << endl;
 
-    cout << "-------------------Constants----------------------" << endl;
+    out << "-------------------Constants----------------------" << endl;
     for(map<double, NumericConstant*>::iterator it = constants.begin(); it != constants.end(); ++it) {
-        it->second->print();
-        cout << endl;
+        it->second->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "-------------------Actions------------------------" << endl;
+    out << "-------------------Actions------------------------" << endl;
     for(map<string, ActionFluent*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        it->second->print();
-        cout << endl;
+        it->second->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "---------------------CPFs.------------------------" << endl;
+    out << "---------------------CPFs.------------------------" << endl;
     for(map<StateFluent*, ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
-        it->second->print();
-        cout << endl;
+        it->second->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "--------------------Reward------------------------" << endl;
-    rewardCPF->print();
-    cout << endl;
+    out << "--------------------Reward------------------------" << endl;
+    rewardCPF->print(out);
+    out << endl;
 
-    cout << "-----------State Action Constraints---------------" << endl;
+    out << "-----------State Action Constraints---------------" << endl;
     for(unsigned int i = 0; i < SACs.size(); ++i) {
-        SACs[i]->print();
-        cout << endl;
+        SACs[i]->print(out);
+        out << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "---------------------------------------------------------------------------------------------------------" << endl;
+    out << "---------------------------------------------------------------------------------------------------------" << endl;
 }
 
 void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {

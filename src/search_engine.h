@@ -13,25 +13,19 @@ class ProstPlanner;
 class SearchEngine : public CachingComponent, public LearningComponent {
 public:
     //create a SearchEngine
-    static SearchEngine* fromString(std::string& desc, ProstPlanner* planner, std::vector<double>& searchEngineResult);
+    static SearchEngine* fromString(std::string& desc, ProstPlanner* planner);
 
     //set parameters from string
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    //ResultType defines the kind of result this search engine gives when run() is called
-    enum ResultType {
-        RELATIVE, // the values assigned to actions do not matter, just the ordering (used for toplevel search engines)
-        PRUNED_ESTIMATE, // any q-value estimate for all actions applicable in that task, and -infty else (used if action pruning is possible with initializer)
-        ESTIMATE, // any q-value estimate for all actions (used for initialization)
-        LOWER_BOUND_ESTIMATE, // the q-value estimates are lower bound estimates in the planning task assigned to this search engine
-        UPPER_BOUND_ESTIMATE // the q-value estimates are upper bound estimates in the planning task assigned to this search engine
-    };
+    //this is called before the first run starts
+    bool learn(std::vector<State> const& trainingSet);
 
-    //this is called before actual runs start
-    virtual void learn(std::vector<State> const& /*trainingSet*/) {}
+    //estimate the q-values of all (pruned) actions 
+    virtual void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult) = 0;
 
-    //starts the search engine
-    void run(State const& _rootState);
+    //estimate the best actions (no q-value estimates necessary)
+    virtual void estimateBestActions(State const& _rootState, std::vector<int>& result) = 0;
 
     //join the thread
     //void join();
@@ -48,17 +42,10 @@ public:
 
     virtual void setPlanningTask(PlanningTask* _task) {
         task = _task;
-        rootState = State(task->getStateSize());
-        currentState = State(task->getStateSize());
-        actionsToExpand = std::vector<int>(task->getNumberOfActions(),0);
     }
    
     virtual void setMaxSearchDepth(int _maxSearchDepth) {
         maxSearchDepth = _maxSearchDepth;
-    }
-
-    virtual void setResultType(SearchEngine::ResultType const _resultType) {
-        resultType = _resultType;
     }
 
     //getter methods of various settings
@@ -70,35 +57,22 @@ public:
         return maxSearchDepth;
     }
 
-    virtual SearchEngine::ResultType const& getResultType() const {
-        return resultType;
-    }
-
-    //reset the statistic variables. when you overwrite these, you
-    //should usually call resetStats() of the super class
+    //reset statistic variables.
     virtual void resetStats() {}
 
     //printer
-    virtual void print();
-    virtual void printStats(std::string indent = "");
+    virtual void print(std::ostream& out);
+    virtual void printStats(std::ostream& out, std::string indent = "");
 
 protected:
-    SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task, std::vector<double>& _result) :
+    SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
         CachingComponent(_planner),
         LearningComponent(_planner),
         name(_name),
         planner(_planner), 
         task(_task), 
-        rootState(task->getStateSize()),
-        currentState(task->getStateSize()),
-        result(_result),
-        actionsToExpand(_task->getNumberOfActions(),0),
-        resultType(SearchEngine::RELATIVE),
         cachingEnabled(true),
         maxSearchDepth(15) {}
-
-    //main search function that is called from run(), implement the search code here.
-    virtual void _run() = 0;
 
     //used for logging
     std::string name;
@@ -108,22 +82,6 @@ protected:
 
     //the used planning task
     PlanningTask* task;
-
-    //initial state
-    State rootState;
-
-    //currentState
-    State currentState;
-
-    //the result of this search engine's run is written to this
-    std::vector<double>& result;
-
-    //action i is supposed to be expanded if actionsToExpand[i] == i; 
-    //otherwise, it is equivalent to actionsToExpand[i];
-    std::vector<int> actionsToExpand;
-
-    //the type of result produced by this search engine
-    SearchEngine::ResultType resultType;
 
     //parameters that can be set
     bool cachingEnabled;

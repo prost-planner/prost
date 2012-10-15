@@ -64,7 +64,7 @@ public:
     void getCPFs(std::vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF = true);
     void removeCPF(ConditionalProbabilityFunction* cpf);
 
-    void print();
+    void print(std::ostream& out);
 
     //string description
     std::string domainDesc;

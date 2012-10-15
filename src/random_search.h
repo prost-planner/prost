@@ -7,10 +7,14 @@
 
 class RandomSearch : public SearchEngine {
 public:
-    RandomSearch(ProstPlanner* _planner, std::vector<double>& _result);
+    RandomSearch(ProstPlanner* _planner);
 
-protected:
-    void _run();
+    //main (public) search functions
+    void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
+    void estimateBestActions(State const& /*_rootState*/, std::vector<int>& /*result*/) {
+        //TODO: This is not needed currently but might be in the future (and is quite straightforward), so implement it
+        assert(false);
+    }
 };
 
 #endif

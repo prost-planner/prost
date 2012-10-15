@@ -21,6 +21,10 @@ public:
     double expectedRewardEstimate() {
         return accumulatedReward / (double) numberOfVisits;
     }
+    
+    void print(std::ostream& out, std::string indent = "") {
+        out << indent << expectedRewardEstimate() << " (in " << numberOfVisits << " visits)" << std::endl;
+    }
 };
 
 class UCTSearch : public SearchEngine {
@@ -31,12 +35,7 @@ public:
         TIME_AND_NUMBER_OF_ROLLOUTS //stop after timeout ms or maxNumberOfRollouts rollouts, whichever comes first
     };
 
-    enum RandomNumberGenerationMethod {
-        STANDARD,
-        EXOGENOUS
-    };
-
-    UCTSearch(ProstPlanner* _planner, std::vector<double>& _result);
+    UCTSearch(ProstPlanner* _planner);
 
     bool setValueFromString(std::string& param, std::string& value);
 
@@ -67,21 +66,26 @@ public:
     }
 
     //learn
-    void learn(std::vector<State> const& trainingSet);
+    bool learn(std::vector<State> const& trainingSet);
+
+    //main (public) search functions
+    void estimateBestActions(State const& _rootState, std::vector<int>& result);
+    void estimateQValues(State const& /*_rootState*/, std::vector<double>& /*result*/, const bool& /*pruneResult*/) {
+        assert(false);
+    }
 
     void resetStats();
-    void print();
-    void printStats(std::string indent = "");
+    void print(std::ostream& out);
+    void printStats(std::ostream& out, std::string indent = "");
 
 protected:
-    //main search functions
-    void _run();
+    //main (protected) search functions
     void search();
     double rolloutDecisionNode(UCTNode* node);
     double rolloutChanceNodes(UCTNode* node);
 
     //(re-)setters of variables in various phases
-    void initStep();
+    void initStep(State const& _rootState);
     void initRollout();
     void initRolloutStep();
 
@@ -102,14 +106,19 @@ protected:
     UCTNode* getUCTNode();
     void resetNodePool();
 
-    //the root node
+    //special search nodes
     UCTNode* currentRootNode;
-
-    //the successor of the current node
     UCTNode* chosenChild;
 
-    //UCT related variables
-    double magicConstant;
+    //Used states and actions
+    std::vector<State> states;
+    int currentStateIndex;
+    int nextStateIndex;
+    std::vector<int> actions;
+    int& currentActionIndex;
+
+    //Max search depth for the current step
+    int maxSearchDepthForThisStep;
 
     //vector for decision node children of equal quality (wrt UCT formula)
     std::vector<int> bestDecisionNodeChildren;
@@ -117,21 +126,19 @@ protected:
     //variable counting the rollouts
     int currentRollout;
 
-    //Successor state
-    State nextState;
-
-    //the last chosen action
-    int chosenActionIndex;
-
     //variables needed to apply UCT formula
+    double magicConstant;
     double numberOfChildrenVisitsLog;
     double visitPart;
     double UCTValue;
     double bestUCTValue;
 
+    //the number of steps that are "cut off" due to search depth limitation
+    int ignoredSteps;
+
     //search engine for initialization of decison node children
     SearchEngine* initializer;
-    std::vector<double> initialRewards;    
+    std::vector<double> initialRewards;
 
     //memory management (nodePool)
     int  lastUsedNodePoolIndex;
@@ -140,9 +147,6 @@ protected:
     //variables to choose successor that has been tried too rarely from UCT
     int smallestNumVisits;
     int highestNumVisits;
-
-    //if the task is pruning equivalent to its determinization, we use the initializer to prune
-    bool pruneWithInitialization;
 
     //parameter
     UCTSearch::TimeoutMethod timeoutMethod;
@@ -156,8 +160,8 @@ protected:
     int numberOfRuns;
 
     //Caching
-    int rewardCacheIndexForThisStep;
-    static std::vector<std::map<State, std::vector<double>, State::CompareIgnoringRemainingSteps> > rewardCache;
+    //int cacheIndexForThisStep;
+    //static std::vector<std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> > bestActionCache;
 };
 
 #endif

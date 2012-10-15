@@ -87,11 +87,11 @@ public:
         return stateFluentHashKeys[index];
     }
 
-    long const& getHashKey() {
+    long const& getHashKey() const {
         return hashKey;
     }
 
-    bool isEqualIgnoringRemainingStepsTo(State const& other) {
+    bool isEqualIgnoringRemainingStepsTo(State const& other) const {
         assert(state.size() == other.state.size());
         if((hashKey >= 0) && (other.hashKey >= 0)) {
             return (hashKey == other.hashKey);
