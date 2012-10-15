@@ -11,22 +11,20 @@ class UCTSearchEngine;
 
 class DepthFirstSearch : public SearchEngine {
 public:
-    DepthFirstSearch(ProstPlanner* _planner, std::vector<double>& _result);
+    DepthFirstSearch(ProstPlanner* _planner);
 
-    int getNumberOfEvaluatedStates();
-    int getNumberOfCacheHits();
+    //main (public) search functions
+    void estimateQValues(State const& _rootState, std::vector<double>& result, const bool& pruneResult);
+    void estimateBestActions(State const& /*_rootState*/, std::vector<int>& /*result*/){
+        //TODO: This is not needed currently but might be in the future (and is quite straightforward), so implement it
+        assert(false);
+    }
 
 private:
-    void _run();
+    void applyAction(State const& state, int const& actionIndex, double& reward);
+    void expandState(State const& state, double& res);
 
-    void expandState(State& cur, std::vector<double>& res);
-    void applyAction(State& state, int actionIndex, double& reward);
-
-    int evaluatedStates;
-    int cacheHits;
-    int bestRewardIndex;
     double rewardHelperVar;
-    double referenceReward;
 };
 
 #endif

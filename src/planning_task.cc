@@ -160,8 +160,8 @@ void PlanningTask::calcPossiblyLegalActionStates(int actionsToSchedule, list<vec
 }
 
 void PlanningTask::initializeStateFluentHashKeys() {
-    indexToStateFluentHashKeyMap = vector<vector<pair<int, int> > >(stateSize);
-    indexToKleeneStateFluentHashKeyMap = vector<vector<pair<int, int> > >(stateSize);
+    indexToStateFluentHashKeyMap = vector<vector<pair<int, long> > >(stateSize);
+    indexToKleeneStateFluentHashKeyMap = vector<vector<pair<int, long> > >(stateSize);
 
     for(unsigned int i = 0; i < stateSize; ++i) {
         CPFs[i]->initializeStateFluentHashKeys();
@@ -306,7 +306,7 @@ PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task)
 *****************************************************************/
 
 
-void PlanningTask::learn(vector<State> const& trainingSet) {
+bool PlanningTask::learn(vector<State> const& trainingSet) {
     //learn usage of reasonable action pruning and reward lock detection
     vector<int> actionsToExpand(getNumberOfActions(),-1);
     bool rewardLockFound = false;
@@ -345,6 +345,7 @@ void PlanningTask::learn(vector<State> const& trainingSet) {
         useRewardLockDetection = false;
         cout << (isDeterministic ? " DET: " : "PROB: ") << ": Reward lock detection disabled!" << endl;
     }
+    return LearningComponent::learn(trainingSet);
 }
 
 
@@ -388,6 +389,8 @@ inline void PlanningTask::checkForReasonableActions(State const& state, vector<i
         calcSuccessorAsProbabilityDistribution(state, actionIndex, nxt);
         calcHashKeyOfProbabilityDistribution(nxt);
         if(childStates.find(nxt) != childStates.end()) {
+            //TODO: Check if rewardCPF->doesNotDependPositivelyOnActions(), and if NOT
+            //we can NOT prune if both variables appear positively in the rewardCPF!
             res[actionIndex] = childStates[nxt];
         } else {
             childStates[nxt] = actionIndex;
@@ -463,7 +466,6 @@ bool PlanningTask::checkDeadLock(State const& state, double const& referenceRewa
 
     //Check if the successor is unchanged, otherwise continue to check if it is a reward lock
     if(mergedSuccs.isEqualIgnoringRemainingStepsTo(state) || checkDeadLock(mergedSuccs, referenceReward)) {
-        //cout << "DEAD LOCK FOUND" << endl;
         bdd stateAsBDD;
         stateToBDD(state, stateAsBDD);
         cachedDeadLocks |= stateAsBDD;
@@ -477,14 +479,9 @@ bool PlanningTask::checkDeadLock(State const& state, double const& referenceRewa
 //We underapproximate the set of goals, as we only consider those
 //where applying noop makes us stay in the reward lock
 bool PlanningTask::checkGoal(State const& state, double const& referenceReward) {
-    //cout << "checking state:" << endl;
-    //task->printState(state);
-
     State succ(stateSize);
     calcKleeneSuccessor(state, 0, succ);
     calcKleeneReward(state, 0, succ, rewardLockSuccStateReward);
-
-    //cout << "with reward " << rewardLockSuccStateReward << endl << endl;
 
     if(!MathUtils::doubleIsEqual(rewardLockSuccStateReward, referenceReward)) {
         return false;
@@ -496,7 +493,6 @@ bool PlanningTask::checkGoal(State const& state, double const& referenceReward) 
     calcKleeneStateFluentHashKeys(succ);
 
     if(succ.isEqualIgnoringRemainingStepsTo(state) || checkGoal(succ, referenceReward)) {
-        //cout << "GOAL FOUND" << endl;
         bdd stateAsBDD;
         stateToBDD(state, stateAsBDD);
         cachedGoals |= stateAsBDD;
@@ -541,87 +537,86 @@ void PlanningTask::disableCaching() {
     cacheActionsToExpand = false;
 }
 
-void PlanningTask::print() const {
-    cout << "This task is " << (isDeterministic? "deterministic." : "probabilistic.") << endl;
-    cout << "--------StateActionConstraints--------" << endl<< endl;
+void PlanningTask::print(ostream& out) const {
+    out << "This task is " << (isDeterministic? "deterministic." : "probabilistic.") << endl;
+    out << "--------StateActionConstraints--------" << endl<< endl;
     for(unsigned int i = 0; i < SACs.size(); ++i) {
-        SACs[i]->print();
-        cout << endl;
+        SACs[i]->print(out);
+        out << endl;
     }
-    cout << endl << endl;
+    out << endl << endl;
 
-    cout << "----------------Actions---------------" << endl << endl;
-    cout << "Action fluents: " << endl;
+    out << "----------------Actions---------------" << endl << endl;
+    out << "Action fluents: " << endl;
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        actionFluents[i]->print();
-        cout << endl;
+        actionFluents[i]->print(out);
+        out << endl;
     }
-    cout << "---------------" << endl << endl;
-    cout << "Legal Action Combinations: " << endl;
+    out << "---------------" << endl << endl;
+    out << "Legal Action Combinations: " << endl;
     for(unsigned int i = 0; i < actionStates.size(); ++i) {
-        printAction(i);
-        cout << endl;
+        printAction(out, i);
+        out << endl;
     }
-    cout << endl;
-    cout << "-----------------CPFs-----------------" << endl << endl;
+    out << endl;
+    out << "-----------------CPFs-----------------" << endl << endl;
     for(unsigned int i = 0; i < stateSize; ++i) {
-        CPFs[i]->print();
-        cout << endl << "--------------" << endl;
+        CPFs[i]->print(out);
+        out << endl << "--------------" << endl;
     }
-    cout << endl;
+    out << endl;
 
-    cout << "Reward CPF:" << endl;
-    rewardCPF->print();
-    cout << endl << endl;
+    out << "Reward CPF:" << endl;
+    rewardCPF->print(out);
+    out << endl << endl;
 
     for(unsigned int i = 0; i < indexToStateFluentHashKeyMap.size(); ++i) {
-        cout << "a change of variable " << i << " influences variables ";
+        out << "a change of variable " << i << " influences variables ";
         for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
-            cout << indexToStateFluentHashKeyMap[i][j].first << " (" << indexToStateFluentHashKeyMap[i][j].second << ")  ";
+            out << indexToStateFluentHashKeyMap[i][j].first << " (" << indexToStateFluentHashKeyMap[i][j].second << ")  ";
         }
-        cout << endl;
+        out << endl;
     }
 
-    cout << endl;
+    out << endl;
     for(unsigned int i = 0; i < indexToStateFluentHashKeyMap.size(); ++i) {
-        cout << "a change of variable " << i << " influences variables in Kleene states ";
+        out << "a change of variable " << i << " influences variables in Kleene states ";
         for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-            cout << indexToKleeneStateFluentHashKeyMap[i][j].first << " (" << indexToKleeneStateFluentHashKeyMap[i][j].second << ")  ";
+            out << indexToKleeneStateFluentHashKeyMap[i][j].first << " (" << indexToKleeneStateFluentHashKeyMap[i][j].second << ")  ";
         }
-        cout << endl;
+        out << endl;
     }
 
-    cout << "----------Initial State---------------" << endl << endl;
-    printState(initialState);
-    cout << endl;
+    out << "----------Initial State---------------" << endl << endl;
+    printState(out, initialState);
+    out << endl;
 
-    cout << "This task is " << (isPruningEquivalentToDet? "" : "not ") << "pruning equivalent to its most likely determinization" << endl;
-    cout << "NOOP as last action is " << (noopIsOptimalFinalAct? "" : "not ") << "always optimal." << endl;
-    cout << "Deterministic state hashing is " << (stateHashingPoss? "" : "not ") << "possible";
+    out << "This task is " << (isPruningEquivalentToDet? "" : "not ") << "pruning equivalent to its most likely determinization" << endl;
+    out << "NOOP as last action is " << (noopIsOptimalFinalAct? "" : "not ") << "always optimal." << endl;
+    out << "Deterministic state hashing is " << (stateHashingPoss? "" : "not ") << "possible";
     if(isDeterministic) {
-        cout << "." << endl;
+        out << "." << endl;
     } else {
-        cout << " and probabilistic state hashing is " << (probStateHashingPoss? "" : "not ") << "possible." << endl;
+        out << " and probabilistic state hashing is " << (probStateHashingPoss? "" : "not ") << "possible." << endl;
     }
     
 }
 
-void PlanningTask::printState(State const& s) const {
+void PlanningTask::printState(ostream& out, State const& s) const {
     assert(s.state.size() == stateSize);
     for(unsigned int i = 0; i < stateSize; ++i) {
-        cout << CPFs[i]->head->name << ": " << s[i] << endl;
+        out << CPFs[i]->head->name << ": " << s[i] << endl;
     }
-    cout << "Remaining Steps: " << s.remainingSteps() << endl;
-    cout << "StateHashKey: " << s.hashKey << endl;
-    //cout << endl;
+    out << "Remaining Steps: " << s.remainingSteps() << endl;
+    out << "StateHashKey: " << s.hashKey << endl;
 }
 
-void PlanningTask::printAction(int const& index) const {
+void PlanningTask::printAction(ostream& out, int const& index) const {
     if(actionStates[index].scheduledActionFluents.empty()) {
-        cout << "noop() ";
+        out << "noop() ";
     } else {
         for(unsigned int i = 0; i < actionStates[index].scheduledActionFluents.size(); ++i) {
-            cout << actionStates[index].scheduledActionFluents[i]->name << " ";
+            out << actionStates[index].scheduledActionFluents[i]->name << " ";
         }
     }
 }

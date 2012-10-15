@@ -37,7 +37,7 @@ public:
         searchEngine = _searchEngine;
     }
 
-    void setSeed(int seed);
+    void setSeed(int _seed);
 
     void setNumberOfRounds(int _numberOfRounds) {
         numberOfRounds = _numberOfRounds;
@@ -82,7 +82,7 @@ private:
 
     void monitorRAMUsage();
 
-    void printStep(int result, bool printSearchEngineLogs = true, bool printSearchEngineResult = true);
+    void printStep(int result, bool printSearchEngineLogs = true);
 
     UnprocessedPlanningTask* unprocessedTask;
     PlanningTask* probabilisticTask;
@@ -101,8 +101,11 @@ private:
 
     int ramLimit;
     int bitSize;
+    int seed;
 
-    std::vector<double> searchEngineResult;
+    int chosenActionIndex;
+
+    std::vector<int> bestActions;
 
     std::vector<CachingComponent*> cachingComponents;
     std::vector<LearningComponent*> learningComponents;

@@ -27,7 +27,7 @@ public:
     virtual void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     virtual void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    virtual void print() = 0;
+    virtual void print(std::ostream& out) = 0;
 };
 
 
@@ -58,7 +58,7 @@ public:
     double defaultValue;
     int level;
 
-    void print();
+    void print(std::ostream& out);
 
 private:
     VariableDefinition(std::string _name, std::vector<ObjectType*> _params, VariableType _variableType, Type* _valueType, double _defaultValue = 0.0, int _level = 1) :
@@ -75,7 +75,7 @@ public:
     void instantiate(UnprocessedPlanningTask* task);
     bool simplify(UnprocessedPlanningTask* task, std::map<StateFluent*, NumericConstant*>& replacements);
 
-    void print();
+    void print(std::ostream& out);
 
 private:
     StateActionConstraint(LogicalExpression* _sac) :
@@ -90,7 +90,7 @@ public:
     ParameterDefinition(std::string _parameterName, ObjectType* _parameterType):
         parameterName(_parameterName), parameterType(_parameterType) {}
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class ParameterDefinitionSet : public LogicalExpression {
@@ -101,7 +101,7 @@ public:
         parameterDefs(_defs) {}
     ParameterDefinitionSet() {}
 
-    void print();
+    void print(std::ostream& out);
 };
 
 /*****************************************************************
@@ -120,7 +120,7 @@ public:
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class AtomicLogicalExpression : public LogicalExpression {
@@ -138,7 +138,7 @@ public:
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void print();
+    void print(std::ostream& out);
 
 protected:
     AtomicLogicalExpression(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue);
@@ -214,7 +214,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 /*****************************************************************
@@ -230,7 +230,7 @@ public:
 
     void getReplacements(UnprocessedPlanningTask* task, std::vector<std::string>& parameterNames, std::vector<std::vector<Object*> >& replacements, Instantiator* instantiator);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Sumation : public Quantifier {
@@ -240,7 +240,7 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Product : public Quantifier {
@@ -250,7 +250,7 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
 
-    void print();    
+    void print(std::ostream& out);    
 };
 
 class UniversalQuantification : public Quantifier {
@@ -260,7 +260,7 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class ExistentialQuantification: public Quantifier {
@@ -270,7 +270,7 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 /*****************************************************************
@@ -285,7 +285,7 @@ public:
     Connective(std::vector<LogicalExpression*>& _exprs) :
         exprs(_exprs), exprRes(0.0) {}
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Conjunction : public Connective {
@@ -306,7 +306,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Disjunction : public Connective {
@@ -327,7 +327,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class EqualsExpression : public Connective {
@@ -348,7 +348,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class GreaterExpression : public Connective {
@@ -369,7 +369,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class LowerExpression : public Connective {
@@ -390,7 +390,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class GreaterEqualsExpression : public Connective {
@@ -411,7 +411,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class LowerEqualsExpression : public Connective {
@@ -432,7 +432,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Addition : public Connective {
@@ -453,7 +453,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Subtraction : public Connective {
@@ -474,7 +474,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Multiplication : public Connective {
@@ -495,7 +495,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class Division : public Connective {
@@ -516,7 +516,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 /*****************************************************************
@@ -550,7 +550,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class KronDeltaDistribution : public ProbabilityDistribution {
@@ -562,7 +562,7 @@ public:
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 /*****************************************************************
@@ -592,7 +592,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class MultiConditionChecker : public LogicalExpression {
@@ -616,7 +616,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 class NegateExpression : public LogicalExpression {
@@ -639,7 +639,7 @@ public:
     void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
 
-    void print();
+    void print(std::ostream& out);
 };
 
 

@@ -10,12 +10,20 @@ public:
     LearningComponent(ProstPlanner* planner);
     virtual ~LearningComponent();
 
-    virtual void learn(std::vector<State> const& trainingSet) = 0;
+    virtual bool learn(std::vector<State> const& /*trainingSet*/) {
+        hasLearned = true;
+        return true;
+    }
+
+    bool learningFinished() {
+        return hasLearned;
+    }
 
 private:
     LearningComponent() {}
 
     ProstPlanner* learningComponentAdmin;
+    bool hasLearned;
 };
 
 #endif

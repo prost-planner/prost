@@ -3,7 +3,8 @@
 #include "prost_planner.h"
 
 LearningComponent::LearningComponent(ProstPlanner* planner) :
-    learningComponentAdmin(planner) {
+    learningComponentAdmin(planner),
+    hasLearned(false) {
     learningComponentAdmin->registerLearningComponent(this);
 }
 

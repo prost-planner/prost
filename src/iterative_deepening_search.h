@@ -12,14 +12,21 @@ class DepthFirstSearch;
 
 class IterativeDeepeningSearch : public SearchEngine {
 public:
-    IterativeDeepeningSearch(ProstPlanner* _planner, std::vector<double>& _result);
+    //search engine creation
+    IterativeDeepeningSearch(ProstPlanner* _planner);
 
     bool setValueFromString(std::string& param, std::string& value);
 
-    void learn(std::vector<State> const& trainingSet);
+    //learning
+    bool learn(std::vector<State> const& trainingSet);
 
-    ////parameter setters: overwrites
-    void setResultType(SearchEngine::ResultType const _resultType);
+    //main (public) search functions
+    void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
+    void estimateBestActions(State const& /*_rootState*/, std::vector<int>& /*result*/) {
+        assert(false);
+    }
+
+    //parameter setters: overwrites
     void setMaxSearchDepth(int _maxSearchDepth);
 
     //parameter setters: new parameters
@@ -47,12 +54,14 @@ public:
         dfs->setCachingEnabled(_cachingEnabled);
     }
 
+    //printing and statistics
     void resetStats();
-    void printStats(std::string indent = "");
+    void printStats(std::ostream& out, std::string indent = "");
 
 protected:
-    void _run();
-    bool moreIterations();
+    bool moreIterations(std::vector<double>& result);
+
+    State currentState;
 
     //learning related stuff
     bool isLearning;
@@ -62,9 +71,11 @@ protected:
     Timer timer;
     double time;
 
-    //the used depth first search and the vector where dfs writes the result
+    //the used depth first search engine
     SearchEngine* dfs;
-    std::vector<double> dfsResult;
+
+    //The number of remaining steps that was queried
+    int maxSearchDepthForThisStep;
 
     //parameter
     double terminationTimeout;

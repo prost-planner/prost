@@ -17,7 +17,7 @@ public:
     } type;
 
     virtual ~Type() {}
-    virtual void print();
+    virtual void print(std::ostream& out);
     virtual double valueStringToDouble(std::string& val);
 
     Type(std::string _name, TypeType _type) :
@@ -85,7 +85,7 @@ public:
 
     ObjectType* superType;
 
-    void print();
+    void print(std::ostream& out);
     double valueStringToDouble(std::string& val);
 
 private:
@@ -102,7 +102,7 @@ public:
     static void parse(std::string& desc, UnprocessedPlanningTask* task);
 
     void getObjectTypes(std::vector<ObjectType*>& objectTypes);
-    void print();
+    void print(std::ostream& out);
 
     std::string name;
     ObjectType* type;

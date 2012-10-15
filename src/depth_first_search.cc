@@ -15,16 +15,12 @@ using namespace std;
             Constructor, Statistics and Parameters
 ******************************************************************/
 
-DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner, vector<double>& _result) :
-    SearchEngine("DFS", _planner, _planner->getDeterministicTask(), _result),
-    evaluatedStates(0),
-    cacheHits(0),
-    rewardHelperVar(0.0),
-    referenceReward(0.0) {
+DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner) :
+    SearchEngine("DFS", _planner, _planner->getDeterministicTask()),
+    rewardHelperVar(0.0) {
 
-    bestRewardIndex = task->getNumberOfActions();
-
-    //TODO: Check why adding this makes such a huge difference (e.g. with sysadmin 5)!
+    //TODO: Check why adding this makes such a huge difference (e.g.
+    //with sysadmin 5)!
     if(task->stateHashingPossible()) {
         cachingEnabled = true;
     } else {
@@ -32,134 +28,79 @@ DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner, vector<double>& _resu
     }
 }
 
-int DepthFirstSearch::getNumberOfEvaluatedStates() {
-    return evaluatedStates;
-}
+void DepthFirstSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
+    assert(_rootState.remainingSteps() > 0);
+    assert(_rootState.remainingSteps() <= maxSearchDepth);
+    assert(result.size() == task->getNumberOfActions());
 
-int DepthFirstSearch::getNumberOfCacheHits() {
-    return cacheHits;
-}
+    if(pruneResult) {
+        vector<int> actionsToExpand(task->getNumberOfActions(),-1);
+        task->setActionsToExpand(_rootState, actionsToExpand);
 
-void DepthFirstSearch::_run() {
-    assert(resultType == SearchEngine::ESTIMATE || resultType == SearchEngine::PRUNED_ESTIMATE);
-    assert(rootState.remainingSteps() > 0);
-
-    currentState.setTo(rootState);
-
-    evaluatedStates = 0;
-    cacheHits = 0;
-
-    map<State, vector<double> >::iterator it = task->rewardCache.find(currentState);
-    if(it != task->rewardCache.end()) {
-        ++cacheHits;
-        assert(result.size() == it->second.size());
-        for(unsigned int i = 0; i < result.size(); ++i) {
-            result[i] = it->second[i];
+        for(unsigned int index = 0; index < result.size(); ++index) {
+            if(actionsToExpand[index] == index) {
+                applyAction(_rootState, index, result[index]);
+            } else {
+                result[index] = -numeric_limits<double>::max();
+            }
         }
     } else {
-        vector<double> res(bestRewardIndex+1,-numeric_limits<double>::max());
-
-        if(currentState.remainingSteps() == 1 && task->noopIsOptimalFinalAction()) {
-            rewardHelperVar = 0.0;
-            task->calcReward(currentState, 0, currentState, rewardHelperVar);
-            vector<int> expands(actionsToExpand.size(),-1);
-            task->setActionsToExpand(currentState, expands);
-            for(unsigned int index = 0; index < expands.size(); ++index) {
-                if(expands[index] == index) {
-                    res[index] = rewardHelperVar;
-                }
-            }
-            res[bestRewardIndex] = rewardHelperVar;
-        } else {
-            expandState(currentState, res);
-        }
-
-        if(cachingEnabled) {
-            task->rewardCache[currentState] = vector<double>(bestRewardIndex+1);
-            it = task->rewardCache.find(currentState);
-            for(unsigned int i = 0; i < res.size(); ++i) {
-                it->second[i] = res[i];
-                result[i] = res[i];
-            }
-        } else {
-            for(unsigned int i = 0; i < result.size(); ++i) {
-                result[i] = res[i];
-            }
+        for(unsigned int index = 0; index < result.size(); ++index) {
+            applyAction(_rootState, index, result[index]);
         }
     }
 }
 
-void DepthFirstSearch::expandState(State& state, vector<double>& res) {
-    vector<int> expands(actionsToExpand.size(),-1);
-    task->setActionsToExpand(state, expands);
-
-    /*
-    if(task->isARewardLock(state, referenceReward)) {
-        if(resultType == SearchEngine::ESTIMATE) {
-            for(unsigned int index = 0; index < expands.size(); ++index) {
-                res[index] = state.remainingSteps() * referenceReward;
-            }
-        } else {
-            for(unsigned int index = 0; index < expands.size(); ++index) {
-                if(expands[index] == index) {
-                    res[index] = state.remainingSteps() * referenceReward;
-                }
-            }
-            res[bestRewardIndex] = state.remainingSteps() * referenceReward;
-            return;
-        }
-    }
-    */
-
-    for(unsigned int index = 0; index < expands.size(); ++index) {
-        if(expands[index] == index) {
-            applyAction(state, index, res[index]);
-
-            if(MathUtils::doubleIsGreater(res[index], res[bestRewardIndex])) {
-                res[bestRewardIndex] = res[index];
-
-                /*
-                //TODO: If the currently best reward is equal to the maximal possible reward, we can stop here!
-                if(res[bestRewardIndex] == (task->getMaxReward() * state.remainingSteps())) {
-                    return;
-                }
-                */
-            }
-        } else {
-            if(resultType == SearchEngine::ESTIMATE) {
-                assert(expands[index] < index);
-                res[index] = res[expands[index]];
-            } else {
-                assert(MathUtils::doubleIsMinusInfinity(res[index]));
-            }
-        }
-    }
-}
-
-void DepthFirstSearch::applyAction(State& state, int actionIndex, double& reward) {
-    ++evaluatedStates;
-
+void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
     State nxt(task->getStateSize(), state.remainingSteps()-1);
     task->calcStateTransition(state, actionIndex, nxt, reward);
 
-    if(nxt.remainingSteps() == 1 && task->noopIsOptimalFinalAction()) {
-        rewardHelperVar = 0.0;
-        task->calcReward(nxt, 0, nxt, rewardHelperVar);
-        reward += rewardHelperVar;
-        return;
-    } else if(nxt.remainingSteps() == 0) {
+    //1. check if the next state is already cached
+    if(task->stateValueCache.find(nxt) != task->stateValueCache.end()) {
+        reward += task->stateValueCache[nxt];
         return;
     }
 
-    if(task->rewardCache.find(nxt) == task->rewardCache.end()) {
-        vector<double> res(bestRewardIndex+1,-numeric_limits<double>::max());
-        expandState(nxt, res);
-        if(cachingEnabled) {
-            task->rewardCache[nxt] = res;
+    //2. Check if we have reached a leaf
+    if(nxt.remainingSteps() == 0) {
+        return;
+    } else if(nxt.remainingSteps() == 1 && task->noopIsOptimalFinalAction()) {
+        rewardHelperVar = 0.0;
+        State final(task->getStateSize(), 0);
+        task->calcReward(nxt, 0, final, rewardHelperVar);
+        reward += rewardHelperVar;
+        return;
+    }
+
+    //3. Expand the state
+    double futureResult = -numeric_limits<double>::max();
+    expandState(nxt, futureResult);
+    reward += futureResult;
+}
+
+
+void DepthFirstSearch::expandState(State const& state, double& result) {
+    assert(task->stateValueCache.find(state) == task->stateValueCache.end());
+    assert(MathUtils::doubleIsMinusInfinity(result));
+
+    //Calculate reasonable actions
+    vector<int> actionsToExpand(task->getNumberOfActions(), -1);
+    task->setActionsToExpand(state, actionsToExpand);
+
+    //Apply reasonable actions and determine best one
+    for(unsigned int index = 0; index < actionsToExpand.size(); ++index) {
+        if(actionsToExpand[index] == index) {
+            double tmp = 0.0;
+            applyAction(state, index, tmp);
+
+            if(MathUtils::doubleIsGreater(tmp, result)) {
+                result = tmp;
+            }
         }
-        reward += res[bestRewardIndex];
-    } else {
-        ++cacheHits;
-        reward += task->rewardCache[nxt][bestRewardIndex];
+    }
+
+    //Cache state value if caching is enabled
+    if(cachingEnabled) {
+        task->stateValueCache[state] = result;
     }
 }
