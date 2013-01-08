@@ -136,7 +136,7 @@ public:
             next[i] = nextAsProbDistr[i];
         }
         for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
+            if(MathUtils::doubleIsEqual(nextAsProbDistr[i], 0.0) || MathUtils::doubleIsEqual(nextAsProbDistr[i], 1.0)) {
                 next[i] = nextAsProbDistr[i];
                 continue;
             } else {
