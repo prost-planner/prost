@@ -412,7 +412,7 @@ inline void UCTSearch::chooseDecisionNodeSuccessorBasedOnUCTFormula(UCTNode* nod
     assert(node->numberOfChildrenVisits != 0);
 
     bestUCTValue = -std::numeric_limits<double>::max();
-    numberOfChildrenVisitsLog = log((double)node->numberOfChildrenVisits);
+    numberOfChildrenVisitsLog = std::log((double)node->numberOfChildrenVisits);
 
     for(unsigned int i = 0; i < node->children.size(); ++i) {
         if(node->children[i] != NULL) {
