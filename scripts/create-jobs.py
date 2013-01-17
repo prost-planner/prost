@@ -13,7 +13,7 @@ benchmarkDir="../testbed/benchmarks/ippc2011/rddl/"
 # "athlon.q" and "athlon_core.q". The former value configures the use
 # of a whole cpu, while the latter option configures the use of a
 # single cpu core. queue = "opteron_core.q"
-queue = "athlon_core.q"
+queue = "opteron_core.q"
 
 
 # defines the timeout for one taks. The time format is
@@ -27,13 +27,13 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev2"
+revision = "rev4"
 
 configs = [
-    "[UCT -uc 0 -t 3 -i [IDS]]",
-    "[UCT -uc 0 -t 3 -i [RAND]]",
-    "[UCT -uc 0 -t 3 -sd 40 -i [IDS -sd 40]]",
-    "[UCT -uc 0 -t 3 -sd 40 -i [RAND]]"
+    "[UCT -uc 0 -i [IDS]]",
+    "[UCT -uc 0 -i [RAND]]",
+    "[UCT -uc 0 -sd 40 -i [IDS -sd 40]]",
+    "[UCT -uc 0 -sd 40 -i [RAND]]"
 ]
 
 host = "localhost"
@@ -43,9 +43,9 @@ resultsDir = "results/"+revision+"/"+revision+"_"
 
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server %(port)d 100 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/ippc2011/rddl/ %(port)d 100 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 30 &&" \
-" ./prost2 %(baseDir)s/rddl_prefix/ %(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./prost4 %(baseDir)s/rddl_prefix/ %(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
 def isInstanceName(fileName):
     return fileName.count("inst") > 0
@@ -80,4 +80,4 @@ if __name__ == '__main__':
         benchmarkDir = sys.argv[1]
     instances = filter(isInstanceName, os.listdir(benchmarkDir))
     instances = [instance.split(".")[0] for instance in instances]
-    create_tasks("prost2.q", instances)
+    create_tasks("../testbed/prost4.q", instances)

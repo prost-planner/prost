@@ -13,5 +13,8 @@ fi
 for i in ${libDir}/*.jar ; do
     CP="${CP}${SEP}$i"
 done
-
-java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server benchmarks/ippc2011/rddl $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
+if [ $# == 0 ] ; then
+   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server benchmarks/ippc2011/rddl
+else
+   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
+fi
