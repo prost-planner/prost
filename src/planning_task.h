@@ -181,8 +181,7 @@ public:
 
     //create a Kleene state from a non-Kleene state
     State toKleeneState(State const& state) {
-        State res(state);
-        res.hashKey = -1;
+        State res(state.state, state.remSteps);
         calcKleeneStateFluentHashKeys(res);
         return res;
     }

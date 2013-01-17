@@ -1,7 +1,7 @@
 #ifndef MATH_UTILS_H
 #define MATH_UTILS_H
 
-#define EPSILON 0.0001
+#define EPSILON std::numeric_limits<double>::epsilon()
 
 #include <cmath>
 #include <vector>
