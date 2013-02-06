@@ -37,8 +37,6 @@ public:
         cachedDeadLocks(bddfalse),
         cachedGoals(bddfalse),
         useRewardLockDetection(false),
-        refReward(0.0),
-        rewardLockSuccStateReward(0.0),
         actionsToExpandCache(),
         cacheActionsToExpand(true), //TODO: MAKE THIS A PARAMETER
         useReasonableActionPruning(true),
@@ -66,8 +64,6 @@ public:
         cachedDeadLocks(bddfalse),
         cachedGoals(bddfalse),
         useRewardLockDetection(true),
-        refReward(0.0),
-        rewardLockSuccStateReward(0.0),
         actionsToExpandCache(),
         cacheActionsToExpand(true), //TODO: MAKE THIS A PARAMETER
         useReasonableActionPruning(true),
@@ -149,13 +145,6 @@ public:
     //calulate the reward
     void calcReward(State const& current, int const& actionIndex, State const& next, double& reward) const {
         rewardCPF->evaluate(reward, current, next, actionStates[actionIndex]);
-    }
-
-    //calculate the whoe state transition in Kleene logic
-    void calcKleeneStateTransition(State const& current, int const& actionIndex, State& next, double& reward) {
-        calcKleeneSuccessor(current, actionIndex, next);
-        calcKleeneStateFluentHashKeys(next);
-        calcKleeneReward(current, actionIndex, next, reward);
     }
 
     //calculate successor in Kleene logic
@@ -325,10 +314,7 @@ public:
     //the action index leads to equivalent results as res[index] if
     //the reward is action independent, and to worse results if
     void setActionsToExpand(State const& state, std::vector<int>& res);
-    bool isARewardLock(State const& current) {
-        return isARewardLock(current, refReward);
-    }
-    bool isARewardLock(State const& current, double& referenceReward);
+    bool isARewardLock(State const& current);
 
     void generateRandomNumber(double& res) const {
         res = ((double)(rand() % 1000001) / 1000000.0);
@@ -353,8 +339,8 @@ private:
 
     //internal function for action pruning and reward lock detection
     void checkForReasonableActions(State const& state, std::vector<int>& res);
-    bool checkDeadLock(State const& state, double const& referenceReward);
-    bool checkGoal(State const& state, double const& referenceReward);
+    bool checkDeadLock(State const& state);
+    bool checkGoal(State const& state);
 
     //BDD related functions
     void stateToBDD(State const& state, bdd& res);
@@ -391,8 +377,6 @@ private:
     bdd cachedDeadLocks;
     bdd cachedGoals;
     bool useRewardLockDetection;
-    double refReward;
-    double rewardLockSuccStateReward;
 
     //applicable and reasonable action stuff
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> actionsToExpandCache;

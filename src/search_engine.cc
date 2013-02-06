@@ -91,6 +91,6 @@ void SearchEngine::print(ostream& out) {
 }
 
 void SearchEngine::printStats(ostream& out, string indent) {
-    out << indent << "Statisics of " << name << ":" << endl;
+    out << indent << "Statistics of " << name << ":" << endl;
 }
 

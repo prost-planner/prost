@@ -252,7 +252,7 @@ void PlanningTask::initializeOtherStuff() {
     }
 
     //TODO: Make sure these numbers make sense!
-    bdd_init(1000000,50000);
+    bdd_init(5000000,20000);
     bdd_setvarnum(stateSize);
 
     cachedDeadLocks = bddfalse;
@@ -403,17 +403,19 @@ inline void PlanningTask::checkForReasonableActions(State const& state, vector<i
             Reward Lock Detection (including BDD Stuff)
 ******************************************************************/
 
-bool PlanningTask::isARewardLock(State const& current, double& referenceReward) {
+bool PlanningTask::isARewardLock(State const& current) {
     if(!useRewardLockDetection) {
         return false;
     }
 
     //calculate the reference reward (TODO: Careful, we assume here that NOOP is always applicable!)
     assert(rewardCPF->isNextStateIndependent());
-    State succ(stateSize);
-    calcReward(current, 0, succ, referenceReward);
 
-    if(isMinReward(referenceReward)) {
+    State succ(stateSize);
+    double reward = 0.0;
+    calcReward(current, 0, succ, reward);
+
+    if(isMinReward(reward)) {
         //Check if current is known to be a dead lock
         if(BDDIncludes(cachedDeadLocks, current)) {
             return true;
@@ -423,8 +425,8 @@ bool PlanningTask::isARewardLock(State const& current, double& referenceReward) 
         State currentInKleene = toKleeneState(current);
 
         //check reward lock on Kleene state
-        return checkDeadLock(currentInKleene, referenceReward);
-    } else if(isMaxReward(referenceReward)) {
+        return checkDeadLock(currentInKleene);
+    } else if(isMaxReward(reward)) {
         //Check if current is known to be a goal
         if(BDDIncludes(cachedGoals, current)) {
             return true;
@@ -433,27 +435,30 @@ bool PlanningTask::isARewardLock(State const& current, double& referenceReward) 
         //convert to Kleene state (necessary for hash keys)
         State currentInKleene = toKleeneState(current);
 
-        return checkGoal(currentInKleene, referenceReward);
+        return checkGoal(currentInKleene);
     }
 
     return false;
 }
 
-bool PlanningTask::checkDeadLock(State const& state, double const& referenceReward) {
+bool PlanningTask::checkDeadLock(State const& state) {
     //calc noop successor and check if reward is identical
     State mergedSuccs(stateSize);
-    calcKleeneStateTransition(state, 0, mergedSuccs, rewardLockSuccStateReward);
+    calcKleeneSuccessor(state, 0, mergedSuccs);
+    double reward = 0.0;
+    calcKleeneReward(state, 0, mergedSuccs, reward);
 
-    if(!MathUtils::doubleIsEqual(rewardLockSuccStateReward, referenceReward)) {
+    if(!isMinReward(reward)) {
         return false;
     }
 
     for(unsigned int actionIndex = 1; actionIndex < getNumberOfActions(); ++actionIndex) {
         //calc Kleene successor of applying action actionIndex, and check if reward is identical
         State succ(stateSize);
-        calcKleeneStateTransition(state, actionIndex, succ, rewardLockSuccStateReward);
+        calcKleeneSuccessor(state, actionIndex, succ);
+        calcKleeneReward(state, actionIndex, succ, reward);
 
-        if(!MathUtils::doubleIsEqual(rewardLockSuccStateReward, referenceReward)) {
+        if(!isMinReward(reward)) {
             return false;
         }
 
@@ -465,7 +470,7 @@ bool PlanningTask::checkDeadLock(State const& state, double const& referenceRewa
     calcKleeneStateFluentHashKeys(mergedSuccs);
 
     //Check if the successor is unchanged, otherwise continue to check if it is a reward lock
-    if(mergedSuccs.isEqualIgnoringRemainingStepsTo(state) || checkDeadLock(mergedSuccs, referenceReward)) {
+    if(mergedSuccs.isEqualIgnoringRemainingStepsTo(state) || checkDeadLock(mergedSuccs)) {
         bdd stateAsBDD;
         stateToBDD(state, stateAsBDD);
         cachedDeadLocks |= stateAsBDD;
@@ -478,21 +483,23 @@ bool PlanningTask::checkDeadLock(State const& state, double const& referenceRewa
 
 //We underapproximate the set of goals, as we only consider those
 //where applying noop makes us stay in the reward lock
-bool PlanningTask::checkGoal(State const& state, double const& referenceReward) {
+bool PlanningTask::checkGoal(State const& state) {
     State succ(stateSize);
     calcKleeneSuccessor(state, 0, succ);
-    calcKleeneReward(state, 0, succ, rewardLockSuccStateReward);
+    double reward = 0.0;
+    calcKleeneReward(state, 0, succ, reward);
 
-    if(!MathUtils::doubleIsEqual(rewardLockSuccStateReward, referenceReward)) {
+    if(!isMaxReward(reward)) {
         return false;
     }
 
     //add parent to successor
     mergeKleeneStates(state, succ);
+
     //update state fluent hash keys
     calcKleeneStateFluentHashKeys(succ);
 
-    if(succ.isEqualIgnoringRemainingStepsTo(state) || checkGoal(succ, referenceReward)) {
+    if(succ.isEqualIgnoringRemainingStepsTo(state) || checkGoal(succ)) {
         bdd stateAsBDD;
         stateToBDD(state, stateAsBDD);
         cachedGoals |= stateAsBDD;

@@ -185,6 +185,9 @@ private:
     std::vector<StateFluent*> dependentStateFluents;
     std::vector<ActionFluent*> dependentActionFluents;
 
+    std::vector<ActionFluent*> positiveActionDependencies;
+    std::vector<ActionFluent*> negativeActionDependencies;
+
     //hashing of states as probability distributions
     std::map<double, int> probDomainMap;
     int probDomainSize;
