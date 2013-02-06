@@ -41,8 +41,6 @@ bool ConditionalProbabilityFunction::simplify(UnprocessedPlanningTask* _task, ma
 void ConditionalProbabilityFunction::initialize() {
     assert(!initialized);
 
-    std::vector<ActionFluent*> positiveActionDependencies;
-    std::vector<ActionFluent*> negativeActionDependencies;
     body->collectInitialInfo(isProb, dependentStateFluents, positiveActionDependencies, negativeActionDependencies);
 
     if(positiveActionDependencies.empty()) {
@@ -105,7 +103,7 @@ void ConditionalProbabilityFunction::initializeStateFluentHashKeys() {
         ++nextExponent;
     }
 
-    if(nextExponent + dependentStateFluents.size() > MathUtils::twoToThePowerOfMap.size()) {
+    if(nextExponent + dependentStateFluents.size() >= MathUtils::twoToThePowerOfMap.size()) {
         cacheInVector = false;
         cachingEnabled = false;
         return;
@@ -148,7 +146,7 @@ void ConditionalProbabilityFunction::initializeKleeneStateFluentHashKeys() {
         ++nextExponent;
     }
 
-    if(nextExponent + dependentStateFluents.size() > MathUtils::threeToThePowerOfMap.size()) {
+    if(nextExponent + dependentStateFluents.size() >= MathUtils::threeToThePowerOfMap.size()) {
         kleeneCacheInVector = false;
         kleeneCachingEnabled = false;
         return;
@@ -341,6 +339,17 @@ void ConditionalProbabilityFunction::print(ostream& out) {
 
         if(head != StateFluent::rewardInstance()) {
             out << "ProbHashKeyBase is " << probHashKeyBase << " and hashKeybase is " << hashKeyBase << endl;
+        } else {
+            out << "Depends positively on: " << endl;
+            for(unsigned int i = 0; i < positiveActionDependencies.size(); ++i) {
+                positiveActionDependencies[i]->print(cout);
+                out << endl;
+            }
+            out << "Depends negatively on: " << endl;
+            for(unsigned int i = 0; i < negativeActionDependencies.size(); ++i) {
+                negativeActionDependencies[i]->print(cout);
+                out << endl;
+            }
         }
     }
 

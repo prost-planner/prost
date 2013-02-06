@@ -67,7 +67,9 @@ ProstPlanner* ProstPlanner::fromString(string& desc, string& domain, string& pro
         }
     }
 
-    assert(searchEngineDefined);
+    if(!searchEngineDefined) {
+        SystemUtils::abort("A Search Engine must be specified");
+    }
 
     return result;
 }
@@ -119,7 +121,6 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
     t.reset();
     cout << "learning on training set..." << endl;
 
-
     int lastSize = learningComponents.size();
     while(!learningComponents.empty()) {
         for(unsigned int i = 0; i < learningComponents.size(); ++i) {
@@ -131,8 +132,7 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
         }
         if(!learningComponents.empty()) {
             if(learningComponents.size() == lastSize) {
-                cout << "Some component(s) registered as LearningComponent but cannot learn!" << endl;
-                assert(false);
+                SystemUtils::abort("Some component(s) registered as LearningComponent but cannot learn!");
             }
             lastSize = learningComponents.size();
         }
@@ -155,7 +155,7 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     --remainingSteps;
     vector<string> result;
     probabilisticTask->actionState(chosenActionIndex).getActions(result);
-
+    //assert(false);
     return result;
 }
 

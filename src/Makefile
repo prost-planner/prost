@@ -60,13 +60,8 @@ else
 endif
 
 ## Additional specialized options for the various targets follow.
-## In release mode, we link statically since this makes it more likely
-## that local compiles will work on the grid
-##
-## NOTE: This precludes some uses of exceptions.
-## For details, see man gcc on -static-libgcc.
 
-CCOPT_RELEASE  = -O3 -fomit-frame-pointer
+CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
 CCOPT_DEBUG    = 
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc

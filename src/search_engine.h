@@ -70,7 +70,7 @@ protected:
         LearningComponent(_planner),
         name(_name),
         planner(_planner), 
-        task(_task), 
+        task(_task),
         cachingEnabled(true),
         maxSearchDepth(15) {}
 
