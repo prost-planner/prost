@@ -44,9 +44,6 @@ public:
 
     virtual void setMinSearchDepth(int _minSearchDepth) {
         minSearchDepth = _minSearchDepth;
-        if(task->noopIsOptimalFinalAction()) {
-            ++minSearchDepth;
-        }
     }
 
     virtual void setCachingEnabled(bool _cachingEnabled) {

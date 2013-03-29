@@ -5,12 +5,21 @@
 #include <vector>
 #include <cassert>
 
+#include "state.h"
+
 class ActionFluent;
+class StateActionConstraint;
 
 class ActionState {
 public:
     ActionState(int size) :
         state(size,0), index(-1) {}
+
+    ActionState(ActionState const& other) :
+        state(other.state),
+        scheduledActionFluents(other.scheduledActionFluents),
+        relevantSACs(other.relevantSACs),
+        index(other.index) {}
 
     int& operator[](int const& index) {
         return state[index];
@@ -21,14 +30,19 @@ public:
     }
 
     void getActions(std::vector<std::string>& result) const;
-    void calculateProperties(std::vector<ActionFluent*>& actionFluents);
+    void calculateProperties(std::vector<ActionFluent*> const& actionFluents, std::vector<StateActionConstraint*> const& sacs);
+    bool isApplicable(State const& current) const; 
 
     std::vector<int> state;
     std::vector<ActionFluent*> scheduledActionFluents;
+    std::vector<StateActionConstraint*> relevantSACs;
     int index;
 
 private:
     ActionState() {}
+
+    bool containsNegativeActionFluent(StateActionConstraint* sac) const;
+    bool containsAdditionalPositiveActionFluent(StateActionConstraint* sac) const;
 };
 
 inline bool operator<(ActionState const& lhs, ActionState const& rhs) {

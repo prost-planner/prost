@@ -14,17 +14,14 @@ class PlanningTask;
 class State {
 public:
     State() {} //TODO: This constructor is ugly and unsafe, but currently needed.
-    State(std::vector<double> _state, int _remSteps) :
-        state(_state), remSteps(_remSteps), stateFluentHashKeys(state.size()+1,0), hashKey(-1) {}
+    State(std::vector<double> _state, int const& _remSteps, int const& stateFluentHashKeySize) :
+        state(_state), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize,0), hashKey(-1) {}
 
     State(State const& other) :
         state(other.state), remSteps(other.remSteps), stateFluentHashKeys(other.stateFluentHashKeys), hashKey(other.hashKey) {}
 
-    State(int size) :
-        state(size,0.0), remSteps(-1), stateFluentHashKeys(size+1,0), hashKey(-1) {}
-
-    State(int size, int _remSteps) :
-        state(size,0.0), remSteps(_remSteps), stateFluentHashKeys(size+1,0), hashKey(-1) {}
+    State(int const& size, int const& _remSteps, int const& stateFluentHashKeySize) :
+        state(size,0.0), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize,0), hashKey(-1) {}
 
     void setTo(State const& other) {
         for(unsigned int i = 0; i < state.size(); ++i) {

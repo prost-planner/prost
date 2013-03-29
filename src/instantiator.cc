@@ -2,7 +2,8 @@
 
 #include "typed_objects.h"
 #include "logical_expressions.h"
-#include "conditional_probability_functions.h"
+#include "conditional_probability_function.h"
+#include "state_action_constraint.h"
 
 using namespace std;
 
@@ -30,7 +31,7 @@ void Instantiator::instantiateCPFs() {
         vector<AtomicLogicalExpression*> instantiatedVars;
         task->getVariablesOfSchema(CPFDefs[i]->head->parent, instantiatedVars);
         for(unsigned int j = 0; j < instantiatedVars.size(); ++j) {
-            task->addCPF(CPFDefs[i]->instantiate(planner, task, probPlanningTask, instantiatedVars[j]));
+            task->addCPF(CPFDefs[i]->instantiate(task, instantiatedVars[j]));
         }
     }
 }

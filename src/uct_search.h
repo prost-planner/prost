@@ -158,10 +158,6 @@ protected:
 
     //statistics
     int numberOfRuns;
-
-    //Caching
-    //int cacheIndexForThisStep;
-    //static std::vector<std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> > bestActionCache;
 };
 
 #endif

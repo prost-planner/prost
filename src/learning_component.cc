@@ -8,6 +8,12 @@ LearningComponent::LearningComponent(ProstPlanner* planner) :
     learningComponentAdmin->registerLearningComponent(this);
 }
 
+LearningComponent::LearningComponent(LearningComponent const& other) :
+    learningComponentAdmin(other.learningComponentAdmin),
+    hasLearned(false) {
+    learningComponentAdmin->registerLearningComponent(this);
+}
+
 LearningComponent::~LearningComponent() {
     learningComponentAdmin->unregisterLearningComponent(this);
 }

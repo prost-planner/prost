@@ -8,8 +8,8 @@ class ProstPlanner;
 
 class Instantiator {
 public:
-    Instantiator(ProstPlanner* _planner, UnprocessedPlanningTask* _task, PlanningTask* _probPlanningTask) :
-        planner(_planner), task(_task), probPlanningTask(_probPlanningTask) {}
+    Instantiator(ProstPlanner* _planner, UnprocessedPlanningTask* _task) :
+        planner(_planner), task(_task) {}
 
     void instantiate();
 
@@ -19,7 +19,6 @@ public:
 private:
     ProstPlanner* planner;
     UnprocessedPlanningTask* task;
-    PlanningTask* probPlanningTask;
 
     void instantiateVariables();
     void instantiateCPFs();

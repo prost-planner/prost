@@ -6,7 +6,7 @@
 #include "search_engine.h"
 #include "state_set_generator.h"
 #include "actions.h"
-#include "conditional_probability_functions.h"
+#include "conditional_probability_function.h"
 #include "caching_component.h"
 
 #include "utils/timer.h"
@@ -83,13 +83,13 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
 
     t.reset();
     cout << "instantiating..." << endl;
-    probabilisticTask = new PlanningTask(this);
-    Instantiator instantiator(this, unprocessedTask, probabilisticTask);
+    Instantiator instantiator(this, unprocessedTask);
     instantiator.instantiate();
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
     cout << "preprocessing..." << endl;
+    probabilisticTask = new PlanningTask(this);
     Preprocessor preprocessor(this, unprocessedTask, probabilisticTask);
     deterministicTask = preprocessor.preprocess(stateVariableIndices);
 
@@ -99,10 +99,6 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
     setSearchEngine(SearchEngine::fromString(searchEngineDesc, this));
 
     cout << "...finished (" << t << ")." << endl;
-
-    cout << "Preprocessed tasks:" << endl;
-    probabilisticTask->print(cout);
-    //deterministicTask->print(cout);
 
     t.reset();
     cout << endl << endl << "generating training set..." << endl;
@@ -140,6 +136,10 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
 
     assert(learningComponents.empty());
     cout << "...finished (" << t << ")." << endl << endl;
+
+    cout << "generated planning tasks:" << endl;
+    probabilisticTask->print(cout);
+    //deterministicTask->print(cout);
 }
 
 vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
@@ -174,9 +174,11 @@ void ProstPlanner::monitorRAMUsage() {
 }
 
 void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
-    currentState = State(nextStateVec, remainingSteps);
-    probabilisticTask->calcStateFluentHashKeys(currentState);
-    probabilisticTask->calcStateHashKey(currentState);
+    currentState = probabilisticTask->getState(nextStateVec, remainingSteps);
+
+    //State(nextStateVec, remainingSteps, probabilisticTask->getNumberOfStateFluentHashKeys());
+    //probabilisticTask->calcStateFluentHashKeys(currentState);
+    //probabilisticTask->calcStateHashKey(currentState);
     bestActions.clear();
 }
 

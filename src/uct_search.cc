@@ -3,7 +3,7 @@
 #include "prost_planner.h"
 #include "logical_expressions.h"
 #include "actions.h"
-#include "conditional_probability_functions.h"
+#include "conditional_probability_function.h"
 #include "iterative_deepening_search.h"
 #include "random_search.h"
 
@@ -15,8 +15,6 @@
 #include <iostream>
 
 using namespace std;
-
-//vector<map<State, vector<int>, State::CompareIgnoringRemainingSteps> > UCTSearch::bestActionCache;
 
 /******************************************************************
                               UCT Node
@@ -36,7 +34,7 @@ UCTSearch::UCTSearch(ProstPlanner* _planner):
     SearchEngine("UCT", _planner, _planner->getProbabilisticTask()), 
     currentRootNode(NULL),
     chosenChild(NULL),
-    states(task->getHorizon()+1, State(task->getStateSize())),
+    states(task->getHorizon()+1, State(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys())),
     currentStateIndex(task->getHorizon()),
     nextStateIndex(task->getHorizon()-1),
     actions(task->getHorizon(), -1),
@@ -53,11 +51,6 @@ UCTSearch::UCTSearch(ProstPlanner* _planner):
     numberOfRuns(0) {
 
     nodePool.resize(18000000,NULL);
-    /*
-    if(bestActionCache.size() < 6) {
-        bestActionCache.resize(6);
-    }
-    */
 }
 
 bool UCTSearch::setValueFromString(string& param, string& value) {
@@ -268,17 +261,13 @@ double UCTSearch::rolloutDecisionNode(UCTNode* node) {
     double reward = 0.0;
 
     if(node != currentRootNode) {
-        task->calcReward(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex], reward);
+        task->calcReward(states[currentStateIndex], actions[currentActionIndex], reward);
 
-        if(nextStateIndex == 0) {
-            //this node is a leaf
-            return reward;
-        } else if((nextStateIndex == 1) && task->noopIsOptimalFinalAction()) {
-            //this node is a pseudo-leaf as the last action is always
-            //noop in an optimal policy
+        if(nextStateIndex == 1) {
+            //this node is a leaf (the last action is optimally
+            //calculated by the planning task)
             double finalReward = 0.0;
-            states[0].reset(0);
-            task->calcReward(states[1], 0, states[0], finalReward);
+            task->calcOptimalFinalReward(states[1], finalReward);
             reward += finalReward;
             return reward;
         }
@@ -292,10 +281,8 @@ double UCTSearch::rolloutDecisionNode(UCTNode* node) {
     }
 
     if(node->isARewardLock) {
-        assert(task->rewardIsNextStateIndependent());
-
         double rewardLockReward = 0.0;
-        task->calcReward(states[currentStateIndex], 0, states[nextStateIndex], rewardLockReward);
+        task->calcReward(states[currentStateIndex], 0, rewardLockReward);
         rewardLockReward *= (ignoredSteps + currentStateIndex);
         reward += rewardLockReward;
     } else {
@@ -361,7 +348,6 @@ void UCTSearch::chooseDecisionNodeSuccessor(UCTNode* node) {
     actions[currentActionIndex] = bestDecisionNodeChildren[rand() % bestDecisionNodeChildren.size()];
     chosenChild = node->children[actions[currentActionIndex]];
 
-
     // cout << "Chosen action is ";
     // task->printAction(cout, actions[currentActionIndex]);
     // cout << endl;
@@ -376,20 +362,28 @@ inline void UCTSearch::chooseUnvisitedChild(UCTNode* node) {
 }
 
 inline void UCTSearch::chooseDecisionNodeSuccessorBasedOnVisitDifference(UCTNode* node) {
-    bestDecisionNodeChildren.push_back(0);
-    smallestNumVisits = node->children[0]->numberOfVisits;
-    highestNumVisits = node->children[0]->numberOfVisits;
+    unsigned int childIndex = 0;
+    for(; childIndex < node->children.size(); ++childIndex) {
+    	if(node->children[childIndex]) {
+            bestDecisionNodeChildren.push_back(childIndex);
+            smallestNumVisits = node->children[childIndex]->numberOfVisits;
+            highestNumVisits = node->children[childIndex]->numberOfVisits;
+            break;
+        }
+    }
 
-    for(unsigned int i = 1; i < node->children.size(); ++i) {
-        if(node->children[i]) {
-            if(MathUtils::doubleIsSmaller(node->children[i]->numberOfVisits,smallestNumVisits)) {
+    ++childIndex;
+
+    for(; childIndex < node->children.size(); ++childIndex) {
+        if(node->children[childIndex]) {
+            if(MathUtils::doubleIsSmaller(node->children[childIndex]->numberOfVisits,smallestNumVisits)) {
                 bestDecisionNodeChildren.clear();
-                bestDecisionNodeChildren.push_back(i);
-                smallestNumVisits = node->children[i]->numberOfVisits;
-            } else if(MathUtils::doubleIsEqual(node->children[i]->numberOfVisits,smallestNumVisits)) {
-                bestDecisionNodeChildren.push_back(i);
-            } else if(MathUtils::doubleIsGreater(node->children[i]->numberOfVisits, highestNumVisits))  {
-                highestNumVisits = node->children[i]->numberOfVisits;
+                bestDecisionNodeChildren.push_back(childIndex);
+                smallestNumVisits = node->children[childIndex]->numberOfVisits;
+            } else if(MathUtils::doubleIsEqual(node->children[childIndex]->numberOfVisits,smallestNumVisits)) {
+                bestDecisionNodeChildren.push_back(childIndex);
+            } else if(MathUtils::doubleIsGreater(node->children[childIndex]->numberOfVisits, highestNumVisits))  {
+                highestNumVisits = node->children[childIndex]->numberOfVisits;
             }
         }
     }
@@ -456,12 +450,11 @@ void UCTSearch::initializeDecisionNode(UCTNode* node) {
         }
     } else {
         initializer->estimateQValues(states[currentStateIndex], initialRewards, false);
-        vector<int> actionsToExpand(task->getNumberOfActions(), -1);
-        task->setActionsToExpand(states[currentStateIndex], actionsToExpand);
+        vector<int> actionsToExpand = task->getApplicableActions(states[currentStateIndex], true);
 
         for(unsigned int i = 0; i < node->children.size(); ++i) {
-            assert(!MathUtils::doubleIsMinusInfinity(initialRewards[i]));
             if(actionsToExpand[i] == i) {
+                assert(!MathUtils::doubleIsMinusInfinity(initialRewards[i]));
                 initializeDecisionNodeChild(node, i, initialRewards[i]);
             }
         }
@@ -484,26 +477,30 @@ inline void UCTSearch::initializeDecisionNodeChild(UCTNode* node, unsigned int c
 ******************************************************************/
 
 inline int UCTSearch::getUniquePolicy() {
-    if(currentStateIndex == 1 && task->noopIsOptimalFinalAction()) {
-        outStream << "NOOP is the optimal last action in this task, and this is the last step!" << endl;
-        return 0;
+    if(currentStateIndex == 1) {
+        outStream << "Returning the optimal last action!" << endl;
+        return task->getOptimalFinalActionIndex(states[1]);
     }
+
+    vector<int> actionsToExpand = task->getApplicableActions(states[currentStateIndex], true);
 
     if(task->isARewardLock(states[currentStateIndex])) {
         outStream << "Current root state is a reward lock state!" << std::endl;
-        return 0;
-    }
 
-    vector<int> actionsToExpand(task->getNumberOfActions(), -1);
-    task->setActionsToExpand(states[currentStateIndex], actionsToExpand);
+        for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {
+            if(actionsToExpand[i] == i) {
+                return i;
+            }
+        }
+
+        assert(false);
+    }
 
     int applicableOp = -1;
     for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {
         if(actionsToExpand[i] == i) {
             if(applicableOp != -1) {
                 //there is more than one applicable action
-                //TODO: Is the update that follows necessary or not?
-                //updateDecisionNode(currentRootNode, 0.0, 0.0);
                 return -1;
             }
             applicableOp = i;

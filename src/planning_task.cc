@@ -1,8 +1,7 @@
 #include "planning_task.h"
 
-#include "prost_planner.h"
 #include "logical_expressions.h"
-#include "conditional_probability_functions.h"
+#include "state_action_constraint.h"
 
 #include <cassert>
 #include <iostream>
@@ -16,98 +15,130 @@ using namespace std;
 void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<ConditionalProbabilityFunction*>& _CPFs, 
                               vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
                               int _horizon, double _discountFactor, map<string,int>& stateVariableIndices) {
-    //set member vars
-    SACs = _SACs;
+    //Set member vars
     numberOfConcurrentActions = _numberOfConcurrentActions;
     horizon = _horizon;
     discountFactor = _discountFactor;
 
-    //initialize CPFs and initial state
+    // Initialize SACs, CPFs, initial state and actions
+    initializeSACs(_SACs);
     initializeCPFs(_CPFs);
-
-    //initialize actions
     initializeActions(_actionFluents);
 
-    //prepare hash key calculation
+    // Prepare hash key calculation
     initializeStateFluentHashKeys();
     initializeStateHashKeys();
     initializeHashKeysOfStatesAsProbabilityDistributions();
 
-    //calculate hash keys of initial state
+    // Calculate hash keys of initial state
     calcStateFluentHashKeys(initialState);
     calcStateHashKey(initialState);
 
-    //do the rest
-    initializeOtherStuff();
+    // Determine if this task is pruning equivalent to its
+    // determinization
+    determinePruningEquivalence();
 
-    //set mapping of variables to variable names
+    // Initialize reward and reward lock dependent variables
+    initializeRewardDependentVariables();
+
+    // Set mapping of variables to variable names for communication
+    // with environment
     for(unsigned int i = 0; i < stateSize; ++i) {
         assert(stateVariableIndices.find(CPFs[i]->head->name) == stateVariableIndices.end());
         stateVariableIndices[CPFs[i]->head->name] = i;
     }
 }
 
-void PlanningTask::initializeCPFs(vector<ConditionalProbabilityFunction*>& _CPFs) {
-    //calculate basic properties
-    for(unsigned int i = 0; i < _CPFs.size(); ++i) {
-        _CPFs[i]->initialize();
+void PlanningTask::initializeSACs(vector<StateActionConstraint*>& _SACs) {
+    // Initialize SACs, then divide them into dynamic SACs, static
+    // SACs and state invariants.
+    for(unsigned int index = 0; index < _SACs.size(); ++index) {
+        _SACs[index]->initialize();
+
+    	if(_SACs[index]->containsStateFluent()) {
+             if(_SACs[index]->containsActionFluent()) {
+                 // An SAC that contain both state and action fluents
+                 // must be evaluated like a precondition for actions.
+                 dynamicSACs.push_back(_SACs[index]);
+            } else {
+                // An SAC that only contains state fluents represents
+                // a state invariant that must be true in every state.
+                stateInvariants.push_back(_SACs[index]);
+            }
+    	} else {
+            // An SAC that only contains action fluents is used to
+            // statically forbid action combinations.
+            staticSACs.push_back(_SACs[index]);
+    	}
     }
 
-    //order CPFs and get reward CPF
+    numberOfStateFluentHashKeys += dynamicSACs.size();
+}
+
+void PlanningTask::initializeCPFs(vector<ConditionalProbabilityFunction*>& _CPFs) {
+    // Calculate basic properties
+    for(unsigned int index = 0; index < _CPFs.size(); ++index) {
+        _CPFs[index]->initialize();
+    }
+
+    // Order CPFs and get reward CPF
     vector<ConditionalProbabilityFunction*> probCPFs;
-    for(unsigned int i = 0; i < _CPFs.size(); ++i) {
-        if(_CPFs[i]->head == StateFluent::rewardInstance()) {
-            rewardCPF = _CPFs[i];
-        } else if(_CPFs[i]->isProbabilistic()) {
-            probCPFs.push_back(_CPFs[i]);
+    for(unsigned int index = 0; index < _CPFs.size(); ++index) {
+        if(_CPFs[index]->head == StateFluent::rewardInstance()) {
+            rewardCPF = _CPFs[index];
+        } else if(_CPFs[index]->isProbabilistic()) {
+            probCPFs.push_back(_CPFs[index]);
         } else {
-            CPFs.push_back(_CPFs[i]);
+            CPFs.push_back(_CPFs[index]);
         }
     }
     assert(rewardCPF);
 
-    //set constants based on CPFs
+    // Set constants based on CPFs
     if(probCPFs.empty()) {
         isDeterministic = true;
     } else {
         isDeterministic = false;
     }
 
-    //set variables that depend on CPFs
+    // Set variables that depend on CPFs
     firstProbabilisticVarIndex = (int)CPFs.size();
     CPFs.insert(CPFs.end(), probCPFs.begin(), probCPFs.end());
     stateSize = (int)CPFs.size();
  
-    //set indices
+    // Set indices
     for(unsigned int i = 0; i < stateSize; ++i) {
         CPFs[i]->head->index = i;
-        CPFs[i]->index = i;
     }
-    rewardCPF->index = (int)CPFs.size();
 
-    //set initial state
-    initialState = State(stateSize,horizon);
+    numberOfStateFluentHashKeys += (CPFs.size() + 1);
+
+    // Set initial state
+    initialState = State(stateSize, horizon, numberOfStateFluentHashKeys);
     for(unsigned int i = 0; i < stateSize; ++i) {
         initialState[i] = CPFs[i]->head->initialValue;
     }
 }
 
 void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
-    //initialize action fluents
+    // Initialize action fluents
     actionFluents = _actionFluents;
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {
         actionFluents[i]->index = i;
     }
 
+    // Calculate all possible action combinations with up to
+    // numberOfConcurrentActions concurrent actions
     list<vector<int> > actionCombinations;    
     calcPossiblyLegalActionStates(numberOfConcurrentActions, actionCombinations);
 
     double res = 0.0;
     State current(initialState);
-    State next(stateSize);
 
     set<ActionState> legalActions;
 
+    // Remove all illegal action combinations by checking the SACs
+    // that are state independent
     for(list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
         vector<int>& tmp = *it;
 
@@ -117,8 +148,8 @@ void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
         }
 
         bool isLegal = true;
-        for(unsigned int i = 0; i < SACs.size(); ++i) {
-            SACs[i]->sac->evaluate(res, current, next, actionState);
+        for(unsigned int i = 0; i < staticSACs.size(); ++i) {
+            staticSACs[i]->evaluate(res, current, actionState);
             if(MathUtils::doubleIsEqual(res,0.0)) {
                 isLegal = false;
                 break;
@@ -130,13 +161,15 @@ void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
         }
     }
 
+    // All remaining action states might be legal in some state.
+    // initialize the actionStates vector and set their index
     for(set<ActionState>::iterator it = legalActions.begin(); it != legalActions.end(); ++it) {
         actionStates.push_back(*it);
     }
 
     for(unsigned int i = 0; i < actionStates.size(); ++i) {
         actionStates[i].index = i;
-        actionStates[i].calculateProperties(actionFluents);
+        actionStates[i].calculateProperties(actionFluents, dynamicSACs);
     }
 
     numberOfActions = (int)actionStates.size();
@@ -163,140 +196,231 @@ void PlanningTask::initializeStateFluentHashKeys() {
     indexToStateFluentHashKeyMap = vector<vector<pair<int, long> > >(stateSize);
     indexToKleeneStateFluentHashKeyMap = vector<vector<pair<int, long> > >(stateSize);
 
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        CPFs[i]->initializeStateFluentHashKeys();
-        CPFs[i]->initializeKleeneStateFluentHashKeys();
-    }
+    int hashIndex = 0;
 
-    rewardCPF->initializeStateFluentHashKeys();
-    rewardCPF->initializeKleeneStateFluentHashKeys();
+    for(; hashIndex < stateSize; ++hashIndex) {
+        CPFs[hashIndex]->initializeHashKeys(hashIndex, actionStates, CPFs, indexToStateFluentHashKeyMap, indexToKleeneStateFluentHashKeyMap);
+    }
+    rewardCPF->initializeHashKeys(hashIndex, actionStates, CPFs, indexToStateFluentHashKeyMap, indexToKleeneStateFluentHashKeyMap);
+
+    for(unsigned int i = 0; i < dynamicSACs.size(); ++i) {
+        ++hashIndex;
+        dynamicSACs[i]->initializeHashKeys(hashIndex, actionStates, CPFs, indexToStateFluentHashKeyMap, indexToKleeneStateFluentHashKeyMap);
+    }
 }
 
+// Check if state hashing is possible, and assign hash key bases if so
 void PlanningTask::initializeStateHashKeys() {
-    if(stateSize < (planner->getBitSize() - 1)) {
-        stateHashingPoss = true;
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            CPFs[i]->hashKeyBase = MathUtils::twoToThePowerOf(CPFs[i]->index);
+    stateHashingPossible = true;
+    long nextHashKeyBase = 1;
+    vector<long> hashKeyBases;
+    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+        hashKeyBases.push_back(nextHashKeyBase);
+        if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 2)) {
+            stateHashingPossible = false;
+            return;
         }
-    } else {
-        stateHashingPoss = false;
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            CPFs[i]->hashKeyBase = 0;
-        }
+    }
+
+    assert(hashKeyBases.size() == CPFs.size());
+
+    for(unsigned int i = 0; i < hashKeyBases.size(); ++i) {
+        CPFs[i]->hashKeyBase = hashKeyBases[i];
     }
 }
 
+// Check if state hashing is possible with states as probability
+// distributuions, and assign prob hash key bases if so
 void PlanningTask::initializeHashKeysOfStatesAsProbabilityDistributions() {
-    //calculate domains
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        CPFs[i]->calculateDomain(actionStates);
-    }
-    rewardCPF->calculateDomain(actionStates);
-
-    //assign hash key bases
-    int nextBase = 1;
-    for(unsigned int i = 0; i <  stateSize; ++i) {
-        CPFs[i]->probHashKeyBase = nextBase;
-        nextBase *= CPFs[i]->probDomainSize;
+    // We first need to compute the possible values to determine the
+    // domain size
+    for(unsigned int index = 0; index < stateSize; ++index) {
+        initializeDomainOfCPF(index);
     }
 
-    //check if hash key bases grow (otherwise prob state hashing is not possible)
-    probStateHashingPoss = true;
-    for(unsigned int i = 0; i < stateSize-1; ++i) {
-        if(CPFs[i]->probHashKeyBase > CPFs[i+1]->probHashKeyBase) {
-            probStateHashingPoss = false;
+    // Assign hash key bases
+    stateHashingWithStatesAsProbabilityDistributionPossible = true;
+    long nextHashKeyBase = 1;
+    vector<long> hashKeyBases;
+    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+        hashKeyBases.push_back(nextHashKeyBase);
+        if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->probDomainSize)) {
+            stateHashingWithStatesAsProbabilityDistributionPossible = false;
+            return;
         }
     }
-    if(CPFs[stateSize-1]->probHashKeyBase > nextBase) {
-        probStateHashingPoss = false;
-    }
 
-    //multiply values with the hash key base if prob state hashing is possible
-    if(!probStateHashingPoss) {
-        for(unsigned int i = 0; i <  stateSize; ++i) {
-            CPFs[i]->probHashKeyBase = 0;
-        }
-    } else {
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            for(map<double, int>::iterator it = CPFs[i]->probDomainMap.begin(); it != CPFs[i]->probDomainMap.end(); ++it) {
-                it->second *= (int)CPFs[i]->probHashKeyBase;
-            }
+    assert(hashKeyBases.size() == CPFs.size());
+
+    for(unsigned int index = 0; index < hashKeyBases.size(); ++index) {
+        CPFs[index]->probHashKeyBase = hashKeyBases[index];
+        for(map<double, long>::iterator it = CPFs[index]->probDomainMap.begin(); it != CPFs[index]->probDomainMap.end(); ++it) {
+            it->second *= CPFs[index]->probHashKeyBase;
         }
     }
 }
 
-void PlanningTask::initializeOtherStuff() {
+set<double> PlanningTask::calculateDomainOfCPF(ConditionalProbabilityFunction* cpf) {
+    set<double> result;
+    for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
+        // Calculate the values that can be achieved if the action
+        // with actionIndex is applied and add it to the values of
+        // all other actions
+        set<double> actionDependentValues;
+        cpf->formula->calculateDomain(actionStates[actionIndex], actionDependentValues);
+        result.insert(actionDependentValues.begin(), actionDependentValues.end());
+    }
+    return result;
+}
+
+void PlanningTask::initializeDomainOfCPF(int const& index) {
+    if(CPFs[index]->isProbabilistic()) {
+        set<double> actionIndependentValues = calculateDomainOfCPF(CPFs[index]);
+
+        // Enumerate all values with 0...domainSize. We will later
+        // multiply these with the hash key base once it's determined.
+        CPFs[index]->probDomainSize = 0;
+        for(set<double>::iterator it = actionIndependentValues.begin(); it != actionIndependentValues.end(); ++it) {
+            CPFs[index]->probDomainMap[*it] = CPFs[index]->probDomainSize;
+            ++CPFs[index]->probDomainSize;
+        }
+    } else {
+        // The domainSize is 2 with possible values 0 and 1.
+        CPFs[index]->probDomainSize = 2;
+        CPFs[index]->probDomainMap[0.0] = 0;
+        CPFs[index]->probDomainMap[1.0] = 1;
+    }
+}
+
+void PlanningTask::determinePruningEquivalence() {
+    // A probabilistic PlanningTask is pruning equivalent to its
+    // determinization if:
+
+    // 1. there are no unreasonable actions (as applicability is
+    // always equivalent because SACs must be deterministic) 
+
+    // 2. each probabilistic variable has a domain size of at most 2,
+    // and if one value is higher and one smaller or equal to 0.5. If
+    // it is pruning equivalent, the determinization is used for
+    // action pruning.
+
+    // TODO: only works with the most-likely determinization! Make
+    // PlanningTask an abstract superclass with derived classes
+    // ProbabilisticTask and MostLikelyDeterminization.
+
     isPruningEquivalentToDet = true;
-    for(unsigned int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-        if(CPFs[i]->probDomainSize > 2) {
-            isPruningEquivalentToDet = false;
-            break;
-        } else if(CPFs[i]->probDomainSize == 2) {
-            if(MathUtils::doubleIsGreater(CPFs[i]->probDomainMap.begin()->first,0.5) &&
-               MathUtils::doubleIsGreater(CPFs[i]->probDomainMap.rbegin()->first,0.5)) {
+    if(hasUnreasonableActions) {
+        for(unsigned int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+            if(CPFs[i]->probDomainSize > 2) {
                 isPruningEquivalentToDet = false;
                 break;
-            }
+            } else if(CPFs[i]->probDomainSize == 2) {
+                if(MathUtils::doubleIsGreater(CPFs[i]->probDomainMap.begin()->first,0.5) &&
+                   MathUtils::doubleIsGreater(CPFs[i]->probDomainMap.rbegin()->first,0.5)) {
+                    isPruningEquivalentToDet = false;
+                    break;
+                }
 
-            if(MathUtils::doubleIsSmallerOrEqual(CPFs[i]->probDomainMap.begin()->first,0.5) &&
-               MathUtils::doubleIsSmallerOrEqual(CPFs[i]->probDomainMap.rbegin()->first,0.5)) {
-                isPruningEquivalentToDet = false;
-                break;
-            }
-        } //otherwise probDomainSize is 1 and the variable is pruning equivalent
+                if(MathUtils::doubleIsSmallerOrEqual(CPFs[i]->probDomainMap.begin()->first,0.5) &&
+                   MathUtils::doubleIsSmallerOrEqual(CPFs[i]->probDomainMap.rbegin()->first,0.5)) {
+                    isPruningEquivalentToDet = false;
+                    break;
+                }
+            } //otherwise probDomainSize is 1 and the variable is pruning equivalent
+        }
+    }
+}
+
+void PlanningTask::initializeRewardDependentVariables() {
+    set<double> rewardValues = calculateDomainOfCPF(rewardCPF);
+    rewardCPF->minVal = *(rewardValues.begin());
+    rewardCPF->maxVal = *(rewardValues.rbegin());
+
+    noopIsOptimalFinalAction = false;
+    useRewardLockDetection = true;
+
+    // TODO: goalTestActionIndex should actually be a vector that
+    // contains all actions indices that could potentially be the
+    // action that is necessary to stay in a goal. Currently, we just
+    // set it to noop or to -1, as there is no domain with a
+    // "stayInGoal" action that is different from noop. Moreover, it
+    // could also be that there are several such actions, e.g.
+    // stayInGoal_1 and stayInGoal_2 which are used for different goal
+    // states. What we do currently is sound but makes the
+    // rewardLockDetection even more incomplete.
+    if(rewardCPF->hasPositiveActionDependencies()) {
+        goalTestActionIndex = -1;
+        useRewardLockDetection = false;
+    } else {
+        goalTestActionIndex = 0;
+
+        if(actionStates[0].scheduledActionFluents.empty() && actionStates[0].relevantSACs.empty()) {
+            // If no action fluent occurs positively in the reward, if
+            // noop is not forbidden due to static SACs, and if noop
+            // has no SACs that might make it inapplicable, noop is
+            // always at least as good as other actions in the final
+            // state transition.
+            noopIsOptimalFinalAction = true;
+        }
     }
 
-    noopIsOptimalFinalAct = false;
-    if(rewardCPF->doesNotDependPositivelyOnActions() && rewardCPF->isNextStateIndependent()) {
-        noopIsOptimalFinalAct = true;
-    }
-
-    //TODO: Make sure these numbers make sense!
+    // TODO: Make sure these numbers make sense!
     bdd_init(5000000,20000);
     bdd_setvarnum(stateSize);
-
-    cachedDeadLocks = bddfalse;
-    cachedGoals = bddfalse;
 }
 
 /*****************************************************************
                          Determinization
 *****************************************************************/
 
+// TODO: Determinization is currently a very dirty process that is
+// very error prone (and possibly contains several). We should really
+// split planning task to different kinds of classes to make
+// everything nice and clean.
 PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task) {
-    //Create the determinization as a copy of this
+    // Create the determinization as a copy of this
     PlanningTask* detPlanningTask = new PlanningTask(*this);
 
-    //The created planning task is deterministic
-    detPlanningTask->isDeterministic = true;
-
-    //clear the CPFs and determinize them
+    // Clear the CPFs and determinize them
     detPlanningTask->CPFs.clear();
-    //map<StateFluent*,NumericConstant*> replacements;
     NumericConstant* randomNumberReplacement = task->getConstant(0.5);
 
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        ConditionalProbabilityFunction* detCPF = CPFs[i]->determinizeMostLikely(randomNumberReplacement, detPlanningTask, task);
+        ConditionalProbabilityFunction* detCPF = CPFs[i]->determinizeMostLikely(randomNumberReplacement, task);
         detPlanningTask->CPFs.push_back(detCPF);
     }
 
-    //we currently assume deterministic reward CPFs. To change this,
-    //we have to determinize the reward CPF here as well (I am not
-    //sure about the consequences of this elsewhere, which is why I
-    //leave it as is)
+    // We currently assume deterministic reward CPFs. To change this,
+    // we have to determinize the reward CPF here as well (I am not
+    // sure about the consequences of this elsewhere, which is why I
+    // leave it as is)
     assert(!rewardCPF->isProbabilistic());
 
-    //there are no probabilistic variables
+    // There are no probabilistic variables
     detPlanningTask->firstProbabilisticVarIndex = stateSize;
 
-    //as detPlanningTask is deterministic, it is obviously pruning
-    //equivalent to itself
+    // As detPlanningTask is deterministic, it is obviously pruning
+    // equivalent to itself.Nevertheless, this is never used.
     detPlanningTask->isPruningEquivalentToDet = true;
 
-    //while this should not be needed, prob state hashing is possible
-    //in a deterministic planning task when state hashing is possible
-    //in a probabilistic one (as all domains of variables are {0,1})
-    detPlanningTask->probStateHashingPoss = detPlanningTask->stateHashingPoss;
+    // DEPRECATED COMMENT: While this should not be needed, prob state
+    // hashing is possible in a deterministic planning task when state
+    // hashing is possible in a probabilistic one (as all domains of
+    // variables are {0,1})
+
+    // UPDATED COMMENT: Actually, we could convert the planning task
+    // such that the above statement is true, but then we have
+    // different hash keys for the same CPF in the two tasks (because
+    // the bases are different), which results in errors when we use
+    // the cache. For now, we leave it this way, even though in some
+    // domains we could use state hashing for states as probability
+    // distribution if implemented correctly but cannot currently
+    // (with the below commented). TODO
+
+    //detPlanningTask->stateHashingWithStatesAsProbabilityDistributionPossible = detPlanningTask->stateHashingPossible;
+
+    // The created planning task is now deterministic
+    detPlanningTask->isDeterministic = true;
 
     return detPlanningTask;
 }
@@ -305,45 +429,46 @@ PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task)
                              Learning
 *****************************************************************/
 
-
 bool PlanningTask::learn(vector<State> const& trainingSet) {
-    //learn usage of reasonable action pruning and reward lock detection
-    vector<int> actionsToExpand(getNumberOfActions(),-1);
+    if(isDeterministic) {
+        cout << " DET: learning..." << endl;
+    } else {
+        cout << "PROB: learning..." << endl;
+    }
+    // Learn if reasonable action pruning and reward lock detection
+    // might be needed in this planning task
+
+    // This will be set if one of the methods was applied successfully
     bool rewardLockFound = false;
     bool unreasonableActionFound = false;
 
-    useRewardLockDetection = true;
-    useReasonableActionPruning = true;
+    for(unsigned int stateIndex = 0; stateIndex < trainingSet.size(); ++stateIndex) {
+        assert(trainingSet[stateIndex].remSteps >= 0);
 
-    for(unsigned int i = 0; i < trainingSet.size(); ++i) {
-        assert(trainingSet[i].remSteps >= 0);
-        setActionsToExpand(trainingSet[i], actionsToExpand);
-        if(!unreasonableActionFound) {
-            for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {
-                if(actionsToExpand[i] != i) {
-                    unreasonableActionFound = true;
-                }
+        // Check if this training state has unreasonable actions
+        vector<int> applicableActions = getApplicableActions(trainingSet[stateIndex], true);
+
+        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+            if((applicableActions[actionIndex] != actionIndex) && (applicableActions[actionIndex] != -1)) {
+                unreasonableActionFound = true;
             }
         }
 
-        //TODO: Our implementation only works if the reward is next state independent
-        if(rewardCPF->isNextStateIndependent() && isARewardLock(trainingSet[i])) {
+        // Check if this training state is a reward lock
+        if(isARewardLock(trainingSet[stateIndex])) {
             rewardLockFound = true;
         }
     }
 
-    if(unreasonableActionFound) {
-        cout << (isDeterministic ? " DET: " : "PROB: ") << ": Reasonable action pruning enabled!" << endl;
-    } else {
-        useReasonableActionPruning = false;
-        cout << (isDeterministic ? " DET: " : "PROB: ") << ": Reasonable action pruning disabled!" << endl;
-    }
+    // Set the variables that control action pruning and reward lock
+    // detection
+    hasUnreasonableActions = unreasonableActionFound;
+    useRewardLockDetection = rewardLockFound;
 
-    if(rewardLockFound) {
-        cout << (isDeterministic ? " DET: " : "PROB: ") << ": Reward lock detection enabled!" << endl;
+    if(isDeterministic) {
+        cout << " DET: ...finished" << endl;
     } else {
-        useRewardLockDetection = false;
-        cout << (isDeterministic ? " DET: " : "PROB: ") << ": Reward lock detection disabled!" << endl;
+        cout << "PROB: ...finished" << endl;
     }
     return LearningComponent::learn(trainingSet);
 }
@@ -353,47 +478,74 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
                Applicable Actions and Action Pruning
 ******************************************************************/
 
-void PlanningTask::setActionsToExpand(State const& state, vector<int>& res) {
-    assert(res.size() == getNumberOfActions());
+vector<int> PlanningTask::getApplicableActions(State const& state, bool const& pruneUnreasonableActions) {
+    vector<int> res(getNumberOfActions(), 0);
 
-    //TODO: Check dynamic state action constraints and mark
-    //unapplicable operators
+    if(hasUnreasonableActions && pruneUnreasonableActions) {
+        map<State, vector<int> >::iterator it = applicableReasonableActionsCache.find(state);
+        if(it != applicableReasonableActionsCache.end()) {
+            assert(it->second.size() == res.size());
+            for(unsigned int i = 0; i < res.size(); ++i) {
+                res[i] = it->second[i];
+            }
+        } else {
+            setApplicableReasonableActions(state, res);
 
-    if(!useReasonableActionPruning) {
-        for(unsigned int i = 0; i < res.size(); ++i) {
-            res[i] = i;
-        }
-        return;
-    }
- 
-    map<State, vector<int> >::iterator it = actionsToExpandCache.find(state);
-    if(it != actionsToExpandCache.end()) {
-        assert(it->second.size() == res.size());
-        for(unsigned int i = 0; i < res.size(); ++i) {
-            res[i] = it->second[i];
+            if(cacheApplicableActions) {
+                applicableReasonableActionsCache[state] = res;
+            }
         }
     } else {
-        checkForReasonableActions(state, res);
+        map<State, vector<int> >::iterator it = applicableActionsCache.find(state);
+        if(it != applicableActionsCache.end()) {
+            assert(it->second.size() == res.size());
+            for(unsigned int i = 0; i < res.size(); ++i) {
+                res[i] = it->second[i];
+            }
+        } else {
+            setApplicableActions(state, res);
 
-        if(cacheActionsToExpand) {
-            actionsToExpandCache[state] = res;
+            if(cacheApplicableActions) {
+                applicableActionsCache[state] = res;
+            }
+        }
+    }
+    return res;
+}
+
+inline void PlanningTask::setApplicableReasonableActions(State const& state, std::vector<int>& res) const {
+    map<State, int, State::CompareIgnoringRemainingSteps> childStates;
+
+    // TODO: Check if there are positive actions in the reward CPF, as
+    // we are not allowed to prune an action that occurs positively in
+    // the rewardCPF!
+
+    for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
+        if(actionStates[actionIndex].isApplicable(state)) {
+            State nxt(stateSize, state.remainingSteps()-1, numberOfStateFluentHashKeys);
+            // This action is applicable
+            calcSuccessorAsProbabilityDistribution(state, actionIndex, nxt);
+            calcHashKeyOfProbabilityDistribution(nxt);
+            if(childStates.find(nxt) == childStates.end()) {
+                // This action is reasonable
+                childStates[nxt] = actionIndex;
+                res[actionIndex] = actionIndex;
+            } else {
+                // This action is not reasonable
+                res[actionIndex] = childStates[nxt];
+            }
+        } else {
+            // This action is not appicable
+            res[actionIndex] = -1;            
         }
     }
 }
 
-inline void PlanningTask::checkForReasonableActions(State const& state, vector<int>& res) {
-    State nxt(stateSize);
-    map<State, int, State::CompareIgnoringRemainingSteps> childStates;
-
-    for(int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
-        calcSuccessorAsProbabilityDistribution(state, actionIndex, nxt);
-        calcHashKeyOfProbabilityDistribution(nxt);
-        if(childStates.find(nxt) != childStates.end()) {
-            //TODO: Check if rewardCPF->doesNotDependPositivelyOnActions(), and if NOT
-            //we can NOT prune if both variables appear positively in the rewardCPF!
-            res[actionIndex] = childStates[nxt];
+inline void PlanningTask::setApplicableActions(State const& state, vector<int>& res) const {
+    for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
+        if(!actionStates[actionIndex].isApplicable(state)) {
+            res[actionIndex] = -1;
         } else {
-            childStates[nxt] = actionIndex;
             res[actionIndex] = actionIndex;
         }
     }
@@ -403,36 +555,40 @@ inline void PlanningTask::checkForReasonableActions(State const& state, vector<i
             Reward Lock Detection (including BDD Stuff)
 ******************************************************************/
 
+// Currently, we only consider goals and dead ends (i.e., reward locks
+// with min or max reward). This makes sense on the IPPC 2011 domains,
+// yet we might want to change it in the future so keep an eye on it.
+// Nevertheless, isARewardLock is sound as is (and incomplete
+// independently from this decision).
 bool PlanningTask::isARewardLock(State const& current) {
     if(!useRewardLockDetection) {
         return false;
     }
 
-    //calculate the reference reward (TODO: Careful, we assume here that NOOP is always applicable!)
-    assert(rewardCPF->isNextStateIndependent());
+    assert(goalTestActionIndex >= 0);
 
-    State succ(stateSize);
+    // Calculate the reference reward
     double reward = 0.0;
-    calcReward(current, 0, succ, reward);
+    calcReward(current, goalTestActionIndex, reward);
 
     if(isMinReward(reward)) {
-        //Check if current is known to be a dead lock
-        if(BDDIncludes(cachedDeadLocks, current)) {
+        // Check if current is known to be a dead end
+        if(BDDIncludes(cachedDeadEnds, current)) {
             return true;
         }
 
-        //convert to Kleene state (necessary for hash keys)
+        // Convert to Kleene state (necessary for hash keys)
         State currentInKleene = toKleeneState(current);
 
-        //check reward lock on Kleene state
-        return checkDeadLock(currentInKleene);
+        // Check reward lock on Kleene state
+        return checkDeadEnd(currentInKleene);
     } else if(isMaxReward(reward)) {
-        //Check if current is known to be a goal
+        // Check if current is known to be a goal
         if(BDDIncludes(cachedGoals, current)) {
             return true;
         }
 
-        //convert to Kleene state (necessary for hash keys)
+        // Convert to Kleene state (necessary for hash keys)
         State currentInKleene = toKleeneState(current);
 
         return checkGoal(currentInKleene);
@@ -441,53 +597,63 @@ bool PlanningTask::isARewardLock(State const& current) {
     return false;
 }
 
-bool PlanningTask::checkDeadLock(State const& state) {
-    //calc noop successor and check if reward is identical
-    State mergedSuccs(stateSize);
-    calcKleeneSuccessor(state, 0, mergedSuccs);
-    double reward = 0.0;
-    calcKleeneReward(state, 0, mergedSuccs, reward);
+bool PlanningTask::checkDeadEnd(State const& state) {
+    // TODO: We do currently not care about action applicability.
+    // Nevertheless, the results remain sound, as we only check too
+    // many actions (it might be the case that we think some state is
+    // not a dead end even though it is. This is because the action
+    // that would make us leave the dead end is actually
+    // inapplicable).
 
+    // Calc noop successor
+    State mergedSuccs(stateSize, -1, numberOfStateFluentHashKeys);
+    double reward = 0.0;
+    calcKleeneSuccessor(state, 0, mergedSuccs);
+    calcKleeneReward(state, 0, reward);
+
+    // If reward is not minimal this is not a dead end
     if(!isMinReward(reward)) {
         return false;
     }
 
-    for(unsigned int actionIndex = 1; actionIndex < getNumberOfActions(); ++actionIndex) {
-        //calc Kleene successor of applying action actionIndex, and check if reward is identical
-        State succ(stateSize);
-        calcKleeneSuccessor(state, actionIndex, succ);
-        calcKleeneReward(state, actionIndex, succ, reward);
 
+    for(unsigned int actionIndex = 1; actionIndex < getNumberOfActions(); ++actionIndex) {
+        // Calc Kleene successor of applying action actionIndex
+        State succ(stateSize, -1, numberOfStateFluentHashKeys);
+        calcKleeneSuccessor(state, actionIndex, succ);
+        calcKleeneReward(state, actionIndex, reward);
+
+        // If reward is not minimal this is not a dead end
         if(!isMinReward(reward)) {
             return false;
         }
 
-        //merge with noop successor
+        // Merge with previous successors
         mergeKleeneStates(succ, mergedSuccs);
     }
 
-    //refresh state fluent hash keys
+    // Calculate state fluent hash keys
     calcKleeneStateFluentHashKeys(mergedSuccs);
 
-    //Check if the successor is unchanged, otherwise continue to check if it is a reward lock
-    if(mergedSuccs.isEqualIgnoringRemainingStepsTo(state) || checkDeadLock(mergedSuccs)) {
+    // Check if the merged successor is equivalent to state, otherwise
+    // continue to check if this is a dead end
+    if(mergedSuccs.isEqualIgnoringRemainingStepsTo(state) || checkDeadEnd(mergedSuccs)) {
         bdd stateAsBDD;
         stateToBDD(state, stateAsBDD);
-        cachedDeadLocks |= stateAsBDD;
-
+        cachedDeadEnds |= stateAsBDD;
         return true;
     }
     return false;
 }
 
-
-//We underapproximate the set of goals, as we only consider those
-//where applying noop makes us stay in the reward lock
+// We underapproximate the set of goals, as we only consider those
+// where applying goalTestActionIndex makes us stay in the reward lock. 
 bool PlanningTask::checkGoal(State const& state) {
-    State succ(stateSize);
-    calcKleeneSuccessor(state, 0, succ);
+    State succ(stateSize, -1, numberOfStateFluentHashKeys);
     double reward = 0.0;
-    calcKleeneReward(state, 0, succ, reward);
+
+    calcKleeneSuccessor(state, goalTestActionIndex, succ);
+    calcKleeneReward(state, goalTestActionIndex, reward);
 
     if(!isMaxReward(reward)) {
         return false;
@@ -536,62 +702,165 @@ bool PlanningTask::BDDIncludes(bdd BDD, State const& state) {
     }
 }
 
+/******************************************************************
+                               Caching
+******************************************************************/
+
 void PlanningTask::disableCaching() {
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
         CPFs[i]->disableCaching();
     }
     rewardCPF->disableCaching();
-    cacheActionsToExpand = false;
+    cacheApplicableActions = false;
 }
+
+/******************************************************************
+               Calculation of Final Reward and Action
+******************************************************************/
+
+void PlanningTask::calcOptimalFinalReward(State const& current, double& reward) {
+    if(noopIsOptimalFinalAction) {
+        return calcReward(current, 0, reward);
+    }
+
+    // Get applicable actions
+    vector<int> applicableActions = getApplicableActions(current, true);
+
+    if(rewardCPF->isActionIndependent()) {
+        // If no action fluent occurs in the reward ,all rewards are
+        // the same and we only need to find an applicable action
+        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+            if(applicableActions[actionIndex] == actionIndex) {
+                return calcReward(current, actionIndex, reward);
+            }
+        }
+        assert(false);
+    }
+
+    // Otherwise we compute which action yields the highest reward
+
+    reward = -numeric_limits<double>::max();
+    double tmpReward = 0.0;
+
+    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+        if(applicableActions[actionIndex] == actionIndex) {
+            calcReward(current, actionIndex, tmpReward);
+
+            if(MathUtils::doubleIsGreater(tmpReward, reward)) {
+                reward = tmpReward;
+            }
+        }
+    }
+}
+
+int PlanningTask::getOptimalFinalActionIndex(State const& current) {
+    if(noopIsOptimalFinalAction) {
+        return 0;
+    }
+
+    // Get applicable actions
+    vector<int> applicableActions = getApplicableActions(current, true);
+
+    if(rewardCPF->isActionIndependent()) {
+        // If no action fluent occurs in the reward ,all rewards are
+        // the same and we only need to find an applicable action
+        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+            if(applicableActions[actionIndex] == actionIndex) {
+                return actionIndex;
+            }
+        }
+        assert(false);
+        return -1;
+    }
+
+    // Otherwise we compute which action yields the highest reward
+    double reward = -numeric_limits<double>::max();
+    double tmpReward = 0.0;
+    int optimalFinalActionIndex = -1;
+
+    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+        if(applicableActions[actionIndex] == actionIndex) {
+            calcReward(current, actionIndex, tmpReward);
+
+            if(MathUtils::doubleIsGreater(tmpReward, reward)) {
+                reward = tmpReward;
+                optimalFinalActionIndex = actionIndex;
+            }
+        }
+    }
+
+    return optimalFinalActionIndex;
+}
+
+/******************************************************************
+                            Printers
+******************************************************************/
 
 void PlanningTask::print(ostream& out) const {
     out << "This task is " << (isDeterministic? "deterministic." : "probabilistic.") << endl;
-    out << "--------StateActionConstraints--------" << endl<< endl;
-    for(unsigned int i = 0; i < SACs.size(); ++i) {
-        SACs[i]->print(out);
-        out << endl;
-    }
-    out << endl << endl;
 
     out << "----------------Actions---------------" << endl << endl;
     out << "Action fluents: " << endl;
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        actionFluents[i]->print(out);
+    for(unsigned int index = 0; index < actionFluents.size(); ++index) {
+        actionFluents[index]->print(out);
         out << endl;
     }
     out << "---------------" << endl << endl;
     out << "Legal Action Combinations: " << endl;
-    for(unsigned int i = 0; i < actionStates.size(); ++i) {
-        printAction(out, i);
-        out << endl;
+    for(unsigned int index = 0; index < actionStates.size(); ++index) {
+        printActionInDetail(out, index);
+        out << "---------------" << endl;
     }
     out << endl;
     out << "-----------------CPFs-----------------" << endl << endl;
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        CPFs[i]->print(out);
+    for(unsigned int index = 0; index < stateSize; ++index) {
+        printCPFInDetail(out, index);
         out << endl << "--------------" << endl;
     }
-    out << endl;
 
-    out << "Reward CPF:" << endl;
-    rewardCPF->print(out);
+    out << endl << "Reward CPF:" << endl;
+    printRewardCPFInDetail(out);
     out << endl << endl;
 
-    for(unsigned int i = 0; i < indexToStateFluentHashKeyMap.size(); ++i) {
-        out << "a change of variable " << i << " influences variables ";
-        for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
-            out << indexToStateFluentHashKeyMap[i][j].first << " (" << indexToStateFluentHashKeyMap[i][j].second << ")  ";
+    out << "------State Fluent Hash Key Map-------" << endl << endl;
+
+    for(unsigned int varIndex = 0; varIndex < indexToStateFluentHashKeyMap.size(); ++varIndex) {
+        out << "a change of variable " << varIndex << " influences variables ";
+        for(unsigned int influencedVarIndex = 0; influencedVarIndex < indexToStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
+            out << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].first << " (" 
+                << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second << ")  ";
         }
         out << endl;
     }
 
     out << endl;
-    for(unsigned int i = 0; i < indexToStateFluentHashKeyMap.size(); ++i) {
-        out << "a change of variable " << i << " influences variables in Kleene states ";
-        for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-            out << indexToKleeneStateFluentHashKeyMap[i][j].first << " (" << indexToKleeneStateFluentHashKeyMap[i][j].second << ")  ";
+    for(unsigned int varIndex = 0; varIndex < indexToStateFluentHashKeyMap.size(); ++varIndex) {
+        out << "a change of variable " << varIndex << " influences variables in Kleene states ";
+        for(unsigned int influencedVarIndex = 0; influencedVarIndex < indexToKleeneStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
+            out << indexToKleeneStateFluentHashKeyMap[varIndex][influencedVarIndex].first << " ("
+                << indexToKleeneStateFluentHashKeyMap[varIndex][influencedVarIndex].second << ")  ";
         }
         out << endl;
+    }
+
+    out << endl;
+    out << "-----------------SACs-----------------" << endl << endl;
+    out << "Static SACs: " << endl;
+    for(unsigned int index = 0; index < staticSACs.size(); ++index) {
+        printStaticSACInDetail(out, index);
+        out << endl << "--------------" << endl;
+    }
+
+    out << "Dynamic SACs: " << endl;
+    for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
+        printDynamicSACInDetail(out, index);
+        out << endl << "--------------" << endl;
+    }
+
+    out << "State invariants: " << endl;
+    for(unsigned int index = 0; index < stateInvariants.size(); ++index) {
+        printStateInvariantInDetail(out, index);
+        out << endl << "--------------" << endl;
     }
 
     out << "----------Initial State---------------" << endl << endl;
@@ -599,31 +868,189 @@ void PlanningTask::print(ostream& out) const {
     out << endl;
 
     out << "This task is " << (isPruningEquivalentToDet? "" : "not ") << "pruning equivalent to its most likely determinization" << endl;
-    out << "NOOP as last action is " << (noopIsOptimalFinalAct? "" : "not ") << "always optimal." << endl;
-    out << "Deterministic state hashing is " << (stateHashingPoss? "" : "not ") << "possible";
+
+    out << "Deterministic state hashing is " << (stateHashingPossible? "" : "not ") << "possible";
     if(isDeterministic) {
         out << "." << endl;
     } else {
-        out << " and probabilistic state hashing is " << (probStateHashingPoss? "" : "not ") << "possible." << endl;
+        out << " and state hashing with states as probability distribution is " 
+            << (stateHashingWithStatesAsProbabilityDistributionPossible? "" : "not ") << "possible." << endl;
     }
-    
+
+    if(useRewardLockDetection) {
+        if(goalTestActionIndex >= 0) {
+            out << "Reward lock detection is enabled for goals and dead ends." << endl;
+        } else {
+            out << "Reward lock detection is enabled for dead ends." << endl;
+        }
+    } else {
+        out << "Reward lock detection is disabled." << endl;
+    }
+
+    if(hasUnreasonableActions) {
+        out << "This task contains unreasonable actions." << endl;
+    } else {
+        out << "This task does not contain unreasonable actions." << endl;
+    }
+
+    if(noopIsOptimalFinalAction) {
+        out << "NOOP is always optimal as final action." << endl;
+    } else {
+        out << "There is no optimal final action." << endl;
+    }
+    out << endl;
 }
 
-void PlanningTask::printState(ostream& out, State const& s) const {
-    assert(s.state.size() == stateSize);
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        out << CPFs[i]->head->name << ": " << s[i] << endl;
+void PlanningTask::printState(ostream& out, State const& state) const {
+    assert(state.state.size() == stateSize);
+    for(unsigned int index = 0; index < stateSize; ++index) {
+        out << CPFs[index]->head->name << ": " << state[index] << endl;
     }
-    out << "Remaining Steps: " << s.remainingSteps() << endl;
-    out << "StateHashKey: " << s.hashKey << endl;
+    out << "Remaining Steps: " << state.remainingSteps() << endl;
+    out << "StateHashKey: " << state.hashKey << endl;
 }
 
-void PlanningTask::printAction(ostream& out, int const& index) const {
-    if(actionStates[index].scheduledActionFluents.empty()) {
+void PlanningTask::printAction(ostream& out, int const& actionIndex) const {
+    if(actionStates[actionIndex].scheduledActionFluents.empty()) {
         out << "noop() ";
     } else {
-        for(unsigned int i = 0; i < actionStates[index].scheduledActionFluents.size(); ++i) {
-            out << actionStates[index].scheduledActionFluents[i]->name << " ";
+        for(unsigned int index = 0; index < actionStates[actionIndex].scheduledActionFluents.size(); ++index) {
+            out << actionStates[actionIndex].scheduledActionFluents[index]->name << " ";
         }
     }
+}
+
+void PlanningTask::printActionInDetail(ostream& out, int const& index) const {
+    printAction(out, index);
+    out << ": " << endl;
+    out << "Index : " << actionStates[index].index << endl;
+    out << "Relevant SACs:" << endl;
+    for(unsigned int i = 0; i < actionStates[index].relevantSACs.size(); ++i) {
+        out << "  ";
+        actionStates[index].relevantSACs[i]->formula->print(out);
+        out << endl;
+    }
+    out << endl;
+}
+
+void PlanningTask::printCPFInDetail(std::ostream& out, int const& index) const {
+    printEvaluatableInDetail(out, CPFs[index]);
+
+    cout << endl << "  Map for probabilistic state hash keys: " << endl;
+    for(map<double, long>::iterator it = CPFs[index]->probDomainMap.begin(); it != CPFs[index]->probDomainMap.end(); ++it) {
+        out << "    " << it->first << " -> " << it->second << endl;
+    }
+}
+
+void PlanningTask::printRewardCPFInDetail(std::ostream& out) const {
+    printEvaluatableInDetail(out, rewardCPF);
+
+    out << "Min Reward: " << rewardCPF->getMinVal() << endl;
+    out << "Max Reward: " << rewardCPF->getMaxVal() << endl;
+}
+
+void PlanningTask::printDynamicSACInDetail(std::ostream& out, int const& index) const {
+    printEvaluatableInDetail(out, dynamicSACs[index]);
+}
+ 
+void PlanningTask::printStaticSACInDetail(std::ostream& out, int const& index) const {
+    printEvaluatableInDetail(out, staticSACs[index]);
+}
+
+void PlanningTask::printStateInvariantInDetail(std::ostream& out, int const& index) const {
+    printEvaluatableInDetail(out, stateInvariants[index]);
+}
+
+void PlanningTask::printEvaluatableInDetail(ostream& out, Evaluatable* eval) const {
+    out << eval->name << endl;
+    out << "  HashIndex: " << eval->hashIndex << ",";
+
+    if(!eval->isProbabilistic()) {
+        out << " deterministic,";
+    } else {
+        out << " probabilistic,";
+    }
+    
+    if(eval->isActionIndependent()) {
+        out << " action independent,";
+    } else {
+        out << " action dependent,";
+    }
+
+    switch(eval->cachingType) {
+    case Evaluatable::NONE:
+        out << " no caching, ";
+        break;
+    case Evaluatable::MAP:
+    case Evaluatable::DISABLED_MAP:
+        out << " caching in maps, ";
+        break;
+    case Evaluatable::VECTOR:
+        out << " caching in vectors of size " << eval->evaluationCacheVector.size() << ", ";
+        break;
+    }
+
+    switch(eval->kleeneCachingType) {
+    case Evaluatable::NONE:
+        out << " no Kleene caching.";
+        break;
+    case Evaluatable::MAP:
+    case Evaluatable::DISABLED_MAP:
+        out << " Kleene caching in maps.";
+        break;
+    case Evaluatable::VECTOR:
+        out << " Kleene caching in vectors of size " << eval->kleeneEvaluationCacheVector.size() << ".";
+        break;
+    }
+
+    out << endl << endl;
+
+    if(!eval->positiveActionDependencies.empty()) {
+        out << "  Depends positively on action fluents:" << endl;
+
+        for(set<ActionFluent*>::iterator it = eval->positiveActionDependencies.begin(); it != eval->positiveActionDependencies.end(); ++it) {
+            out << "    ";
+            (*it)->print(cout);
+            out << endl;
+        }
+    } else {
+        out << "  Has no positive dependencies on actions." << endl;
+    }
+
+    if(!eval->negativeActionDependencies.empty()) {
+        out << "  Depends negatively on action fluents:" << endl;
+
+        for(set<ActionFluent*>::iterator it = eval->negativeActionDependencies.begin(); it != eval->negativeActionDependencies.end(); ++it) {
+            out << "    ";
+            (*it)->print(cout);
+            out << endl;
+        }
+    } else {
+        out << "  Has no negative dependencies on actions." << endl;
+    }
+
+    if(!eval->dependentStateFluents.empty()) {
+        out << "  Depends on state fluents:" << endl;
+        for(set<StateFluent*>::iterator it = eval->dependentStateFluents.begin(); it != eval->dependentStateFluents.end(); ++it) {
+            out << "    " << (*it)->name << endl;
+        }
+    } else {
+        out << "  Has no dependencies on state fluents." << endl;
+    }
+
+    out << (eval->containsArithmeticFunction() ? "  Contains an arithmetic function." : "  Does not contain an arithmetic function.") << endl << endl;
+
+    if(!eval->isActionIndependent()) {
+        out <<  "  Action Hash Key Map: " << endl;
+        for(unsigned int i = 0; i < eval->actionHashKeyMap.size(); ++i) {
+            if(eval->actionHashKeyMap[i] != 0) {
+                out << "    ";
+                printAction(out, i);
+                out << " : " << eval->actionHashKeyMap[i] << endl;
+            }
+        }
+    }
+
+    eval->formula->print(out);
+    out << endl;
 }

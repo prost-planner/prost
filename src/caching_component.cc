@@ -7,6 +7,11 @@ CachingComponent::CachingComponent(ProstPlanner* planner) :
     cachingComponentAdmin->registerCachingComponent(this);
 }
 
+CachingComponent::CachingComponent(CachingComponent const& other) :
+    cachingComponentAdmin(other.cachingComponentAdmin) {
+    cachingComponentAdmin->registerCachingComponent(this);
+}
+
 CachingComponent::~CachingComponent() {
     cachingComponentAdmin->unregisterCachingComponent(this);
 }

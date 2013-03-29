@@ -20,12 +20,12 @@ public:
 
     virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    virtual void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                                    std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    virtual void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     virtual void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    virtual void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    virtual void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    virtual void evaluate(double& res, State const& current, ActionState const& actions);
+    virtual void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     virtual void print(std::ostream& out) = 0;
 };
@@ -63,23 +63,6 @@ public:
 private:
     VariableDefinition(std::string _name, std::vector<ObjectType*> _params, VariableType _variableType, Type* _valueType, double _defaultValue = 0.0, int _level = 1) :
         name(_name), params(_params), variableType(_variableType), valueType(_valueType), defaultValue(_defaultValue), level(_level) {}
-};
-
-class StateActionConstraint {
-public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task, RDDLParser* parser);
-
-    LogicalExpression* sac;
-
-    void replaceQuantifier(UnprocessedPlanningTask* task, Instantiator* instantiator);
-    void instantiate(UnprocessedPlanningTask* task);
-    bool simplify(UnprocessedPlanningTask* task, std::map<StateFluent*, NumericConstant*>& replacements);
-
-    void print(std::ostream& out);
-
-private:
-    StateActionConstraint(LogicalExpression* _sac) :
-        sac(_sac) {}
 };
 
 class ParameterDefinition : public LogicalExpression {
@@ -157,12 +140,13 @@ public:
         AtomicLogicalExpression(_parent, _params, _parent->defaultValue) {}
 
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 };
 
 class ActionFluent : public AtomicLogicalExpression {
@@ -170,12 +154,12 @@ public:
     ActionFluent(VariableDefinition* _parent, std::vector<Object*> _params) :
         AtomicLogicalExpression(_parent, _params, 0.0) {}
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 };
 
 class NonFluent : public AtomicLogicalExpression {
@@ -211,8 +195,8 @@ public:
 
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -299,12 +283,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -320,12 +304,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -341,12 +325,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -362,12 +346,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -383,12 +367,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -404,12 +388,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -425,12 +409,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -446,12 +430,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -467,12 +451,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -488,12 +472,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -509,12 +493,12 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -541,14 +525,14 @@ public:
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents, 
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -583,14 +567,14 @@ public:
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents,
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -606,15 +590,15 @@ public:
         conditions(_conditions), effects(_effects), hasUncertainCondition(false), exprRes(0.0) {}
 
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents,
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -630,14 +614,14 @@ public:
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 
-    void collectInitialInfo(bool& isProbabilistic, std::vector<StateFluent*>& dependentStateFluents,
-                            std::vector<ActionFluent*>& positiveDependentActionFluents, std::vector<ActionFluent*>& negativeDependentActionFluents);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, State const& next, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
