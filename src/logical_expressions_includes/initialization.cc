@@ -112,12 +112,6 @@ void VariableDefinition::parse(string& desc, UnprocessedPlanningTask* task) {
     task->addVariableDefinition(new VariableDefinition(name,params,varType,type,defaultVal,level));
 }
 
-void StateActionConstraint::parse(string& desc, UnprocessedPlanningTask* task, RDDLParser* parser) {
-    LogicalExpression* formula = parser->parseRDDLFormula(desc,task);
-
-    task->addStateActionConstraint(new StateActionConstraint(formula));
-}
-
 void AtomicLogicalExpression::parse(string& desc, UnprocessedPlanningTask* task) {
     if(desc.find("~") == 0) {
         assert(desc.find("=") == string::npos);

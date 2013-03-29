@@ -20,7 +20,7 @@ map<State, vector<double>, State::CompareIgnoringRemainingSteps> IterativeDeepen
 
 IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
     SearchEngine("IDS", _planner, _planner->getDeterministicTask()),
-    currentState(task->getStateSize()),
+    currentState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys()),
     isLearning(false),
     timer(),
     time(0.0),
@@ -32,7 +32,7 @@ IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
     cacheHits(0),
     numberOfRuns(0) {
 
-    setMinSearchDepth(1);
+    setMinSearchDepth(2);
 
     elapsedTime.resize(maxSearchDepth+1);
 
@@ -82,7 +82,7 @@ void IterativeDeepeningSearch::estimateQValues(State const& _rootState, vector<d
         }
     } else {
         currentState.setTo(_rootState);
-        currentState.remainingSteps() = (task->noopIsOptimalFinalAction() ? 1 : 0);
+        currentState.remainingSteps() = 1;
         do {
             ++currentState.remainingSteps();
             dfs->estimateQValues(currentState, result, pruneResult);
@@ -123,9 +123,31 @@ bool IterativeDeepeningSearch::moreIterations(vector<double>& result) {
 
     //1. Check if we have a significant result
     if(terminateWithReasonableAction) {
-        for(unsigned int i = 1; i < result.size(); ++i) {
-            if(MathUtils::doubleIsGreater(result[i],result[0])) {
-                return false;
+        if(!MathUtils::doubleIsMinusInfinity(result[0])) {
+            // Noop is applicable -> we check if another action is
+            // better than noop
+            for(unsigned int i = 1; i < result.size(); ++i) {
+                if(MathUtils::doubleIsGreater(result[i],result[0])) {
+                    return false;
+                }
+            }
+        } else {
+            // Noop is not applicable -> we determine the first
+            // applicable action (we assume here that result[i] =
+            // -infty if the action is not applicable)
+            unsigned int firstApplicableActionIndex = 1;
+            while(MathUtils::doubleIsMinusInfinity(result[firstApplicableActionIndex])) {
+    		++firstApplicableActionIndex;
+            }
+
+            // There should be at least one value that is different from -infty
+            assert(firstApplicableActionIndex < result.size());
+
+            // Check if any two actions yield different results
+            for(unsigned int i = firstApplicableActionIndex; i < result.size(); ++i) {
+                if(!MathUtils::doubleIsEqual(result[i],result[firstApplicableActionIndex])) {
+                    return false;
+                }
             }
         }
     }
@@ -191,7 +213,7 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
 
     //determine max search depth based on average time needed in different search depths
     maxSearchDepth = 0;
-    unsigned int index = (task->noopIsOptimalFinalAction() ? 2 : 1);
+    unsigned int index = 2;
 
     for(;index < elapsedTime.size(); ++index) {
         if(elapsedTime[index].size() > (trainingSet.size()/2)) {

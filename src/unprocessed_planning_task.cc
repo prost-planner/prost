@@ -3,7 +3,8 @@
 #include "typed_objects.h"
 #include "logical_expressions.h"
 #include "actions.h"
-#include "conditional_probability_functions.h"
+#include "conditional_probability_function.h"
+#include "state_action_constraint.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
@@ -60,7 +61,8 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
     instanceDesc = nonFluentsAndInstance[1];
 }
 
-void UnprocessedPlanningTask::print(ostream& out) {
+void UnprocessedPlanningTask::print(ostream& /*out*/) {
+    /*
     out << "-----------------------------------------------Planning PlanningTask---------------------------------------------" << endl;
     out << "-----------------------------------Input---------------------------------" << endl;
     out << "-------------Domain Description-------------" << endl;
@@ -184,6 +186,7 @@ void UnprocessedPlanningTask::print(ostream& out) {
     out << endl;
 
     out << "---------------------------------------------------------------------------------------------------------" << endl;
+    */
 }
 
 void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {

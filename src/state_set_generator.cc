@@ -19,15 +19,14 @@ vector<State> StateSetGenerator::generateStateSet(State const& rootState, int co
 
     set<State, State::CompareIgnoringRemainingSteps> stateSet;
 
-    State nextState(task->getStateSize());
+    State nextState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys());
     nextState.reset(rootState.remainingSteps()-1);
     State currentState(rootState);
 
     stateSet.insert(currentState);
 
     while((stateSet.size() < numberOfStates) && (MathUtils::doubleIsSmaller(t(), 2.0))) {
-        vector<int> actionsToExpand(task->getNumberOfActions(),0);
-        task->setActionsToExpand(currentState, actionsToExpand);
+        vector<int> actionsToExpand = task->getApplicableActions(currentState, true);
 
         vector<int> actionsToExpandIndices;
         for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {

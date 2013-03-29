@@ -1,7 +1,8 @@
 #include "rddl_parser.h"
 
 #include "logical_expressions.h"
-#include "conditional_probability_functions.h"
+#include "conditional_probability_function.h"
+#include "state_action_constraint.h"
 #include "typed_objects.h"
 #include "utils/string_utils.h"
 

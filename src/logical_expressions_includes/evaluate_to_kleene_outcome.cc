@@ -1,23 +1,23 @@
-void LogicalExpression::evaluateToKleeneOutcome(double& /*res*/, State const& /*current*/, State const& /*next*/, ActionState const& /*actions*/) {
+void LogicalExpression::evaluateToKleeneOutcome(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
     assert(false);
 }
 
-void StateFluent::evaluateToKleeneOutcome(double& res, State const& current, State const& /*next*/, ActionState const& /*actions*/) {
+void StateFluent::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& /*actions*/) {
     res = current[index];
 }
 
-void ActionFluent::evaluateToKleeneOutcome(double& res, State const& /*current*/, State const& /*next*/, ActionState const& actions) {
+void ActionFluent::evaluateToKleeneOutcome(double& res, State const& /*current*/, ActionState const& actions) {
     res = actions[index];
 }
 
-void NumericConstant::evaluateToKleeneOutcome(double& res, State const& /*current*/, State const& /*next*/, ActionState const& /*actions*/) {
+void NumericConstant::evaluateToKleeneOutcome(double& res, State const& /*current*/, ActionState const& /*actions*/) {
     res = value;
 }
 
-void Conjunction::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void Conjunction::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     res = 1.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
         if(MathUtils::doubleIsEqual(exprRes, 0.0)) {
             res = 0.0;
             return;
@@ -27,10 +27,10 @@ void Conjunction::evaluateToKleeneOutcome(double& res, State const& current, Sta
     }
 }
 
-void Disjunction::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void Disjunction::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     res = 0.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
         if(MathUtils::doubleIsEqual(exprRes, 1.0)) {
             res = 1.0;
             return;
@@ -40,8 +40,8 @@ void Disjunction::evaluateToKleeneOutcome(double& res, State const& current, Sta
     }
 }
 
-void EqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
+void EqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res)) {
         //res is already -infty
@@ -49,7 +49,7 @@ void EqualsExpression::evaluateToKleeneOutcome(double& res, State const& current
     }
 
     for(unsigned int i = 1; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
         if(MathUtils::doubleIsMinusInfinity(exprRes)) {
             res = -numeric_limits<double>::max();
             return;
@@ -61,10 +61,10 @@ void EqualsExpression::evaluateToKleeneOutcome(double& res, State const& current
     res = 1.0;
 }
 
-void GreaterExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void GreaterExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
-    exprs[1]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
+    exprs[1]->evaluateToKleeneOutcome(exprRes, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res) || MathUtils::doubleIsMinusInfinity(exprRes)) {
         res = -numeric_limits<double>::max();
@@ -73,10 +73,10 @@ void GreaterExpression::evaluateToKleeneOutcome(double& res, State const& curren
     }
 }
 
-void LowerExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void LowerExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
-    exprs[1]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
+    exprs[1]->evaluateToKleeneOutcome(exprRes, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res) || MathUtils::doubleIsMinusInfinity(exprRes)) {
         res = -numeric_limits<double>::max();
@@ -85,10 +85,10 @@ void LowerExpression::evaluateToKleeneOutcome(double& res, State const& current,
     }
 }
 
-void GreaterEqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void GreaterEqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
-    exprs[1]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
+    exprs[1]->evaluateToKleeneOutcome(exprRes, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res) || MathUtils::doubleIsMinusInfinity(exprRes)) {
         res = -numeric_limits<double>::max();
@@ -97,10 +97,10 @@ void GreaterEqualsExpression::evaluateToKleeneOutcome(double& res, State const& 
     }
 }
 
-void LowerEqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void LowerEqualsExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
-    exprs[1]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
+    exprs[1]->evaluateToKleeneOutcome(exprRes, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res) || MathUtils::doubleIsMinusInfinity(exprRes)) {
         res = -numeric_limits<double>::max();
@@ -109,10 +109,10 @@ void LowerEqualsExpression::evaluateToKleeneOutcome(double& res, State const& cu
     }
 }
 
-void Addition::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void Addition::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     res = 0.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
         if(MathUtils::doubleIsMinusInfinity(exprRes)) {
             res = -numeric_limits<double>::max();
             return;
@@ -122,8 +122,8 @@ void Addition::evaluateToKleeneOutcome(double& res, State const& current, State 
     }
 }
 
-void Subtraction::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
+void Subtraction::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res)) {
         //res is already -infty
@@ -131,7 +131,7 @@ void Subtraction::evaluateToKleeneOutcome(double& res, State const& current, Sta
     }
 
     for(unsigned int i = 1; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
 
         if(MathUtils::doubleIsMinusInfinity(exprRes)) {
             res = -numeric_limits<double>::max();
@@ -142,10 +142,10 @@ void Subtraction::evaluateToKleeneOutcome(double& res, State const& current, Sta
     }
 }
 
-void Multiplication::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void Multiplication::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     res = 1.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
 
         if(MathUtils::doubleIsEqual(exprRes, 0.0)) {
             res = 0.0;
@@ -158,8 +158,8 @@ void Multiplication::evaluateToKleeneOutcome(double& res, State const& current, 
     }
 }
 
-void Division::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    exprs[0]->evaluateToKleeneOutcome(res, current, next, actions);
+void Division::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    exprs[0]->evaluateToKleeneOutcome(res, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res)) {
         //res is already -infty
@@ -170,7 +170,7 @@ void Division::evaluateToKleeneOutcome(double& res, State const& current, State 
     }
 
     for(unsigned int i = 1; i < exprs.size(); ++i) {
-        exprs[i]->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        exprs[i]->evaluateToKleeneOutcome(exprRes, current, actions);
 
         if(MathUtils::doubleIsMinusInfinity(exprRes)) {
             res = -numeric_limits<double>::max();
@@ -181,48 +181,48 @@ void Division::evaluateToKleeneOutcome(double& res, State const& current, State 
     }
 }
 
-void BernoulliDistribution::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    expr->evaluateToKleeneOutcome(res, current, next, actions);
+void BernoulliDistribution::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    expr->evaluateToKleeneOutcome(res, current, actions);
     if(!MathUtils::doubleIsEqual(res,1.0) && !MathUtils::doubleIsEqual(res,0.0)) {
         res = -numeric_limits<double>::max();
     }
 }
 
-void IfThenElseExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    condition->evaluateToKleeneOutcome(res, current, next, actions);
+void IfThenElseExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    condition->evaluateToKleeneOutcome(res, current, actions);
 
     if(MathUtils::doubleIsMinusInfinity(res)) {
         //the condition could be true or false -> we evaluate both, and check if they are equal
-        valueIfFalse->evaluateToKleeneOutcome(res, current, next, actions);
-        valueIfTrue->evaluateToKleeneOutcome(exprRes, current, next, actions);
+        valueIfFalse->evaluateToKleeneOutcome(res, current, actions);
+        valueIfTrue->evaluateToKleeneOutcome(exprRes, current, actions);
         if(!MathUtils::doubleIsEqual(res,exprRes)) {
             res = -numeric_limits<double>::max();
         }
     } else {
         //otherwise we only evaluate the corresponding log expr
         if(MathUtils::doubleIsEqual(res,0.0)) {
-            valueIfFalse->evaluateToKleeneOutcome(res, current, next, actions);
+            valueIfFalse->evaluateToKleeneOutcome(res, current, actions);
         } else {
-            valueIfTrue->evaluateToKleeneOutcome(res, current, next, actions);
+            valueIfTrue->evaluateToKleeneOutcome(res, current, actions);
         }
     }
 }
 
-void MultiConditionChecker::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
+void MultiConditionChecker::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     //if we meet a condition that evaluates to unknown we must keep on checking conditions until we find one
     //that is always true, and compare all potentially true ones with each other
     hasUncertainCondition = false;
 
     for(unsigned int i = 0; i < conditions.size(); ++i) {
-        conditions[i]->evaluateToKleeneOutcome(res, current, next, actions);
+        conditions[i]->evaluateToKleeneOutcome(res, current, actions);
         if(MathUtils::doubleIsEqual(res,1.0)) {
-            effects[i]->evaluateToKleeneOutcome(res, current, next, actions);
+            effects[i]->evaluateToKleeneOutcome(res, current, actions);
             if(hasUncertainCondition && !MathUtils::doubleIsEqual(res,exprRes)) {
                 res = -numeric_limits<double>::max();
             }
             return;
         } else if(MathUtils::doubleIsMinusInfinity(res)) {
-            effects[i]->evaluateToKleeneOutcome(res, current, next, actions);
+            effects[i]->evaluateToKleeneOutcome(res, current, actions);
 
             if(MathUtils::doubleIsMinusInfinity(res)) {
                 return;
@@ -237,8 +237,8 @@ void MultiConditionChecker::evaluateToKleeneOutcome(double& res, State const& cu
     assert(false);
 }
 
-void NegateExpression::evaluateToKleeneOutcome(double& res, State const& current, State const& next, ActionState const& actions) {
-    expr->evaluateToKleeneOutcome(res, current, next, actions);
+void NegateExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    expr->evaluateToKleeneOutcome(res, current, actions);
     if(MathUtils::doubleIsEqual(res, 0.0)) {
         res = 1.0;
     } else if(MathUtils::doubleIsEqual(res, 1.0)) {

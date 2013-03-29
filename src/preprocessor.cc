@@ -3,18 +3,14 @@
 #include "prost_planner.h"
 #include "logical_expressions.h"
 #include "actions.h"
-#include "conditional_probability_functions.h"
-
-#include "utils/math_utils.h"
+#include "conditional_probability_function.h"
+#include "state_action_constraint.h"
 
 #include <iostream>
 
 using namespace std;
 
 PlanningTask* Preprocessor::preprocess(map<string,int>& stateVariableIndices) {
-    MathUtils::initTwoToThePowerOfMap();
-    MathUtils::initThreeToThePowerOfMap();
-
     simplifyFormulas();
     createProbabilisticPlanningTaskRepresentation(stateVariableIndices);
     return probPlanningTask->determinizeMostLikely(task);

@@ -15,7 +15,9 @@ HEADERS = prost_planner.h \
 	  typed_objects.h \
 	  logical_expressions.h \
 	  actions.h \
-	  conditional_probability_functions.h \
+	  evaluatable.h \
+	  conditional_probability_function.h \
+	  state_action_constraint.h \
 	  caching_component.h \
 	  learning_component.h \
 	  utils/strxml.h \

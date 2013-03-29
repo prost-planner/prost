@@ -1,13 +1,3 @@
-void StateActionConstraint::replaceQuantifier(UnprocessedPlanningTask* task, Instantiator* instantiator) {
-    map<string, string> replacements;
-    sac = sac->replaceQuantifier(task, replacements, instantiator);
-}
-
-void StateActionConstraint::instantiate(UnprocessedPlanningTask* task) {
-    map<string, Object*> replacements;
-    sac = sac->instantiate(task, replacements);
-}
-
 void Quantifier::getReplacements(UnprocessedPlanningTask* task, vector<string>& parameterNames, vector<vector<Object*> >& replacements, Instantiator* instantiator) {
     vector<ObjectType*> parameterTypes;
     for(unsigned int i = 0; i < parameterDefsSet->parameterDefs.size(); ++i) {

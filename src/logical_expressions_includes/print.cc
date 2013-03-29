@@ -24,11 +24,6 @@ void VariableDefinition::print(ostream& out) {
     out << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
 }
 
-void StateActionConstraint::print(ostream& out) {
-    sac->print(out);
-    out << endl;
-}
-
 void ParameterDefinition::print(ostream& out) {
     out << "(";
     out << parameterName;

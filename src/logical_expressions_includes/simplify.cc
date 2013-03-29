@@ -1,25 +1,3 @@
-bool StateActionConstraint::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    //StateActionConstraints are checked on the initial state, so we treat all variables 
-    //as constants (besides actions)
-    map<StateFluent*, NumericConstant*> replacementsCopy = replacements;
-    vector<AtomicLogicalExpression*> initVals;
-    task->getInitialState(initVals);
-    for(unsigned int i = 0; i < initVals.size(); ++i) {
-        StateFluent* var = dynamic_cast<StateFluent*>(initVals[i]);
-        if(var && replacementsCopy.find(var) == replacementsCopy.end()) {
-            replacementsCopy[var] = task->getConstant(var->initialValue);
-        }
-    }
-
-    sac = sac->simplify(task, replacementsCopy);
-    NumericConstant* nc = dynamic_cast<NumericConstant*>(sac);
-    if(nc) {
-        assert(nc != NumericConstant::falsity());
-        return true;
-    }
-    return false;
-}
-
 LogicalExpression* LogicalExpression::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
     assert(false);
     return NULL;

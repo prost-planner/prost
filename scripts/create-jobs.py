@@ -27,13 +27,12 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev4"
+revision = "rev14"
 
 configs = [
     "[UCT -uc 0 -i [IDS]]",
     "[UCT -uc 0 -i [RAND]]",
-    "[UCT -uc 0 -sd 40 -i [IDS -sd 40]]",
-    "[UCT -uc 0 -sd 40 -i [RAND]]"
+    "[UCT -uc 0 -sd 40 -i [IDS -sd 40]]"
 ]
 
 host = "localhost"
@@ -45,7 +44,7 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "./run-server benchmarks/ippc2011/rddl/ %(port)d 100 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 30 &&" \
-" ./prost4 %(baseDir)s/rddl_prefix/ %(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./prost %(baseDir)s/rddl_prefix/ %(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
 def isInstanceName(fileName):
     return fileName.count("inst") > 0
@@ -80,4 +79,4 @@ if __name__ == '__main__':
         benchmarkDir = sys.argv[1]
     instances = filter(isInstanceName, os.listdir(benchmarkDir))
     instances = [instance.split(".")[0] for instance in instances]
-    create_tasks("../testbed/prost4.q", instances)
+    create_tasks("../testbed/prost.q", instances)

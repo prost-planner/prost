@@ -8,6 +8,7 @@ class ProstPlanner;
 class LearningComponent {
 public:
     LearningComponent(ProstPlanner* planner);
+    LearningComponent(LearningComponent const& other);
     virtual ~LearningComponent();
 
     virtual bool learn(std::vector<State> const& /*trainingSet*/) {
