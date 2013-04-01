@@ -133,8 +133,8 @@ protected:
         isProb(false),
         hasArithmeticFunction(false),
         hashIndex(-1),
-        cachingType(VECTOR),
-        kleeneCachingType(VECTOR) {}
+        cachingType(NONE),
+        kleeneCachingType(NONE) {}
 
     Evaluatable(Evaluatable const& other, LogicalExpression* _formula) :
         name(other.name),
