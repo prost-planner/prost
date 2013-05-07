@@ -18,7 +18,7 @@ using namespace std;
 bool ConditionalProbabilityFunction::simplify(UnprocessedPlanningTask* _task, map<StateFluent*, NumericConstant*>& replacements) {
     formula = formula->simplify(_task, replacements);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(formula);
-    if(nc) {
+    if(nc && MathUtils::doubleIsEqual(head->initialValue, nc->value)) {
         assert(replacements.find(head) == replacements.end());
         replacements[head] = nc;
         return true;
