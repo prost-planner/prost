@@ -62,7 +62,7 @@ public:
 
     //printer
     virtual void print(std::ostream& out);
-    virtual void printStats(std::ostream& out, std::string indent = "");
+    virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
     SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
@@ -72,7 +72,7 @@ protected:
         planner(_planner), 
         task(_task),
         cachingEnabled(true),
-        maxSearchDepth(15) {}
+        maxSearchDepth(_task->getHorizon()) {}
 
     //used for logging
     std::string name;
