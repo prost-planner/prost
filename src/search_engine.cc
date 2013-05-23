@@ -1,6 +1,6 @@
 #include "search_engine.h"
 
-#include "uct_search.h"
+#include "mc_uct_search.h"
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
 #include "random_search.h"
@@ -24,7 +24,7 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
 
     if(desc.find("UCT") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new UCTSearch(planner);
+        result = new MCUCTSearch(planner);
     } else if(desc.find("IDS") == 0) {
         desc = desc.substr(3,desc.size());
         result = new IterativeDeepeningSearch(planner);
