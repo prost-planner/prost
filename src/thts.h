@@ -4,6 +4,68 @@
 #include "random_search.h"
 #include "utils/timer.h"
 
+// THTS, Trial-based Heuristic Tree Search, is the implementation of
+// the abstract framework described in the ICAPS 2013 paper (Thomas
+// Keller and Malte Helmert: Trial-based Heuristic Tree Search for
+// Finite Horizon MDPs). The described ingredients can be implemented
+// in the abstract functions 
+
+// 1. int selectAction(SearchNode* node): return the index of the
+// selected action
+
+// 2. SearchNode* selectOutcome(SearchNode* node, State&
+// stateAsProbDistr, int& varIndex): return the successor node of node
+// and set stateAsProbDistr[varIndex] to the according value within
+// that variables domain
+
+
+// 3. bool continueTrial(SearchNode* node): return false to enter the
+// backup phase, and true otherwise. The baseline implementation of
+// this checks if the number of previously unvisited decision nodes
+// that was encountered in this trial is equal to a parameter that is
+// set to the horizon by default (i.e., if nothing is changed all
+// trials only finish in goal states)
+
+// 4. void initializeDecisionNode(SearchNode* node): implement *how*
+// to use the heuristic, not *which* heuristic to use (that is done on
+// the command line with the parameter "-i"). The baseline
+// implementation is an action-value initialization that calls void
+// initializeDecisionNodeChild(SearchNode* node, unsigned int const&
+// actionIndex, double const& initialQValue) for each child with index
+// actionIndex that is supposed to be initialized.
+
+// 5a. void backupDecisionNodeLeaf(SearchNode* node, double const&
+// immReward, double const& futReward): is called on leaf (not tip!)
+// nodes, i.e. immReward and futReward are known to be correct.
+
+// 5b. backupDecisionNode(SearchNode* node, double const& immReward,
+// double const& futReward): is called for non-leaf decision nodes, so
+// futReward is not exact but the result of the current trial
+
+// 5c. backupChanceNode(SearchNode* node, double const& accReward): is
+// called for chance nodes
+
+
+// SearchNode must be a class with the following public functions and
+// members:
+
+// 1. A member variable std::vector<SearchNode> children to represent
+// the tree
+
+// 2. A function getExpectedReward() that returns a double, the
+// expected reward in that node WITHOUT the immediate reward
+
+// 3. A function getExpectedRewardEstimate() that returns a double,
+// the expected reward estimate in that node INCLUDING the immediate
+// reward
+
+// 4. A function isSolved() that returns a bool indicating if the node
+// has been labeled as solved
+
+// 5. A function isARewardLock() that returns a bool indicating if the
+// node is a reward lock
+
+
 template <class SearchNode>
 class THTS : public SearchEngine {
 public:
@@ -54,6 +116,10 @@ public:
         initializer = _initializer;
     }
 
+    virtual void setNumberOfNewDecisionNodesPerTrial(int _numberOfNewDecisionNodesPerTrial) {
+        numberOfNewDecisionNodesPerTrial = _numberOfNewDecisionNodesPerTrial;
+    }
+
     // Print
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
@@ -62,20 +128,20 @@ protected:
     THTS<SearchNode>(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
         SearchEngine(_name, _planner, _task), 
         currentRootNode(NULL),
-        chosenChild(NULL),
+        chosenOutcome(NULL),
         states(task->getHorizon()+1, State(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys())),
         currentStateIndex(task->getHorizon()),
         nextStateIndex(task->getHorizon()-1),
         actions(task->getHorizon(), -1),
         currentActionIndex(nextStateIndex),
         currentTrial(0),
-        varIndex(-1),
         initializer(NULL),
         initialQValues(task->getNumberOfActions(),0.0),
         initializedDecisionNodes(0),
         terminationMethod(THTS<SearchNode>::TIME), 
         timeout(2.0),
         maxNumberOfTrials(0),
+        numberOfNewDecisionNodesPerTrial(task->getHorizon()+1),
         numberOfRuns(0),
         cacheHits(0),
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
@@ -95,14 +161,19 @@ protected:
     void initTrial();
     void initTrialStep();
 
-    // Action selection (and trial termination)
-    virtual void selectAction(SearchNode* node) = 0;
+    // Action selection
+    virtual int selectAction(SearchNode* node) = 0;
 
     // Outcome selection
-    virtual void selectOutcome(SearchNode* node) = 0;
+    virtual SearchNode* selectOutcome(SearchNode* node, State& stateAsProbDistr, int& varIndex) = 0;
+
+    // Trial length determination
+    virtual bool continueTrial(SearchNode* /*node*/) {
+        return (initializedDecisionNodes < numberOfNewDecisionNodesPerTrial);
+    }
 
     // Initialization of nodes
-    void initializeDecisionNode(SearchNode* node);
+    virtual void initializeDecisionNode(SearchNode* node);
     virtual void initializeDecisionNodeChild(SearchNode* node, unsigned int const& actionIndex, double const& initialQValue) = 0;
 
     // Backup functions
@@ -114,8 +185,9 @@ protected:
     // action, noop or the only reasonable action is returned
     int getUniquePolicy();
 
-    // Determine if the termination criterion is fullfilled
-    bool continueTrial();
+    // Determine if the termination criterion is fullfilled or if we
+    // want another trial
+    bool moreTrials();
 
     // Memory management
     SearchNode* getSearchNode();
@@ -124,9 +196,16 @@ protected:
     }
     void resetNodePool();
 
+    // The number of remaining steps until the max search depth for
+    // this state is reached
+    int const& remainingConsideredSteps() {
+        return currentStateIndex;
+    }
+
+private:
     // Search nodes used in trials
     SearchNode* currentRootNode;
-    SearchNode* chosenChild;
+    SearchNode* chosenOutcome;
 
     // States used in trials
     std::vector<State> states;
@@ -147,8 +226,8 @@ protected:
     // depth is used
     int ignoredSteps;
 
-    // Index of variable that is currently processed
-    int varIndex;
+    // Variable used to navigate through chance node layers
+    int chanceNodeVarIndex;
 
     // Search engine that estimates Q-values for initialization of
     // decison node children
@@ -170,6 +249,7 @@ protected:
     THTS<SearchNode>::TerminationMethod terminationMethod;
     double timeout;
     int maxNumberOfTrials;
+    int numberOfNewDecisionNodesPerTrial;
 
     // Statistics
     int numberOfRuns;
@@ -324,7 +404,7 @@ void THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
 
     // Start the main loop that starts trials until some termination
     // criterion is fullfilled
-    while(continueTrial()) {
+    while(moreTrials()) {
         initTrial();
         visitDecisionNode(currentRootNode);
         ++currentTrial;
@@ -369,7 +449,7 @@ void THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
 }
 
 template <class SearchNode>
-bool THTS<SearchNode>::continueTrial() {
+bool THTS<SearchNode>::moreTrials() {
     // Check memory constraints and solvedness
     if(currentRootNode->isSolved() || (lastUsedNodePoolIndex >= 15000000)) {
         return false;
@@ -443,17 +523,21 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         return (reward + futureReward);
     }
 
-    // Select the action that is simulated
-    selectAction(node);
+    if(continueTrial(node)) {
+        // Select the action that is simulated
+        actions[currentActionIndex] = selectAction(node);
+        assert(node->children[actions[currentActionIndex]]);
 
-    // If chosenChild is NULL, we have reached the end of this trial
-    if(chosenChild) {
+        // cout << "Chosen action is ";
+        // task->printAction(cout, actions[currentActionIndex]);
+        // cout << endl;
+
         // Sample successor state
         task->calcSuccessorAsProbabilityDistribution(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
-        varIndex = task->getFirstProbabilisticVarIndex();
+        chanceNodeVarIndex = task->getFirstProbabilisticVarIndex();
 
         // Continue with the chance nodes
-        futureReward = visitChanceNode(chosenChild);
+        futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
     }
 
     // Backup this node
@@ -477,19 +561,21 @@ template <class SearchNode>
 double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
     double futureReward;
     //TODO: Make sure this also works in deterministic domains
-    assert(varIndex < task->getStateSize());
+    assert(chanceNodeVarIndex < task->getStateSize());
 
-    // select outcome (and set variable in next state accordingly)
-    selectOutcome(node);
+    // select outcome (and set the variable in next state accordingly)
+    chosenOutcome = selectOutcome(node, states[nextStateIndex], chanceNodeVarIndex);
+    assert(MathUtils::doubleIsEqual(states[nextStateIndex][chanceNodeVarIndex],0.0) || 
+           MathUtils::doubleIsEqual(states[nextStateIndex][chanceNodeVarIndex],1.0));
 
-    ++varIndex;
-    if(varIndex == task->getStateSize()) {
+    ++chanceNodeVarIndex;
+    if(chanceNodeVarIndex == task->getStateSize()) {
         task->calcStateFluentHashKeys(states[nextStateIndex]);
         task->calcStateHashKey(states[nextStateIndex]);
 
-        futureReward = visitDecisionNode(chosenChild);
+        futureReward = visitDecisionNode(chosenOutcome);
     } else {
-        futureReward = visitChanceNode(chosenChild);
+        futureReward = visitChanceNode(chosenOutcome);
     }
 
     backupChanceNode(node, futureReward);
