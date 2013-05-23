@@ -53,7 +53,7 @@ public:
 
     //printing and statistics
     void resetStats();
-    void printStats(std::ostream& out, std::string indent = "");
+    void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
     bool moreIterations(std::vector<double>& result);

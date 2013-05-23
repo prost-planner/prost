@@ -90,7 +90,7 @@ void SearchEngine::print(ostream& out) {
     outStream.str("");
 }
 
-void SearchEngine::printStats(ostream& out, string indent) {
+void SearchEngine::printStats(ostream& out, bool const& /*printRoundStats*/, string indent) {
     out << indent << "Statistics of " << name << ":" << endl;
 }
 

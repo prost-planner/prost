@@ -171,8 +171,8 @@ void IterativeDeepeningSearch::resetStats() {
     numberOfRuns = 0;
 }
 
-void IterativeDeepeningSearch::printStats(ostream& out, string indent) {
-    SearchEngine::printStats(out, indent);
+void IterativeDeepeningSearch::printStats(ostream& out, bool const& printRoundStats, string indent) {
+    SearchEngine::printStats(out, printRoundStats, indent);
     if(numberOfRuns > 0) {
         out << indent << "Average search depth: " << ((double)accumulatedSearchDepth/(double)numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
     }

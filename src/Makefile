@@ -1,5 +1,6 @@
 HEADERS = prost_planner.h \
 	  search_engine.h \
+	  thts.h \
 	  uct_search.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \

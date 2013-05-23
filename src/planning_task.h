@@ -89,6 +89,58 @@ public:
         return res;
     }
 
+    // Calculates the probabiltity distribution that results from
+    // applying action with index actionIndex in the state current
+    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, State& nextAsProbDistr) const {
+        for(int i = 0; i < stateSize; ++i) {
+            CPFs[i]->evaluate(nextAsProbDistr[i], current, actionStates[actionIndex]);
+        }
+    }
+
+    // Sample a successor state from a state given as a probability
+    // distribution (and overwrite the state)
+    void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
+        // Sample all probabilistic variables according to their
+        // probability distribution
+        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
+                continue;
+            } else {
+                generateRandomNumber(randNum);
+                next[i] = (MathUtils::doubleIsSmaller(randNum, next[i]) ? 1.0 : 0.0);
+            }
+        }
+    }
+
+    // Sample a successor state from a state given as a probability
+    // distribution (and write to another state)
+    void sampleSuccessorStateFromProbabilityDistribution(State const& nextAsProbDistr, State& next) const {
+        // All deterministic variables are already 0 or 1
+        for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
+            next[i] = nextAsProbDistr[i];
+        }
+
+        // Sample all probabilistic variables according to their
+        // probability distribution
+        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(nextAsProbDistr[i], 0.0) || MathUtils::doubleIsEqual(nextAsProbDistr[i], 1.0)) {
+                next[i] = nextAsProbDistr[i];
+                continue;
+            } else {
+                generateRandomNumber(randNum);
+                next[i] = (MathUtils::doubleIsSmaller(randNum, nextAsProbDistr[i]) ? 1.0 : 0.0);
+            }
+        }
+    }
+
+    // Samples a single variable within a state given as a probability distribution
+    void sampleVariable(State& stateAsProbDistr, unsigned int const& varIndex) const {
+        if(!MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 0.0) && !MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 1.0)) {
+            generateRandomNumber(randNum);
+            stateAsProbDistr[varIndex] = (MathUtils::doubleIsSmaller(randNum, stateAsProbDistr[varIndex]) ? 1.0 : 0.0);
+        }
+    }
+
     // Calculate the whole state transition, including rewards
     void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
         calcSuccessorAsProbabilityDistribution(current, actionIndex, next);
@@ -148,6 +200,76 @@ public:
     // Calulate the reward in Kleene logic
     void calcKleeneReward(State const& current, int const& actionIndex, double& reward) const {
         rewardCPF->evaluateToKleeneOutcome(reward, current, actionStates[actionIndex]);
+    }
+
+    // Calculate the state fluent hash key for each state fluent
+    void calcStateFluentHashKeys(State& state) const {
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToStateFluentHashKeyMap[i][j].first] += indexToStateFluentHashKeyMap[i][j].second;
+                }                
+            }
+        }
+    }
+
+    // Calculate the Kleene state fluent hash key for each state
+    // fluent
+    void calcKleeneStateFluentHashKeys(State& state) const {
+        for(unsigned int i = 0; i < stateSize; ++i) {
+            if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += indexToKleeneStateFluentHashKeyMap[i][j].second;
+                }                
+            } else if(MathUtils::doubleIsMinusInfinity(state[i])) {
+                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
+                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
+                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += (2*indexToKleeneStateFluentHashKeyMap[i][j].second);
+                } 
+            }
+        }
+    }
+
+    // Calculate (bool) hash key and state fluent hash keys (if state
+    // hashing is possible)
+    void calcStateHashKey(State& state) const {
+        if(stateHashingPossible) {
+            state.hashKey = 0;
+            for(int i = 0; i < stateSize; ++i) {
+                if(MathUtils::doubleIsEqual(state[i],1.0)) {
+                    state.hashKey += CPFs[i]->hashKeyBase;
+                }
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
+    }
+
+    // Calculate hash key of states as probability distribution (if
+    // state hashing is possible)
+    void calcHashKeyOfProbabilityDistribution(State& state) const {
+        if(stateHashingWithStatesAsProbabilityDistributionPossible) {
+            state.hashKey = 0;
+            // We differentiate between deterministic and
+            // probabilistic variables here because we can omit a map
+            // lookup for deterministic variables, and because the
+            // probDomainMap is not set correctly in deterministic
+            // tasks.
+            for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
+                if(MathUtils::doubleIsEqual(state[index],1.0)) {
+                    state.hashKey += CPFs[index]->hashKeyBase;
+                }
+            }
+
+            for(int index = firstProbabilisticVarIndex; index < stateSize; ++index) {
+                assert(CPFs[index]->probDomainMap.find(state[index]) != CPFs[index]->probDomainMap.end());
+                state.hashKey += CPFs[index]->probDomainMap[state[index]];
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
     }
 
     ActionState const& actionState(int const& index) const {
@@ -255,120 +377,6 @@ private:
 
     void determinePruningEquivalence();
     void initializeRewardDependentVariables();
-
-    // Calculates the probabiltity distribution that results from
-    // applying action with index actionIndex in the state current
-    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, State& nextAsProbDistr) const {
-        for(int i = 0; i < stateSize; ++i) {
-            CPFs[i]->evaluate(nextAsProbDistr[i], current, actionStates[actionIndex]);
-        }
-    }
-
-    // Sample a successor state from a state given as a probability
-    // distribution (and overwrite the state)
-    void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
-        // Sample all probabilistic variables according to their
-        // probability distribution
-        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
-                continue;
-            } else {
-                generateRandomNumber(randNum);
-                next[i] = (MathUtils::doubleIsSmaller(randNum, next[i]) ? 1.0 : 0.0);
-            }
-        }
-    }
-
-    // Sample a successor state from a state given as a probability
-    // distribution (and write to another state)
-    void sampleSuccessorStateFromProbabilityDistribution(State const& nextAsProbDistr, State& next) const {
-        // All deterministic variables are already 0 or 1
-        for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
-            next[i] = nextAsProbDistr[i];
-        }
-
-        // Sample all probabilistic variables according to their
-        // probability distribution
-        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(nextAsProbDistr[i], 0.0) || MathUtils::doubleIsEqual(nextAsProbDistr[i], 1.0)) {
-                next[i] = nextAsProbDistr[i];
-                continue;
-            } else {
-                generateRandomNumber(randNum);
-                next[i] = (MathUtils::doubleIsSmaller(randNum, nextAsProbDistr[i]) ? 1.0 : 0.0);
-            }
-        }
-    }
-
-    // Calculate the state fluent hash key for each state fluent
-    void calcStateFluentHashKeys(State& state) const {
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(state[i],1.0)) {
-                for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
-                    assert(state.stateFluentHashKeys.size() > indexToStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToStateFluentHashKeyMap[i][j].first] += indexToStateFluentHashKeyMap[i][j].second;
-                }                
-            }
-        }
-    }
-
-    // Calculate the Kleene state fluent hash key for each state
-    // fluent
-    void calcKleeneStateFluentHashKeys(State& state) const {
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(state[i],1.0)) {
-                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += indexToKleeneStateFluentHashKeyMap[i][j].second;
-                }                
-            } else if(MathUtils::doubleIsMinusInfinity(state[i])) {
-                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += (2*indexToKleeneStateFluentHashKeyMap[i][j].second);
-                } 
-            }
-        }
-    }
-
-    // Calculate (bool) hash key and state fluent hash keys (if state
-    // hashing is possible)
-    void calcStateHashKey(State& state) const {
-        if(stateHashingPossible) {
-            state.hashKey = 0;
-            for(int i = 0; i < stateSize; ++i) {
-                if(MathUtils::doubleIsEqual(state[i],1.0)) {
-                    state.hashKey += CPFs[i]->hashKeyBase;
-                }
-            }
-        } else {
-            assert(state.hashKey == -1);
-        }
-    }
-
-    // Calculate hash key of states as probability distribution (if
-    // state hashing is possible)
-    void calcHashKeyOfProbabilityDistribution(State& state) const {
-        if(stateHashingWithStatesAsProbabilityDistributionPossible) {
-            state.hashKey = 0;
-            // We differentiate between deterministic and
-            // probabilistic variables here because we can omit a map
-            // lookup for deterministic variables, and because the
-            // probDomainMap is not set correctly in deterministic
-            // tasks.
-            for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
-                if(MathUtils::doubleIsEqual(state[index],1.0)) {
-                    state.hashKey += CPFs[index]->hashKeyBase;
-                }
-            }
-
-            for(int index = firstProbabilisticVarIndex; index < stateSize; ++index) {
-                assert(CPFs[index]->probDomainMap.find(state[index]) != CPFs[index]->probDomainMap.end());
-                state.hashKey += CPFs[index]->probDomainMap[state[index]];
-            }
-        } else {
-            assert(state.hashKey == -1);
-        }
-    }
 
     // functions for action applicability and pruning
     void setApplicableReasonableActions(State const& state, std::vector<int>& res) const;
