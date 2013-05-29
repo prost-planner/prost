@@ -6,7 +6,7 @@ using namespace std;
                         Initialization
 ******************************************************************/
 
-inline void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& actionIndex, double const& initialQValue) {
+void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& actionIndex, double const& initialQValue) {
     node->children[actionIndex] = getSearchNode();
     node->children[actionIndex]->accumulatedReward = (double)numberOfInitialVisits * (double)remainingConsideredSteps() * initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;

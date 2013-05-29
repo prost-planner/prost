@@ -1,6 +1,9 @@
 #include "search_engine.h"
 
 #include "mc_uct_search.h"
+#include "max_mc_uct_search.h"
+#include "dp_uct_search.h"
+
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
 #include "random_search.h"
@@ -12,6 +15,7 @@
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
+
 using namespace std;
 
 SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
@@ -20,11 +24,30 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
     StringUtils::removeFirstAndLastCharacter(desc);
     StringUtils::trim(desc);
 
+    // Check if a shortcut description has been used. TODO: Implement
+    // this in a clean and extendible way!
+    if(desc.find("IPPC2011") == 0) {
+        desc = desc.substr(8,desc.size());
+        desc = "MC-UCT -sd 15 -i [IDS -sd 15]" + desc;
+    } else if(desc.find("UCTStar") == 0) {
+        desc = desc.substr(7,desc.size());
+        desc = "DP-UCT -ndn 2" + desc;
+    } else if(desc.find("MaxMC-UCTStar") == 0) {
+        desc = desc.substr(13,desc.size());
+        desc = "MaxMC-UCT -ndn 2" + desc;
+    }
+
     SearchEngine* result = NULL;
 
-    if(desc.find("UCT") == 0) {
-        desc = desc.substr(3,desc.size());
+    if(desc.find("MC-UCT") == 0) {
+        desc = desc.substr(6,desc.size());
         result = new MCUCTSearch(planner);
+    } else if(desc.find("MaxMC-UCT") == 0) {
+        desc = desc.substr(9,desc.size());
+        result = new MaxMCUCTSearch(planner);
+    } else if(desc.find("DP-UCT") == 0) { 
+        desc = desc.substr(6,desc.size());
+        result = new DPUCTSearch(planner);
     } else if(desc.find("IDS") == 0) {
         desc = desc.substr(3,desc.size());
         result = new IterativeDeepeningSearch(planner);

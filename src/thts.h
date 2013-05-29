@@ -288,6 +288,9 @@ bool THTS<SearchNode>::setValueFromString(std::string& param, std::string& value
     } else if(param == "-i") {
         setInitializer(SearchEngine::fromString(value, planner));
         return true;
+    } else if(param == "-ndn") {
+        setNumberOfNewDecisionNodesPerTrial(atoi(value.c_str()));
+        return true;
     }
 
     return SearchEngine::setValueFromString(param, value);
@@ -304,7 +307,7 @@ bool THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
     }
     std::cout << name << ": learning..." << std::endl;
 
-    if(initializer->getMaxSearchDepth() <= 2) {
+    if(initializer->getMaxSearchDepth() == 0) {
         RandomSearch* _initializer = new RandomSearch(planner);
         setInitializer(_initializer);
         std::cout << "Aborted initialization as search depth is too low!" << std::endl;
@@ -396,6 +399,7 @@ void THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
         task->printAction(outStream, uniquePolicyOpIndex);
         outStream << std::endl << std::endl;
         result.push_back(uniquePolicyOpIndex);
+        currentRootNode = NULL;
         printStats(outStream, (_rootState.remainingSteps() == 1));
         return;
     }
@@ -527,6 +531,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         // Select the action that is simulated
         actions[currentActionIndex] = selectAction(node);
         assert(node->children[actions[currentActionIndex]]);
+        assert(!node->children[actions[currentActionIndex]]->isSolved());
 
         // cout << "Chosen action is ";
         // task->printAction(cout, actions[currentActionIndex]);
@@ -715,20 +720,25 @@ void THTS<SearchNode>::print(std::ostream& out) {
 template <class SearchNode>
 void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats, std::string indent) {
     SearchEngine::printStats(out, printRoundStats, indent);
+
     if(currentTrial > 0) {
         out << "Performed trials: " << currentTrial << std::endl;
         out << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
+        out << indent << "Cache Hits: " << cacheHits << std::endl;
     }
     out << "Initialization: ";
     initializer->printStats(out, printRoundStats, indent + "  ");
 
     if(currentRootNode) {
+        out << std::endl << indent << "Root Node: " << std::endl;
+        currentRootNode->print(out);
         out << std::endl << "Q-Value Estimates: " << std::endl;
         for(unsigned int i = 0; i < currentRootNode->children.size(); ++i) {
             if(currentRootNode->children[i]) {
+                out << indent;
                 task->printAction(out, i);
-                out << ": " << currentRootNode->children[i]->getExpectedRewardEstimate()
-                    << " (in " << currentRootNode->children[i]->numberOfVisits << " visits)" << std::endl;
+                out << ": ";
+                currentRootNode->children[i]->print(out);
             }
         }
     }
