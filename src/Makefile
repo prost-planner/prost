@@ -3,6 +3,8 @@ HEADERS = prost_planner.h \
 	  thts.h \
 	  uct_base.h \
 	  mc_uct_search.h \
+	  max_mc_uct_search.h \
+	  dp_uct_search.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
 	  random_search.h \

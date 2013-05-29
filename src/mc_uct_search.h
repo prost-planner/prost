@@ -2,11 +2,11 @@
 #define MC_UCT_SEARCH_H
 
 // MCUCTSearch is the "standard" UCT variant that uses Monte-Carlo
-// backups and Monote-Carlo sampling for outcome selection.
+// backups and Monte-Carlo sampling for outcome selection.
 
 #include "uct_base.h"
 
-class MCUCTNode {
+class MCUCTNode { //Monte Carlo UCTNode
 public:
     MCUCTNode() :
         children(),

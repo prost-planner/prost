@@ -126,7 +126,7 @@ template <class SearchNode>
 inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(SearchNode* node) {
     unsigned int childIndex = 0;
     for(; childIndex < node->children.size(); ++childIndex) {
-    	if(node->children[childIndex]) {
+    	if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
             bestActionIndices.push_back(childIndex);
             smallestNumVisits = node->children[childIndex]->numberOfVisits;
             highestNumVisits = node->children[childIndex]->numberOfVisits;
@@ -137,7 +137,7 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(SearchNode* 
     ++childIndex;
 
     for(; childIndex < node->children.size(); ++childIndex) {
-        if(node->children[childIndex]) {
+        if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
             if(MathUtils::doubleIsSmaller(node->children[childIndex]->numberOfVisits,smallestNumVisits)) {
                 bestActionIndices.clear();
                 bestActionIndices.push_back(childIndex);
@@ -171,19 +171,19 @@ inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
     bestUCTValue = -std::numeric_limits<double>::max();
     parentVisitPart = std::log((double)node->numberOfChildrenVisits);
 
-    for(unsigned int i = 0; i < node->children.size(); ++i) {
-        if(node->children[i] != NULL) {
-            visitPart = magicConstant * sqrt(parentVisitPart / (double)node->children[i]->numberOfVisits);
-            UCTValue = node->children[i]->getExpectedRewardEstimate() + visitPart;
+    for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
+        if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
+            visitPart = magicConstant * sqrt(parentVisitPart / (double)node->children[childIndex]->numberOfVisits);
+            UCTValue = node->children[childIndex]->getExpectedRewardEstimate() + visitPart;
 
             assert(!MathUtils::doubleIsMinusInfinity(UCTValue));
 
             if(MathUtils::doubleIsGreater(UCTValue,bestUCTValue)) {
                 bestActionIndices.clear();
-                bestActionIndices.push_back(i);
+                bestActionIndices.push_back(childIndex);
                 bestUCTValue = UCTValue;
             } else if(MathUtils::doubleIsEqual(UCTValue,bestUCTValue)) {
-                bestActionIndices.push_back(i);
+                bestActionIndices.push_back(childIndex);
             }
         }
     }

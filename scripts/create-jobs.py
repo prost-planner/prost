@@ -27,12 +27,14 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev14"
+revision = "rev16"
 
 configs = [
-    "[UCT -uc 0 -i [IDS]]",
-    "[UCT -uc 0 -i [RAND]]",
-    "[UCT -uc 0 -sd 40 -i [IDS -sd 40]]"
+    "[MC-UCT -i [IDS]",
+    "[IPPC2011]",
+    "[DP-UCT -i [IDS]]",    
+    "[UCTStar -i [IDS]]",
+    "[MaxMC-UCT -i [IDS]]"
 ]
 
 host = "localhost"
