@@ -29,9 +29,6 @@ void Preprocessor::simplifyFormulas() {
         for(unsigned int i = 0; i < cpfs.size(); ++i) {
             simplifyAgain = cpfs[i]->simplify(task, replacements);
             if(simplifyAgain) {
-                //TODO: This is actually not entirely correct, we
-                //should also check if the value is equal to the value
-                //in the initial state!
                 task->removeCPF(cpfs[i]);
                 break;
             }

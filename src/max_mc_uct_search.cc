@@ -8,9 +8,11 @@ using namespace std;
 
 void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned int const& actionIndex, double const& initialQValue) {
     node->children[actionIndex] = getSearchNode();
-    node->children[actionIndex]->reward = heuristicWeight * (double)remainingConsideredSteps() * initialQValue;
+    node->children[actionIndex]->futureReward = heuristicWeight * (double)remainingConsideredSteps() * initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
-    node->numberOfChildrenVisits += numberOfInitialVisits;
+
+    node->numberOfVisits += numberOfInitialVisits;
+    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initializing child ";
     // task->printAction(cout,index);
@@ -40,7 +42,9 @@ MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, State& stateAsPr
 ******************************************************************/
 
 void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& immReward, double const& futReward) {
-    node->reward = immReward + futReward;
+    node->immediateReward = immReward;
+    node->futureReward = futReward;
+
     ++node->numberOfVisits;
 
     // cout << "updated dec node leaf with immediate reward " << immReward << endl;
@@ -60,22 +64,18 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
     // otherwise the former best child is still the best child.
 
     // Identify best child and take its reward estimate
-    node->reward = node->children[0]->reward;
-    node->numberOfChildrenVisits = node->children[0]->numberOfVisits;
-
-    for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
-        if(node->children[childIndex]) {
-            node->numberOfChildrenVisits += node->children[childIndex]->numberOfVisits;
-
-            if(MathUtils::doubleIsGreater(node->children[childIndex]->reward, node->reward)) {
-                node->reward = node->children[childIndex]->reward;
-            }
-        }
+    if(selectedActionIndex() != -1) {
+        ++node->numberOfVisits;
     }
 
-    // Add immediate reward and visit
-    node->reward += immReward;
-    ++node->numberOfVisits;
+    node->immediateReward = immReward;
+    node->futureReward = node->children[0]->futureReward;
+
+    for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
+        if(node->children[childIndex] && MathUtils::doubleIsGreater(node->children[childIndex]->futureReward, node->futureReward)) {
+            node->futureReward = node->children[childIndex]->futureReward;
+        }
+    }
 
     // cout << "updated dec node with immediate reward " << immReward << endl;
     // node->print(cout);
@@ -84,21 +84,20 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
 
 void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node, double const& /*futReward*/) {
     assert(node->children.size() == 2);
+    assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
+
+    ++node->numberOfVisits;
 
     // Propagate values from children
     if(node->children[0] && node->children[1]) {
-        node->numberOfVisits = node->children[0]->numberOfVisits + node->children[1]->numberOfVisits;
-        node->reward = (((node->children[0]->numberOfVisits * node->children[0]->reward) + 
-                         (node->children[1]->numberOfVisits * node->children[1]->reward)) /
-                        node->numberOfVisits);
+        node->futureReward = (((node->children[0]->numberOfVisits * node->children[0]->getExpectedRewardEstimate()) + 
+                              (node->children[1]->numberOfVisits * node->children[1]->getExpectedRewardEstimate())) /
+                              (node->children[0]->numberOfVisits + node->children[1]->numberOfVisits));
     } else if(node->children[0]) {
-        node->numberOfVisits = node->children[0]->numberOfVisits;
-        node->reward = node->children[0]->reward;
+        node->futureReward = node->children[0]->getExpectedRewardEstimate();
     } else {
         assert(node->children[1]);
-
-        node->numberOfVisits = node->children[1]->numberOfVisits;        
-        node->reward = node->children[1]->reward;
+        node->futureReward = node->children[1]->getExpectedRewardEstimate();
     }
 }
 

@@ -10,40 +10,35 @@
 // Finite Horizon MDPs). The described ingredients can be implemented
 // in the abstract functions 
 
-// 1. int selectAction(SearchNode* node): return the index of the
-// selected action
+// 1. int selectAction(SearchNode*): return the index of the selected
+// action
 
-// 2. SearchNode* selectOutcome(SearchNode* node, State&
-// stateAsProbDistr, int& varIndex): return the successor node of node
-// and set stateAsProbDistr[varIndex] to the according value within
-// that variables domain
+// 2. SearchNode* selectOutcome(SearchNode*, State&, int&): return the
+// node that corresponds to the selected outcome and ADDITIONALLY set
+// the state accordingly
 
-
-// 3. bool continueTrial(SearchNode* node): return false to enter the
+// 3. bool continueTrial(SearchNode*): return false to start the
 // backup phase, and true otherwise. The baseline implementation of
 // this checks if the number of previously unvisited decision nodes
 // that was encountered in this trial is equal to a parameter that is
 // set to the horizon by default (i.e., if nothing is changed all
 // trials only finish in goal states)
 
-// 4. void initializeDecisionNode(SearchNode* node): implement *how*
-// to use the heuristic, not *which* heuristic to use (that is done on
-// the command line with the parameter "-i"). The baseline
-// implementation is an action-value initialization that calls void
-// initializeDecisionNodeChild(SearchNode* node, unsigned int const&
-// actionIndex, double const& initialQValue) for each child with index
-// actionIndex that is supposed to be initialized.
+// 4. void initializeDecisionNode(SearchNode*): implement *how* to use
+// the heuristic, not *which* heuristic to use (that is done on the
+// command line with the parameter "-i"). The baseline implementation
+// is an action-value initialization that calls void
+// initializeDecisionNodeChild(SearchNode*, unsigned int const&,
+// double const&) for each child that is supposed to be initialized.
 
-// 5a. void backupDecisionNodeLeaf(SearchNode* node, double const&
-// immReward, double const& futReward): is called on leaf (not tip!)
-// nodes, i.e. immReward and futReward are known to be correct.
+// 5a. void backupDecisionNodeLeaf(SearchNode*, double const&, double
+// const&): is called on leaf (not tip!) nodes.
 
-// 5b. backupDecisionNode(SearchNode* node, double const& immReward,
-// double const& futReward): is called for non-leaf decision nodes, so
-// futReward is not exact but the result of the current trial
+// 5b. backupDecisionNode(SearchNode*, double const&, double const&):
+// is called to backup non-leaf decision nodes
 
-// 5c. backupChanceNode(SearchNode* node, double const& accReward): is
-// called for chance nodes
+// 5c. backupChanceNode(SearchNode*, double const&): is called to
+// backup chance nodes
 
 
 // SearchNode must be a class with the following public functions and
@@ -52,18 +47,18 @@
 // 1. A member variable std::vector<SearchNode> children to represent
 // the tree
 
-// 2. A function getExpectedReward() that returns a double, the
-// expected reward in that node WITHOUT the immediate reward
-
-// 3. A function getExpectedRewardEstimate() that returns a double,
-// the expected reward estimate in that node INCLUDING the immediate
+// 2. A function getExpectedFutureRewardEstimate() that returns a
+// double, the expected reward in that node WITHOUT the immediate
 // reward
 
-// 4. A function isSolved() that returns a bool indicating if the node
-// has been labeled as solved
+// 3. A function bool isSolved() const that returns a bool indicating
+// if the node has been labeled as solved
 
-// 5. A function isARewardLock() that returns a bool indicating if the
-// node is a reward lock
+// 4. A function bool isARewardLock() const that returns a bool
+// indicating if the node is a reward lock
+
+// 5. A function void setRewardLock(bool const&) that sets the bool
+// that is returned in (4.)
 
 
 template <class SearchNode>
@@ -139,7 +134,7 @@ protected:
         initialQValues(task->getNumberOfActions(),0.0),
         initializedDecisionNodes(0),
         terminationMethod(THTS<SearchNode>::TIME), 
-        timeout(2.0),
+        timeout(1.0),
         maxNumberOfTrials(0),
         numberOfNewDecisionNodesPerTrial(task->getHorizon()+1),
         numberOfRuns(0),
@@ -200,6 +195,11 @@ protected:
     // this state is reached
     int const& remainingConsideredSteps() {
         return currentStateIndex;
+    }
+
+    // The action that was selected (use only in backup phase)
+    int const& selectedActionIndex() {
+        return actions[currentStateIndex-1];
     }
 
 private:
@@ -419,12 +419,12 @@ void THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
         if(currentRootNode->children[i]) {
             if(result.empty()) {
                 result.push_back(i);
-            } else if(MathUtils::doubleIsGreater(currentRootNode->children[i]->getExpectedRewardEstimate(), 
-                                                 currentRootNode->children[result[0]]->getExpectedRewardEstimate())) {
+            } else if(MathUtils::doubleIsGreater(currentRootNode->children[i]->getExpectedFutureRewardEstimate(), 
+                                                 currentRootNode->children[result[0]]->getExpectedFutureRewardEstimate())) {
                 result.clear();
                 result.push_back(i);
-            } else if(MathUtils::doubleIsEqual(currentRootNode->children[i]->getExpectedRewardEstimate(),
-                                               currentRootNode->children[result[0]]->getExpectedRewardEstimate())) {
+            } else if(MathUtils::doubleIsEqual(currentRootNode->children[i]->getExpectedFutureRewardEstimate(),
+                                               currentRootNode->children[result[0]]->getExpectedFutureRewardEstimate())) {
                 result.push_back(i);
             }
         }
@@ -543,6 +543,8 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 
         // Continue with the chance nodes
         futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
+    } else {
+        actions[currentActionIndex] = -1;
     }
 
     // Backup this node
@@ -554,7 +556,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
     if(node->isSolved()) {
         //std::cout << "solved a state with rem steps " << currentStateIndex << " in trial " << currentTrial << std::endl;
         if(cachingEnabled && task->stateValueCache.find(states[currentStateIndex]) == task->stateValueCache.end()) {
-            task->stateValueCache[states[currentStateIndex]] = node->getExpectedReward();
+            task->stateValueCache[states[currentStateIndex]] = node->getExpectedFutureRewardEstimate();
         }
     }
 
@@ -595,7 +597,7 @@ double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
 template <class SearchNode>
 void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     if(task->isARewardLock(states[currentStateIndex])) {
-        node->isARewardLock() = true;
+        node->setRewardLock(true);
         return;
     }
 

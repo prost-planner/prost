@@ -7,10 +7,9 @@ class DPUCTNode {
 public:
     DPUCTNode() :
         children(),
-        numberOfVisits(0.0),
-        numberOfChildrenVisits(0.0),
         immediateReward(0.0),
-        futureReward(0.0),
+        futureReward(-std::numeric_limits<double>::max()),
+        numberOfVisits(0),
         prob(0.0),
         solved(false),
         rewardLock(false) {}
@@ -23,31 +22,40 @@ public:
         }
     }
 
+    friend class DPUCTSearch;
+
     void reset() {
         children.clear();
-        numberOfVisits = 0.0;
-        numberOfChildrenVisits = 0.0;
         immediateReward = 0.0;
-        futureReward = 0.0;
+        futureReward = -std::numeric_limits<double>::max();
+        numberOfVisits = 0;
         prob = 0.0;
         solved = false;
         rewardLock = false;
-    }
-
-    double getExpectedReward() const {
-        return futureReward;
     }
 
     double getExpectedRewardEstimate() const {
         return futureReward + immediateReward;
     }
 
-    bool& isSolved() {
+    double getExpectedFutureRewardEstimate() const {
+        return futureReward;
+    }
+
+    bool const& isSolved() const {
         return solved;
     }
 
-    bool& isARewardLock() {
+    bool const& isARewardLock() const {
         return rewardLock;
+    }
+
+    void setRewardLock(bool const& _rewardLock) {
+        rewardLock = _rewardLock;
+    }
+
+    int const& getNumberOfVisits() const {
+        return numberOfVisits;
     }
 
     void print(std::ostream& out, std::string indent = "") const {
@@ -60,11 +68,11 @@ public:
 
     std::vector<DPUCTNode*> children;
 
-    double numberOfVisits;
-    double numberOfChildrenVisits;
-
+private:
     double immediateReward;
     double futureReward;
+
+    int numberOfVisits;
 
     double prob;
     bool solved;

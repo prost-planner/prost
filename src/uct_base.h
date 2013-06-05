@@ -7,13 +7,11 @@
 // the backup functions (and continueTrial if desired).
 
 // SearchNode must be a class that satisfies all constraints (1-5) of
-// a THTS Search node and additionally contains:
+// a THTS SearchNode and additionally contains:
 
-// 6. A member variable numberOfVisits that returns the number of
+// 6. A function int getNumberOfVisits() that returns the number of
 // times this node has been visited in a trial.
 
-// 7. A member variable numberOfChildrenVisits that returns the number
-// of times this node has been visited in a trial.
 
 #include "thts.h"
 #include "prost_planner.h"
@@ -116,7 +114,7 @@ int UCTBase<SearchNode>::selectAction(SearchNode* node) {
 template <class SearchNode>
 inline void UCTBase<SearchNode>::selectUnselectedAction(SearchNode* node) {
     for(unsigned int i = 0; i < node->children.size(); ++i) {
-        if(node->children[i] && (node->children[i]->numberOfVisits == 0)) {
+        if(node->children[i] && (node->children[i]->getNumberOfVisits() == 0)) {
             bestActionIndices.push_back(i);
         }
     }
@@ -128,8 +126,8 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(SearchNode* 
     for(; childIndex < node->children.size(); ++childIndex) {
     	if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
             bestActionIndices.push_back(childIndex);
-            smallestNumVisits = node->children[childIndex]->numberOfVisits;
-            highestNumVisits = node->children[childIndex]->numberOfVisits;
+            smallestNumVisits = node->children[childIndex]->getNumberOfVisits();
+            highestNumVisits = node->children[childIndex]->getNumberOfVisits();
             break;
         }
     }
@@ -138,14 +136,14 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(SearchNode* 
 
     for(; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
-            if(MathUtils::doubleIsSmaller(node->children[childIndex]->numberOfVisits,smallestNumVisits)) {
+            if(MathUtils::doubleIsSmaller(node->children[childIndex]->getNumberOfVisits(),smallestNumVisits)) {
                 bestActionIndices.clear();
                 bestActionIndices.push_back(childIndex);
-                smallestNumVisits = node->children[childIndex]->numberOfVisits;
-            } else if(MathUtils::doubleIsEqual(node->children[childIndex]->numberOfVisits,smallestNumVisits)) {
+                smallestNumVisits = node->children[childIndex]->getNumberOfVisits();
+            } else if(MathUtils::doubleIsEqual(node->children[childIndex]->getNumberOfVisits(),smallestNumVisits)) {
                 bestActionIndices.push_back(childIndex);
-            } else if(MathUtils::doubleIsGreater(node->children[childIndex]->numberOfVisits, highestNumVisits))  {
-                highestNumVisits = node->children[childIndex]->numberOfVisits;
+            } else if(MathUtils::doubleIsGreater(node->children[childIndex]->getNumberOfVisits(), highestNumVisits))  {
+                highestNumVisits = node->children[childIndex]->getNumberOfVisits();
             }
         }
     }
@@ -157,24 +155,21 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(SearchNode* 
 
 template <class SearchNode>
 inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node) {
-    if(node->numberOfVisits == 0) {
-        magicConstant = 0.0;
+    if(MathUtils::doubleIsMinusInfinity(node->getExpectedFutureRewardEstimate()) || MathUtils::doubleIsEqual(node->getExpectedFutureRewardEstimate(),0.0)) {
+        magicConstant = 100.0;
     } else {
-        magicConstant = magicConstantScaleFactor * std::abs(node->getExpectedRewardEstimate());
-        if(MathUtils::doubleIsEqual(magicConstant,0.0)) {
-            magicConstant = 100.0;
-        }
+        magicConstant = magicConstantScaleFactor * std::abs(node->getExpectedFutureRewardEstimate());
     }
 
-    assert(node->numberOfChildrenVisits != 0);
+    assert(node->getNumberOfVisits() > 0);
 
     bestUCTValue = -std::numeric_limits<double>::max();
-    parentVisitPart = std::log((double)node->numberOfChildrenVisits);
+    parentVisitPart = std::log((double)node->getNumberOfVisits());
 
     for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
-            visitPart = magicConstant * sqrt(parentVisitPart / (double)node->children[childIndex]->numberOfVisits);
-            UCTValue = node->children[childIndex]->getExpectedRewardEstimate() + visitPart;
+            visitPart = magicConstant * sqrt(parentVisitPart / (double)node->children[childIndex]->getNumberOfVisits());
+            UCTValue = node->children[childIndex]->getExpectedFutureRewardEstimate() + visitPart;
 
             assert(!MathUtils::doubleIsMinusInfinity(UCTValue));
 
