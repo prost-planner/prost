@@ -11,9 +11,9 @@ class MaxMCUCTNode { //Max Monte Carlo UCTNode
 public:
     MaxMCUCTNode() :
         children(),
-        reward(0.0),
+        immediateReward(0.0),
+        futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
-        numberOfChildrenVisits(0),
         rewardLock(false) {}
 
     ~MaxMCUCTNode() {
@@ -24,36 +24,38 @@ public:
         }
     }
 
-    // Reset is called when a node is reused
+    friend class MaxMCUCTSearch;
+
     void reset() {
         children.clear();
-        reward = 0.0;
+        immediateReward = 0.0;
+        futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
-        numberOfChildrenVisits = 0;
         rewardLock = false;
     }
 
-    // This is used in the UCT formula as the Q-value estimate and in
-    // the decision which successor node is the best
     double getExpectedRewardEstimate() const {
-        return reward;
+        return (immediateReward + futureReward);
     }
 
-    // This is only used for solve labeling which is not supported
-    double getExpectedReward() const {
-        assert(false);
-        return -std::numeric_limits<double>::max();
+    double getExpectedFutureRewardEstimate() const {
+        return futureReward;
     }
 
-    // Plain MonteCarlo-UCT does not support solve labeling
     bool isSolved() const {
         return false;
     }
 
-    // A label that is true if the assigned state is a reward lock.
-    // Then, this node doesn't have any children.
-    bool& isARewardLock() {
+    bool const& isARewardLock() const {
         return rewardLock;
+    }
+
+    void setRewardLock(bool const& _rewardLock) {
+        rewardLock = _rewardLock;
+    }
+
+    int const& getNumberOfVisits() const {
+        return numberOfVisits;
     }
 
     // Print
@@ -63,9 +65,10 @@ public:
 
     std::vector<MaxMCUCTNode*> children;
 
-    double reward;
+private:
+    double immediateReward;
+    double futureReward;
     int numberOfVisits;
-    int numberOfChildrenVisits;
 
     bool rewardLock;
 };

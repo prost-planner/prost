@@ -27,10 +27,10 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev16"
+revision = "rev19"
 
 configs = [
-    "[MC-UCT -i [IDS]",
+    "[MC-UCT -i [IDS]]",
     "[IPPC2011]",
     "[DP-UCT -i [IDS]]",    
     "[UCTStar -i [IDS]]",

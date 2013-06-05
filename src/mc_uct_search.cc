@@ -8,9 +8,11 @@ using namespace std;
 
 void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& actionIndex, double const& initialQValue) {
     node->children[actionIndex] = getSearchNode();
-    node->children[actionIndex]->accumulatedReward = (double)numberOfInitialVisits * (double)remainingConsideredSteps() * initialQValue;
+    node->children[actionIndex]->futureReward = (double)numberOfInitialVisits * (double)remainingConsideredSteps() * initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
-    node->numberOfChildrenVisits += numberOfInitialVisits;
+
+    node->numberOfVisits += numberOfInitialVisits;
+    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initializing child ";
     // task->printAction(cout,index);
@@ -40,13 +42,17 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, State& stateAsProbDistr, 
 ******************************************************************/
 
 void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& immReward, double const& futReward) {
-    node->accumulatedReward += (immReward + futReward);
+    node->immediateReward += immReward;
+    node->futureReward += futReward;
+
     ++node->numberOfVisits;
-    ++node->numberOfChildrenVisits;
 }
 
 void MCUCTSearch::backupChanceNode(MCUCTNode* node, double const& futReward) {
-    node->accumulatedReward += futReward;
+    assert(node->children.size() == 2);
+    assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
+
+    node->futureReward += futReward;
     ++node->numberOfVisits;
 }
 

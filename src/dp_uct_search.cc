@@ -10,7 +10,9 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->children[actionIndex] = getDPUCTNode(1.0);
     node->children[actionIndex]->futureReward = heuristicWeight * (double)remainingConsideredSteps() * initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
-    node->numberOfChildrenVisits += numberOfInitialVisits;
+
+    node->numberOfVisits += numberOfInitialVisits;
+    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initialized child ";
     // task->printAction(cout, actionIndex);
@@ -66,9 +68,9 @@ void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node, double const& immRewar
 
     node->immediateReward = immReward;
     node->futureReward = futReward;
-    ++node->numberOfVisits;
     node->solved = true;
 
+    ++node->numberOfVisits;
     // cout << "updated dec node leaf with immediate reward " << immReward << endl;
     // node->print(cout);
     // cout << endl;
@@ -78,18 +80,19 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
     assert(!node->children.empty());
 
     node->immediateReward = immReward;
-    ++node->numberOfVisits;
+
+    if(selectedActionIndex() != -1) {
+        ++node->numberOfVisits;
+    }
 
     // set best child dependent values to noop child first
     node->futureReward = node->children[0]->futureReward;
     node->solved = node->children[0]->solved;
-    node->numberOfChildrenVisits = node->children[0]->numberOfVisits;
 
     // then check for better child
     for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex]) {
             node->solved &= node->children[childIndex]->solved;
-            node->numberOfChildrenVisits += node->children[childIndex]->numberOfVisits;
 
             if(MathUtils::doubleIsGreater(node->children[childIndex]->futureReward, node->futureReward)) {
                 node->futureReward = node->children[childIndex]->futureReward;
@@ -106,22 +109,21 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/)
     assert(node->children.size() == 2);
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
+    ++node->numberOfVisits;
+
     // propagate values from children
     if(node->children[0] && node->children[1]) {
         node->futureReward = (node->children[0]->prob * node->children[0]->getExpectedRewardEstimate()) + 
             (node->children[1]->prob * node->children[1]->getExpectedRewardEstimate());
         node->solved = node->children[0]->solved && node->children[1]->solved;
-        node->numberOfVisits = node->children[0]->numberOfVisits + node->children[1]->numberOfVisits;
     } else if(node->children[0]) {
         node->futureReward = node->children[0]->getExpectedRewardEstimate();
         node->solved = node->children[0]->solved && MathUtils::doubleIsEqual(node->children[0]->prob, 1.0);
-        node->numberOfVisits = node->children[0]->numberOfVisits;
     } else {
         assert(node->children[1]);
         
         node->futureReward = node->children[1]->getExpectedRewardEstimate();
         node->solved = node->children[1]->solved && MathUtils::doubleIsEqual(node->children[1]->prob, 1.0);
-        node->numberOfVisits = node->children[1]->numberOfVisits;
     }
 
     // cout << "updated chance node:" << endl;
