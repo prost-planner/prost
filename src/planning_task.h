@@ -24,7 +24,7 @@ public:
         numberOfActions(-1),
         stateSize(-1),
         numberOfStateFluentHashKeys(0),
-        isDeterministic(false),
+        deterministic(false),
         goalTestActionIndex(0),
         isPruningEquivalentToDet(false),
         firstProbabilisticVarIndex(-1),
@@ -54,7 +54,7 @@ public:
         numberOfActions(other.numberOfActions),
         stateSize(other.stateSize),
         numberOfStateFluentHashKeys(other.numberOfStateFluentHashKeys),
-        isDeterministic(other.isDeterministic),
+        deterministic(other.deterministic),
         goalTestActionIndex(other.goalTestActionIndex),
         isPruningEquivalentToDet(other.isPruningEquivalentToDet),
         initialState(other.initialState),
@@ -321,6 +321,10 @@ public:
         return isPruningEquivalentToDet;
     }
 
+    bool const& isDeterministic() const {
+        return deterministic;
+    }
+
     // Returns a vector ("res") that encodes applicable and reasonable
     // actions. If res[i] = i, the action with index i is applicable,
     // and if res[i] = -1 it is not. Otherwise, the action with index
@@ -416,7 +420,7 @@ private:
     int numberOfStateFluentHashKeys;
 
     // Is true if this planning task is deterministic
-    bool isDeterministic;
+    bool deterministic;
 
     // The index of this action is used to check if a state is a goal
     int goalTestActionIndex;
