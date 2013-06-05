@@ -419,12 +419,12 @@ void THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
         if(currentRootNode->children[i]) {
             if(result.empty()) {
                 result.push_back(i);
-            } else if(MathUtils::doubleIsGreater(currentRootNode->children[i]->getExpectedFutureRewardEstimate(), 
-                                                 currentRootNode->children[result[0]]->getExpectedFutureRewardEstimate())) {
+            } else if(MathUtils::doubleIsGreater(currentRootNode->children[i]->getExpectedRewardEstimate(), 
+                                                 currentRootNode->children[result[0]]->getExpectedRewardEstimate())) {
                 result.clear();
                 result.push_back(i);
-            } else if(MathUtils::doubleIsEqual(currentRootNode->children[i]->getExpectedFutureRewardEstimate(),
-                                               currentRootNode->children[result[0]]->getExpectedFutureRewardEstimate())) {
+            } else if(MathUtils::doubleIsEqual(currentRootNode->children[i]->getExpectedRewardEstimate(),
+                                               currentRootNode->children[result[0]]->getExpectedRewardEstimate())) {
                 result.push_back(i);
             }
         }
@@ -527,6 +527,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         return (reward + futureReward);
     }
 
+    // Check if we continue with this trial
     if(continueTrial(node)) {
         // Select the action that is simulated
         actions[currentActionIndex] = selectAction(node);
@@ -541,9 +542,18 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         task->calcSuccessorAsProbabilityDistribution(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
         chanceNodeVarIndex = task->getFirstProbabilisticVarIndex();
 
-        // Continue with the chance nodes
-        futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
+        if(task->isDeterministic()) {
+            // This task is deterministic -> there are no chance nodes
+            task->calcStateFluentHashKeys(states[nextStateIndex]);
+            task->calcStateHashKey(states[nextStateIndex]);
+            futureReward = visitDecisionNode(node->children[actions[currentActionIndex]]);
+        } else {
+            // Continue with chance nodes
+            futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
+        }
     } else {
+        // No action was chosen in this decision node as we stop the
+        // trial
         actions[currentActionIndex] = -1;
     }
 
