@@ -12,7 +12,7 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
 
     node->numberOfVisits += numberOfInitialVisits;
-    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
+    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initializing child ";
     // task->printAction(cout,index);
@@ -69,11 +69,11 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
     }
 
     node->immediateReward = immReward;
-    node->futureReward = node->children[0]->futureReward;
+    node->futureReward = node->children[0]->getExpectedRewardEstimate();
 
     for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
-        if(node->children[childIndex] && MathUtils::doubleIsGreater(node->children[childIndex]->futureReward, node->futureReward)) {
-            node->futureReward = node->children[childIndex]->futureReward;
+        if(node->children[childIndex]) {
+            node->futureReward = std::max(node->futureReward, node->children[childIndex]->getExpectedRewardEstimate());
         }
     }
 

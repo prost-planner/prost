@@ -96,9 +96,9 @@ void PlanningTask::initializeCPFs(vector<ConditionalProbabilityFunction*>& _CPFs
 
     // Set constants based on CPFs
     if(probCPFs.empty()) {
-        isDeterministic = true;
+        deterministic = true;
     } else {
-        isDeterministic = false;
+        deterministic = false;
     }
 
     // Set variables that depend on CPFs
@@ -378,6 +378,11 @@ void PlanningTask::initializeRewardDependentVariables() {
 // split planning task to different kinds of classes to make
 // everything nice and clean.
 PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task) {
+    // There is nothing to do in deterministic problems
+    if(deterministic) {
+        return this;
+    }
+
     // Create the determinization as a copy of this
     PlanningTask* detPlanningTask = new PlanningTask(*this);
 
@@ -420,7 +425,7 @@ PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task)
     //detPlanningTask->stateHashingWithStatesAsProbabilityDistributionPossible = detPlanningTask->stateHashingPossible;
 
     // The created planning task is now deterministic
-    detPlanningTask->isDeterministic = true;
+    detPlanningTask->deterministic = true;
 
     return detPlanningTask;
 }
@@ -430,7 +435,7 @@ PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task)
 *****************************************************************/
 
 bool PlanningTask::learn(vector<State> const& trainingSet) {
-    if(isDeterministic) {
+    if(deterministic) {
         cout << " DET: learning..." << endl;
     } else {
         cout << "PROB: learning..." << endl;
@@ -465,7 +470,7 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
     hasUnreasonableActions = unreasonableActionFound;
     useRewardLockDetection = rewardLockFound;
 
-    if(isDeterministic) {
+    if(deterministic) {
         cout << " DET: ...finished" << endl;
     } else {
         cout << "PROB: ...finished" << endl;
@@ -797,7 +802,7 @@ int PlanningTask::getOptimalFinalActionIndex(State const& current) {
 ******************************************************************/
 
 void PlanningTask::print(ostream& out) const {
-    out << "This task is " << (isDeterministic? "deterministic." : "probabilistic.") << endl;
+    out << "This task is " << (deterministic? "deterministic." : "probabilistic.") << endl;
 
     out << "----------------Actions---------------" << endl << endl;
     out << "Action fluents: " << endl;
@@ -870,7 +875,7 @@ void PlanningTask::print(ostream& out) const {
     out << "This task is " << (isPruningEquivalentToDet? "" : "not ") << "pruning equivalent to its most likely determinization" << endl;
 
     out << "Deterministic state hashing is " << (stateHashingPossible? "" : "not ") << "possible";
-    if(isDeterministic) {
+    if(deterministic) {
         out << "." << endl;
     } else {
         out << " and state hashing with states as probability distribution is " 

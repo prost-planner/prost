@@ -169,7 +169,7 @@ inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
     for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {
             visitPart = magicConstant * sqrt(parentVisitPart / (double)node->children[childIndex]->getNumberOfVisits());
-            UCTValue = node->children[childIndex]->getExpectedFutureRewardEstimate() + visitPart;
+            UCTValue = node->children[childIndex]->getExpectedRewardEstimate() + visitPart;
 
             assert(!MathUtils::doubleIsMinusInfinity(UCTValue));
 

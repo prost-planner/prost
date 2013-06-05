@@ -12,7 +12,7 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
 
     node->numberOfVisits += numberOfInitialVisits;
-    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
+    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
     // task->printAction(cout, actionIndex);
@@ -86,17 +86,14 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
     }
 
     // set best child dependent values to noop child first
-    node->futureReward = node->children[0]->futureReward;
+    node->futureReward = node->children[0]->getExpectedRewardEstimate();
     node->solved = node->children[0]->solved;
 
     // then check for better child
     for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex]) {
             node->solved &= node->children[childIndex]->solved;
-
-            if(MathUtils::doubleIsGreater(node->children[childIndex]->futureReward, node->futureReward)) {
-                node->futureReward = node->children[childIndex]->futureReward;
-            }
+            node->futureReward = std::max(node->futureReward, node->children[childIndex]->getExpectedRewardEstimate());
         }
     }
 
@@ -113,8 +110,8 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/)
 
     // propagate values from children
     if(node->children[0] && node->children[1]) {
-        node->futureReward = (node->children[0]->prob * node->children[0]->getExpectedRewardEstimate()) + 
-            (node->children[1]->prob * node->children[1]->getExpectedRewardEstimate());
+        node->futureReward = ((node->children[0]->prob * node->children[0]->getExpectedRewardEstimate()) + 
+                              (node->children[1]->prob * node->children[1]->getExpectedRewardEstimate()));
         node->solved = node->children[0]->solved && node->children[1]->solved;
     } else if(node->children[0]) {
         node->futureReward = node->children[0]->getExpectedRewardEstimate();
