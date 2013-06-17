@@ -25,7 +25,7 @@ public:
     virtual void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult) = 0;
 
     //estimate the best actions (no q-value estimates necessary)
-    virtual void estimateBestActions(State const& _rootState, std::vector<int>& result) = 0;
+    virtual void estimateBestActions(State const& _rootState, std::vector<int>& result);
 
     //join the thread
     //void join();

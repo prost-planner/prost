@@ -22,9 +22,6 @@ public:
 
     //main (public) search functions
     void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
-    void estimateBestActions(State const& /*_rootState*/, std::vector<int>& /*result*/) {
-        assert(false);
-    }
 
     //parameter setters: overwrites
     void setMaxSearchDepth(int _maxSearchDepth);

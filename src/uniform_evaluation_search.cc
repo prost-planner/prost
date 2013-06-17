@@ -1,4 +1,4 @@
-#include "random_search.h"
+#include "uniform_evaluation_search.h"
 
 #include "prost_planner.h"
 
@@ -6,10 +6,10 @@
 
 using namespace std;
 
-RandomSearch::RandomSearch(ProstPlanner* _planner) :
-    SearchEngine("Random", _planner, _planner->getDeterministicTask()) {}
+UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner) :
+    SearchEngine("UniformEvaluation", _planner, _planner->getDeterministicTask()) {}
 
-void RandomSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
+void UniformEvaluationSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
     vector<int> actionsToExpand = task->getApplicableActions(_rootState, pruneResult);
 
     for(unsigned int i = 0; i < result.size(); ++i) {

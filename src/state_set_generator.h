@@ -4,7 +4,6 @@
 #include "prost_planner.h"
 
 class StateSetGenerator;
-class RandomSearch;
 
 class StateSetGenerator {
 public:

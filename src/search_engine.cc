@@ -6,7 +6,7 @@
 
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
-#include "random_search.h"
+#include "uniform_evaluation_search.h"
 
 #include "prost_planner.h"
 #include "actions.h"
@@ -54,9 +54,9 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
     } else if(desc.find("DFS") == 0) {
         desc = desc.substr(3,desc.size());
         result = new DepthFirstSearch(planner);
-    } else if(desc.find("RAND") == 0) {
-        desc = desc.substr(4,desc.size());
-        result = new RandomSearch(planner);
+    } else if(desc.find("Uniform") == 0) {
+        desc = desc.substr(7,desc.size());
+        result = new UniformEvaluationSearch(planner);
     } else {
         cout << "Unknown Search Engine: " << desc << endl;
         assert(false);
@@ -106,6 +106,21 @@ bool SearchEngine::learn(std::vector<State> const& trainingSet) {
     bool res = LearningComponent::learn(trainingSet);
     cout << name << ": ...finished" << endl;
     return res;
+}
+
+void SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>& result) {
+    vector<double> qValues(task->getNumberOfActions());
+    estimateQValues(_rootState, qValues, false);
+
+    result.push_back(0);
+    for(unsigned int i = 1; i < qValues.size(); ++i) {
+        if(MathUtils::doubleIsGreater(qValues[i], qValues[result[0]])) {
+            result.clear();
+            result.push_back(i);
+        } else if(MathUtils::doubleIsEqual(qValues[i], qValues[result[0]])) {
+            result.push_back(i);
+        }
+    }
 }
 
 void SearchEngine::print(ostream& out) {
