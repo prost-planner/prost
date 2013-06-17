@@ -7,7 +7,7 @@ HEADERS = prost_planner.h \
 	  dp_uct_search.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
-	  random_search.h \
+	  uniform_evaluation_search.h \
 	  state_set_generator.h \
 	  ippc_client.h \
 	  rddl_parser.h \

@@ -1,7 +1,7 @@
 #ifndef THTS_H
 #define THTS_H
 
-#include "random_search.h"
+#include "uniform_evaluation_search.h"
 #include "utils/timer.h"
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of
@@ -308,7 +308,7 @@ bool THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
     std::cout << name << ": learning..." << std::endl;
 
     if(initializer->getMaxSearchDepth() == 0) {
-        RandomSearch* _initializer = new RandomSearch(planner);
+        UniformEvaluationSearch* _initializer = new UniformEvaluationSearch(planner);
         setInitializer(_initializer);
         std::cout << "Aborted initialization as search depth is too low!" << std::endl;
     }

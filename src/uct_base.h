@@ -28,7 +28,7 @@ public:
     }
 
     virtual void setInitializer(SearchEngine* _initializer) {
-        if(dynamic_cast<RandomSearch*>(_initializer)) {
+        if(dynamic_cast<UniformEvaluationSearch*>(_initializer)) {
             numberOfInitialVisits = 0;
         }
 
