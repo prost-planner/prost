@@ -70,19 +70,21 @@ public:
         TIME_AND_NUMBER_OF_TRIALS //stop after timeout sec or maxNumberOfTrials trials, whichever comes first
     };
 
-    // Search engine creation
+    // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    // Learning
+    // Learn parameter values from a training set
     virtual bool learn(std::vector<State> const& trainingSet);
 
-    // Start the search engine
+    // Start the search engine as main search engine
     void estimateBestActions(State const& _rootState, std::vector<int>& result);
+
+    // Start the search engine for Q-value estimation
     void estimateQValues(State const& /*_rootState*/, std::vector<double>& /*result*/, const bool& /*pruneResult*/) {
         assert(false);
     }
 
-    // Parameter setters: overwrites
+    // Parameter setter
     virtual void setMaxSearchDepth(int _maxSearchDepth) {
         SearchEngine::setMaxSearchDepth(_maxSearchDepth);
 
@@ -91,7 +93,6 @@ public:
         }
     }
 
-    // Parameter setters: new parameters
     virtual void setTerminationMethod(THTS<SearchNode>::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
     }
@@ -115,7 +116,7 @@ public:
         numberOfNewDecisionNodesPerTrial = _numberOfNewDecisionNodesPerTrial;
     }
 
-    // Print
+    // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 

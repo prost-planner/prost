@@ -1,41 +1,44 @@
 #ifndef SEARCH_ENGINE_H
 #define SEARCH_ENGINE_H
 
+// This is the abstract interface all search engines are based on. It
+// only implements a basic method to estimate best actions by calling
+// estimateQValues, and defines a couple of member variables.
+
 #include "caching_component.h"
 #include "learning_component.h"
 #include "planning_task.h"
 
 #include <sstream>
-//#include <boost/thread.hpp>
 
 class ProstPlanner;
 
 class SearchEngine : public CachingComponent, public LearningComponent {
 public:
-    //create a SearchEngine
+    // Create a SearchEngine
     static SearchEngine* fromString(std::string& desc, ProstPlanner* planner);
 
-    //set parameters from string
+    // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    //this is called before the first run starts
+    // Learn parameter values from a training set
     bool learn(std::vector<State> const& trainingSet);
 
-    //estimate the q-values of all (pruned) actions 
-    virtual void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult) = 0;
-
-    //estimate the best actions (no q-value estimates necessary)
+    // Start the search engine as main search engine. By default, this
+    // calls estimateQValues and returns those with the highest
+    // result.
     virtual void estimateBestActions(State const& _rootState, std::vector<int>& result);
 
-    //join the thread
-    //void join();
+    // Start the search engine for Q-value estimation
+    virtual void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult) = 0;
 
-    //this function is inherited from CachingComponent and called when caching is disabled because memory becomes sparse
+    // This is inherited from CachingComponent and called when caching
+    // is disabled because memory becomes sparse.
     void disableCaching() {
         cachingEnabled = false;
     }
 
-    //parameter setters
+    // Parameter setter
     virtual void setCachingEnabled(bool _cachingEnabled) {
         cachingEnabled = _cachingEnabled;
     }
@@ -48,7 +51,7 @@ public:
         maxSearchDepth = _maxSearchDepth;
     }
 
-    //getter methods of various settings
+    // Parameter getter
     virtual bool const& cachingIsEnabled() const {
         return cachingEnabled;
     }
@@ -57,10 +60,10 @@ public:
         return maxSearchDepth;
     }
 
-    //reset statistic variables.
+    // Reset statistic variables
     virtual void resetStats() {}
 
-    //printer
+    // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
@@ -74,25 +77,21 @@ protected:
         cachingEnabled(true),
         maxSearchDepth(_task->getHorizon()) {}
 
-    //used for logging
+    // Used for debug output only
     std::string name;
 
-    //the main planner
+    // The main planner
     ProstPlanner* planner;
 
-    //the used planning task
+    // The used planning task
     PlanningTask* task;
 
-    //parameters that can be set
+    // Parameter
     bool cachingEnabled;
     int maxSearchDepth;
-    //bool runInThread;
 
-    //stream for nicer printing (via print())
+    // Stream for nicer (and better timed) printing
     std::stringstream outStream;
-
-    //the thread to run this search engine
-    //boost::thread thr;
 };
 
 #endif

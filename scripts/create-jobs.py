@@ -15,7 +15,6 @@ benchmarkDir="../testbed/benchmarks/ippc2011/rddl/"
 # single cpu core. queue = "opteron_core.q"
 queue = "opteron_core.q"
 
-
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
 # to 30 minutes. If timout is set to None, then there is no timeout.
@@ -30,11 +29,18 @@ memout = None
 revision = "rev19"
 
 configs = [
+    "[IDS]",
     "[MC-UCT -i [IDS]]",
     "[IPPC2011]",
     "[DP-UCT -i [IDS]]",    
     "[UCTStar -i [IDS]]",
-    "[MaxMC-UCT -i [IDS]]"
+    "[MaxMC-UCT -i [IDS]]",
+    #"[Uniform]",
+    #"[MC-UCT -i [Uniform]]",
+    #"[MC-UCT -sd 15 -i [Uniform]]",
+    #"[DP-UCT -i [Uniform]]",    
+    #"[UCTStar -i [Uniform]]",
+    #"[MaxMC-UCT -i [Uniform]]",
 ]
 
 host = "localhost"

@@ -1,6 +1,13 @@
 #ifndef DP_UCT_SEARCH_H
 #define DP_UCT_SEARCH_H
 
+// DPUCTSearch is used for two of the UCT variant described in the
+// ICAPS 2013 paper by Keller and Helmert. If called with IDS as
+// initializers, it corresponds to the search engine labelled DP-UCT
+// in that paper which uses Partial Bellman backups and Monte-Carlo
+// sampling for outcome selection. If the number of new decision nodes
+// is limited to 1, it is UCT*.
+
 #include "uct_base.h"
 
 class DPUCTNode {
@@ -85,7 +92,7 @@ public:
         UCTBase<DPUCTNode>("DP-UCT", _planner),
         heuristicWeight(0.5) {}
 
-    // Search engine creation
+    // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value) {
         if(param == "-hw") {
             setHeuristicWeight(atof(value.c_str()));
@@ -95,19 +102,19 @@ public:
         return UCTBase<DPUCTNode>::setValueFromString(param, value);
     }
 
-    // Parameter setters: new parameters
+    // Parameter setter
     virtual void setHeuristicWeight(double _heuristicWeight) {
         heuristicWeight = _heuristicWeight;
     }
 
 protected:
-    //initialization of nodes
+    // Initialization of nodes
     void initializeDecisionNodeChild(DPUCTNode* node, unsigned int const& actionIndex, double const& initialQValue);
 
     // Outcome selection
     DPUCTNode* selectOutcome(DPUCTNode* node, State& stateAsProbDistr, int& varIndex);
 
-    //backup functions
+    // Backup functions
     void backupDecisionNodeLeaf(DPUCTNode* node, double const& immReward, double const& futReward);
     void backupDecisionNode(DPUCTNode* node, double const& immReward, double const& futReward);
     void backupChanceNode(DPUCTNode* node, double const& futReward);
@@ -116,9 +123,6 @@ protected:
     DPUCTNode* getRootNode() {
         return getDPUCTNode(1.0);
     }
-
-    // Parameter
-    double heuristicWeight;
 
 private:
     // Creates a successor node of a chance node that is reached with
@@ -131,6 +135,9 @@ private:
         res->prob = prob;
         return res;
     }
+
+    // Parameter
+    double heuristicWeight;
 };
 
 #endif

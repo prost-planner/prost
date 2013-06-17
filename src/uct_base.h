@@ -19,10 +19,10 @@
 template <class SearchNode>
 class UCTBase : public THTS<SearchNode> {
 public:
-    // Search engine creation
+    // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
-    // Parameter setters: new parameters
+    // Parameter setter
     virtual void setNumberOfInitialVisits(int _numberOfInitialVisits) {
         numberOfInitialVisits = _numberOfInitialVisits;
     }

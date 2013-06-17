@@ -1,6 +1,10 @@
 #ifndef ITERATIVE_DEEPENING_SEARCH_H
 #define ITERATIVE_DEEPENING_SEARCH_H
 
+// Implements an iterative deepending search engine. This was used as
+// initialization for UCT in IPPC 2011 and is described in the paper
+// by Keller and Eyerich (2012).
+
 #include "search_engine.h"
 
 #include "utils/timer.h"
@@ -12,21 +16,20 @@ class DepthFirstSearch;
 
 class IterativeDeepeningSearch : public SearchEngine {
 public:
-    //search engine creation
     IterativeDeepeningSearch(ProstPlanner* _planner);
 
+    // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
-    //learning
+    // Learn parameter values from a training set
     bool learn(std::vector<State> const& trainingSet);
 
-    //main (public) search functions
+    // Start the search engine for Q-value estimation
     void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
 
-    //parameter setters: overwrites
+    // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
 
-    //parameter setters: new parameters
     virtual void setTerminationTimeout(double _terminationTimeout) {
         terminationTimeout = _terminationTimeout;
     }
@@ -48,41 +51,45 @@ public:
         dfs->setCachingEnabled(_cachingEnabled);
     }
 
-    //printing and statistics
+    // Reset statistic variables
     void resetStats();
+
+    // Printer
     void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
+    // Decides whether more iterations are possible and reasonable
     bool moreIterations(std::vector<double>& result);
 
+    // The state that is given iteratively to the DFS engine
     State currentState;
 
-    //learning related stuff
+    // Learning related variables
     bool isLearning;
     std::vector<std::vector<double> > elapsedTime;
 
-    //timer related stuff
+    // Timer related variables
     Timer timer;
     double time;
 
-    //the used depth first search engine
+    // The depth first search engine
     SearchEngine* dfs;
 
-    //The number of remaining steps that was queried
+    // The number of remaining steps for this step
     int maxSearchDepthForThisStep;
 
-    //parameter
+    // Parameter
     double terminationTimeout;
     double strictTerminationTimeout;
     bool terminateWithReasonableAction;
     int minSearchDepth;
 
-    //statistics
+    // Statistics
     int accumulatedSearchDepth;
     int cacheHits;
     int numberOfRuns;
 
-    //caching
+    // Caching
     static std::map<State, std::vector<double>, State::CompareIgnoringRemainingSteps> rewardCache;
 };
 
