@@ -34,7 +34,7 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
         desc = "DP-UCT -ndn 1 -iv 1" + desc;
     } else if(desc.find("MaxMC-UCTStar") == 0) {
         desc = desc.substr(13,desc.size());
-        desc = "MaxMC-UCT -ndn 2" + desc;
+        desc = "MaxMC-UCT -ndn 1" + desc;
     }
 
     SearchEngine* result = NULL;

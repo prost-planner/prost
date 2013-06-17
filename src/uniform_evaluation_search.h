@@ -11,8 +11,20 @@ class UniformEvaluationSearch : public SearchEngine {
 public:
     UniformEvaluationSearch(ProstPlanner* _planner);
 
-    //main (public) search functions
+    // Set parameters from command line
+    bool setValueFromString(std::string& param, std::string& value);
+
+    // Start the search engine for Q-value estimation
     void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
+
+    // Parameter setter
+    virtual void setInitialValue(double const& _initialValue) {
+        initialValue = _initialValue;
+    }
+
+private:
+    // Parameter
+    double initialValue;
 };
 
 #endif
