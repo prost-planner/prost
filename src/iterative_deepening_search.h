@@ -25,7 +25,7 @@ public:
     bool learn(std::vector<State> const& trainingSet);
 
     // Start the search engine for Q-value estimation
-    void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult);
+    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
 
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
@@ -46,10 +46,7 @@ public:
         minSearchDepth = _minSearchDepth;
     }
 
-    virtual void setCachingEnabled(bool _cachingEnabled) {
-        SearchEngine::setCachingEnabled(_cachingEnabled);
-        dfs->setCachingEnabled(_cachingEnabled);
-    }
+    virtual void setCachingEnabled(bool _cachingEnabled);
 
     // Reset statistic variables
     void resetStats();
@@ -59,7 +56,7 @@ public:
 
 protected:
     // Decides whether more iterations are possible and reasonable
-    bool moreIterations(std::vector<double>& result);
+    bool moreIterations(std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
 
     // The state that is given iteratively to the DFS engine
     State currentState;
@@ -73,7 +70,7 @@ protected:
     double time;
 
     // The depth first search engine
-    SearchEngine* dfs;
+    DepthFirstSearch* dfs;
 
     // The number of remaining steps for this step
     int maxSearchDepthForThisStep;

@@ -1,6 +1,7 @@
 #include "preprocessor.h"
 
 #include "prost_planner.h"
+#include "planning_task.h"
 #include "logical_expressions.h"
 #include "actions.h"
 #include "conditional_probability_function.h"

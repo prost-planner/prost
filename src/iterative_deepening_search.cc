@@ -1,6 +1,7 @@
 #include "iterative_deepening_search.h"
 
 #include "prost_planner.h"
+#include "planning_task.h"
 #include "depth_first_search.h"
 #include "actions.h"
 
@@ -13,14 +14,14 @@
 using namespace std;
 
 /******************************************************************
-                                IDS
+                     Search Engine Creation
 ******************************************************************/
 
 map<State, vector<double>, State::CompareIgnoringRemainingSteps> IterativeDeepeningSearch::rewardCache;
 
 IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
-    SearchEngine("IDS", _planner, _planner->getDeterministicTask()),
-    currentState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys()),
+    SearchEngine("IDS", _planner, false),
+    currentState(successorGenerator->getStateSize(), -1, successorGenerator->getNumberOfStateFluentHashKeys()),
     isLearning(false),
     timer(),
     time(0.0),
@@ -58,130 +59,27 @@ bool IterativeDeepeningSearch::setValueFromString(string& param, string& value) 
     return SearchEngine::setValueFromString(param, value);
 }
 
+/******************************************************************
+                            Parameter
+******************************************************************/
+
 void IterativeDeepeningSearch::setMaxSearchDepth(int _maxSearchDepth) {
     dfs->setMaxSearchDepth(_maxSearchDepth);
     SearchEngine::setMaxSearchDepth(_maxSearchDepth);
     elapsedTime.resize(_maxSearchDepth+1);
 }
 
-void IterativeDeepeningSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
-    timer.reset();
-
-    if(_rootState.remainingSteps() > maxSearchDepth) {
-        maxSearchDepthForThisStep = maxSearchDepth;
-    } else {
-        maxSearchDepthForThisStep = _rootState.remainingSteps();
-    }
-
-    map<State, std::vector<double> >::iterator it = IterativeDeepeningSearch::rewardCache.find(_rootState);
-    if(it != IterativeDeepeningSearch::rewardCache.end()) {
-        ++cacheHits;
-        assert(result.size() == it->second.size());
-        for(unsigned int i = 0; i < result.size(); ++i) {
-            result[i] = it->second[i];
-        }
-    } else {
-        currentState.setTo(_rootState);
-        currentState.remainingSteps() = 1;
-        do {
-            ++currentState.remainingSteps();
-            dfs->estimateQValues(currentState, result, pruneResult);
-        }  while(moreIterations(result));
-
-        for(unsigned int i = 0; i < result.size(); ++i) {
-            if(!MathUtils::doubleIsMinusInfinity(result[i])) {
-                result[i] /= ((double)currentState.remainingSteps());
-            }
-        }
-
-        //TODO: Currently, we cache every result, but we should only
-        //do so if the result was achieved with a reasonable action,
-        //with a timeout or on a state with sufficient depth
-        if(cachingEnabled) {
-            IterativeDeepeningSearch::rewardCache[currentState] = result;
-        }
-
-        accumulatedSearchDepth += currentState.remainingSteps();
-        ++numberOfRuns;
-    }
+void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
+    SearchEngine::setCachingEnabled(_cachingEnabled);
+    dfs->setCachingEnabled(_cachingEnabled);
 }
 
-bool IterativeDeepeningSearch::moreIterations(vector<double>& result) {
-    time = timer();
-
-    //If we are learning, we apply different termination criteria
-    if(isLearning) {
-        elapsedTime[currentState.remainingSteps()].push_back(time);
-
-        if(MathUtils::doubleIsGreater(time,strictTerminationTimeout)) {
-            elapsedTime.resize(currentState.remainingSteps());
-            maxSearchDepth = currentState.remainingSteps()-1;
-            return false;
-        }
-        return (currentState.remainingSteps() < maxSearchDepthForThisStep);
-    }
-
-    //1. Check if we have a significant result
-    if(terminateWithReasonableAction) {
-        if(!MathUtils::doubleIsMinusInfinity(result[0])) {
-            // Noop is applicable -> we check if another action is
-            // better than noop
-            for(unsigned int i = 1; i < result.size(); ++i) {
-                if(MathUtils::doubleIsGreater(result[i],result[0])) {
-                    return false;
-                }
-            }
-        } else {
-            // Noop is not applicable -> we determine the first
-            // applicable action (we assume here that result[i] =
-            // -infty if the action is not applicable)
-            unsigned int firstApplicableActionIndex = 1;
-            while(MathUtils::doubleIsMinusInfinity(result[firstApplicableActionIndex])) {
-    		++firstApplicableActionIndex;
-            }
-
-            // There should be at least one value that is different from -infty
-            assert(firstApplicableActionIndex < result.size());
-
-            // Check if any two actions yield different results
-            for(unsigned int i = firstApplicableActionIndex; i < result.size(); ++i) {
-                if(!MathUtils::doubleIsEqual(result[i],result[firstApplicableActionIndex])) {
-                    return false;
-                }
-            }
-        }
-    }
-
-    //2. Check if we have reached the max search depth for this step
-    if(currentState.remainingSteps() >= maxSearchDepthForThisStep) {
-        return false;
-    }
-
-    //3. Check if the timeout is reached
-    if(MathUtils::doubleIsGreater(time,terminationTimeout)) {
-        return false;
-    }
-
-    return true;
-}
-
-void IterativeDeepeningSearch::resetStats() {
-    accumulatedSearchDepth = 0;
-    cacheHits = 0;
-    numberOfRuns = 0;
-}
-
-void IterativeDeepeningSearch::printStats(ostream& out, bool const& printRoundStats, string indent) {
-    SearchEngine::printStats(out, printRoundStats, indent);
-    if(numberOfRuns > 0) {
-        out << indent << "Average search depth: " << ((double)accumulatedSearchDepth/(double)numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
-    }
-    out << indent << "Maximal search depth: " << maxSearchDepth << endl;
-    out << indent << "Cache hits: " << cacheHits << endl;
-}
+/******************************************************************
+                            Learning
+******************************************************************/
 
 bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
-    if(!dfs->learningFinished() || !task->learningFinished()) {
+    if(!dfs->learningFinished() || !successorGenerator->learningFinished() || !applicableActionGenerator->learningFinished()) {
         return false;
     }
     cout << name << ": learning..." << endl;
@@ -193,10 +91,12 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     //perform ids for all states in traningSet and record the time it took
     for(unsigned int i = 0; i < trainingSet.size(); ++i) {
         State copy(trainingSet[i]);
-        copy.remainingSteps() = task->getHorizon();
-        vector<double> res(task->getNumberOfActions());
+        copy.remainingSteps() = successorGenerator->getHorizon();
+        vector<double> res(successorGenerator->getNumberOfActions());
 
-        estimateQValues(copy, res, false);
+        vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(copy);
+
+        estimateQValues(copy, actionsToExpand, res);
         if(maxSearchDepth < minSearchDepth) {
             cout << name << ": Setting max search depth to 0!" << endl;
             setMaxSearchDepth(0);
@@ -238,4 +138,132 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     resetStats();
     cout << name << ": ...finished" << endl;
     return LearningComponent::learn(trainingSet);
+}
+
+/******************************************************************
+                       Main Search Functions
+******************************************************************/
+
+bool IterativeDeepeningSearch::estimateQValues(State const& _rootState, vector<int> const& actionsToExpand, vector<double>& qValues) {
+    timer.reset();
+
+    if(_rootState.remainingSteps() > maxSearchDepth) {
+        maxSearchDepthForThisStep = maxSearchDepth;
+    } else {
+        maxSearchDepthForThisStep = _rootState.remainingSteps();
+    }
+
+    map<State, std::vector<double> >::iterator it = IterativeDeepeningSearch::rewardCache.find(_rootState);
+    if(it != IterativeDeepeningSearch::rewardCache.end()) {
+        ++cacheHits;
+        assert(qValues.size() == it->second.size());
+        for(unsigned int i = 0; i < qValues.size(); ++i) {
+            qValues[i] = it->second[i];
+        }
+    } else {
+        currentState.setTo(_rootState);
+        currentState.remainingSteps() = 1;
+        do {
+            ++currentState.remainingSteps();
+            dfs->estimateQValues(currentState, actionsToExpand, qValues);
+        }  while(moreIterations(actionsToExpand, qValues));
+
+        for(unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
+            if(actionsToExpand[actionIndex] == actionIndex) {
+                qValues[actionIndex] /= ((double)currentState.remainingSteps());
+            }
+        }
+
+        // TODO: Currently, we cache every result, but we should only
+        // do so if the result was achieved with a reasonable action,
+        // with a timeout or on a state with sufficient depth
+        if(cachingEnabled) {
+            IterativeDeepeningSearch::rewardCache[currentState] = qValues;
+        }
+
+        accumulatedSearchDepth += currentState.remainingSteps();
+        ++numberOfRuns;
+    }
+
+    return true;
+}
+
+bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand, vector<double>& qValues) {
+    time = timer();
+
+    // If we are learning, we apply different termination criteria
+    if(isLearning) {
+        elapsedTime[currentState.remainingSteps()].push_back(time);
+
+        if(MathUtils::doubleIsGreater(time,strictTerminationTimeout)) {
+            elapsedTime.resize(currentState.remainingSteps());
+            maxSearchDepth = currentState.remainingSteps()-1;
+            return false;
+        }
+        return (currentState.remainingSteps() < maxSearchDepthForThisStep);
+    }
+
+    // 1. Check if we have a significant result
+    if(terminateWithReasonableAction) {
+        if(actionsToExpand[0] == 0) {
+            // Noop is applicable -> we check if another action is
+            // better than noop
+            for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
+                if((actionsToExpand[actionIndex] == actionIndex) && 
+                   MathUtils::doubleIsGreater(qValues[actionIndex], qValues[0])) {
+                    return false;
+                }
+            }
+        } else {
+            // Noop is not applicable -> we determine the first
+            // applicable action
+            unsigned int firstApplicableActionIndex = 1;
+            while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
+    		++firstApplicableActionIndex;
+            }
+
+            // There must be at least one applicable action
+            assert(firstApplicableActionIndex < qValues.size());
+
+            // Check if any two applicable actions yield different
+            // results
+            for(unsigned int actionIndex = firstApplicableActionIndex; actionIndex < qValues.size(); ++actionIndex) {
+                if((actionsToExpand[actionIndex] == actionIndex) && 
+                   !MathUtils::doubleIsEqual(qValues[actionIndex], qValues[firstApplicableActionIndex])) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // 2. Check if we have reached the max search depth for this step
+    if(currentState.remainingSteps() >= maxSearchDepthForThisStep) {
+        return false;
+    }
+
+    // 3. Check if the timeout is reached
+    if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
+        return false;
+    }
+
+    return true;
+}
+
+/******************************************************************
+                   Statistics and Printers
+******************************************************************/
+
+void IterativeDeepeningSearch::resetStats() {
+    accumulatedSearchDepth = 0;
+    cacheHits = 0;
+    numberOfRuns = 0;
+}
+
+void IterativeDeepeningSearch::printStats(ostream& out, bool const& printRoundStats, string indent) {
+    SearchEngine::printStats(out, printRoundStats, indent);
+    if(numberOfRuns > 0) {
+        out << indent << "Average search depth: " << ((double)accumulatedSearchDepth/(double)numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
+    }
+    out << indent << "Maximal search depth: " << maxSearchDepth << endl;
+    out << indent << "Cache hits: " << cacheHits << endl;
 }
