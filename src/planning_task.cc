@@ -451,7 +451,7 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
         assert(trainingSet[stateIndex].remSteps >= 0);
 
         // Check if this training state has unreasonable actions
-        vector<int> applicableActions = getApplicableActions(trainingSet[stateIndex], true);
+        vector<int> applicableActions = getApplicableActions(trainingSet[stateIndex]);
 
         for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
             if((applicableActions[actionIndex] != actionIndex) && (applicableActions[actionIndex] != -1)) {
@@ -483,10 +483,10 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
                Applicable Actions and Action Pruning
 ******************************************************************/
 
-vector<int> PlanningTask::getApplicableActions(State const& state, bool const& pruneUnreasonableActions) {
+vector<int> PlanningTask::getApplicableActions(State const& state) {
     vector<int> res(getNumberOfActions(), 0);
 
-    if(hasUnreasonableActions && pruneUnreasonableActions) {
+    if(hasUnreasonableActions) {
         map<State, vector<int> >::iterator it = applicableReasonableActionsCache.find(state);
         if(it != applicableReasonableActionsCache.end()) {
             assert(it->second.size() == res.size());
@@ -621,7 +621,6 @@ bool PlanningTask::checkDeadEnd(State const& state) {
         return false;
     }
 
-
     for(unsigned int actionIndex = 1; actionIndex < getNumberOfActions(); ++actionIndex) {
         // Calc Kleene successor of applying action actionIndex
         State succ(stateSize, -1, numberOfStateFluentHashKeys);
@@ -729,7 +728,7 @@ void PlanningTask::calcOptimalFinalReward(State const& current, double& reward) 
     }
 
     // Get applicable actions
-    vector<int> applicableActions = getApplicableActions(current, true);
+    vector<int> applicableActions = getApplicableActions(current);
 
     if(rewardCPF->isActionIndependent()) {
         // If no action fluent occurs in the reward ,all rewards are
@@ -764,7 +763,7 @@ int PlanningTask::getOptimalFinalActionIndex(State const& current) {
     }
 
     // Get applicable actions
-    vector<int> applicableActions = getApplicableActions(current, true);
+    vector<int> applicableActions = getApplicableActions(current);
 
     if(rewardCPF->isActionIndependent()) {
         // If no action fluent occurs in the reward ,all rewards are

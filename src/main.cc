@@ -273,7 +273,7 @@ void printUsage() {
     cout << "  [UCTStar <options>] := [DP-UCT -ndn 1 -iv 1 <options>]" << endl;
     cout << "    This corresponds to the algorithms that has described as UCT* by Keller and Helmert (2013). To obtain the planner from that paper, use -i [IDS] as single further option." << endl << endl;
 
-    cout << "  [MaxMC.UCTStar <options>] := [MaxMC-UCT -ndn 1 -iv 1 <options>]" << endl;
+    cout << "  [MaxMC-UCTStar <options>] := [MaxMC-UCT -ndn 1 -iv 1 <options>]" << endl;
     cout << "    This is the equivalent to UCT* with MaxMC-UCT as the base algorithm." << endl << endl;
 }
 

@@ -15,7 +15,7 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
-    // task->printAction(cout, actionIndex);
+    // successorGenerator->printAction(cout, actionIndex);
     // cout << endl;
     // initialQValue.print(cout);
     // node->children[actionIndex]->print(cout);
@@ -32,7 +32,7 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, State& stateAsProbDistr, 
     }
 
     double prob = stateAsProbDistr[varIndex];
-    task->sampleVariable(stateAsProbDistr, varIndex);
+    successorGenerator->sampleVariable(stateAsProbDistr, varIndex);
     unsigned int childIndex = (unsigned int)stateAsProbDistr[varIndex];
 
     if(!node->children[childIndex]) {

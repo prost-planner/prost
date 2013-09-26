@@ -103,8 +103,6 @@ private:
     int bitSize;
     int seed;
 
-    int chosenActionIndex;
-
     std::vector<int> bestActions;
 
     std::vector<CachingComponent*> cachingComponents;

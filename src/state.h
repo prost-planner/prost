@@ -74,7 +74,7 @@ public:
         return remSteps;
     }
 
-    bool isFinalState() const {
+    bool isTerminal() const {
         assert(remSteps >= 0);
         return (remSteps == 0);
     }
