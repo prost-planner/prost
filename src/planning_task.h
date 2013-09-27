@@ -38,8 +38,7 @@ public:
         cachedGoals(bddfalse),
         cacheApplicableActions(true),
         hasUnreasonableActions(true),
-        noopIsOptimalFinalAction(false),
-        randNum(0.0) {}
+        noopIsOptimalFinalAction(false) {}
 
     PlanningTask(PlanningTask const& other) :
         CachingComponent(other),
@@ -71,8 +70,7 @@ public:
         hasUnreasonableActions(true),
         noopIsOptimalFinalAction(other.noopIsOptimalFinalAction),
         indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
-        indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap),
-        randNum(0.0) {}
+        indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap) {}
 
     void initialize(std::vector<ActionFluent*>& _actionFluents, std::vector<ConditionalProbabilityFunction*>& _CPFs, 
                     std::vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
@@ -106,8 +104,7 @@ public:
             if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
                 continue;
             } else {
-                generateRandomNumber(randNum);
-                next[i] = (MathUtils::doubleIsSmaller(randNum, next[i]) ? 1.0 : 0.0);
+                next[i] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), next[i]) ? 1.0 : 0.0);
             }
         }
     }
@@ -127,8 +124,7 @@ public:
                 next[i] = nextAsProbDistr[i];
                 continue;
             } else {
-                generateRandomNumber(randNum);
-                next[i] = (MathUtils::doubleIsSmaller(randNum, nextAsProbDistr[i]) ? 1.0 : 0.0);
+                next[i] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), nextAsProbDistr[i]) ? 1.0 : 0.0);
             }
         }
     }
@@ -136,8 +132,7 @@ public:
     // Samples a single variable within a state given as a probability distribution
     void sampleVariable(State& stateAsProbDistr, unsigned int const& varIndex) const {
         if(!MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 0.0) && !MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 1.0)) {
-            generateRandomNumber(randNum);
-            stateAsProbDistr[varIndex] = (MathUtils::doubleIsSmaller(randNum, stateAsProbDistr[varIndex]) ? 1.0 : 0.0);
+            stateAsProbDistr[varIndex] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), stateAsProbDistr[varIndex]) ? 1.0 : 0.0);
         }
     }
 
@@ -331,18 +326,22 @@ public:
     // i is unreasonable as the action with index res[i] leads to the
     // same distribution over successor states (this is only checked
     // if pruneUnreasonableActions is true).
-    std::vector<int> getApplicableActions(State const& state, bool const& pruneUnreasonableActions);
+    std::vector<int> getApplicableActions(State const& state);
+    std::vector<int> getIndicesOfApplicableActions(State const& state) {
+        std::vector<int> applicableActions = getApplicableActions(state);
+        std::vector<int> result;
+        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+            if(applicableActions[actionIndex] == actionIndex) {
+                result.push_back(actionIndex);
+            }
+        }
+        return result;
+    }
 
     // Checks if current is a reward lock (actually, currently this
     // checks only if it is a dead end or a goal, i.e., a reward lock
     // with minimal or maximal reward).
     bool isARewardLock(State const& current);
-
-    // TODO: Move this function where it belongs, it has nothing to do
-    // with the planning task.
-    void generateRandomNumber(double& res) const {
-        res = ((double)(rand() % 1000001) / 1000000.0);
-    }
 
     // If caching is disabled due to exceeding memory consumption,
     // this is called (this disables caching of all kinds)
@@ -484,8 +483,6 @@ private:
     // and is updated with indexToStateFluentHashKeyMap[i][j].second
     std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
     std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
-
-    mutable double randNum;
 };
 
 #endif

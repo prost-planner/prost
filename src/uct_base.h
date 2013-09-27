@@ -41,7 +41,7 @@ public:
 
 protected:
     UCTBase(std::string _name, ProstPlanner* _planner) :
-        THTS<SearchNode>(_name, _planner, _planner->getProbabilisticTask()), 
+        THTS<SearchNode>(_name, _planner), 
         numberOfInitialVisits(5),
         magicConstantScaleFactor(1.0) {}
 

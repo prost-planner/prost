@@ -1,5 +1,9 @@
 #include "search_engine.h"
 
+#include "prost_planner.h"
+#include "planning_task.h"
+#include "actions.h"
+
 #include "mc_uct_search.h"
 #include "max_mc_uct_search.h"
 #include "dp_uct_search.h"
@@ -8,15 +12,26 @@
 #include "depth_first_search.h"
 #include "uniform_evaluation_search.h"
 
-#include "prost_planner.h"
-#include "actions.h"
-
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
-
 using namespace std;
+
+/******************************************************************
+                     Search Engine Creation
+******************************************************************/
+
+SearchEngine::SearchEngine(std::string _name, ProstPlanner* _planner, bool useProbabilisticTask) :
+    CachingComponent(_planner),
+    LearningComponent(_planner),
+    name(_name),
+    planner(_planner), 
+    cachingEnabled(true) {
+
+    useProbabilisticPlanningTask(useProbabilisticTask);
+    maxSearchDepth = successorGenerator->getHorizon();
+}
 
 SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
     StringUtils::trim(desc);
@@ -80,16 +95,9 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     if(param == "-uc") {
         setCachingEnabled(atoi(value.c_str()));
         return true;
-    } else if(param == "-task") {
-        if(value == "PROB") {
-            setPlanningTask(planner->getProbabilisticTask());
-            return true;
-        } else if(value == "MLD") {
-            setPlanningTask(planner->getDeterministicTask());
-            return true;
-        } else {
-            return false;
-        }
+    } else if(param == "-prob") {
+        useProbabilisticPlanningTask(atoi(value.c_str()));
+        return true;
     } else if(param == "-sd") {
         setMaxSearchDepth(atoi(value.c_str()));
         return true;
@@ -98,8 +106,31 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     return false;
 }
 
+/******************************************************************
+                            Parameter
+******************************************************************/
+
+void SearchEngine::useProbabilisticPlanningTask(bool const& useProbabilisticTask) {
+    if(useProbabilisticTask) {
+        successorGenerator = planner->getProbabilisticTask();
+        if(successorGenerator->isPruningEquivalentToDeterminization()) {
+            applicableActionGenerator = planner->getDeterministicTask();
+        } else {
+            applicableActionGenerator = planner->getProbabilisticTask();
+        }
+    } else {
+        successorGenerator = planner->getDeterministicTask();
+        applicableActionGenerator = planner->getDeterministicTask();
+    }
+}
+
+/******************************************************************
+                            Learning
+******************************************************************/
+
 bool SearchEngine::learn(std::vector<State> const& trainingSet) {
-    if(!task->learningFinished()) {
+    if(!successorGenerator->learningFinished() || !applicableActionGenerator->learningFinished()) {
+        cout << "damn" << endl;
         return false;
     }
     cout << name << ": learning..." << endl;
@@ -108,20 +139,53 @@ bool SearchEngine::learn(std::vector<State> const& trainingSet) {
     return res;
 }
 
-void SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>& result) {
-    vector<double> qValues(task->getNumberOfActions());
-    estimateQValues(_rootState, qValues, false);
+/******************************************************************
+                       Main Search Functions
+******************************************************************/
 
-    result.push_back(0);
-    for(unsigned int i = 1; i < qValues.size(); ++i) {
-        if(MathUtils::doubleIsGreater(qValues[i], qValues[result[0]])) {
-            result.clear();
-            result.push_back(i);
-        } else if(MathUtils::doubleIsEqual(qValues[i], qValues[result[0]])) {
-            result.push_back(i);
+bool SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
+    vector<double> qValues(applicableActionGenerator->getNumberOfActions());
+    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(_rootState);
+
+    if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
+        return false;
+    }
+
+    double stateValue = -numeric_limits<double>::max();    
+    for(unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
+        if(actionsToExpand[actionIndex] == actionIndex) {
+            if(MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
+                stateValue = qValues[actionIndex];
+                bestActions.clear();
+                bestActions.push_back(actionIndex);
+            } else if(MathUtils::doubleIsEqual(qValues[actionIndex], stateValue)) {
+                bestActions.push_back(actionIndex);
+            }
         }
     }
+    return true;
 }
+
+bool SearchEngine::estimateStateValue(State const& _rootState, double& stateValue) {
+    vector<double> qValues(applicableActionGenerator->getNumberOfActions());
+    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(_rootState);
+
+    if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
+        return false;
+    }
+
+    stateValue = -numeric_limits<double>::max();
+    for(unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
+        if((actionsToExpand[actionIndex] == actionIndex) && MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
+            stateValue = qValues[actionIndex];
+        }
+    }
+    return true;
+}
+
+/******************************************************************
+                   Statistics and Printers
+******************************************************************/
 
 void SearchEngine::print(ostream& out) {
     out << outStream.str() << endl;

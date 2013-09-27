@@ -1,6 +1,7 @@
 #include "depth_first_search.h"
 
 #include "prost_planner.h"
+#include "planning_task.h"
 #include "actions.h"
 #include "conditional_probability_function.h"
 
@@ -12,42 +13,43 @@
 using namespace std;
 
 /******************************************************************
-            Constructor, Statistics and Parameters
+                     Search Engine Creation
 ******************************************************************/
 
 DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner) :
-    SearchEngine("DFS", _planner, _planner->getDeterministicTask()),
+    SearchEngine("DFS", _planner, false),
     rewardHelperVar(0.0) {}
 
-void DepthFirstSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
+/******************************************************************
+                       Main Search Functions
+******************************************************************/
+
+bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> const& actionsToExpand, vector<double>& qValues) {
     assert(_rootState.remainingSteps() > 0);
     assert(_rootState.remainingSteps() <= maxSearchDepth);
-    assert(result.size() == task->getNumberOfActions());
+    assert(qValues.size() == successorGenerator->getNumberOfActions());
 
-    vector<int> actionsToExpand = task->getApplicableActions(_rootState, pruneResult);
-
-    for(unsigned int index = 0; index < result.size(); ++index) {
+    for(unsigned int index = 0; index < qValues.size(); ++index) {
         if(actionsToExpand[index] == index) {
-            applyAction(_rootState, index, result[index]);
-        } else {
-            result[index] = -numeric_limits<double>::max();
+            applyAction(_rootState, index, qValues[index]);
         }
     }
+    return true;
 }
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
-    State nxt(task->getStateSize(), state.remainingSteps()-1, task->getNumberOfStateFluentHashKeys());
-    task->calcStateTransition(state, actionIndex, nxt, reward);
+    State nxt(successorGenerator->getStateSize(), state.remainingSteps()-1, successorGenerator->getNumberOfStateFluentHashKeys());
+    successorGenerator->calcStateTransition(state, actionIndex, nxt, reward);
 
     // Check if the next state is already cached
-    if(task->stateValueCache.find(nxt) != task->stateValueCache.end()) {
-        reward += task->stateValueCache[nxt];
+    if(successorGenerator->stateValueCache.find(nxt) != successorGenerator->stateValueCache.end()) {
+        reward += successorGenerator->stateValueCache[nxt];
         return;
     }
 
     // Check if we have reached a leaf
     if(nxt.remainingSteps() == 1) {
-        task->calcOptimalFinalReward(nxt, rewardHelperVar);
+        successorGenerator->calcOptimalFinalReward(nxt, rewardHelperVar);
         reward += rewardHelperVar;
         return;
     }
@@ -60,11 +62,11 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
 
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
-    assert(task->stateValueCache.find(state) == task->stateValueCache.end());
+    assert(successorGenerator->stateValueCache.find(state) == successorGenerator->stateValueCache.end());
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions
-    vector<int> actionsToExpand = task->getApplicableActions(state, true);
+    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(state);
 
     // Apply applicable actions and determine best one
     for(unsigned int index = 0; index < actionsToExpand.size(); ++index) {
@@ -80,6 +82,6 @@ void DepthFirstSearch::expandState(State const& state, double& result) {
 
     // Cache state value if caching is enabled
     if(cachingEnabled) {
-        task->stateValueCache[state] = result;
+        successorGenerator->stateValueCache[state] = result;
     }
 }

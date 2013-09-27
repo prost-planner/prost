@@ -17,7 +17,7 @@ public:
     DepthFirstSearch(ProstPlanner* _planner);
 
     // Start the search engine for Q-value estimation
-    void estimateQValues(State const& _rootState, std::vector<double>& result, const bool& pruneResult);
+    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
 
 private:
     // Returns the reward that can be achieved if the action with

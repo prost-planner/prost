@@ -1,5 +1,7 @@
 #include "state_set_generator.h"
 
+#include "prost_planner.h"
+#include "planning_task.h"
 #include "actions.h"
 
 #include "utils/timer.h"
@@ -11,7 +13,13 @@ using namespace std;
 
 StateSetGenerator::StateSetGenerator(ProstPlanner* _planner) :
     planner(_planner),
-    task(planner->getProbabilisticTask()) {
+    successorGenerator(planner->getProbabilisticTask()) {
+
+    if(successorGenerator->isPruningEquivalentToDeterminization()) {
+        applicableActionGenerator = planner->getDeterministicTask();
+    } else {
+        applicableActionGenerator = planner->getProbabilisticTask();
+    }
 }
 
 vector<State> StateSetGenerator::generateStateSet(State const& rootState, int const& numberOfStates, double const& inclusionProb) {
@@ -19,37 +27,27 @@ vector<State> StateSetGenerator::generateStateSet(State const& rootState, int co
 
     set<State, State::CompareIgnoringRemainingSteps> stateSet;
 
-    State nextState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys());
+    State nextState(successorGenerator->getStateSize(), -1, successorGenerator->getNumberOfStateFluentHashKeys());
     nextState.reset(rootState.remainingSteps()-1);
     State currentState(rootState);
 
     stateSet.insert(currentState);
 
     while((stateSet.size() < numberOfStates) && (MathUtils::doubleIsSmaller(t(), 2.0))) {
-        vector<int> actionsToExpand = task->getApplicableActions(currentState, true);
-
-        vector<int> actionsToExpandIndices;
-        for(unsigned int i = 0; i < actionsToExpand.size(); ++i) {
-            if(actionsToExpand[i] == i) {
-                actionsToExpandIndices.push_back(i);
-            }
-        }
-
+        vector<int> actionsToExpandIndices = applicableActionGenerator->getIndicesOfApplicableActions(currentState);
         int chosenActionIndex = actionsToExpandIndices[std::rand() % actionsToExpandIndices.size()];
         double reward = 0.0;
-        task->calcStateTransition(currentState, chosenActionIndex, nextState, reward);
+        successorGenerator->calcStateTransition(currentState, chosenActionIndex, nextState, reward);
 
-        if(task->isMinReward(reward) || task->isMaxReward(reward)) {
+        if(successorGenerator->isMinReward(reward) || successorGenerator->isMaxReward(reward)) {
             stateSet.insert(nextState);
         } else {
-            double randNum = 0.0;
-            task->generateRandomNumber(randNum);
-            if(MathUtils::doubleIsSmallerOrEqual(randNum,inclusionProb)) {
+            if(MathUtils::doubleIsSmallerOrEqual(MathUtils::generateRandomNumber(), inclusionProb)) {
                 stateSet.insert(nextState);
             }
         }
 
-        if(nextState.isFinalState()) {
+        if(nextState.isTerminal()) {
             nextState.reset(rootState.remainingSteps()-1);
             currentState.setTo(rootState);
         } else {
