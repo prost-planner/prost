@@ -7,7 +7,6 @@
 
 #include "caching_component.h"
 #include "learning_component.h"
-#include "planning_task.h"
 
 #include <sstream>
 
@@ -24,13 +23,14 @@ public:
     // Learn parameter values from a training set
     bool learn(std::vector<State> const& trainingSet);
 
-    // Start the search engine as main search engine. By default, this
-    // calls estimateQValues and returns those with the highest
-    // result.
-    virtual void estimateBestActions(State const& _rootState, std::vector<int>& result);
+    // Start the search engine to calculate best actions
+    virtual bool estimateBestActions(State const& _rootState, std::vector<int>& bestActions);
+
+    // Start the search engine for state value estimation
+    virtual bool estimateStateValue(State const& _rootState, double& stateValue);
 
     // Start the search engine for Q-value estimation
-    virtual void estimateQValues(State const& _rootState, std::vector<double>& result, bool const& pruneResult) = 0;
+    virtual bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues) = 0;
 
     // This is inherited from CachingComponent and called when caching
     // is disabled because memory becomes sparse.
@@ -43,9 +43,7 @@ public:
         cachingEnabled = _cachingEnabled;
     }
 
-    virtual void setPlanningTask(PlanningTask* _task) {
-        task = _task;
-    }
+    virtual void useProbabilisticPlanningTask(bool const& useProbabilisticTask);
    
     virtual void setMaxSearchDepth(int _maxSearchDepth) {
         maxSearchDepth = _maxSearchDepth;
@@ -68,14 +66,7 @@ public:
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
-    SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
-        CachingComponent(_planner),
-        LearningComponent(_planner),
-        name(_name),
-        planner(_planner), 
-        task(_task),
-        cachingEnabled(true),
-        maxSearchDepth(_task->getHorizon()) {}
+    SearchEngine(std::string _name, ProstPlanner* _planner, bool useProbabilisticTask);
 
     // Used for debug output only
     std::string name;
@@ -83,8 +74,10 @@ protected:
     // The main planner
     ProstPlanner* planner;
 
-    // The used planning task
-    PlanningTask* task;
+    // The planning tasks that are used for successor and applicable
+    // action generation
+    PlanningTask* successorGenerator;
+    PlanningTask* applicableActionGenerator;
 
     // Parameter
     bool cachingEnabled;

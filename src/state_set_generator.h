@@ -1,9 +1,11 @@
 #ifndef STATE_SET_GENERATOR_H
 #define STATE_SET_GENERATOR_H
 
-#include "prost_planner.h"
+#include <vector>
 
-class StateSetGenerator;
+class ProstPlanner;
+class PlanningTask;
+class State;
 
 class StateSetGenerator {
 public:
@@ -13,7 +15,8 @@ public:
 
 protected:
     ProstPlanner* planner;
-    PlanningTask* task;
+    PlanningTask* successorGenerator;
+    PlanningTask* applicableActionGenerator;
 };
 
 #endif

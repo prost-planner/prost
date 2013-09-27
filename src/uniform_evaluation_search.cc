@@ -1,19 +1,24 @@
 #include "uniform_evaluation_search.h"
 
 #include "prost_planner.h"
+#include "planning_task.h"
 
 #include <limits>
 
 using namespace std;
 
+/******************************************************************
+                     Search Engine Creation
+******************************************************************/
+
 UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner) :
-    SearchEngine("UniformEvaluation", _planner, _planner->getDeterministicTask()),
+    SearchEngine("UniformEvaluation", _planner, false),
     initialValue(0.0) {}
 
 bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     if(param == "-val") {
         if(value == "INFTY") {
-            setInitialValue(task->getMaxReward());
+            setInitialValue(successorGenerator->getMaxReward());
         } else {
             setInitialValue(atof(value.c_str()));
         }
@@ -23,14 +28,20 @@ bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     return SearchEngine::setValueFromString(param, value);
 }
 
-void UniformEvaluationSearch::estimateQValues(State const& _rootState, vector<double>& result, bool const& pruneResult) {
-    vector<int> actionsToExpand = task->getApplicableActions(_rootState, pruneResult);
+/******************************************************************
+                       Main Search Functions
+******************************************************************/
 
-    for(unsigned int i = 0; i < result.size(); ++i) {
-        if(actionsToExpand[i] == i) {
-            result[i] = initialValue;
-        } else {
-            result[i] = -std::numeric_limits<double>::max();
+bool UniformEvaluationSearch::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
+    bestActions = applicableActionGenerator->getIndicesOfApplicableActions(_rootState);
+    return true;
+}
+
+bool UniformEvaluationSearch::estimateQValues(State const& /*_rootState*/, vector<int> const& actionsToExpand, vector<double>& qValues) {
+    for(unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
+        if(actionsToExpand[actionIndex] == actionIndex) {
+            qValues[actionIndex] = initialValue;
         }
     }
+    return true;
 }

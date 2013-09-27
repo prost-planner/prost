@@ -3,6 +3,7 @@
 
 #define EPSILON std::numeric_limits<double>::epsilon()
 
+#include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <cassert>
@@ -44,6 +45,10 @@ public:
             }
         }
         return true;
+    }
+
+    static double generateRandomNumber() {
+        return ((double)(rand() % 1000001) / 1000000.0);
     }
 
 private:

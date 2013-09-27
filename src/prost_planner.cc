@@ -147,8 +147,8 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     initNextStep(nextStateVec);
 
     searchEngine->estimateBestActions(currentState, bestActions);
+    int chosenActionIndex = combineResults();
 
-    chosenActionIndex = combineResults();
     printStep(chosenActionIndex);
     monitorRAMUsage();
 
@@ -185,7 +185,6 @@ void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
 void ProstPlanner::initNextRound() {
     ++currentRound;
     remainingSteps = probabilisticTask->getHorizon();
-    chosenActionIndex = -1;
 }
 
 int ProstPlanner::combineResults() {
