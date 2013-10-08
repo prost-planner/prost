@@ -412,6 +412,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
     // Start the main loop that starts trials until some termination
     // criterion is fullfilled
     while(moreTrials()) {
+        //std::cout << "Trial " << (currentTrial+1) << std::endl;
         initTrial();
         visitDecisionNode(currentRootNode);
         ++currentTrial;

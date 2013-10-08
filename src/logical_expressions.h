@@ -264,10 +264,9 @@ public:
 class Connective : public LogicalExpression {
 public:
     std::vector<LogicalExpression*> exprs;
-    double exprRes;
 
     Connective(std::vector<LogicalExpression*>& _exprs) :
-        exprs(_exprs), exprRes(0.0) {}
+        exprs(_exprs) {}
 
     void print(std::ostream& out);
 };
@@ -558,10 +557,9 @@ public:
     LogicalExpression* condition;
     LogicalExpression* valueIfTrue;
     LogicalExpression* valueIfFalse;
-    double exprRes;
 
     IfThenElseExpression(LogicalExpression* _condition, LogicalExpression* _valueIfTrue, LogicalExpression* _valueIfFalse) :
-        condition(_condition), valueIfTrue(_valueIfTrue), valueIfFalse(_valueIfFalse), exprRes(0.0) {}
+        condition(_condition), valueIfTrue(_valueIfTrue), valueIfFalse(_valueIfFalse) {}
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
@@ -584,10 +582,9 @@ public:
     std::vector<LogicalExpression*> conditions;
     std::vector<LogicalExpression*> effects;
     bool hasUncertainCondition;
-    double exprRes;
 
     MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
-        conditions(_conditions), effects(_effects), hasUncertainCondition(false), exprRes(0.0) {}
+        conditions(_conditions), effects(_effects), hasUncertainCondition(false) {}
 
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 

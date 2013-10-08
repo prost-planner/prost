@@ -237,16 +237,17 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
     }
 
     // 2. Check if we have reached the max search depth for this step
-    if(currentState.remainingSteps() >= maxSearchDepthForThisStep) {
-        return false;
-    }
+    return currentState.remainingSteps() < maxSearchDepthForThisStep;
+
+    // We don't check this anymore as it leads to nondeterministic
+    // behaviour, but if learning is very bad for some reason it is
+    // possible that the planner gets stuck here
 
     // 3. Check if the timeout is reached
-    if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
-        return false;
-    }
+    // if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
+    // return false; }
 
-    return true;
+    // return true;
 }
 
 /******************************************************************
