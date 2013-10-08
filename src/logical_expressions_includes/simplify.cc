@@ -353,21 +353,16 @@ LogicalExpression* Division::simplify(UnprocessedPlanningTask* task, map<StateFl
 
 LogicalExpression* BernoulliDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
     LogicalExpression* newExpr = expr->simplify(task, replacements);
-   NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
-   if(nc) {
-       if(!MathUtils::doubleIsGreater(nc->value,0.0)) {
-           return NumericConstant::falsity();
-       } else if(!MathUtils::doubleIsSmaller(nc->value,1.0)) {
-           return NumericConstant::truth();
-       }
-   }
+    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
+    if(nc) {
+        if(MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            return NumericConstant::falsity();
+        } else if(MathUtils::doubleIsGreaterOrEqual(nc->value, 1.0) || MathUtils::doubleIsSmaller(nc->value, 0.0)) {
+            return NumericConstant::truth();
+        }
+    }
 
-   AtomicLogicalExpression* sf = dynamic_cast<AtomicLogicalExpression*>(newExpr);
-   if(sf) {
-       return newExpr; //TODO: remove this for real-valued competition!!!!!!!!!!!
-   }
-
-   return new BernoulliDistribution(newExpr);
+    return new BernoulliDistribution(newExpr);
 }
 
 LogicalExpression* KronDeltaDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
@@ -379,6 +374,7 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
     LogicalExpression* newValueIfTrue = valueIfTrue->simplify(task, replacements);
     LogicalExpression* newValueIfFalse = valueIfFalse->simplify(task, replacements);
 
+    // Check if the condition is a constant
     NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCondition);
     if(ncCond) {
         if(MathUtils::doubleIsEqual(ncCond->value, 0.0)) {
@@ -388,25 +384,28 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
         }
     }
 
+    // Check for cases of the form: "if a then 1 else 0" (and vice
+    // versa) and simplify to "a" ("not a"); Also check for "If a then
+    // const else const" and return "const" (TODO: This would be
+    // possible in general, but then we need a comparison operator of
+    // LogicalExpressions).
     NumericConstant* ncTrue = dynamic_cast<NumericConstant*>(newValueIfTrue);
     NumericConstant* ncFalse = dynamic_cast<NumericConstant*>(newValueIfFalse);
 
-    //check for cases of the form: if a then 1 else 0 (and vice versa)
-    //these can be simplified to: a (not a)
     if(ncTrue && ncFalse) {
-        if(MathUtils::doubleIsEqual(ncTrue->value,1.0) && MathUtils::doubleIsEqual(ncFalse->value,0.0)) {
+        if(MathUtils::doubleIsEqual(ncTrue->value, 1.0) && MathUtils::doubleIsEqual(ncFalse->value, 0.0)) {
             return newCondition;
-        } else if(MathUtils::doubleIsEqual(ncTrue->value,0.0) && MathUtils::doubleIsEqual(ncFalse->value,1.0)) {
+        } else if(MathUtils::doubleIsEqual(ncTrue->value, 0.0) && MathUtils::doubleIsEqual(ncFalse->value, 1.0)) {
             NegateExpression* res = new NegateExpression(newCondition);
-            return res->simplify(task,replacements);
-        } else if(MathUtils::doubleIsEqual(ncTrue->value,ncFalse->value)) {
+            return res->simplify(task, replacements);
+        } else if(MathUtils::doubleIsEqual(ncTrue->value, ncFalse->value)) {
             return ncTrue;
         }
     }
 
-    //check if this is part of if a then b else if ...
+    // Check for cases of the form "If a then b else if ..." and
+    // simplify to a MultiConditionChecker
     IfThenElseExpression* elseIf = dynamic_cast<IfThenElseExpression*>(newValueIfFalse);
-
     if(elseIf) {
         vector<LogicalExpression*> conditions;
         conditions.push_back(newCondition);
@@ -422,6 +421,7 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
         return mc->simplify(task, replacements);
     }
 
+    // Check if there is a condition checker nested inside this
     MultiConditionChecker* elseMCC = dynamic_cast<MultiConditionChecker*>(newValueIfFalse);
     if(elseMCC) {
         vector<LogicalExpression*> conditions;
