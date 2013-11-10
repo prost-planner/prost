@@ -146,11 +146,16 @@ void AtomicLogicalExpression::parse(string& desc, UnprocessedPlanningTask* task)
     VariableDefinition* parent = task->getVariableDefinition(name);
     switch(parent->variableType) {
     case VariableDefinition::STATE_FLUENT:
-    case VariableDefinition::INTERM_FLUENT:
         task->addStateFluent(new StateFluent(parent,paramsAsObjects,atof(valString.c_str())));
         break;
+    case VariableDefinition::INTERM_FLUENT:
+        // Interm fluents are currently not supported
+        assert(false);
+        break;
     case VariableDefinition::ACTION_FLUENT:
-        assert(false); //This is only called to parse the initial state and an action fluent just doesn't make sense there!
+        // This is only used to parse the initial state, where action
+        // fluents are not allowed
+        assert(false);
         break;
     case VariableDefinition::NON_FLUENT:
         task->addNonFluent(new NonFluent(parent,paramsAsObjects,atof(valString.c_str())));

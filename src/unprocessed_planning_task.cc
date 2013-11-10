@@ -54,139 +54,18 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
 
     std::vector<string> nonFluentsAndInstance;
     StringUtils::tokenize(problemDesc, nonFluentsAndInstance);
-    assert(nonFluentsAndInstance.size() == 2);
-    assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
+    if(nonFluentsAndInstance.size() == 1) {
+        // There is no non-fluents block
+        assert(nonFluentsAndInstance[0].find("instance ") == 0);
 
-    nonFluentsDesc = nonFluentsAndInstance[0];
-    instanceDesc = nonFluentsAndInstance[1];
-}
+        instanceDesc = nonFluentsAndInstance[0];
+    } else {
+        assert(nonFluentsAndInstance.size() == 2);
+        assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
 
-void UnprocessedPlanningTask::print(ostream& /*out*/) {
-    /*
-    out << "-----------------------------------------------Planning PlanningTask---------------------------------------------" << endl;
-    out << "-----------------------------------Input---------------------------------" << endl;
-    out << "-------------Domain Description-------------" << endl;
-    out << domainDesc << endl << endl;
-
-    out << "-----------NonFluents Description-----------" << endl;
-    out << nonFluentsDesc << endl << endl;
-
-    out << "------------Instance Description------------" << endl;
-    out << instanceDesc << endl << endl;
-
-    out << "-----------------------------------Parsed--------------------------------" << endl;
-
-    out << "----------------Domain Name-----------------" << endl;
-    out << domainName << endl << endl;
-
-    out << "--------------NonFluents Name---------------" << endl;
-    out << nonFluentsName << endl << endl;
-
-    out << "---------------Instance Name----------------" << endl;
-    out << instanceName << endl << endl;
-
-    out << "----------------Requirements----------------" << endl;
-    for(map<string, bool>::iterator it = requirements.begin(); it != requirements.end(); ++it) {
-        out << it->first << ": " << (it->second ? "yes" : "no") << endl;
+        nonFluentsDesc = nonFluentsAndInstance[0];
+        instanceDesc = nonFluentsAndInstance[1];
     }
-    out << endl;
-
-    out << "--------------------Object Types-----------------" << endl;
-    for(map<string, ObjectType*>::iterator it = objectTypes.begin(); it != objectTypes.end(); ++it) {
-        it->second->print(out);
-    }
-    out << endl;
-
-    out << "-----------------Objects-------------------------" << endl;
-    for(map<string,Object*>::iterator it = objects.begin(); it != objects.end(); ++it) {
-        it->second->print(out);
-    }
-    out << endl;
-
-    out << "---------------Objects by Type-------------------" << endl;
-    for(map<ObjectType*,vector<Object*> >::iterator it = objectsByType.begin(); it != objectsByType.end(); ++it) {
-        if(!it->second.empty()) {
-            out << it->first->name << " : ";
-            for(unsigned int i = 0; i < it->second.size(); ++i) {
-                out << it->second[i]->name;
-                if(i != it->second.size()-1) {
-                    out << ", ";
-                }
-            }
-            out << endl;
-        }
-    }
-    out << endl;
-
-    out << "---------------Variable Definitions--------------" << endl;
-    for(unsigned int i = 0; i < variableDefinitionsVec.size(); ++i) {
-        variableDefinitionsVec[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "-----------------CPF Definitions-----------------" << endl;
-    for(unsigned int i = 0; i < CPFDefsVec.size(); ++i) {
-        CPFDefsVec[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "--------------Reward CPF Definition--------------" << endl;
-    rewardCPFDef->print(out);
-    out << endl;
-
-    out << "--------------------Numbers----------------------" << endl;
-    out << "Horizon: " << horizon << endl;
-    out << "NumberOfConcurrentActions: " << numberOfConcurrentActions << endl;
-    out << "DiscountFactor: " << discountFactor << endl;
-    out << endl;
-
-    out << "----------------Initial State---------------------" << endl;
-    for(map<VariableDefinition*, vector<AtomicLogicalExpression*> >::iterator it = variablesBySchema.begin(); it != variablesBySchema.end(); ++it) {
-        if(it->first->variableType != VariableDefinition::ACTION_FLUENT) {
-            for(unsigned int i = 0; i < it->second.size(); ++i) {
-                it->second[i]->print(out);
-                out << " = " << it->second[i]->initialValue << endl;
-            }
-        }
-    }
-    out << endl;
-
-    out << "-------------------Constants----------------------" << endl;
-    for(map<double, NumericConstant*>::iterator it = constants.begin(); it != constants.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "-------------------Actions------------------------" << endl;
-    for(map<string, ActionFluent*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "---------------------CPFs.------------------------" << endl;
-    for(map<StateFluent*, ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "--------------------Reward------------------------" << endl;
-    rewardCPF->print(out);
-    out << endl;
-
-    out << "-----------State Action Constraints---------------" << endl;
-    for(unsigned int i = 0; i < SACs.size(); ++i) {
-        SACs[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "---------------------------------------------------------------------------------------------------------" << endl;
-    */
 }
 
 void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {

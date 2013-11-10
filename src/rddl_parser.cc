@@ -86,39 +86,41 @@ void RDDLParser::parseDomain() {
 }
 
 void RDDLParser::parseNonFluents() {
-    string nonFluentsDesc = task->nonFluentsDesc;
+    if(!task->nonFluentsDesc.empty()) {
+        string nonFluentsDesc = task->nonFluentsDesc;
 
-    getTokenName(nonFluentsDesc,task->nonFluentsName,12);
+        getTokenName(nonFluentsDesc, task->nonFluentsName, 12);
 
-    vector<string> tokens;
-    splitToken(nonFluentsDesc,tokens);
+        vector<string> tokens;
+        splitToken(nonFluentsDesc,tokens);
 
-    for(unsigned int i = 0; i < tokens.size(); ++i) {
-        if(tokens[i].find("domain =") == 0) {
-            string domainName = tokens[i].substr(9,tokens[i].length()-10);
-            StringUtils::trim(domainName);
-            StringUtils::removeTRN(domainName);
-            assert(task->domainName == domainName);
-        } else if(tokens[i].find("objects ") == 0) {
-            tokens[i] = tokens[i].substr(9,tokens[i].length()-11);
-            StringUtils::trim(tokens[i]);
-            StringUtils::removeTRN(tokens[i]);
-            vector<string> objectsAsString;
-            StringUtils::split(tokens[i], objectsAsString, ";");
-            for(unsigned int j = 0; j < objectsAsString.size(); ++j) {
-                Object::parse(objectsAsString[j], task);
+        for(unsigned int i = 0; i < tokens.size(); ++i) {
+            if(tokens[i].find("domain =") == 0) {
+                string domainName = tokens[i].substr(9,tokens[i].length()-10);
+                StringUtils::trim(domainName);
+                StringUtils::removeTRN(domainName);
+                assert(task->domainName == domainName);
+            } else if(tokens[i].find("objects ") == 0) {
+                tokens[i] = tokens[i].substr(9,tokens[i].length()-11);
+                StringUtils::trim(tokens[i]);
+                StringUtils::removeTRN(tokens[i]);
+                vector<string> objectsAsString;
+                StringUtils::split(tokens[i], objectsAsString, ";");
+                for(unsigned int j = 0; j < objectsAsString.size(); ++j) {
+                    Object::parse(objectsAsString[j], task);
+                }
+            } else if(tokens[i].find("non-fluents ") == 0) {
+                tokens[i] = tokens[i].substr(13,tokens[i].length()-15);
+                StringUtils::trim(tokens[i]);
+                StringUtils::removeTRN(tokens[i]);
+                vector<string> nonFluentsAsString;
+                StringUtils::split(tokens[i],nonFluentsAsString,";");
+                for(unsigned int j = 0; j < nonFluentsAsString.size(); ++j) {
+                    AtomicLogicalExpression::parse(nonFluentsAsString[j], task);
+                }
+            } else {
+                assert(false);
             }
-        } else if(tokens[i].find("non-fluents ") == 0) {
-            tokens[i] = tokens[i].substr(13,tokens[i].length()-15);
-            StringUtils::trim(tokens[i]);
-            StringUtils::removeTRN(tokens[i]);
-            vector<string> nonFluentsAsString;
-            StringUtils::split(tokens[i],nonFluentsAsString,";");
-            for(unsigned int j = 0; j < nonFluentsAsString.size(); ++j) {
-                AtomicLogicalExpression::parse(nonFluentsAsString[j], task);
-            }
-        } else {
-            assert(false);
         }
     }
 }

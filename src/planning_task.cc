@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -76,6 +77,8 @@ void PlanningTask::initializeSACs(vector<StateActionConstraint*>& _SACs) {
 }
 
 void PlanningTask::initializeCPFs(vector<ConditionalProbabilityFunction*>& _CPFs) {
+    std::sort(_CPFs.begin(), _CPFs.end(), PlanningTask::TransitionFunctionSort());
+
     // Calculate basic properties
     for(unsigned int index = 0; index < _CPFs.size(); ++index) {
         _CPFs[index]->initialize();

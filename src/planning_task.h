@@ -18,6 +18,14 @@ class ActionFluent;
 
 class PlanningTask : public CachingComponent, public LearningComponent {
 public:
+    // This is only to sort transition functions by their name to
+    // ensure deterministic behaviour
+    struct TransitionFunctionSort {
+        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
+            return lhs->head->name < rhs->head->name;
+        }
+    };
+
     PlanningTask(ProstPlanner* _planner) :
         CachingComponent(_planner),
         LearningComponent(_planner),
