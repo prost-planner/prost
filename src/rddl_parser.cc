@@ -271,6 +271,11 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
                     assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
                     readyExpressions[numberOfOpenParanthesis-1].push_back(new GreaterEqualsExpression(readyExpressions[numberOfOpenParanthesis]));
+                } else if(newKeyWords[0].compare(">") == 0) {
+                    assert(newKeyWords.size() == 1);
+                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
+                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                    readyExpressions[numberOfOpenParanthesis-1].push_back(new GreaterExpression(readyExpressions[numberOfOpenParanthesis]));
                 } else if(newKeyWords[0].compare("<=") == 0) {
                     assert(newKeyWords.size() == 1);
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
@@ -310,6 +315,11 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                     disj.push_back(negConj);
                     disj.push_back(posConj);
                     readyExpressions[numberOfOpenParanthesis-1].push_back(new Disjunction(disj));
+                } else if(newKeyWords[0].compare("<") == 0) {
+                    assert(newKeyWords.size() == 1);
+                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
+                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                    readyExpressions[numberOfOpenParanthesis-1].push_back(new LowerExpression(readyExpressions[numberOfOpenParanthesis]));
                 } else if(newKeyWords[0].compare("-") == 0) {
                     assert(newKeyWords.size() == 1);
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?

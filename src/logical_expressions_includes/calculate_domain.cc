@@ -60,18 +60,13 @@ void Disjunction::calculateDomain(ActionState const& actions, set<double>& res) 
 void EqualsExpression::calculateDomain(ActionState const& actions, set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
+
     set<double> childRes;
     exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
+
     set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
+    exprs[1]->calculateDomain(actions, childRes2);
+
     if(childRes.size() == 1 || childRes2.size() == 1) {
         if(MathUtils::doubleIsEqual(*childRes.begin(),*childRes2.begin())) {
             res.insert(1.0);
@@ -91,41 +86,70 @@ void EqualsExpression::calculateDomain(ActionState const& actions, set<double>& 
 
 }
 
-void GreaterExpression::calculateDomain(ActionState const& /*actions*/, set<double>& /*res*/) {
-    assert(false);
+void GreaterExpression::calculateDomain(ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> childRes;
+    exprs[0]->calculateDomain(actions, childRes);
+
+    set<double> childRes2;
+    exprs[1]->calculateDomain(actions, childRes2);
+
+    if(MathUtils::doubleIsGreater(*childRes.rbegin(),*childRes2.begin())) {
+        res.insert(1.0);
+    } else {
+        res.insert(0.0);
+    }
+
+    if(!MathUtils::doubleIsGreater(*childRes.begin(),*childRes2.rbegin())) {
+        res.insert(0.0);
+    } else {
+        res.insert(1.0);
+    }
 }
 
-void LowerExpression::calculateDomain(ActionState const& /*actions*/, set<double>& /*res*/) {
-    assert(false);
+void LowerExpression::calculateDomain(ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> childRes;
+    exprs[0]->calculateDomain(actions, childRes);
+
+    set<double> childRes2;
+    exprs[1]->calculateDomain(actions, childRes2);
+
+    if(MathUtils::doubleIsSmaller(*childRes.rbegin(),*childRes2.begin())) {
+        res.insert(1.0);
+    } else {
+        res.insert(0.0);
+    }
+
+    if(!MathUtils::doubleIsSmaller(*childRes.begin(),*childRes2.rbegin())) {
+        res.insert(0.0);
+    } else {
+        res.insert(1.0);
+    } 
 }
 
 void GreaterEqualsExpression::calculateDomain(ActionState const& actions, set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
+
     set<double> childRes;
     exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
-    set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
 
+    set<double> childRes2;
+    exprs[1]->calculateDomain(actions, childRes2);
 
     if(MathUtils::doubleIsGreaterOrEqual(*childRes.rbegin(),*childRes2.begin())) {
         res.insert(1.0);
-        //cout << "might be bigger or equal" << endl;
     } else {
         res.insert(0.0);
     }
 
     if(!MathUtils::doubleIsGreaterOrEqual(*childRes.begin(),*childRes2.rbegin())) {
         res.insert(0.0);
-        //cout << "might be smaller" << endl;
     } else {
         res.insert(1.0);
     }
@@ -136,28 +160,18 @@ void LowerEqualsExpression::calculateDomain(ActionState const& actions, set<doub
     assert(res.empty());
     set<double> childRes;
     exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
-    set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
 
+    set<double> childRes2;
+    exprs[1]->calculateDomain(actions, childRes2);
 
     if(MathUtils::doubleIsSmallerOrEqual(*childRes.rbegin(),*childRes2.begin())) {
         res.insert(1.0);
-        //cout << "might be bigger or equal" << endl;
     } else {
         res.insert(0.0);
     }
 
     if(!MathUtils::doubleIsSmallerOrEqual(*childRes.begin(),*childRes2.rbegin())) {
         res.insert(0.0);
-        //cout << "might be smaller" << endl;
     } else {
         res.insert(1.0);
     } 
