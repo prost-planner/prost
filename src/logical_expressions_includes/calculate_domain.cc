@@ -2,6 +2,10 @@ void LogicalExpression::calculateDomain(ActionState const& /*actions*/, set<doub
     assert(false);
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
 void StateFluent::calculateDomain(ActionState const& /*actions*/, set<double>& res) {
     res.insert(0.0);
     res.insert(1.0);
@@ -15,6 +19,10 @@ void ActionFluent::calculateDomain(ActionState const& actions, set<double>& res)
 void NumericConstant::calculateDomain(ActionState const& /*actions*/, set<double>& res) {
     res.insert(value);
 }
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 void Conjunction::calculateDomain(ActionState const& actions, set<double>& res) {
     assert(res.empty());
@@ -242,12 +250,42 @@ void Division::calculateDomain(ActionState const& actions, set<double>& res) {
             res.insert(*it / *it2);
         }
     }
-
 }
+
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void NegateExpression::calculateDomain(ActionState const& actions, set<double>& res) {
+    set<double> tmp;
+    expr->calculateDomain(actions, tmp);
+    for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+        assert(MathUtils::doubleIsSmallerOrEqual(*it,1.0));
+        res.insert(1.0 - (*it));
+    }
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
 
 void BernoulliDistribution::calculateDomain(ActionState const& actions, set<double>& res) {
     expr->calculateDomain(actions,res);
 }
+
+void DiscreteDistribution::calculateDomain(ActionState const& actions, set<double>& res) {
+    // We assume that each of the values has non-zero probability in some
+    // (reachable) state
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        set<double> tmp;
+        values[i]->calculateDomain(actions, tmp);
+        res.insert(tmp.begin(), tmp.end());
+    }
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 void IfThenElseExpression::calculateDomain(ActionState const& actions, set<double>& res) {
     assert(res.empty());
@@ -278,15 +316,6 @@ void MultiConditionChecker::calculateDomain(ActionState const& actions, set<doub
             effects[i]->calculateDomain(actions, tmp);
             res.insert(tmp.begin(),tmp.end());
         }
-    }
-}
-
-void NegateExpression::calculateDomain(ActionState const& actions, set<double>& res) {
-    set<double> tmp;
-    expr->calculateDomain(actions, tmp);
-    for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        assert(MathUtils::doubleIsSmallerOrEqual(*it,1.0));
-        res.insert(1.0 - (*it));
     }
 }
 

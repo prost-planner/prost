@@ -2,6 +2,10 @@ void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, Acti
     assert(false);
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
 void StateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) {
     res = current[index];
 }
@@ -13,6 +17,10 @@ void ActionFluent::evaluate(double& res, State const& /*current*/, ActionState c
 void NumericConstant::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) {
     res = value;
 }
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 void Conjunction::evaluate(double& res, State const& current, ActionState const& actions) {
     res = 1.0;
@@ -139,9 +147,38 @@ void Division::evaluate(double& res, State const& current, ActionState const& ac
     }
 }
 
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void NegateExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+    expr->evaluate(res, current, actions);
+    res = MathUtils::doubleIsEqual(res, 0.0);
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
 void BernoulliDistribution::evaluate(double& res, State const& current, ActionState const& actions) {
     expr->evaluate(res, current, actions);
 }
+
+void DiscreteDistribution::evaluate(double& res, State const& current, ActionState const& actions) {
+    print(cout);
+    cout << endl;
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        double val;
+        values[i]->evaluate(val, current, actions);
+        probabilities[i]->evaluate(res, current, actions);
+        cout << val << ": " << res << endl;
+    }
+    assert(false);
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 void IfThenElseExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     condition->evaluate(res, current, actions);
@@ -180,9 +217,4 @@ void MultiConditionChecker::evaluate(double& res, State const& current, ActionSt
         }
     }
     assert(false);
-}
-
-void NegateExpression::evaluate(double& res, State const& current, ActionState const& actions) {
-    expr->evaluate(res, current, actions);
-    res = MathUtils::doubleIsEqual(res, 0.0);
 }

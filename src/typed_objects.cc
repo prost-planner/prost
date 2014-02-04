@@ -31,8 +31,9 @@ void Type::parse(string& desc, UnprocessedPlanningTask* task) {
         vector<string> valsAsString;
         StringUtils::split(rest, valsAsString, ",");
         for(unsigned int i = 0; i < valsAsString.size(); ++i) {
-            assert(valsAsString[i][0] == '@');
-            task->addObject(new Object(valsAsString[i], newType));
+            Object* obj = new Object(valsAsString[i], newType);
+            task->addObject(obj);
+            newType->domain.push_back(obj);
         }
     } else {
         task->addObjectType(new ObjectType(name, task->getObjectType(rest)));
@@ -81,7 +82,12 @@ void ObjectType::print(ostream& out) {
     } 
 }
 
-double ObjectType::valueStringToDouble(string& /*val*/) {
+double ObjectType::valueStringToDouble(string& val) {
+    for(unsigned int i = 0; i < domain.size(); ++i) {
+        if(domain[i]->name == val) {
+            return i;
+        }
+    }
     assert(false);
     return -1.0;
 }
@@ -107,7 +113,9 @@ void Object::parse(string& desc, UnprocessedPlanningTask* task) {
     vector<string> objectNames;
     StringUtils::split(objs, objectNames, ",");
     for(unsigned int i = 0; i < objectNames.size(); ++i) {
-        task->addObject(new Object(objectNames[i],task->getObjectType(type)));
+        Object* obj = new Object(objectNames[i],task->getObjectType(type));
+        task->addObject(obj);
+        task->getObjectType(type)->domain.push_back(obj);
     }
 }
 

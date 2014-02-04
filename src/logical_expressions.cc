@@ -7,13 +7,15 @@
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
 using namespace std;
 
 #include "logical_expressions_includes/initialization.cc"
-#include "logical_expressions_includes/instantiation.cc"
+#include "logical_expressions_includes/instantiate.cc"
+#include "logical_expressions_includes/replace_quantifier.cc"
 #include "logical_expressions_includes/simplify.cc"
 #include "logical_expressions_includes/collect_initial_info.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
