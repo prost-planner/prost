@@ -84,6 +84,7 @@ public:
     ~ObjectType() {}
 
     ObjectType* superType;
+    std::vector<Object*> domain;
 
     void print(std::ostream& out);
     double valueStringToDouble(std::string& val);

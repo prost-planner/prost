@@ -46,6 +46,15 @@ void RDDLParser::parseDomain() {
             for(unsigned int j = 0; j < typesAsString.size(); ++j) {
                 Type::parse(typesAsString[j], task);
             }
+        } else if(tokens[i].find("objects ") == 0) {
+            tokens[i] = tokens[i].substr(9,tokens[i].length()-11);
+            StringUtils::trim(tokens[i]);
+            StringUtils::removeTRN(tokens[i]);
+            vector<string> objectsAsString;
+            StringUtils::split(tokens[i], objectsAsString, ";");
+            for(unsigned int j = 0; j < objectsAsString.size(); ++j) {
+                Object::parse(objectsAsString[j], task);
+            }
         } else if(tokens[i].find("pvariables ") == 0) {
             tokens[i] = tokens[i].substr(12,tokens[i].length()-14);
             StringUtils::trim(tokens[i]);
@@ -203,7 +212,16 @@ void RDDLParser::splitToken(string& desc, vector<string>& result) {
     }
 }
 
-LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlanningTask* _task) {
+LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlanningTask* _task, string enumContext) {
+    // This is used for the actual context of an enum
+    vector<pair<string, string> > context;
+    context.push_back(make_pair("root", enumContext));
+
+    // The pairs needed for switch/discrete
+    vector<vector<pair<LogicalExpression*, LogicalExpression*> > > enumStatements;
+    // This is used to determine if we are in the second part of a case - there is another context
+    bool afterCase = false;
+
     vector<string> tokens;
     tokenizeFormula(desc, tokens);
 
@@ -237,6 +255,10 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                         varParams.push_back(newKeyWords[i]);
                     }
                     readyExpressions[numberOfOpenParanthesis-1].push_back(new UninstantiatedVariable(varDef,varParams));
+                    // The variable may be a definition for switch or compare
+                    if((context.back().first.compare("switch") == 0 || context.back().first.compare("==") == 0) && (context.back().second.size() == 0)) {
+                        context.back().second = varDef->valueType->name;
+                    }
                 } else if(newKeyWords[0].compare("^") == 0) {
                     assert(newKeyWords.size() == 1);
                     assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
@@ -286,11 +308,22 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
                     assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
                     readyExpressions[numberOfOpenParanthesis-1].push_back(new EqualsExpression(readyExpressions[numberOfOpenParanthesis]));
+                    assert(context.back().first.compare("==") == 0);
+                    context.pop_back();
                 } else if(newKeyWords[0].compare("!=") == 0) {
                     assert(newKeyWords.size() == 1);
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
                     assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
                     readyExpressions[numberOfOpenParanthesis-1].push_back(new NegateExpression(new EqualsExpression(readyExpressions[numberOfOpenParanthesis])));
+                    assert(context.back().first.compare("==") == 0);
+                    context.pop_back();
+                } else if(newKeyWords[0].compare("~=") == 0) {
+                    assert(newKeyWords.size() == 1);
+                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
+                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                    readyExpressions[numberOfOpenParanthesis-1].push_back(new NegateExpression(new EqualsExpression(readyExpressions[numberOfOpenParanthesis])));
+                    assert(context.back().first.compare("==") == 0);
+                    context.pop_back();
                 } else if(newKeyWords[0].compare("=>") == 0) {
                     assert(newKeyWords.size() == 1);
                     assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
@@ -360,6 +393,49 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                             readyExpressions[numberOfOpenParanthesis][0],
                             readyExpressions[numberOfOpenParanthesis][1],
                             readyExpressions[numberOfOpenParanthesis][2]));
+                } else if(newKeyWords[0].compare("case") == 0) { 
+                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2);
+                	enumStatements.back().push_back(make_pair(readyExpressions[numberOfOpenParanthesis][0], readyExpressions[numberOfOpenParanthesis][1]));
+                } else if(newKeyWords[0].compare("switch") == 0) {
+                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2); // The second one is empty, the first one is the variable
+                        std::vector<LogicalExpression*> conditions;
+                        std::vector<LogicalExpression*> effects;
+                        for(unsigned int i = 0; i < enumStatements.back().size(); ++i) {
+                            if(i == (enumStatements.back().size() - 1)) {
+                                // We assume that the last case must be true, otherwise this is maldefined
+                                conditions.push_back(NumericConstant::truth());
+                            } else {
+                                std::vector<LogicalExpression*> equalsExpr;
+                                equalsExpr.push_back(readyExpressions[numberOfOpenParanthesis][0]);
+                                equalsExpr.push_back(enumStatements.back()[i].first);
+                                conditions.push_back(new EqualsExpression(equalsExpr));
+                            }
+                            effects.push_back(enumStatements.back()[i].second);
+                        }
+                        readyExpressions[numberOfOpenParanthesis-1].push_back(new MultiConditionChecker(conditions, effects));
+                	// Remove the context-entry and the cases
+                	enumStatements.pop_back();
+                	assert(context.back().first.compare("switch") == 0);
+                	context.pop_back();
+                } else if(newKeyWords[0].compare("Discrete") == 0) { 
+                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                	assert(readyExpressions[numberOfOpenParanthesis].size() == 1); // It is an empty expression
+                        std::vector<LogicalExpression*> values;
+                        std::vector<LogicalExpression*> probabilities;
+                        for(unsigned int i = 0; i < enumStatements.back().size(); ++i) {
+                            values.push_back(enumStatements.back()[i].first);
+                            probabilities.push_back(enumStatements.back()[i].second);
+                        }
+                	readyExpressions[numberOfOpenParanthesis-1].push_back(new DiscreteDistribution(values, probabilities));
+                	// Remove the context-entry and the cases
+                	enumStatements.pop_back();
+                	assert(context.back().first.compare("discrete") == 0);
+                	context.pop_back();
+                } else if(newKeyWords[0].c_str()[0] == '@') { // This is neccessary for discrete
+                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
+                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2);
+                	enumStatements.back().push_back(make_pair(readyExpressions[numberOfOpenParanthesis][0], readyExpressions[numberOfOpenParanthesis][1]));
                 } else {
                     cout << "Unknown Keyword: " << newKeyWords[0] << " ?" << endl;
                     assert(false);
@@ -378,7 +454,79 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
             double val = atof(token.c_str());
             readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
 
-        } else {
+        } else if(token.c_str()[0] == '@') {
+            assert(context.size() > 0);
+            // if we are in a discrete statement, this is a keyword
+            if(context.back().first.compare("discrete") == 0) {
+                keyWords[numberOfOpenParanthesis].push_back(token);
+            }
+            // We have to take care of the context
+            if(afterCase) {
+                assert(context.back().second.size() > 0);
+                assert(context.back().first.compare("switch") == 0);
+                double val = _task->getObjectType(context.back().second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+            } else if(context.back().first.compare("switch") == 0) {
+                // if we are not right after 'case', but still in the context of switch, we should use the root-context
+                assert(context.size() > 1);
+                assert(context[0].second.size() > 0);
+                assert(context[0].first.compare("root") == 0);
+                double val = _task->getObjectType(context[0].second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+            } else {
+                assert(context.size() > 0);
+                assert(context.back().second.size() > 0);
+                double val = _task->getObjectType(context.back().second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+            }
+        } else if(token.compare("switch") == 0) {
+        	context.push_back(make_pair("switch", ""));
+        	enumStatements.push_back(vector<pair<LogicalExpression*, LogicalExpression*> >());
+        	keyWords[numberOfOpenParanthesis].push_back(token);
+        } else if(token.compare("~=") == 0 || token.compare("==") == 0) {
+            context.push_back(make_pair("==", ""));
+            // we have to check if there is an enum constant
+            // if it is (== enum fluent) we have to swap enum and fluent to get the right context
+            assert(tokens.size() > i+1);
+            if(tokens[i+1].c_str()[0] == '@') {
+                string enumExpression = tokens[i+1];
+                vector<string>::iterator it = tokens.begin();
+                tokens.erase(it+i+1);
+                // Determine the new position for the enum
+                int paranthesis = 0;
+                int index = i;
+                while(index < tokens.size()) {
+                    if(tokens[index].compare("(") == 0) {
+                        ++paranthesis;
+                    } else if(tokens[index].compare(")") == 0) {
+                        --paranthesis;
+                    }
+                    if(paranthesis < 0) {
+                        break;
+                    }
+                    ++index;
+                }
+                assert(paranthesis == -1);
+                // insert the enum
+                it = tokens.begin();
+                tokens.insert(it+index, enumExpression);
+            }
+            keyWords[numberOfOpenParanthesis].push_back(token);
+        } else if(token.compare("Discrete") == 0) {
+            assert(tokens.size() > i+1);
+            context.push_back(make_pair("discrete", tokens[i+1]));
+            enumStatements.push_back(vector<pair<LogicalExpression*, LogicalExpression*> >());
+            keyWords[numberOfOpenParanthesis].push_back(token);
+            i++;
+        } else if(token.compare("case") == 0) {
+            afterCase = true;
+            keyWords[numberOfOpenParanthesis].push_back(token);
+        } else if(token.compare(":") == 0) {
+            if(context.back().first.compare("switch") == 0) {
+                afterCase = false;
+            }
+            keyWords[numberOfOpenParanthesis].push_back(token);
+        }  else {
             keyWords[numberOfOpenParanthesis].push_back(token);
         }
     }
@@ -387,12 +535,8 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
 }
 
 bool RDDLParser::isParameterDefinition(vector<string>& tokens) {
-    for(unsigned int i = 0; i < tokens.size(); ++i) {
-        if(tokens[i].find(":") != -1) {
-            return true;
-        }
-    }
-    return false;
+    //TODO: This should work, but have a look at it
+    return ((tokens[0].find("?") != -1) && tokens[1].find(":") != -1);
 }
 
 bool RDDLParser::isNumericConstant(string& token) {
@@ -419,6 +563,18 @@ void RDDLParser::tokenizeFormula(string& text, vector<string>& tokens) {
                 continue;
             }
             buffer += c;
+            if(c == '~') {
+            	assert(pos < text.length());
+            	if(text[pos+1] == ' ') {
+                    pos++;
+            	}
+            	assert(pos < text.length());
+            	if(text[pos+1] == '=') {
+                    buffer += text[pos+1];
+                    pos++;
+            	}
+            }
+            
             if(c == '<' || c == '>') {
                 assert(pos < text.length());
                 if(text[pos+1] == '=') {
@@ -430,6 +586,7 @@ void RDDLParser::tokenizeFormula(string& text, vector<string>& tokens) {
                     }
                 }
             }
+            
             tokens.push_back(buffer);
             buffer = "";
         } else if(c == '=') {

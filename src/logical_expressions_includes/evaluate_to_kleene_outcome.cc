@@ -2,6 +2,10 @@ void LogicalExpression::evaluateToKleeneOutcome(double& /*res*/, State const& /*
     assert(false);
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
 void StateFluent::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& /*actions*/) {
     res = current[index];
 }
@@ -13,6 +17,10 @@ void ActionFluent::evaluateToKleeneOutcome(double& res, State const& /*current*/
 void NumericConstant::evaluateToKleeneOutcome(double& res, State const& /*current*/, ActionState const& /*actions*/) {
     res = value;
 }
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 void Conjunction::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     res = 1.0;
@@ -203,12 +211,34 @@ void Division::evaluateToKleeneOutcome(double& res, State const& current, Action
     }
 }
 
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void NegateExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    expr->evaluateToKleeneOutcome(res, current, actions);
+    if(!MathUtils::doubleIsMinusInfinity(res)) {
+        res = MathUtils::doubleIsEqual(res, 0.0);
+    }
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
 void BernoulliDistribution::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     expr->evaluateToKleeneOutcome(res, current, actions);
     if(!MathUtils::doubleIsEqual(res,1.0) && !MathUtils::doubleIsEqual(res,0.0)) {
         res = -numeric_limits<double>::max();
     }
 }
+
+void DiscreteDistribution::evaluateToKleeneOutcome(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 void IfThenElseExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
     condition->evaluateToKleeneOutcome(res, current, actions);
@@ -259,9 +289,4 @@ void MultiConditionChecker::evaluateToKleeneOutcome(double& res, State const& cu
     assert(false);
 }
 
-void NegateExpression::evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
-    expr->evaluateToKleeneOutcome(res, current, actions);
-    if(!MathUtils::doubleIsMinusInfinity(res)) {
-        res = MathUtils::doubleIsEqual(res, 0.0);
-    }
-}
+

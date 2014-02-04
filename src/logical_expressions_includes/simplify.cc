@@ -3,6 +3,14 @@ LogicalExpression* LogicalExpression::simplify(UnprocessedPlanningTask* /*task*/
     return NULL;
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
+LogicalExpression* AtomicLogicalExpression::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
+    return this;
+}
+
 LogicalExpression* StateFluent::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& replacements) {
     if(replacements.find(this) != replacements.end()) {
         return replacements[this];
@@ -10,13 +18,13 @@ LogicalExpression* StateFluent::simplify(UnprocessedPlanningTask* /*task*/, map<
     return this;
 }
 
-LogicalExpression* AtomicLogicalExpression::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
-    return this;
-}
-
 LogicalExpression* NumericConstant::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
     return this;
 }
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 LogicalExpression* Conjunction::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
     vector<LogicalExpression*> newExprs;
@@ -351,6 +359,37 @@ LogicalExpression* Division::simplify(UnprocessedPlanningTask* task, map<StateFl
     return new Division(newExprs);
 }
 
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+LogicalExpression* NegateExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+    LogicalExpression* newExpr = expr->simplify(task, replacements);
+
+    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
+    if(nc) {
+        if(MathUtils::doubleIsEqual(nc->value,0.0)) {
+            return NumericConstant::truth();
+        }
+        return NumericConstant::falsity();
+    }
+
+    NegateExpression* neg = dynamic_cast<NegateExpression*>(newExpr);
+    if(neg) {
+        return neg->expr;
+    }
+
+    return new NegateExpression(newExpr);
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
+LogicalExpression* KronDeltaDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+    return expr->simplify(task, replacements);
+}
+
 LogicalExpression* BernoulliDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
     LogicalExpression* newExpr = expr->simplify(task, replacements);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
@@ -365,9 +404,44 @@ LogicalExpression* BernoulliDistribution::simplify(UnprocessedPlanningTask* task
     return new BernoulliDistribution(newExpr);
 }
 
-LogicalExpression* KronDeltaDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    return expr->simplify(task, replacements);
+// TODO: If there is a constant probability equal to 1 or higher (or lower than
+// 0), what do we do? Can we simplify such that the according value is always
+// true?
+LogicalExpression* DiscreteDistribution::simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements) {
+    vector<LogicalExpression*> newValues;
+    vector<LogicalExpression*> newProbs;
+
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        newValues.push_back(values[i]->simplify(task, replacements));
+        newProbs.push_back(probabilities[i]->simplify(task, replacements));
+    }
+
+    // Remove all values with constant probability 0
+    for(unsigned int i = 0; i < newProbs.size(); ++i) {
+        NumericConstant* nc = dynamic_cast<NumericConstant*>(newProbs[i]);
+        if(nc && MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            std::swap(newValues[i], newValues[newValues.size()-1]);
+            newValues.pop_back();
+            std::swap(newProbs[i], newProbs[newProbs.size()-1]);
+            newProbs.pop_back();
+            --i;
+        }
+    }
+
+    assert(!newValues.empty());
+
+    // If only one value is left it must have probability 1 and this is a
+    // KronDelta distribution
+    if(newValues.size() > 1) {
+        return new DiscreteDistribution(newValues, newProbs);
+    } else {
+        return newValues[0];
+    }
 }
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
     LogicalExpression* newCondition = condition->simplify(task, replacements);
@@ -449,23 +523,4 @@ LogicalExpression* MultiConditionChecker::simplify(UnprocessedPlanningTask* task
     }
 
     return new MultiConditionChecker(newConditions, newEffects);
-}
-
-LogicalExpression* NegateExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(task, replacements);
-
-    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
-    if(nc) {
-        if(MathUtils::doubleIsEqual(nc->value,0.0)) {
-            return NumericConstant::truth();
-        }
-        return NumericConstant::falsity();
-    }
-
-    NegateExpression* neg = dynamic_cast<NegateExpression*>(newExpr);
-    if(neg) {
-        return neg->expr;
-    }
-
-    return new NegateExpression(newExpr);
 }

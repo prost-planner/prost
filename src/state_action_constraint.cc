@@ -5,7 +5,7 @@
 using namespace std;
 
 void StateActionConstraint::parse(string& desc, UnprocessedPlanningTask* task, RDDLParser* parser) {
-    LogicalExpression* formula = parser->parseRDDLFormula(desc,task);
+    LogicalExpression* formula = parser->parseRDDLFormula(desc,task, "SAC");
     task->addStateActionConstraint(new StateActionConstraint("SAC ", formula));
 }
 

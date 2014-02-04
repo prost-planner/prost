@@ -12,7 +12,7 @@ public:
         task(_task) {}
 
     void parse();
-    LogicalExpression* parseRDDLFormula(std::string& desc, UnprocessedPlanningTask* _task);
+    LogicalExpression* parseRDDLFormula(std::string& desc, UnprocessedPlanningTask* _task, std::string enumContext);
 
 private:
     UnprocessedPlanningTask* task;

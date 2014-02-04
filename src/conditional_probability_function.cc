@@ -102,8 +102,7 @@ void ConditionalProbabilityFunctionDefinition::parse(string& desc, UnprocessedPl
         headParams.push_back(nameAndParamsVec[i]);
     }
     UninstantiatedVariable* head = new UninstantiatedVariable(headParent, headParams);
-
-    LogicalExpression* formula = parser->parseRDDLFormula(rest,task);
+    LogicalExpression* formula = parser->parseRDDLFormula(rest,task, head->parent->valueType->name);
 
     task->addCPFDefinition(new ConditionalProbabilityFunctionDefinition(head,formula));
 }

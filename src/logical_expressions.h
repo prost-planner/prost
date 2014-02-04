@@ -20,8 +20,8 @@ public:
 
     virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    virtual void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
-                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
+    virtual void collectInitialInfo(bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/, std::set<StateFluent*>& /*dependentStateFluents*/, 
+                                    std::set<ActionFluent*>& /*positiveDependentActionFluents*/, std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
     virtual void calculateDomain(ActionState const& actions, std::set<double>& res);
 
     virtual void evaluate(double& res, State const& current, ActionState const& actions);
@@ -30,10 +30,8 @@ public:
     virtual void print(std::ostream& out) = 0;
 };
 
-
-
 /*****************************************************************
-                       Schematic Stuff
+                         Schematics
 *****************************************************************/
 
 class VariableDefinition {
@@ -87,10 +85,6 @@ public:
     void print(std::ostream& out);
 };
 
-/*****************************************************************
-                      Variables & Constants
-*****************************************************************/
-
 class UninstantiatedVariable : public LogicalExpression {
 public:
     UninstantiatedVariable(VariableDefinition* _parent, std::vector<std::string> _params);
@@ -105,6 +99,10 @@ public:
 
     void print(std::ostream& out);
 };
+
+/*****************************************************************
+                           Atomics
+*****************************************************************/
 
 class AtomicLogicalExpression : public LogicalExpression {
 public:
@@ -190,7 +188,6 @@ public:
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
-
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void calculateDomain(ActionState const& actions, std::set<double>& res);
@@ -202,7 +199,7 @@ public:
 };
 
 /*****************************************************************
-                    Quantifier & Subclasses
+                          Quantifier
 *****************************************************************/
 
 class Quantifier : public LogicalExpression {
@@ -258,7 +255,7 @@ public:
 };
 
 /*****************************************************************
-                    Connective & Subclasses
+                           Connectives
 *****************************************************************/
 
 class Connective : public LogicalExpression {
@@ -503,22 +500,55 @@ public:
 };
 
 /*****************************************************************
+                          Unaries
+*****************************************************************/
+
+class NegateExpression : public LogicalExpression {
+public:
+    LogicalExpression* expr;
+
+    NegateExpression(LogicalExpression* _expr) :
+        expr(_expr) {}
+
+    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+
+    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(ActionState const& actions, std::set<double>& res);
+
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+
+    void print(std::ostream& out);
+};
+
+/*****************************************************************
                    Probability Distributions
 *****************************************************************/
 
-class ProbabilityDistribution : public LogicalExpression {
+class KronDeltaDistribution : public LogicalExpression {
 public:
+    KronDeltaDistribution(LogicalExpression* _expr) :
+        expr(_expr), randNum(0.0) {}
+
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+
+    void print(std::ostream& out);
+
     LogicalExpression* expr;
     double randNum;
-
-    ProbabilityDistribution(LogicalExpression* _expr) :
-        expr(_expr), randNum(0.0) {}
 };
 
-class BernoulliDistribution : public ProbabilityDistribution {
+class BernoulliDistribution : public LogicalExpression {
 public:
     BernoulliDistribution(LogicalExpression* _expr) :
-        ProbabilityDistribution(_expr) {}
+        expr(_expr), randNum(0.0) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
@@ -534,22 +564,37 @@ public:
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
+
+    LogicalExpression* expr;
+    double randNum;
 };
 
-class KronDeltaDistribution : public ProbabilityDistribution {
+class DiscreteDistribution : public LogicalExpression {
 public:
-    KronDeltaDistribution(LogicalExpression* _expr) :
-        ProbabilityDistribution(_expr) {}
+    std::vector<LogicalExpression*> values;
+    std::vector<LogicalExpression*> probabilities;
+    
+    DiscreteDistribution(std::vector<LogicalExpression*> _values, std::vector<LogicalExpression*> _probabilities) :
+    	values(_values), probabilities(_probabilities) {}
 
-    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+
+    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                            std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(ActionState const& actions, std::set<double>& res);
+
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
 
 /*****************************************************************
-                     IfThenElse and Negate
+                         Conditionals
 *****************************************************************/
 
 class IfThenElseExpression : public LogicalExpression {
@@ -586,27 +631,6 @@ public:
     MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
         conditions(_conditions), effects(_effects), hasUncertainCondition(false) {}
 
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
-
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
-
-    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
-                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
-
-    void print(std::ostream& out);
-};
-
-class NegateExpression : public LogicalExpression {
-public:
-    LogicalExpression* expr;
-
-    NegateExpression(LogicalExpression* _expr) :
-        expr(_expr) {}
-
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
@@ -622,7 +646,5 @@ public:
 
     void print(std::ostream& out);
 };
-
-
 
 #endif

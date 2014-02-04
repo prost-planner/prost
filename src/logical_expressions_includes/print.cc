@@ -1,3 +1,7 @@
+/*****************************************************************
+                         Schematics
+*****************************************************************/
+
 void VariableDefinition::print(ostream& out) {
     out << name << "(";
     for(unsigned int i = 0; i < params.size(); ++i) {
@@ -45,6 +49,10 @@ void UninstantiatedVariable::print(ostream& out) {
     out << name;
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
 void AtomicLogicalExpression::print(ostream& out) {
     out << name;
 }
@@ -52,6 +60,10 @@ void AtomicLogicalExpression::print(ostream& out) {
 void NumericConstant::print(ostream& out) {
     out << value;
 }
+
+/*****************************************************************
+                          Quantifier
+*****************************************************************/
 
 void Quantifier::print(ostream& out) {
     parameterDefsSet->print(out);
@@ -81,6 +93,10 @@ void ExistentialQuantification::print(ostream& out) {
     Quantifier::print(out);
     out << ")";
 }
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 void Connective::print(ostream& out) {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
@@ -159,17 +175,47 @@ void Division::print(ostream& out) {
     out << ") ";
 }
 
-void BernoulliDistribution::print(ostream& out) {
-    out << "Bernoulli(";
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void NegateExpression::print(ostream& out) {
+    out << "(not ";
     expr->print(out);
     out << ") ";
 }
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
 
 void KronDeltaDistribution::print(ostream& out) {
     out << "KronDelta(";
     expr->print(out);
     out << ") ";
 }
+
+void BernoulliDistribution::print(ostream& out) {
+    out << "Bernoulli(";
+    expr->print(out);
+    out << ") ";
+}
+
+void DiscreteDistribution::print(ostream& out) {
+    out << "Discrete( ";
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        out << "[";
+        values[i]->print(out);
+        out << " : ";
+        probabilities[i]->print(out);
+        out << "] ";	
+    }
+    out << ")";
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 void IfThenElseExpression::print(ostream& out) {
     out << "(if ";
@@ -200,10 +246,4 @@ void MultiConditionChecker::print(ostream& out) {
         out << " ) ";
     }
     out << " ] ";
-}
-
-void NegateExpression::print(ostream& out) {
-    out << "(not ";
-    expr->print(out);
-    out << ") ";
 }
