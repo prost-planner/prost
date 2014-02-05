@@ -69,6 +69,18 @@ double BoolType::valueStringToDouble(string& val) {
     return 0.0;
 }
 
+void BoolType::printDomain(ostream& out) {
+    out << "0: false" << endl << "1: true" << endl;
+}
+
+void IntType::printDomain(ostream& out) {
+    out << "N" << endl;
+}
+
+void RealType::printDomain(ostream& out) {
+    out << "R" << endl;
+}
+
 ObjectType::ObjectType(string Name, ObjectType* SuperType) :Type(Name, Type::OBJECT), superType(SuperType) {
     assert(superType);
 }
@@ -79,7 +91,13 @@ void ObjectType::print(ostream& out) {
         out << name << " : " << superType->name << endl;
     } else {
         out << name << endl;
-    } 
+    }
+}
+
+void ObjectType::printDomain(ostream& out) {
+    for(unsigned int i = 0; i < domain.size(); ++i) {
+        out << i << ": " << domain[i]->name << endl;
+    }
 }
 
 double ObjectType::valueStringToDouble(string& val) {

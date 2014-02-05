@@ -544,7 +544,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         // cout << endl;
 
         // Sample successor state
-        successorGenerator->calcSuccessorAsProbabilityDistribution(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
+        //REPAIR successorGenerator->calcSuccessorAsProbabilityDistribution(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
         chanceNodeVarIndex = successorGenerator->getFirstProbabilisticVarIndex();
 
         if(successorGenerator->isDeterministic()) {

@@ -15,7 +15,8 @@ using namespace std;
 
 void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<ConditionalProbabilityFunction*>& _CPFs, 
                               vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
-                              int _horizon, double _discountFactor, map<string,int>& stateVariableIndices) {
+                              int _horizon, double _discountFactor, map<string, int>& stateVariableIndices,
+                              vector<vector<string> >& stateVariableValues) {
     //Set member vars
     numberOfConcurrentActions = _numberOfConcurrentActions;
     horizon = _horizon;
@@ -42,11 +43,17 @@ void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<Cond
     // Initialize reward and reward lock dependent variables
     initializeRewardDependentVariables();
 
-    // Set mapping of variables to variable names for communication
-    // with environment
+    // Set mapping of variables to variable names and of values as strings to
+    // internal valued for communication with environment
     for(unsigned int i = 0; i < stateSize; ++i) {
         assert(stateVariableIndices.find(CPFs[i]->head->name) == stateVariableIndices.end());
         stateVariableIndices[CPFs[i]->head->name] = i;
+
+        vector<string> values;
+        for(unsigned int j = 0; j < CPFs[i]->head->parent->valueType->domain.size(); ++j) {
+            values.push_back(CPFs[i]->head->parent->valueType->domain[j]->name);
+        }
+        stateVariableValues.push_back(values);
     }
 }
 
@@ -135,9 +142,7 @@ void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
     list<vector<int> > actionCombinations;    
     calcPossiblyLegalActionStates(numberOfConcurrentActions, actionCombinations);
 
-    double res = 0.0;
     State current(initialState);
-
     set<ActionState> legalActions;
 
     // Remove all illegal action combinations by checking the SACs
@@ -152,11 +157,13 @@ void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
 
         bool isLegal = true;
         for(unsigned int i = 0; i < staticSACs.size(); ++i) {
+            DiscretePD res;
             staticSACs[i]->evaluate(res, current, actionState);
-            if(MathUtils::doubleIsEqual(res,0.0)) {
+            if(res.isFalsity()) {
                 isLegal = false;
                 break;
             }
+            assert(res.isTruth());
         }
 
         if(isLegal) {
@@ -219,7 +226,7 @@ void PlanningTask::initializeStateHashKeys() {
     vector<long> hashKeyBases;
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
         hashKeyBases.push_back(nextHashKeyBase);
-        if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 2)) {
+        if((CPFs[i]->getDomainSize() == 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->getDomainSize())) {
             stateHashingPossible = false;
             return;
         }
@@ -264,6 +271,7 @@ void PlanningTask::initializeHashKeysOfStatesAsProbabilityDistributions() {
 }
 
 set<double> PlanningTask::calculateDomainOfCPF(ConditionalProbabilityFunction* cpf) {
+    //REPAIR
     set<double> result;
     for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
         // Calculate the values that can be achieved if the action
@@ -277,6 +285,7 @@ set<double> PlanningTask::calculateDomainOfCPF(ConditionalProbabilityFunction* c
 }
 
 void PlanningTask::initializeDomainOfCPF(int const& index) {
+    //REPAIR
     if(CPFs[index]->isProbabilistic()) {
         set<double> actionIndependentValues = calculateDomainOfCPF(CPFs[index]);
 
@@ -311,6 +320,8 @@ void PlanningTask::determinePruningEquivalence() {
     // PlanningTask an abstract superclass with derived classes
     // ProbabilisticTask and MostLikelyDeterminization.
 
+    isPruningEquivalentToDet = false;
+    /*REPAIR
     isPruningEquivalentToDet = true;
     if(hasUnreasonableActions) {
         for(unsigned int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
@@ -332,6 +343,7 @@ void PlanningTask::determinePruningEquivalence() {
             } //otherwise probDomainSize is 1 and the variable is pruning equivalent
         }
     }
+    */
 }
 
 void PlanningTask::initializeRewardDependentVariables() {
@@ -522,18 +534,18 @@ vector<int> PlanningTask::getApplicableActions(State const& state) {
 }
 
 inline void PlanningTask::setApplicableReasonableActions(State const& state, std::vector<int>& res) const {
-    map<State, int, State::CompareIgnoringRemainingSteps> childStates;
-
     // TODO: Check if there are positive actions in the reward CPF, as
     // we are not allowed to prune an action that occurs positively in
     // the rewardCPF!
 
+    map<PDState, int, PDState::CompareIgnoringRemainingSteps> childStates;
+
     for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
         if(actionStates[actionIndex].isApplicable(state)) {
-            State nxt(stateSize, state.remainingSteps()-1, numberOfStateFluentHashKeys);
             // This action is applicable
+            PDState nxt = getPDState(state.remainingSteps()-1);
             calcSuccessorAsProbabilityDistribution(state, actionIndex, nxt);
-            calcHashKeyOfProbabilityDistribution(nxt);
+
             if(childStates.find(nxt) == childStates.end()) {
                 // This action is reasonable
                 childStates[nxt] = actionIndex;
@@ -569,6 +581,8 @@ inline void PlanningTask::setApplicableActions(State const& state, vector<int>& 
 // Nevertheless, isARewardLock is sound as is (and incomplete
 // independently from this decision).
 bool PlanningTask::isARewardLock(State const& current) {
+    //REPAIR
+    return false;
     if(!useRewardLockDetection) {
         return false;
     }
@@ -917,6 +931,15 @@ void PlanningTask::printState(ostream& out, State const& state) const {
     out << "StateHashKey: " << state.hashKey << endl;
 }
 
+void PlanningTask::printPDState(ostream& out, PDState const& state) const {
+    assert(state.state.size() == stateSize);
+    for(unsigned int index = 0; index < stateSize; ++index) {
+        out << CPFs[index]->head->name << ": ";
+        state[index].print(out);
+    }
+    out << "Remaining Steps: " << state.remainingSteps() << endl;
+}
+
 void PlanningTask::printAction(ostream& out, int const& actionIndex) const {
     if(actionStates[actionIndex].scheduledActionFluents.empty()) {
         out << "noop() ";
@@ -942,6 +965,9 @@ void PlanningTask::printActionInDetail(ostream& out, int const& index) const {
 
 void PlanningTask::printCPFInDetail(std::ostream& out, int const& index) const {
     printEvaluatableInDetail(out, CPFs[index]);
+
+    out << "  Domain: (size: " << CPFs[index]->getDomainSize() << ")" << endl;
+    CPFs[index]->head->parent->valueType->printDomain(out);
 
     cout << endl << "  Map for probabilistic state hash keys: " << endl;
     for(map<double, long>::iterator it = CPFs[index]->probDomainMap.begin(); it != CPFs[index]->probDomainMap.end(); ++it) {

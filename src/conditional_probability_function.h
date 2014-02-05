@@ -39,8 +39,10 @@ public:
         probHashKeyBase(other.probHashKeyBase),
         hashKeyBase(other.hashKeyBase),
         minVal(other.minVal), 
-        maxVal(other.maxVal) {}
+        maxVal(other.maxVal),
+        domainSize(0) {}
 
+    void initialize();
     bool simplify(UnprocessedPlanningTask* _task, std::map<StateFluent*, NumericConstant*>& replacements);
     ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement, UnprocessedPlanningTask* _task);
 
@@ -62,6 +64,10 @@ public:
         return maxVal;
     }
 
+    unsigned int const& getDomainSize() const {
+        return domainSize;
+    }
+
 private:
     StateFluent* head;
 
@@ -75,6 +81,8 @@ private:
 
     double minVal;
     double maxVal;
+
+    unsigned int domainSize;
 };
 
 class ConditionalProbabilityFunctionDefinition {

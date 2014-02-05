@@ -39,7 +39,7 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> cons
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
     State nxt(successorGenerator->getStateSize(), state.remainingSteps()-1, successorGenerator->getNumberOfStateFluentHashKeys());
-    successorGenerator->calcStateTransition(state, actionIndex, nxt, reward);
+    successorGenerator->sampleStateTransition(state, actionIndex, nxt, reward);
 
     // Check if the next state is already cached
     if(successorGenerator->stateValueCache.find(nxt) != successorGenerator->stateValueCache.end()) {

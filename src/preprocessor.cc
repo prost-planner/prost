@@ -11,9 +11,9 @@
 
 using namespace std;
 
-PlanningTask* Preprocessor::preprocess(map<string,int>& stateVariableIndices) {
+PlanningTask* Preprocessor::preprocess(map<string, int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
     simplifyFormulas();
-    createProbabilisticPlanningTaskRepresentation(stateVariableIndices);
+    createProbabilisticPlanningTaskRepresentation(stateVariableIndices, stateVariableValues);
     return probPlanningTask->determinizeMostLikely(task);
 }
 
@@ -53,7 +53,7 @@ void Preprocessor::simplifyFormulas() {
 
 }
 
-void Preprocessor::createProbabilisticPlanningTaskRepresentation(map<string,int>& stateVariableIndices) {
+void Preprocessor::createProbabilisticPlanningTaskRepresentation(map<string,int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
     vector<ActionFluent*> actionFluents;
     task->getActionFluents(actionFluents);
 
@@ -63,5 +63,5 @@ void Preprocessor::createProbabilisticPlanningTaskRepresentation(map<string,int>
     vector<StateActionConstraint*> sacs;
     task->getStateActionConstraints(sacs);
 
-    probPlanningTask->initialize(actionFluents, cpfs, sacs, task->numberOfConcurrentActions, task->horizon, task->discountFactor, stateVariableIndices);
+    probPlanningTask->initialize(actionFluents, cpfs, sacs, task->numberOfConcurrentActions, task->horizon, task->discountFactor, stateVariableIndices, stateVariableValues);
 }

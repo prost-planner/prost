@@ -18,6 +18,7 @@ HEADERS = prost_planner.h \
 	  unprocessed_planning_task.h \
 	  typed_objects.h \
 	  logical_expressions.h \
+	  probability_distribution.h \
 	  actions.h \
 	  evaluatable.h \
 	  conditional_probability_function.h \
