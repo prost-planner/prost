@@ -15,6 +15,17 @@ using namespace std;
                  ConditionalProbabilityFunction
 *****************************************************************/
 
+void ConditionalProbabilityFunction::initialize() {
+    Evaluatable::initialize();
+    if(head->parent->valueType == BoolType::instance()) {
+        // this is a boolean variable
+        domainSize = 2;
+    } else if(!head->parent->valueType->domain.empty()) {
+        // this variable has a custom domain (enum or object fluent)
+        domainSize = head->parent->valueType->domain.size();
+    }
+}
+
 bool ConditionalProbabilityFunction::simplify(UnprocessedPlanningTask* _task, map<StateFluent*, NumericConstant*>& replacements) {
     formula = formula->simplify(_task, replacements);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(formula);

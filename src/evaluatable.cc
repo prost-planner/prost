@@ -80,9 +80,7 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         if(it != dependentStateFluents.end()) {
             tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
 
-            // When we generalize this to finite-domain variables we
-            // use domain size rather than 2 here!
-            if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 2)) {
+            if((CPFs[i]->getDomainSize() == 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->getDomainSize())) {
                 cachingType = NONE;
                 return;
             }
@@ -97,12 +95,16 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         cachingType = MAP;
     } else {
         cachingType = VECTOR;
-        evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        evaluationCacheVector = vector<DiscretePD>(nextHashKeyBase, DiscretePD());
     }
 }
 
 void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
                                                       vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
+    //REPAIR
+    kleeneCachingType = NONE;
+    return;
+
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
     // We use this to store the state fluent update rules temporary as

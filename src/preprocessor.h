@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 class ProstPlanner;
 class UnprocessedPlanningTask;
@@ -14,7 +15,7 @@ public:
     Preprocessor(ProstPlanner* _planner, UnprocessedPlanningTask* _task, PlanningTask* _probPlanningTask) :
         planner(_planner), task(_task), probPlanningTask(_probPlanningTask) {}
 
-    PlanningTask* preprocess(std::map<std::string,int>& stateVariableIndices);
+    PlanningTask* preprocess(std::map<std::string,int>& stateVariableIndices, std::vector<std::vector<std::string> >& stateVariableValues);
 
 private:
     ProstPlanner* planner;
@@ -22,7 +23,7 @@ private:
     PlanningTask* probPlanningTask;
 
     void simplifyFormulas();
-    void createProbabilisticPlanningTaskRepresentation(std::map<std::string,int>& stateVariableIndices);
+    void createProbabilisticPlanningTaskRepresentation(std::map<std::string,int>& stateVariableIndices, std::vector<std::vector<std::string> >& stateVariableValues);
 };
 
 #endif

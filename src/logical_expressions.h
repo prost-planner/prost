@@ -4,6 +4,7 @@
 #include "typed_objects.h"
 #include "state.h"
 #include "actions.h"
+#include "probability_distribution.h"
 
 #include <set>
 
@@ -24,7 +25,7 @@ public:
                                     std::set<ActionFluent*>& /*positiveDependentActionFluents*/, std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
     virtual void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    virtual void evaluate(double& res, State const& current, ActionState const& actions);
+    virtual void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     virtual void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     virtual void print(std::ostream& out) = 0;
@@ -143,7 +144,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 };
 
@@ -156,7 +157,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 };
 
@@ -192,7 +193,7 @@ public:
 
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -283,7 +284,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -304,7 +305,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -325,7 +326,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -346,7 +347,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -367,7 +368,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -388,7 +389,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -409,7 +410,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -430,7 +431,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -451,7 +452,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -472,7 +473,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -493,7 +494,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -520,7 +521,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -560,7 +561,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -587,7 +588,7 @@ public:
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -616,7 +617,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);
@@ -641,7 +642,7 @@ public:
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
     void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
 
     void print(std::ostream& out);

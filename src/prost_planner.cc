@@ -74,7 +74,7 @@ ProstPlanner* ProstPlanner::fromString(string& desc, string& domain, string& pro
     return result;
 }
 
-void ProstPlanner::init(map<string,int>& stateVariableIndices) {
+void ProstPlanner::init(map<string,int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
     Timer t;
     cout << "parsing..." << endl;
     RDDLParser parser(unprocessedTask);
@@ -91,7 +91,7 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices) {
     cout << "preprocessing..." << endl;
     probabilisticTask = new PlanningTask(this);
     Preprocessor preprocessor(this, unprocessedTask, probabilisticTask);
-    deterministicTask = preprocessor.preprocess(stateVariableIndices);
+    deterministicTask = preprocessor.preprocess(stateVariableIndices, stateVariableValues);
 
     remainingSteps = probabilisticTask->getHorizon();
     currentState = State(probabilisticTask->getInitialState());
@@ -155,7 +155,7 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     --remainingSteps;
     vector<string> result;
     probabilisticTask->actionState(chosenActionIndex).getActions(result);
-    // assert(false);
+    assert(false);
     // SystemUtils::abort("");
     return result;
 }

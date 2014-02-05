@@ -82,7 +82,8 @@ public:
 
     void initialize(std::vector<ActionFluent*>& _actionFluents, std::vector<ConditionalProbabilityFunction*>& _CPFs, 
                     std::vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
-                    int _horizon, double _discountFactor, std::map<std::string,int>& stateVariableIndices);
+                    int _horizon, double _discountFactor, std::map<std::string,int>& stateVariableIndices,
+                    std::vector<std::vector<std::string> >& stateVariableValues);
 
     PlanningTask* determinizeMostLikely(UnprocessedPlanningTask* task);
 
@@ -95,9 +96,13 @@ public:
         return res;
     }
 
+    PDState getPDState(int remainingSteps) const {
+        return PDState(getStateSize(), remainingSteps);
+    }
+
     // Calculates the probabiltity distribution that results from
     // applying action with index actionIndex in the state current
-    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, State& nextAsProbDistr) const {
+    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, PDState& nextAsProbDistr) const {
         for(int i = 0; i < stateSize; ++i) {
             CPFs[i]->evaluate(nextAsProbDistr[i], current, actionStates[actionIndex]);
         }
@@ -144,26 +149,38 @@ public:
         }
     }
 
-    // Calculate the whole state transition, including rewards
-    void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
-        calcSuccessorAsProbabilityDistribution(current, actionIndex, next);
-        sampleSuccessorStateFromProbabilityDistribution(next);
+    double sampleVariable(DiscretePD const& pd) const {
+        assert(pd.isWellDefined());
+        double randNum = MathUtils::generateRandomNumber();
+        double probSum = 0.0;
+        for(unsigned int index = 0; index < pd.probabilities.size(); ++index) {
+            probSum += pd.probabilities[index];
+            if(MathUtils::doubleIsSmaller(randNum, probSum)) {
+                return pd.values[index];
+            }
+        }
+        assert(false);
+        return 0.0;
+    }
+
+    // Samples the whole state transition
+    void sampleStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
+        PDState pdNext = getPDState(next.remainingSteps());
+        calcSuccessorAsProbabilityDistribution(current, actionIndex, pdNext);
+        for(unsigned int varIndex = 0; varIndex < stateSize; ++varIndex) {
+            next[varIndex] = sampleVariable(pdNext[varIndex]);
+        }
         calcStateFluentHashKeys(next);
         calcStateHashKey(next);
         calcReward(current, actionIndex, reward);
     }
 
-    // Calculate the successor state
-    void calcSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        calcSuccessorAsProbabilityDistribution(current, actionIndex, next);
-        sampleSuccessorStateFromProbabilityDistribution(next);
-        calcStateFluentHashKeys(next);
-        calcStateHashKey(next);
-    }
-
     // Calulate the reward
     void calcReward(State const& current, int const& actionIndex, double& reward) const {
-        rewardCPF->evaluate(reward, current, actionStates[actionIndex]);
+        DiscretePD tmp;
+        rewardCPF->evaluate(tmp, current, actionStates[actionIndex]);
+        assert(tmp.isDeterministic());
+        reward = tmp.values[0];
     }
 
     // Calculate reward and optimal action of last state transition
@@ -208,10 +225,10 @@ public:
     // Calculate the state fluent hash key for each state fluent
     void calcStateFluentHashKeys(State& state) const {
         for(unsigned int i = 0; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(state[i],1.0)) {
+            if(MathUtils::doubleIsGreater(state[i], 0.0)) {
                 for(unsigned int j = 0; j < indexToStateFluentHashKeyMap[i].size(); ++j) {
                     assert(state.stateFluentHashKeys.size() > indexToStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToStateFluentHashKeyMap[i][j].first] += indexToStateFluentHashKeyMap[i][j].second;
+                    state.stateFluentHashKeys[indexToStateFluentHashKeyMap[i][j].first] += ((int)state[i]) * indexToStateFluentHashKeyMap[i][j].second;
                 }                
             }
         }
@@ -241,9 +258,7 @@ public:
         if(stateHashingPossible) {
             state.hashKey = 0;
             for(int i = 0; i < stateSize; ++i) {
-                if(MathUtils::doubleIsEqual(state[i],1.0)) {
-                    state.hashKey += CPFs[i]->hashKeyBase;
-                }
+                state.hashKey += ((int)state[i]) * CPFs[i]->hashKeyBase;
             }
         } else {
             assert(state.hashKey == -1);
@@ -359,6 +374,7 @@ public:
     void print(std::ostream& out) const;
 
     void printState(std::ostream& out, State const& state) const;
+    void printPDState(std::ostream& out, PDState const& state) const;
     void printAction(std::ostream& out, int const& actionIndex) const;
 
     void printActionInDetail(std::ostream& out, int const& index) const;

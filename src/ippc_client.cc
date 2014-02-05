@@ -49,7 +49,7 @@ bool IPPCClient::run(string& dir, string& problemName, string& plannerDesc) {
 
     //init planner
     ProstPlanner* planner = ProstPlanner::fromString(plannerDesc, domain, problem, numberOfRounds);
-    planner->init(stateVariableIndices);
+    planner->init(stateVariableIndices, stateVariableValues);
     vector<double> nextState(stateVariableIndices.size());
 
     //main loop
@@ -241,7 +241,7 @@ void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
         assert(false);
     }
 
-    map<string, double> newValues;
+    map<string, string> newValues;
 
     for(int i = 0; i < node->size(); i++) {
         const XMLNode* child = node->getChild(i);
@@ -250,14 +250,34 @@ void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
         }
     }
 
-    for(map<string,double>::iterator it = newValues.begin(); it != newValues.end(); ++it) {
+    for(map<string,string>::iterator it = newValues.begin(); it != newValues.end(); ++it) {
         if(stateVariableIndices.find(it->first) != stateVariableIndices.end()) {
-            nextState[stateVariableIndices[it->first]] = it->second;
+            if(stateVariableValues[stateVariableIndices[it->first]].empty()) {
+                // TODO: This should be a numerical variable without
+                // value->index mapping, but it can also be a boolean one atm.
+                if(it->second =="true") {
+                    nextState[stateVariableIndices[it->first]] = 1.0;
+                } else if(it->second == "false") {
+                    nextState[stateVariableIndices[it->first]] = 0.0;
+                } else {
+                    nextState[stateVariableIndices[it->first]] = atof(it->second.c_str());
+                }
+            } else {
+                bool found = false;
+                for(unsigned int i = 0; i < stateVariableValues[stateVariableIndices[it->first]].size(); ++i) {
+                    if(stateVariableValues[stateVariableIndices[it->first]][i] == it->second) {
+                        nextState[stateVariableIndices[it->first]] = i;
+                        found = true;
+                        break;
+                    }
+                }
+                assert(found);
+            }
         }
     }
 }
 
-void IPPCClient::readVariable(const XMLNode* node, map<string, double>& result) {
+void IPPCClient::readVariable(const XMLNode* node, map<string, string>& result) {
     string name;
     if(node->getName() != "observed-fluent") {
         assert(false);
@@ -269,7 +289,8 @@ void IPPCClient::readVariable(const XMLNode* node, map<string, double>& result) 
     name = name.substr(0,name.length()-1);
 
     vector<string> params;
-    double value = 0.0;
+    string value;
+    string fluentName;
 
     for(int i = 0; i < node->size(); i++) {
         const XMLNode* paramNode = node->getChild(i);
@@ -278,17 +299,10 @@ void IPPCClient::readVariable(const XMLNode* node, map<string, double>& result) 
             continue;
         } else if(paramNode->getName() == "fluent-arg") {
             string param = paramNode->getText();
-            params.push_back(param.substr(0,param.length()-1));
+            params.push_back(param.substr(0, param.length()-1));
         } else if(paramNode->getName() == "fluent-value") {
-            string res = paramNode->getText();
-            res = res.substr(0,res.length()-1);
-            if(res =="true") {
-                value = 1.0;
-            } else if(res == "false") {
-                value = 0.0;
-            } else {
-                value = atof(res.c_str());
-            }
+            value = paramNode->getText();
+            value = value.substr(0, value.length()-1);
         }
     }
     name += "(";

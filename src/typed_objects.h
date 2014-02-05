@@ -16,8 +16,12 @@ public:
         OBJECT
     } type;
 
+    // If the domain is empty, it is infinte
+    std::vector<Object*> domain;
+
     virtual ~Type() {}
     virtual void print(std::ostream& out);
+    virtual void printDomain(std::ostream& out) = 0;
     virtual double valueStringToDouble(std::string& val);
 
     Type(std::string _name, TypeType _type) :
@@ -31,6 +35,7 @@ public:
         return inst;
     }
 
+    void printDomain(std::ostream& out);
     double valueStringToDouble(std::string& val);
 
     ~BoolType() {}
@@ -49,6 +54,8 @@ public:
 
     ~IntType() {}
 
+    void printDomain(std::ostream& out);
+
 private:
     IntType() :
         Type("int", Type::INT) {}
@@ -62,6 +69,8 @@ public:
     }
 
     ~RealType() {}
+
+    void printDomain(std::ostream& out);
 
 private:
     RealType() :
@@ -84,9 +93,9 @@ public:
     ~ObjectType() {}
 
     ObjectType* superType;
-    std::vector<Object*> domain;
 
     void print(std::ostream& out);
+    void printDomain(std::ostream& out);
     double valueStringToDouble(std::string& val);
 
 private:
@@ -109,4 +118,4 @@ public:
     ObjectType* type;
 };
 
-#endif /* TYPED_OBJECTS_H */
+#endif

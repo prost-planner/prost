@@ -11,19 +11,13 @@ public:
     friend class PlanningTask;
 
     // Evaluate
-    void evaluate(double& res, State const& current, ActionState const& actions) {
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
         switch(cachingType) {
         case NONE:
             formula->evaluate(res, current, actions);
             break;
         case MAP:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            if(!((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0))) {
-                std::cout << name << std::endl;
-                std::cout << hashIndex << " / " << actions.index << " / " << stateHashKey << std::endl;
-                std::cout << current.stateFluentHashKey(hashIndex) << std::endl;
-                std::cout << actionHashKeyMap[actions.index] << std::endl;
-            }
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
 
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
@@ -48,7 +42,7 @@ public:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
 
-            if(MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
+            if(evaluationCacheVector[stateHashKey].isUndefined()) {
                 formula->evaluate(res, current, actions);
                 evaluationCacheVector[stateHashKey] = res;
             } else {
@@ -100,7 +94,7 @@ public:
     }
 
     // Initialization
-    void initialize();
+    virtual void initialize();
     void initializeHashKeys(int _hashIndex, std::vector<ActionState> const& actionStates,
                             std::vector<ConditionalProbabilityFunction*> const& CPFs,
                             std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
@@ -143,7 +137,7 @@ protected:
         hasArithmeticFunction(other.hasArithmeticFunction),
         hashIndex(other.hashIndex),
         cachingType(other.cachingType),
-        evaluationCacheVector(other.evaluationCacheVector.size(), -std::numeric_limits<double>::max()),
+        evaluationCacheVector(other.evaluationCacheVector.size(), DiscretePD()),
         kleeneCachingType(other.kleeneCachingType),
         kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
         actionHashKeyMap(other.actionHashKeyMap) {}
@@ -176,8 +170,8 @@ protected:
     // CachingType describes which of the two (if any) datastructures
     // is used to cache computed values
     CachingType cachingType;
-    std::map<long, double> evaluationCacheMap;
-    std::vector<double> evaluationCacheVector;
+    std::map<long, DiscretePD> evaluationCacheMap;
+    std::vector<DiscretePD> evaluationCacheVector;
 
     // KleeneCachingType describes which of the two (if any)
     // datastructures is used to cache computed values on Kleene

@@ -39,7 +39,6 @@ void ActionState::calculateProperties(vector<ActionFluent*> const& actionFluents
             // fluents negatively it might forbid this action.
             relevantSACs.push_back(dynamicSACs[i]);
         } else if(containsAdditionalPositiveActionFluent(dynamicSACs[i])) {
-            // containsMoreThan(dynamicSACs[i]->getPositiveDependentActionFluents())) {
             // If the SAC contains action fluents positively that are
             // not in this ActionStates' action fluents it might
             // enforce that action fluent (and thereby forbid this
@@ -49,7 +48,7 @@ void ActionState::calculateProperties(vector<ActionFluent*> const& actionFluents
     }
 }
 
-bool ActionState::containsNegativeActionFluent(StateActionConstraint* sac) const {
+inline bool ActionState::containsNegativeActionFluent(StateActionConstraint* sac) const {
     set<ActionFluent*> const& actionFluents = sac->getNegativeDependentActionFluents();
 
     for(unsigned int index = 0; index < scheduledActionFluents.size(); ++index) {
@@ -80,14 +79,13 @@ bool ActionState::containsAdditionalPositiveActionFluent(StateActionConstraint* 
 }
 
 bool ActionState::isApplicable(State const& current) const {
-    double res = 0.0;
+    DiscretePD res;
     for(unsigned int sacIndex = 0; sacIndex < relevantSACs.size(); ++sacIndex) {
         relevantSACs[sacIndex]->evaluate(res, current, *this);
-        if(MathUtils::doubleIsEqual(res, 0.0)) {
+        if(res.isFalsity()) {
             return false;
-        } else {
-            assert(MathUtils::doubleIsEqual(res, 1.0));
         }
+        assert(res.isTruth());
     }
     return true;
 }
