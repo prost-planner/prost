@@ -237,20 +237,18 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
     cout << "Sumitting Action: ";
     probabilisticTask->printAction(cout, result);
     cout << endl << "------------------------------------------------------------------" << endl << endl;
+    
+    // cout << "prob deadend bdd:" << endl;
+    // probabilisticTask->printDeadEndBDD();
 
-    /*
-    cout << "prob dead lock bdd:" << endl;
-    bdd_printdot(probabilisticTask->cachedDeadLocks);
+    // cout << "prob goal bdd:" << endl;
+    // probabilisticTask->printGoalBDD();
 
-    cout << "prob goal bdd:" << endl;
-    bdd_printdot(probabilisticTask->cachedGoals);
+    // cout << "prob deadend bdd:" << endl;
+    // deterministicTask->printDeadEndBDD();
 
-    cout << "det dead lock bdd:" << endl;
-    bdd_printdot(deterministicTask->cachedDeadLocks);
-
-    cout << "det goal bdd:" << endl;
-    bdd_printdot(deterministicTask->cachedGoals);
-    */
+    // cout << "prob goal bdd:" << endl;
+    // deterministicTask->printGoalBDD();
 }
 
 

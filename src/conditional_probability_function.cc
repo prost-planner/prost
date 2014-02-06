@@ -15,17 +15,6 @@ using namespace std;
                  ConditionalProbabilityFunction
 *****************************************************************/
 
-void ConditionalProbabilityFunction::initialize() {
-    Evaluatable::initialize();
-    if(head->parent->valueType == BoolType::instance()) {
-        // this is a boolean variable
-        domainSize = 2;
-    } else if(!head->parent->valueType->domain.empty()) {
-        // this variable has a custom domain (enum or object fluent)
-        domainSize = head->parent->valueType->domain.size();
-    }
-}
-
 bool ConditionalProbabilityFunction::simplify(UnprocessedPlanningTask* _task, map<StateFluent*, NumericConstant*>& replacements) {
     formula = formula->simplify(_task, replacements);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(formula);
@@ -52,10 +41,9 @@ ConditionalProbabilityFunction* ConditionalProbabilityFunction::determinizeMostL
     // We know these because detFormula must be deterministic, and
     // therefore this has a domain of 2 with values 0 and 1.
     res->isProb = false;
-    res->probDomainSize = 2;
-    res->probDomainMap.clear();
-    res->probDomainMap[0.0] = 0;
-    res->probDomainMap[1.0] = 1;
+    // res->probDomainMap.clear();
+    // res->probDomainMap[0.0] = 0;
+    // res->probDomainMap[1.0] = res->hashKeyBase;
 
     // We run initialization again, as things might have changed
     // compared to the probabilistic task. Therefore, we need to reset
@@ -71,6 +59,55 @@ ConditionalProbabilityFunction* ConditionalProbabilityFunction::determinizeMostL
     res->formula = res->formula->simplify(_task, replacements);
 
     return res;
+}
+
+void ConditionalProbabilityFunction::initializeDomains(vector<ActionState> const& actionStates) {
+    assert(domain.empty());
+
+    for(unsigned int actionIndex = 0; actionIndex < actionStates.size(); ++actionIndex) {
+        // Calculate the values that can be achieved if the action
+        // actionStates[actionIndex] is applied and add it to the domain
+        set<double> actionDependentValues;
+        formula->calculateDomain(actionStates[actionIndex], actionDependentValues);
+        domain.insert(actionDependentValues.begin(), actionDependentValues.end());
+    }
+
+    // The number of possible values of this variable in Kleene states is 2^0 +
+    // 2^1 + ... + 2^{n-1} = 2^n -1 with n = CPFs[i]->domain.size()
+    kleeneDomainSize = 2;
+    if(!MathUtils::toThePowerOfWithOverflowCheck(kleeneDomainSize, domain.size())) {
+        // TODO: Check if this variable has an infinte domain (e.g. reals or
+        // ints in inifinte horizon). A domain size of 0 represents infinite
+        // domains or domains that are too large to be considered finite.
+        kleeneDomainSize = 0;
+    } else {
+        --kleeneDomainSize;
+    }
+
+    if(isBoolean() && isProbabilistic()) {
+        set<double> actionIndependentValues;
+
+        for(unsigned int actionIndex = 0; actionIndex < actionStates.size(); ++actionIndex) {
+            // Calculate the values that can be achieved if the action
+            // with actionIndex is applied and add it to the values of
+            // all other actions
+            set<double> actionDependentValues;
+            formula->calculateProbDomain(actionStates[actionIndex], actionDependentValues);
+            actionIndependentValues.insert(actionDependentValues.begin(), actionDependentValues.end());
+        }
+
+        // Enumerate all values with 0...domainSize. We will later
+        // multiply these with the hash key base once it's determined
+        // (this happens in planning_task.cc)
+        // int counter = 0;
+        // for(set<double>::iterator it = actionIndependentValues.begin(); it != actionIndependentValues.end(); ++it) {
+        //     probDomainMap[*it] = counter;
+        //     ++counter;
+        // }
+    } // else {
+    //     probDomainMap[0.0] = 0;
+    //     probDomainMap[1.0] = 1;
+    // }
 }
 
 

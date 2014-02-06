@@ -25,26 +25,22 @@ public:
     ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
         Evaluatable("CPF " + _head->name, _formula),
         head(_head),
-        probDomainSize(0),
-        probHashKeyBase(0),
+        kleeneDomainSize(0),
         hashKeyBase(0),
-        minVal(0.0), 
-        maxVal(0.0) {}
+        kleeneHashKeyBase(0) {}
 
     ConditionalProbabilityFunction(ConditionalProbabilityFunction const& other, LogicalExpression* _formula) :
         Evaluatable(other, _formula),
         head(other.head),
-        probDomainMap(other.probDomainMap),
-        probDomainSize(other.probDomainSize),
-        probHashKeyBase(other.probHashKeyBase),
+        domain(other.domain),
+        kleeneDomainSize(other.kleeneDomainSize),
         hashKeyBase(other.hashKeyBase),
-        minVal(other.minVal), 
-        maxVal(other.maxVal),
-        domainSize(0) {}
+        kleeneHashKeyBase(other.kleeneHashKeyBase) {}
 
-    void initialize();
     bool simplify(UnprocessedPlanningTask* _task, std::map<StateFluent*, NumericConstant*>& replacements);
     ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement, UnprocessedPlanningTask* _task);
+
+    void initializeDomains(std::vector<ActionState> const& actionStates);
 
     bool isRewardCPF() const {
         assert(head != NULL);
@@ -56,33 +52,48 @@ public:
         return head;
     }
 
+    bool isBoolean() const {
+        return head->parent->valueType->type == Type::BOOL;
+    }
+
+    std::set<double> const& getDomain() const {
+        return domain;
+    }
+
+    bool hasFiniteDomain() const {
+        return (!domain.empty());
+    }
+
     double const& getMinVal() const {
-        return minVal;
+        assert(!domain.empty());
+        return *domain.begin();
     }
 
     double const& getMaxVal() const {
-        return maxVal;
+        assert(!domain.empty());
+        return *domain.rbegin();
     }
 
-    unsigned int const& getDomainSize() const {
-        return domainSize;
+    bool hasFiniteKleeneDomain() const {
+        return (kleeneDomainSize > 0);
+    }
+
+    long getKleeneDomainSize() const {
+        return kleeneDomainSize;
     }
 
 private:
     StateFluent* head;
 
-    //hashing of states as probability distributions
-    std::map<double, long> probDomainMap;
-    int probDomainSize;
+    // The values this CPF can take
+    std::set<double> domain;
 
-    //hashing of states
-    long probHashKeyBase;
+    // Hashing of KleeneStates
+    long kleeneDomainSize;
+
+    // Hashing of States
     long hashKeyBase;
-
-    double minVal;
-    double maxVal;
-
-    unsigned int domainSize;
+    long kleeneHashKeyBase;
 };
 
 class ConditionalProbabilityFunctionDefinition {

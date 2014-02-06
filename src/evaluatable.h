@@ -41,6 +41,7 @@ public:
         case VECTOR:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            assert(stateHashKey < evaluationCacheVector.size());
 
             if(evaluationCacheVector[stateHashKey].isUndefined()) {
                 formula->evaluate(res, current, actions);
@@ -52,7 +53,8 @@ public:
         }
     }
 
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions) {
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions) {
+        assert(res.empty());
         switch(kleeneCachingType) {
         case NONE:
             formula->evaluateToKleeneOutcome(res, current, actions);
@@ -82,8 +84,9 @@ public:
         case VECTOR:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            assert(stateHashKey < kleeneEvaluationCacheVector.size());
 
-            if(MathUtils::doubleIsMinusInfinity(kleeneEvaluationCacheVector[stateHashKey])) {
+            if(kleeneEvaluationCacheVector[stateHashKey].empty()) {
                 formula->evaluateToKleeneOutcome(res, current, actions);
                 kleeneEvaluationCacheVector[stateHashKey] = res;
             } else {
@@ -94,7 +97,8 @@ public:
     }
 
     // Initialization
-    virtual void initialize();
+    void initialize();
+    //virtual void initializeDomains(std::vector<ActionState> const& actionStates);
     void initializeHashKeys(int _hashIndex, std::vector<ActionState> const& actionStates,
                             std::vector<ConditionalProbabilityFunction*> const& CPFs,
                             std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
@@ -120,6 +124,13 @@ public:
         return hasArithmeticFunction;
     }
 
+    // void addProbHashKeyPart(double const& value, long& hashKey) {
+    //     assert(probDomainMap.find(value) != probDomainMap.end());
+    //     hashKey += probDomainMap[value];
+    // }
+
+    virtual bool isBoolean() const = 0;
+
 protected:
     Evaluatable(std::string _name, LogicalExpression* _formula) :
         name(_name),
@@ -135,14 +146,15 @@ protected:
         formula(_formula),
         isProb(other.isProb),
         hasArithmeticFunction(other.hasArithmeticFunction),
+        //probDomainMap(other.probDomainMap),
         hashIndex(other.hashIndex),
         cachingType(other.cachingType),
         evaluationCacheVector(other.evaluationCacheVector.size(), DiscretePD()),
         kleeneCachingType(other.kleeneCachingType),
-        kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
+        kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size()),
         actionHashKeyMap(other.actionHashKeyMap) {}
 
-    // A unique string that describes this, only used for print()
+    // A unique string that describes this (only used for print)
     std::string name;
 
     // The formula that is evaluatable
@@ -154,6 +166,9 @@ protected:
     std::set<ActionFluent*> negativeActionDependencies;
     bool isProb;
     bool hasArithmeticFunction;
+
+    //hashing of states as probability distributions
+    //REPAIRstd::map<double, long> probDomainMap;
 
     // hashIndex gives the position in the stateFluentHashKey vector
     // of a state where the state fluent hash key of this Evaluatable
@@ -177,8 +192,8 @@ protected:
     // datastructures is used to cache computed values on Kleene
     // states
     CachingType kleeneCachingType;
-    std::map<long, double> kleeneEvaluationCacheMap;
-    std::vector<double> kleeneEvaluationCacheVector;
+    std::map<long, std::set<double> > kleeneEvaluationCacheMap;
+    std::vector<std::set<double> > kleeneEvaluationCacheVector;
 
     // ActionHashKeyMap contains the hash keys of the actions that
     // influence this Evaluatable

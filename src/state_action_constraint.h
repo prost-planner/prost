@@ -31,6 +31,10 @@ public:
         return negativeActionDependencies;
     }
 
+    bool isBoolean() const {
+        return true;
+    }
+
 private:
     StateActionConstraint(std::string _name, LogicalExpression* _formula) :
         Evaluatable(_name, _formula) {}

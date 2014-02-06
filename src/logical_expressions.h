@@ -2,7 +2,7 @@
 #define LOGICAL_EXPRESSIONS_H
 
 #include "typed_objects.h"
-#include "state.h"
+#include "kleene_state.h"
 #include "actions.h"
 #include "probability_distribution.h"
 
@@ -24,9 +24,10 @@ public:
     virtual void collectInitialInfo(bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/, std::set<StateFluent*>& /*dependentStateFluents*/, 
                                     std::set<ActionFluent*>& /*positiveDependentActionFluents*/, std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
     virtual void calculateDomain(ActionState const& actions, std::set<double>& res);
+    virtual void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     virtual void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    virtual void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    virtual void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     virtual void print(std::ostream& out) = 0;
 };
@@ -141,11 +142,12 @@ public:
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
-                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 };
 
 class ActionFluent : public AtomicLogicalExpression {
@@ -154,11 +156,12 @@ public:
         AtomicLogicalExpression(_parent, _params, 0.0) {}
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
-                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 };
 
 class NonFluent : public AtomicLogicalExpression {
@@ -189,12 +192,14 @@ public:
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -283,9 +288,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -304,9 +310,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -325,9 +332,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -346,9 +354,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -367,9 +376,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -388,9 +398,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -409,9 +420,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -430,9 +442,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -451,9 +464,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -472,9 +486,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -493,9 +508,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -520,9 +536,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -534,7 +551,8 @@ public:
 class KronDeltaDistribution : public LogicalExpression {
 public:
     KronDeltaDistribution(LogicalExpression* _expr) :
-        expr(_expr), randNum(0.0) {}
+        LogicalExpression(),
+        expr(_expr) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
@@ -543,13 +561,13 @@ public:
     void print(std::ostream& out);
 
     LogicalExpression* expr;
-    double randNum;
 };
 
 class BernoulliDistribution : public LogicalExpression {
 public:
     BernoulliDistribution(LogicalExpression* _expr) :
-        expr(_expr), randNum(0.0) {}
+        LogicalExpression(),
+        expr(_expr) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
@@ -560,14 +578,14 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 
     LogicalExpression* expr;
-    double randNum;
 };
 
 class DiscreteDistribution : public LogicalExpression {
@@ -576,7 +594,7 @@ public:
     std::vector<LogicalExpression*> probabilities;
     
     DiscreteDistribution(std::vector<LogicalExpression*> _values, std::vector<LogicalExpression*> _probabilities) :
-    	values(_values), probabilities(_probabilities) {}
+    	LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
@@ -587,9 +605,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -616,9 +635,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };
@@ -641,9 +661,10 @@ public:
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(ActionState const& actions, std::set<double>& res);
+    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
 
     void evaluate(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleeneOutcome(double& res, State const& current, ActionState const& actions);
+    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 
     void print(std::ostream& out);
 };

@@ -14,6 +14,8 @@ HEADERS = prost_planner.h \
 	  instantiator.h \
 	  preprocessor.h \
 	  state.h \
+	  kleene_state.h \
+	  pd_state.h \
 	  planning_task.h \
 	  unprocessed_planning_task.h \
 	  typed_objects.h \

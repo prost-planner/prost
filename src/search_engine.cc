@@ -130,7 +130,6 @@ void SearchEngine::useProbabilisticPlanningTask(bool const& useProbabilisticTask
 
 bool SearchEngine::learn(std::vector<State> const& trainingSet) {
     if(!successorGenerator->learningFinished() || !applicableActionGenerator->learningFinished()) {
-        cout << "damn" << endl;
         return false;
     }
     cout << name << ": learning..." << endl;

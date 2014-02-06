@@ -69,18 +69,21 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates, vect
 
 void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
                                                 vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap) {
+    cachingType = NONE;
+    return;
+
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
-    // We use this to store the state fluent update rules temporary as
-    // it is possible that this evaluatable cannot use caching.
+    // We use this to store the state fluent update rules temporary as it is
+    // possible that this evaluatable cannot use caching.
     vector<pair<int, long> > tmpStateFluentDependencies;
 
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[i]->getHead());
+    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[index]->getHead());
         if(it != dependentStateFluents.end()) {
             tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
 
-            if((CPFs[i]->getDomainSize() == 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->getDomainSize())) {
+            if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
                 cachingType = NONE;
                 return;
             }
@@ -91,6 +94,7 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         indexToStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
     }
 
+    // TODO: Make sure this number makes sense
     if(nextHashKeyBase > 50000) {
         cachingType = MAP;
     } else {
@@ -101,22 +105,22 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
 
 void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
                                                       vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
-    //REPAIR
-    kleeneCachingType = NONE;
-    return;
-
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
-    // We use this to store the state fluent update rules temporary as
-    // it is possible that this evaluatable cannot use caching.
+    // We use this to store the state fluent update rules temporary as it is
+    // possible that this evaluatable cannot use caching. This evaluatable
+    // depends on the variables tmpStateFluentDependencies[i].first, and its
+    // KleeneStateFluentHashKey is thereby increased by that variable's value
+    // multiplied with tmpStateFluentDependencies[i].second
     vector<pair<int, long> > tmpStateFluentDependencies;
 
+    // We iterate over the CPFs instead of directly over the
+    // dependentStateFluents vector as we have to access the CPF objects
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[i]->getHead());
-        if(it != dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
+        if(dependentStateFluents.find(CPFs[i]->getHead()) != dependentStateFluents.end()) {
+            tmpStateFluentDependencies.push_back(make_pair(i, nextHashKeyBase));
 
-            if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 3)) {
+            if((CPFs[i]->getKleeneDomainSize() < 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->getKleeneDomainSize())) {
                 kleeneCachingType = NONE;
                 return;
             }
@@ -127,11 +131,12 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabil
         indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
     }
 
+    // TODO: Make sure this number makes sense
     if(nextHashKeyBase > 50000) {
         kleeneCachingType = MAP;
     } else {
         kleeneCachingType = VECTOR;
-        kleeneEvaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        kleeneEvaluationCacheVector = vector<set<double> >(nextHashKeyBase);
     }
 }
 
