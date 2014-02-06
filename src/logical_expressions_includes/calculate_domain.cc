@@ -7,8 +7,20 @@ void LogicalExpression::calculateDomain(ActionState const& /*actions*/, set<doub
 *****************************************************************/
 
 void StateFluent::calculateDomain(ActionState const& /*actions*/, set<double>& res) {
-    res.insert(0.0);
-    res.insert(1.0);
+    switch(parent->valueType->type) {
+    case Type::BOOL:
+        res.insert(0.0);
+        res.insert(1.0);
+        break;
+    case Type::OBJECT:
+        for(unsigned int i = 0; i < parent->valueType->domain.size(); ++i) {
+            res.insert((double)i);
+        }
+        break;
+    case Type::INT:
+    case Type::REAL:
+        SystemUtils::abort("Numeric variables are not supported yet.");
+    }
 }
 
 void ActionFluent::calculateDomain(ActionState const& actions, set<double>& res) {
@@ -270,7 +282,23 @@ void NegateExpression::calculateDomain(ActionState const& actions, set<double>& 
 *****************************************************************/
 
 void BernoulliDistribution::calculateDomain(ActionState const& actions, set<double>& res) {
-    expr->calculateDomain(actions,res);
+    set<double> tmp;
+    expr->calculateDomain(actions, tmp);
+
+    for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+        if(!MathUtils::doubleIsEqual(*it, 0.0)) {
+            res.insert(1.0);
+        }
+
+        if(MathUtils::doubleIsGreaterOrEqual(*it, 0.0) && MathUtils::doubleIsSmaller(*it, 1.0)) {
+            res.insert(0.0);
+        }
+
+        if(res.size() == 2) {
+            return;
+        }
+    }
+
 }
 
 void DiscreteDistribution::calculateDomain(ActionState const& actions, set<double>& res) {
@@ -288,35 +316,35 @@ void DiscreteDistribution::calculateDomain(ActionState const& actions, set<doubl
 *****************************************************************/
 
 void IfThenElseExpression::calculateDomain(ActionState const& actions, set<double>& res) {
+    // TODO: We assume that both cases are possible in some reachable state
     assert(res.empty());
-    condition->calculateDomain(actions, res);
-    assert(!res.empty());
-    if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),0.0))) {
-        res.clear();
-        valueIfFalse->calculateDomain(actions, res);
-    } else if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),1.0))) {
-        res.clear();
-        valueIfTrue->calculateDomain(actions, res);
-    } else {
-        res.clear();
-        valueIfTrue->calculateDomain(actions, res);
-        set<double> tmp;
-        valueIfFalse->calculateDomain(actions, tmp);
-        res.insert(tmp.begin(),tmp.end());
-    }
+    // condition->calculateDomain(actions, res);
+    // assert(!res.empty());
+    // if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),0.0))) {
+    //     res.clear();
+    //     valueIfFalse->calculateDomain(actions, res);
+    // } else if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),1.0))) {
+    //     res.clear();
+    //     valueIfTrue->calculateDomain(actions, res);
+    // } else {
+    //     res.clear();
+    valueIfTrue->calculateDomain(actions, res);
+    set<double> tmp;
+    valueIfFalse->calculateDomain(actions, tmp);
+    res.insert(tmp.begin(),tmp.end());
+    //}
 }
 
 void MultiConditionChecker::calculateDomain(ActionState const& actions, set<double>& res) {
+    // TODO: We assume that all cases are possible in some reachable state
     for(unsigned int i = 0; i < conditions.size(); ++i) {
         set<double> tmp;
-        conditions[i]->calculateDomain(actions, tmp);
-        assert(!tmp.empty());
-        if(tmp.size() > 1 || !MathUtils::doubleIsEqual(*tmp.begin(),0.0)) {
-            tmp.clear();
-            effects[i]->calculateDomain(actions, tmp);
-            res.insert(tmp.begin(),tmp.end());
-        }
+        //conditions[i]->calculateDomain(actions, tmp);
+        //assert(!tmp.empty());
+        //if(tmp.size() > 1 || !MathUtils::doubleIsEqual(*tmp.begin(),0.0)) {
+        //    tmp.clear();
+        effects[i]->calculateDomain(actions, tmp);
+        res.insert(tmp.begin(),tmp.end());
     }
+    //}
 }
-
-

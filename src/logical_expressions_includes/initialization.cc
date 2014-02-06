@@ -153,9 +153,7 @@ void AtomicLogicalExpression::parse(string& desc, UnprocessedPlanningTask* task)
         assert(false);
         break;
     case VariableDefinition::ACTION_FLUENT:
-        // This is only used to parse the initial state, where action
-        // fluents are not allowed
-        assert(false);
+        assert(false); //This is only called to parse the initial state and an action fluent just doesn't make sense there!
         break;
     case VariableDefinition::NON_FLUENT:
         task->addNonFluent(new NonFluent(parent,paramsAsObjects,atof(valString.c_str())));

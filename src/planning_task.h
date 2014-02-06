@@ -2,12 +2,13 @@
 #define PLANNING_TASK_H
 
 #include <cstdlib>
-#include <bdd.h>
+#include <fdd.h>
 #include <list>
 
 #include "caching_component.h"
 #include "learning_component.h"
-#include "state.h"
+#include "kleene_state.h"
+#include "pd_state.h"
 #include "actions.h"
 #include "unprocessed_planning_task.h"
 #include "logical_expressions.h"
@@ -40,7 +41,8 @@ public:
         horizon(-1),
         discountFactor(1.0),
         stateHashingPossible(false),
-        stateHashingWithStatesAsProbabilityDistributionPossible(false),
+        kleeneStateHashingPossible(false),
+        pdStateHashingPossible(false),
         useRewardLockDetection(true),
         cachedDeadEnds(bddfalse),
         cachedGoals(bddfalse),
@@ -70,7 +72,8 @@ public:
         horizon(other.horizon),
         discountFactor(other.discountFactor),
         stateHashingPossible(other.stateHashingPossible),
-        stateHashingWithStatesAsProbabilityDistributionPossible(other.stateHashingWithStatesAsProbabilityDistributionPossible),
+        kleeneStateHashingPossible(other.kleeneStateHashingPossible),
+        pdStateHashingPossible(other.pdStateHashingPossible),
         useRewardLockDetection(other.useRewardLockDetection),
         cachedDeadEnds(bddfalse),
         cachedGoals(bddfalse),
@@ -100,19 +103,19 @@ public:
         return PDState(getStateSize(), remainingSteps);
     }
 
-    // Calculates the probabiltity distribution that results from
-    // applying action with index actionIndex in the state current
-    void calcSuccessorAsProbabilityDistribution(State const& current, int const& actionIndex, PDState& nextAsProbDistr) const {
+    // Calculates the probabiltity distribution that results from applying
+    // action with index actionIndex in the state current
+    void calcSuccessorState(State const& current, int const& actionIndex, PDState& nextAsProbDistr) const {
         for(int i = 0; i < stateSize; ++i) {
             CPFs[i]->evaluate(nextAsProbDistr[i], current, actionStates[actionIndex]);
         }
     }
 
-    // Sample a successor state from a state given as a probability
-    // distribution (and overwrite the state)
+    // Sample a successor state from a state given as a probability distribution
+    // (and overwrite the state)
     void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
-        // Sample all probabilistic variables according to their
-        // probability distribution
+        // Sample all probabilistic variables according to their probability
+        // distribution
         for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
             if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
                 continue;
@@ -122,8 +125,8 @@ public:
         }
     }
 
-    // Sample a successor state from a state given as a probability
-    // distribution (and write to another state)
+    // Sample a successor state from a state given as a probability distribution
+    // (and write to another state)
     void sampleSuccessorStateFromProbabilityDistribution(State const& nextAsProbDistr, State& next) const {
         // All deterministic variables are already 0 or 1
         for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
@@ -163,15 +166,20 @@ public:
         return 0.0;
     }
 
-    // Samples the whole state transition
-    void sampleStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
+    // Samples the successor state
+    void sampleSuccessorState(State const& current, int const& actionIndex, State& next) const {
         PDState pdNext = getPDState(next.remainingSteps());
-        calcSuccessorAsProbabilityDistribution(current, actionIndex, pdNext);
+        calcSuccessorState(current, actionIndex, pdNext);
         for(unsigned int varIndex = 0; varIndex < stateSize; ++varIndex) {
             next[varIndex] = sampleVariable(pdNext[varIndex]);
         }
         calcStateFluentHashKeys(next);
         calcStateHashKey(next);
+    }    
+
+    // Samples the whole state transition
+    void sampleStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
+        sampleSuccessorState(current, actionIndex, next);
         calcReward(current, actionIndex, reward);
     }
 
@@ -190,39 +198,27 @@ public:
     int getOptimalFinalActionIndex(State const& current);
 
     // Calculate successor in Kleene logic
-    void calcKleeneSuccessor(State const& current, int const& actionIndex, State& next) const {
+    void calcKleeneSuccessor(KleeneState const& current, int const& actionIndex, KleeneState& next) const {
         for(unsigned int i = 0; i < stateSize; ++i) {
-            if(MathUtils::doubleIsMinusInfinity(current[i])) {
-                next[i] = -std::numeric_limits<double>::max();
-            } else {
-                CPFs[i]->evaluateToKleeneOutcome(next[i], current, actionStates[actionIndex]);
-            }
+            CPFs[i]->evaluateToKleeneOutcome(next[i], current, actionStates[actionIndex]);
         }
     }
 
     // Merge two states in Kleene logic
-    void mergeKleeneStates(State const& state, State& res) const {
+    void mergeKleeneStates(KleeneState const& state, KleeneState& res) const {
         assert(state.state.size() == res.state.size());
+
         for(unsigned int i = 0; i < stateSize; ++i) {
-            if(!MathUtils::doubleIsEqual(state[i], res[i])) {
-                res[i] = -std::numeric_limits<double>::max();
-            }
+            res[i].insert(state[i].begin(), state[i].end());
         }
     }
 
-    // Create a Kleene state from a non-Kleene state
-    State toKleeneState(State const& state) const {
-        State res(state.state, state.remSteps, state.stateFluentHashKeys.size());
-        calcKleeneStateFluentHashKeys(res);
-        return res;
-    }
-
     // Calulate the reward in Kleene logic
-    void calcKleeneReward(State const& current, int const& actionIndex, double& reward) const {
+    void calcKleeneReward(KleeneState const& current, int const& actionIndex, std::set<double>& reward) const {
         rewardCPF->evaluateToKleeneOutcome(reward, current, actionStates[actionIndex]);
     }
 
-    // Calculate the state fluent hash key for each state fluent
+    // Calculate the hash key for each state fluent in a State
     void calcStateFluentHashKeys(State& state) const {
         for(unsigned int i = 0; i < stateSize; ++i) {
             if(MathUtils::doubleIsGreater(state[i], 0.0)) {
@@ -234,61 +230,66 @@ public:
         }
     }
 
-    // Calculate the Kleene state fluent hash key for each state
-    // fluent
-    void calcKleeneStateFluentHashKeys(State& state) const {
+    // Calculate the hash key for each state fluent in a KleeneState
+    void calcKleeneStateFluentHashKeys(KleeneState& state) const {
         for(unsigned int i = 0; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(state[i],1.0)) {
-                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += indexToKleeneStateFluentHashKeyMap[i][j].second;
-                }                
-            } else if(MathUtils::doubleIsMinusInfinity(state[i])) {
-                for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
-                    assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
-                    state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += (2*indexToKleeneStateFluentHashKeyMap[i][j].second);
-                } 
+            int multiplier = 0;
+            for(std::set<double>::iterator it = state[i].begin(); it != state[i].end(); ++it) {
+                multiplier |= 1<<((int)*it);
             }
+           --multiplier;
+           if(multiplier > 0) {
+               for(unsigned int j = 0; j < indexToKleeneStateFluentHashKeyMap[i].size(); ++j) {
+                   assert(state.stateFluentHashKeys.size() > indexToKleeneStateFluentHashKeyMap[i][j].first);
+                   state.stateFluentHashKeys[indexToKleeneStateFluentHashKeyMap[i][j].first] += (multiplier * indexToKleeneStateFluentHashKeyMap[i][j].second);
+               }
+           }
         }
     }
 
-    // Calculate (bool) hash key and state fluent hash keys (if state
-    // hashing is possible)
+    // Calculate the hash key of a State
     void calcStateHashKey(State& state) const {
         if(stateHashingPossible) {
             state.hashKey = 0;
             for(int i = 0; i < stateSize; ++i) {
-                state.hashKey += ((int)state[i]) * CPFs[i]->hashKeyBase;
+                state.hashKey += (((int)state[i]) * CPFs[i]->hashKeyBase);
             }
         } else {
             assert(state.hashKey == -1);
         }
     }
 
-    // Calculate hash key of states as probability distribution (if
-    // state hashing is possible)
-    void calcHashKeyOfProbabilityDistribution(State& state) const {
-        if(stateHashingWithStatesAsProbabilityDistributionPossible) {
+    // Calculate the hash key of a KleeneState
+    void calcKleeneStateHashKey(KleeneState& state) const {
+        if(kleeneStateHashingPossible) {
             state.hashKey = 0;
-            // We differentiate between deterministic and
-            // probabilistic variables here because we can omit a map
-            // lookup for deterministic variables, and because the
-            // probDomainMap is not set correctly in deterministic
-            // tasks.
-            for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
-                if(MathUtils::doubleIsEqual(state[index],1.0)) {
-                    state.hashKey += CPFs[index]->hashKeyBase;
+            for(int i = 0; i < stateSize; ++i) {
+                int multiplier = 0;
+                for(std::set<double>::iterator it = state[i].begin(); it != state[i].end(); ++it) {
+                    multiplier |= 1<<((int)*it);
                 }
-            }
+                --multiplier;
 
-            for(int index = firstProbabilisticVarIndex; index < stateSize; ++index) {
-                assert(CPFs[index]->probDomainMap.find(state[index]) != CPFs[index]->probDomainMap.end());
-                state.hashKey += CPFs[index]->probDomainMap[state[index]];
+                state.hashKey += (multiplier * CPFs[i]->kleeneHashKeyBase);
             }
         } else {
             assert(state.hashKey == -1);
         }
     }
+
+    // Calculate the hash key of a PDState
+    // void calcPDStateHashKey(State& /*state*/) const {
+    //     //REPAIR
+    //     // if(pdStateHashingPossible) {
+    //     //     state.hashKey = 0;
+
+    //     //     for(int index = 0; index < stateSize; ++index) {
+    //     //         CPFs[index]->addProbHashKeyPart(state[index], state.hashKey);
+    //     //     }
+    //     // } else {
+    //     //     assert(state.hashKey == -1);
+    //     // }
+    // }
 
     ActionState const& actionState(int const& index) const {
         assert(index < actionStates.size());
@@ -304,19 +305,19 @@ public:
     }
 
     bool isMinReward(double const& rew) const {
-        return MathUtils::doubleIsEqual(rew,rewardCPF->minVal);
+        return MathUtils::doubleIsEqual(rew,rewardCPF->getMinVal());
     }
 
     double const& getMinReward() const {
-        return rewardCPF->minVal;
+        return rewardCPF->getMinVal();
     }
 
     bool isMaxReward(double const& rew) const {
-        return MathUtils::doubleIsEqual(rew,rewardCPF->maxVal);
+        return MathUtils::doubleIsEqual(rew,rewardCPF->getMaxVal());
     }
 
     double const& getMaxReward() const {
-        return rewardCPF->maxVal;
+        return rewardCPF->getMaxVal();
     }
 
     State const& getInitialState() const {
@@ -374,6 +375,7 @@ public:
     void print(std::ostream& out) const;
 
     void printState(std::ostream& out, State const& state) const;
+    void printKleeneState(std::ostream& out, KleeneState const& state) const;
     void printPDState(std::ostream& out, PDState const& state) const;
     void printAction(std::ostream& out, int const& actionIndex) const;
 
@@ -385,6 +387,14 @@ public:
     void printStaticSACInDetail(std::ostream& out, int const& index) const;
     void printStateInvariantInDetail(std::ostream& out, int const& index) const;
 
+    void printDeadEndBDD() const {
+        bdd_printdot(cachedDeadEnds);
+    }
+
+    void printGoalBDD() const {
+        bdd_printdot(cachedGoals);
+    }
+
     // Contains state values for solved states.
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;
 
@@ -395,12 +405,12 @@ private:
     void calcPossiblyLegalActionStates(int actionsToSchedule, std::list<std::vector<int> >& result,
                                        std::vector<int> addTo = std::vector<int>());
 
+    void initializeDomains();
+
     void initializeStateFluentHashKeys();
     void initializeStateHashKeys();
+    void initializeKleeneStateHashKeys();
     void initializeHashKeysOfStatesAsProbabilityDistributions();
-
-    void initializeDomainOfCPF(int const& index);
-    std::set<double> calculateDomainOfCPF(ConditionalProbabilityFunction* cpf);
 
     void determinePruningEquivalence();
     void initializeRewardDependentVariables();
@@ -410,12 +420,13 @@ private:
     void setApplicableActions(State const& state, std::vector<int>& res) const;
 
     // functions for reward lock detection
-    bool checkDeadEnd(State const& state);
-    bool checkGoal(State const& state);
+    bool checkDeadEnd(KleeneState const& state);
+    bool checkGoal(KleeneState const& state);
 
     //BDD related functions
-    void stateToBDD(State const& state, bdd& res);
-    bool BDDIncludes(bdd BDD, State const& state);
+    bdd stateToBDD(KleeneState const& state) const;
+    bdd stateToBDD(State const& state) const;
+    bool BDDIncludes(bdd BDD, KleeneState const& state) const;
 
     // Printer functions
     void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval) const;
@@ -470,13 +481,14 @@ private:
     // moment
     double discountFactor;
 
-    // Is true if state hashing of complete states (not state fluent
-    // hashing) is possible
+    // Is true if hashing of States (not state fluent hashing) is possible
     bool stateHashingPossible;
 
-    // Is true if state hashing of states as probability distributions
-    // is possible (again, not state fluent hashing)
-    bool stateHashingWithStatesAsProbabilityDistributionPossible;
+    // Is true if hashing of KleeneStates is possible
+    bool kleeneStateHashingPossible;
+
+    // Is true if hashing of PDStates is possible
+    bool pdStateHashingPossible;
 
     // Is true if reward lock detection is used
     bool useRewardLockDetection;
@@ -502,9 +514,9 @@ private:
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableActionsCache;
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableReasonableActionsCache;
 
-    // The Evaluatable with index
-    // indexToStateFluentHashKeyMap[i][j].first depends on variable i,
-    // and is updated with indexToStateFluentHashKeyMap[i][j].second
+    // The Evaluatable with index indexToStateFluentHashKeyMap[i][j].first
+    // depends on variable i, and is updated with
+    // indexToStateFluentHashKeyMap[i][j].second
     std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
     std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
 };

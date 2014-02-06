@@ -32,10 +32,10 @@ vector<State> StateSetGenerator::generateStateSet(State const& rootState, int co
     nextState.reset(rootState.remainingSteps()-1);
     
     stateSet.insert(currentState);
-
     while((stateSet.size() < numberOfStates) && (MathUtils::doubleIsSmaller(t(), 2.0))) {
         vector<int> actionsToExpandIndices = applicableActionGenerator->getIndicesOfApplicableActions(currentState);
         int chosenActionIndex = actionsToExpandIndices[std::rand() % actionsToExpandIndices.size()];
+
         double reward = 0.0;
         successorGenerator->sampleStateTransition(currentState, chosenActionIndex, nextState, reward);
 
@@ -56,8 +56,14 @@ vector<State> StateSetGenerator::generateStateSet(State const& rootState, int co
     vector<State> result(stateSet.size());
     std::copy(stateSet.begin(), stateSet.end(), result.begin());
 
-    cout << "created " << result.size() << " states." << endl;
+    // for(unsigned int i = 0; i < result.size(); ++i) {
+    //     successorGenerator->printState(cout, result[i]);
+    //     cout << endl << endl;
+    // }
 
+    // assert(false);
+
+    cout << "created " << result.size() << " states." << endl;
     return result;
 }
 

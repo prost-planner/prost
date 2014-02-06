@@ -7,8 +7,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "probability_distribution.h"
-
 #include "utils/math_utils.h"
 
 class PlanningTask;
@@ -23,7 +21,7 @@ public:
         state(other.state), remSteps(other.remSteps), stateFluentHashKeys(other.stateFluentHashKeys), hashKey(other.hashKey) {}
 
     State(int const& size, int const& _remSteps, int const& stateFluentHashKeySize) :
-        state(size,0.0), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize,0), hashKey(-1) {}
+        state(size, 0.0), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize, 0), hashKey(-1) {}
 
     void setTo(State const& other) {
         for(unsigned int i = 0; i < state.size(); ++i) {
@@ -150,65 +148,13 @@ public:
     //states are very tightly coupled. Nevertheless, there must be a
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
+    friend class KleeneState;
 
 protected:
     std::vector<double> state;
     int remSteps;
     std::vector<long> stateFluentHashKeys;
     long hashKey;
-};
-
-class PDState {
-public:
-    PDState() {} //TODO: This constructor is ugly and unsafe, but currently needed.
-    PDState(std::vector<DiscretePD> _state, int const& _remSteps) :
-        state(_state), remSteps(_remSteps) {}
-    PDState(PDState const& other) :
-        state(other.state), remSteps(other.remSteps) {}
-    PDState(int const& size, int const& _remSteps) :
-        state(size, DiscretePD()), remSteps(_remSteps) {}
-
-    DiscretePD& operator[](int const& index) {
-        assert(index < state.size());
-        return state[index];
-    }
-
-    DiscretePD const& operator[](int const& index) const {
-        assert(index < state.size());
-        return state[index];
-    }
-
-    int const& remainingSteps() const {
-        return remSteps;
-    }
-
-    int& remainingSteps() {
-        return remSteps;
-    }
-
-    struct CompareIgnoringRemainingSteps {
-        bool operator() (PDState const& lhs, PDState const& rhs) const {
-            assert(lhs.state.size() == rhs.state.size());
-
-            for(unsigned int i = 0; i < lhs.state.size(); ++i) {
-                if(rhs.state[i] < lhs.state[i]) {
-                    return false;
-                } else if(lhs.state[i] < rhs.state[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    };
-
-    //TODO: This is very very ugly, but cpfs, planning tasks and
-    //states are very tightly coupled. Nevertheless, there must be a
-    //way to get rid of this, even if it takes some work!
-    friend class PlanningTask;
-
-protected:
-    std::vector<DiscretePD> state;
-    int remSteps;
 };
 
 #endif

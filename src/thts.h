@@ -543,17 +543,20 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         // successorGenerator->printAction(cout, actions[currentActionIndex]);
         // cout << endl;
 
-        // Sample successor state
-        //REPAIR successorGenerator->calcSuccessorAsProbabilityDistribution(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
-        chanceNodeVarIndex = successorGenerator->getFirstProbabilisticVarIndex();
-
         if(successorGenerator->isDeterministic()) {
-            // This task is deterministic -> there are no chance nodes
+            // This task is deterministic -> there are no chance nodes and the
+            // successor state can be computed directly
+            successorGenerator->sampleSuccessorState(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
             successorGenerator->calcStateFluentHashKeys(states[nextStateIndex]);
             successorGenerator->calcStateHashKey(states[nextStateIndex]);
             futureReward = visitDecisionNode(node->children[actions[currentActionIndex]]);
         } else {
             // Continue with chance nodes
+
+            // Sample successor state
+            //REPAIRsuccessorGenerator->calcSuccessorState(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
+            chanceNodeVarIndex = successorGenerator->getFirstProbabilisticVarIndex();
+
             futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
         }
     } else {

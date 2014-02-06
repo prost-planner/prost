@@ -19,6 +19,7 @@ using namespace std;
 #include "logical_expressions_includes/simplify.cc"
 #include "logical_expressions_includes/collect_initial_info.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
+#include "logical_expressions_includes/calculate_prob_domain.cc"
 #include "logical_expressions_includes/determinization.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/evaluate_to_kleene_outcome.cc"
