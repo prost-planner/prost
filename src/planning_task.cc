@@ -40,8 +40,7 @@ void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<Cond
     calcStateFluentHashKeys(initialState);
     calcStateHashKey(initialState);
 
-    // Determine if this task is pruning equivalent to its
-    // determinization
+    // Determine if this task is pruning equivalent to its determinization
     determinePruningEquivalence();
 
     // Initialize reward and reward lock dependent variables
@@ -161,13 +160,12 @@ void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
 
         bool isLegal = true;
         for(unsigned int i = 0; i < staticSACs.size(); ++i) {
-            DiscretePD res;
+            double res = 0.0;
             staticSACs[i]->evaluate(res, current, actionState);
-            if(res.isFalsity()) {
+            if(MathUtils::doubleIsEqual(res, 0.0)) {
                 isLegal = false;
                 break;
             }
-            assert(res.isTruth());
         }
 
         if(isLegal) {
@@ -212,18 +210,6 @@ void PlanningTask::initializeDomains() {
     }
 
     rewardCPF->initializeDomains(actionStates);
-
-    // for(unsigned int index = 0; index < staticSACs.size(); ++index) {
-    //     staticSACs[index]->initializeDomains(actionStates);
-    // }
-
-    // for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
-    //     dynamicSACs[index]->initializeDomains(actionStates);
-    // }
-
-    // for(unsigned int index = 0; index < stateInvariants.size(); ++index) {
-    //     stateInvariants[index]->initializeDomains(actionStates);
-    // }
 }
 
 void PlanningTask::initializeStateFluentHashKeys() {
@@ -247,42 +233,34 @@ void PlanningTask::initializeStateFluentHashKeys() {
 void PlanningTask::initializeStateHashKeys() {
     stateHashingPossible = true;
     long nextHashKeyBase = 1;
-    vector<long> hashKeyBases;
 
     for(unsigned int index = 0; index < stateSize; ++index) {
         hashKeyBases.push_back(nextHashKeyBase);
         if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
+            hashKeyBases.clear();
             stateHashingPossible = false;
             return;
         }
     }
 
     assert(hashKeyBases.size() == CPFs.size());
-
-    for(unsigned int index = 0; index < stateSize; ++index) {
-        CPFs[index]->hashKeyBase = hashKeyBases[index];
-    }
 }
 
 // Check if hashing of KleeneStates is possible, and assign hash key bases if so
 void PlanningTask::initializeKleeneStateHashKeys() {
     kleeneStateHashingPossible = true;
     long nextHashKeyBase = 1;
-    vector<long> hashKeyBases;
 
     for(unsigned int index = 0; index < stateSize; ++index) {
-        hashKeyBases.push_back(nextHashKeyBase);
+        kleeneHashKeyBases.push_back(nextHashKeyBase);
         if(!CPFs[index]->hasFiniteKleeneDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getKleeneDomainSize())) {
+            kleeneHashKeyBases.clear();
             kleeneStateHashingPossible = false;
             return;
         }
     }
 
-    assert(hashKeyBases.size() == CPFs.size());
-
-    for(unsigned int index = 0; index < stateSize; ++index) {
-        CPFs[index]->kleeneHashKeyBase = hashKeyBases[index];
-    }
+    assert(kleeneHashKeyBases.size() == CPFs.size());
 }
 
 // Check if state hashing is possible with states as probability
@@ -395,7 +373,6 @@ void PlanningTask::initializeRewardDependentVariables() {
     for(unsigned int index = 0; index < CPFs.size(); ++index) {
         domains[index] = CPFs[index]->getDomain().size();
     }
-    cout << endl;
     fdd_extdomain(domains, stateSize);
 }
 
@@ -551,26 +528,52 @@ vector<int> PlanningTask::getApplicableActions(State const& state) {
 inline void PlanningTask::setApplicableReasonableActions(State const& state, std::vector<int>& res) const {
     // TODO: Check if there are positive actions in the reward CPF, as we are
     // not allowed to prune an action that occurs positively in the rewardCPF!
-    map<PDState, int, PDState::CompareIgnoringRemainingSteps> childStates;
-    
-    for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
-        if(actionStates[actionIndex].isApplicable(state)) {
-            // This action is applicable
-            PDState nxt = getPDState(state.remainingSteps()-1);
-            calcSuccessorState(state, actionIndex, nxt);
-            //REPAIR calcHashKeyOfProbabilityDistribution(nxt);
 
-            if(childStates.find(nxt) == childStates.end()) {
-                // This action is reasonable
-                childStates[nxt] = actionIndex;
-                res[actionIndex] = actionIndex;
+    if(isDeterministic()) {
+        map<State, int, State::CompareIgnoringRemainingSteps> childStates;
+    
+        for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
+            if(actionStates[actionIndex].isApplicable(state)) {
+                // This action is applicable
+                State nxt(stateSize, -1, numberOfStateFluentHashKeys);
+                calcSuccessorState(state, actionIndex, nxt);
+                calcStateHashKey(nxt);
+
+                if(childStates.find(nxt) == childStates.end()) {
+                    // This action is reasonable
+                    childStates[nxt] = actionIndex;
+                    res[actionIndex] = actionIndex;
+                } else {
+                    // This action is not reasonable
+                    res[actionIndex] = childStates[nxt];
+                }
             } else {
-                // This action is not reasonable
-                res[actionIndex] = childStates[nxt];
+                // This action is not appicable
+                res[actionIndex] = -1;            
             }
-        } else {
-            // This action is not appicable
-            res[actionIndex] = -1;            
+        }
+    } else {
+        map<PDState, int, PDState::CompareIgnoringRemainingSteps> childStates;
+    
+        for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
+            if(actionStates[actionIndex].isApplicable(state)) {
+                // This action is applicable
+                PDState nxt = getPDState(state.remainingSteps()-1);
+                calcSuccessorState(state, actionIndex, nxt);
+                //REPAIR calcHashKeyOfProbabilityDistribution(nxt);
+
+                if(childStates.find(nxt) == childStates.end()) {
+                    // This action is reasonable
+                    childStates[nxt] = actionIndex;
+                    res[actionIndex] = actionIndex;
+                } else {
+                    // This action is not reasonable
+                    res[actionIndex] = childStates[nxt];
+                }
+            } else {
+                // This action is not appicable
+                res[actionIndex] = -1;            
+            }
         }
     }
 }
@@ -613,6 +616,7 @@ bool PlanningTask::isARewardLock(State const& current) {
 
         // Convert to Kleene state
         KleeneState currentInKleene(current);
+        calcKleeneStateHashKey(currentInKleene);
         calcKleeneStateFluentHashKeys(currentInKleene);
 
         // Check reward lock on Kleene state
@@ -625,6 +629,7 @@ bool PlanningTask::isARewardLock(State const& current) {
 
         // Convert to Kleene state
         KleeneState currentInKleene(current);
+        calcKleeneStateHashKey(currentInKleene);
         calcKleeneStateFluentHashKeys(currentInKleene);
 
         // cout << "Checking state: " << endl;
@@ -643,20 +648,20 @@ bool PlanningTask::checkDeadEnd(KleeneState const& state) {
     // that would make us leave the dead end is actually
     // inapplicable).
 
-    // Calc noop successor
+    // Apply noop
     KleeneState mergedSuccs(stateSize, numberOfStateFluentHashKeys);
     set<double> reward;
     calcKleeneSuccessor(state, 0, mergedSuccs);
     calcKleeneReward(state, 0, reward);
 
-    // If reward is not minimal this is not a dead end
+    // If reward is not minimal with cetainty this is not a dead end
     if((reward.size() != 1) || !isMinReward(*reward.begin())) {
         return false;
     }
 
     for(unsigned int actionIndex = 1; actionIndex < getNumberOfActions(); ++actionIndex) {
         reward.clear();
-        // Calc Kleene successor of applying action actionIndex
+        // Apply action actionIndex
         KleeneState succ(stateSize, numberOfStateFluentHashKeys);
         calcKleeneSuccessor(state, actionIndex, succ);
         calcKleeneReward(state, actionIndex, reward);
@@ -666,15 +671,16 @@ bool PlanningTask::checkDeadEnd(KleeneState const& state) {
             return false;
         }
 
-        // Merge with previous successors
-        mergeKleeneStates(succ, mergedSuccs);
+        // Merge with previously computed successors
+        mergedSuccs |= succ;
+        //mergeKleeneStates(succ, mergedSuccs);
     }
 
-    // Calculate state fluent hash keys
+    // Calculate hash keys
+    calcKleeneStateHashKey(mergedSuccs);
     calcKleeneStateFluentHashKeys(mergedSuccs);
 
-    // Check if the merged successor is equivalent to state, otherwise
-    // continue to check if this is a dead end
+    // Check if nothing changed, otherwise continue dead end check
     if((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
         cachedDeadEnds |= stateToBDD(state);
         return true;
@@ -682,40 +688,29 @@ bool PlanningTask::checkDeadEnd(KleeneState const& state) {
     return false;
 }
 
-// We underapproximate the set of goals, as we only consider those
-// where applying goalTestActionIndex makes us stay in the reward lock. 
+// We underapproximate the set of goals, as we only consider those where
+// applying goalTestActionIndex makes us stay in the reward lock.
 bool PlanningTask::checkGoal(KleeneState const& state) {
+    // Apply action goalTestActionIndex
     KleeneState succ(stateSize, numberOfStateFluentHashKeys);
     set<double> reward;
-
-    // cout << "Curr: " << endl;
-    // printKleeneState(cout, state);
-
     calcKleeneSuccessor(state, goalTestActionIndex, succ);
     calcKleeneReward(state, goalTestActionIndex, reward);
-    // cout << "calc reward end" << endl << endl;
-    // cout << "Succ: " << endl;
-    // printKleeneState(cout, succ);
-    // cout << "Rewards: " << endl;
-    // for(set<double>::iterator it = reward.begin(); it != reward.end(); ++it) {
-    //     cout << *it << " ";
-    // }
-    // cout << endl;
 
+    // If reward is not maximal with cetainty this is not a goal
     if((reward.size() > 1) || !isMaxReward(*reward.begin())) {
         return false;
     }
 
-    //add parent to successor
-    mergeKleeneStates(state, succ);
+    // Add parent to successor
+    succ |= state;
+    //mergeKleeneStates(state, succ);
 
-    // update state fluent hash keys
+    // Calculate hash keys
+    calcKleeneStateHashKey(succ);
     calcKleeneStateFluentHashKeys(succ);
 
-    // cout << "Merged: " << endl;
-    // printKleeneState(cout, succ);
-    // cout << endl << endl;
-
+    // Check if nothing changed, otherwise continue goal check
     if((succ == state) || checkGoal(succ)) {
         cachedGoals |= stateToBDD(state);
         return true;
@@ -1005,7 +1000,12 @@ void PlanningTask::printCPFInDetail(std::ostream& out, int const& index) const {
     }
     out << endl;
 
-    out << "  HashKeyBase: " << CPFs[index]->hashKeyBase << endl;
+    if(stateHashingPossible) {
+        out << "  HashKeyBase: " << hashKeyBases[index] << endl;
+    }
+    if(kleeneStateHashingPossible) {
+        out << "  KleeneHashKeyBase: " << kleeneHashKeyBases[index] << endl;
+    }
     out << "  KleeneDomainSize: " << CPFs[index]->kleeneDomainSize << endl;
 
     // cout << endl << "  Map for probabilistic state hash keys: " << endl;
@@ -1058,7 +1058,7 @@ void PlanningTask::printEvaluatableInDetail(ostream& out, Evaluatable* eval) con
         out << " caching in maps, ";
         break;
     case Evaluatable::VECTOR:
-        out << " caching in vectors of size " << eval->evaluationCacheVector.size() << ", ";
+        out << " caching in vectors of size " << (eval->isProbabilistic() ? eval->pdEvaluationCacheVector.size() : eval->evaluationCacheVector.size()) << ", ";
         break;
     }
 

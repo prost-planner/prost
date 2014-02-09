@@ -79,13 +79,12 @@ bool ActionState::containsAdditionalPositiveActionFluent(StateActionConstraint* 
 }
 
 bool ActionState::isApplicable(State const& current) const {
-    DiscretePD res;
+    double res = 0.0;
     for(unsigned int sacIndex = 0; sacIndex < relevantSACs.size(); ++sacIndex) {
         relevantSACs[sacIndex]->evaluate(res, current, *this);
-        if(res.isFalsity()) {
+        if(MathUtils::doubleIsEqual(res, 0.0)) {
             return false;
         }
-        assert(res.isTruth());
     }
     return true;
 }

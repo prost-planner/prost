@@ -16,6 +16,9 @@ public:
         }
     }
 
+    KleeneState(KleeneState const& other) :
+        state(other.state), stateFluentHashKeys(other.stateFluentHashKeys), hashKey(other.hashKey) {}
+
     std::set<double>& operator[](int const& index) {
         assert(index < state.size());
         return state[index];
@@ -47,6 +50,23 @@ public:
             }
         }
         return true;
+    }
+
+    // This is used to merge two KleeneStates
+    KleeneState operator|=(KleeneState const& other) {
+        assert(state.size() == other.state.size());
+
+        for(unsigned int i = 0; i < state.size(); ++i) {
+            state[i].insert(other.state[i].begin(), other.state[i].end());
+        }
+
+        hashKey = -1;
+        return *this;
+    }
+
+    KleeneState const operator||(KleeneState const& other) {
+        assert(state.size() == other.state.size());
+        return KleeneState(*this) |= other;
     }
 
     //TODO: This is very very ugly, but cpfs, planning tasks and

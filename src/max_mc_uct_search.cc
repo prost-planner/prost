@@ -23,13 +23,14 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
                          Outcome selection
 ******************************************************************/
 
-MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, State& stateAsProbDistr, int& varIndex) {
+MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+    // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(2,NULL);
+        node->children.resize(successorGenerator->getDomainSizeOfCPF(varIndex), NULL);
     }
 
-    successorGenerator->sampleVariable(stateAsProbDistr, varIndex);
-    unsigned int childIndex = (unsigned int)stateAsProbDistr[varIndex];
+    int childIndex = (int)successorGenerator->sampleVariable(nextPDState[varIndex]);
+    nextState[varIndex] = childIndex;
 
     if(!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
@@ -83,22 +84,19 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
 }
 
 void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node, double const& /*futReward*/) {
-    assert(node->children.size() == 2);
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
+    node->futureReward = 0.0;
+    int numberOfChildVisits = 0;
 
     // Propagate values from children
-    if(node->children[0] && node->children[1]) {
-        node->futureReward = (((node->children[0]->numberOfVisits * node->children[0]->getExpectedRewardEstimate()) + 
-                              (node->children[1]->numberOfVisits * node->children[1]->getExpectedRewardEstimate())) /
-                              (node->children[0]->numberOfVisits + node->children[1]->numberOfVisits));
-    } else if(node->children[0]) {
-        node->futureReward = node->children[0]->getExpectedRewardEstimate();
-    } else {
-        assert(node->children[1]);
-        node->futureReward = node->children[1]->getExpectedRewardEstimate();
+    for(unsigned int i = 0; i < node->children.size(); ++i) {
+        node->futureReward += (node->children[i]->numberOfVisits * node->children[i]->getExpectedRewardEstimate());
+        numberOfChildVisits += node->children[i]->numberOfVisits;
     }
+
+    node->futureReward /= numberOfChildVisits;
 }
 
 

@@ -1,4 +1,4 @@
-void LogicalExpression::evaluate(DiscretePD& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
     assert(false);
 }
 
@@ -6,398 +6,199 @@ void LogicalExpression::evaluate(DiscretePD& /*res*/, State const& /*current*/, 
                            Atomics
 *****************************************************************/
 
-void StateFluent::evaluate(DiscretePD& res, State const& current, ActionState const& /*actions*/) {
-    res.assignDiracDelta(current[index]);
+void StateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) {
+    res = current[index];
 }
 
-void ActionFluent::evaluate(DiscretePD& res, State const& /*current*/, ActionState const& actions) {
-    res.assignDiracDelta(actions[index]);
+void ActionFluent::evaluate(double& res, State const& /*current*/, ActionState const& actions) {
+    res = actions[index];
 }
 
-void NumericConstant::evaluate(DiscretePD& res, State const& /*current*/, ActionState const& /*actions*/) {
-    res.assignDiracDelta(value);
+void NumericConstant::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) {
+    res = value;
 }
 
 /*****************************************************************
                            Connectives
 *****************************************************************/
 
-void Conjunction::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    double truthProb = 1.0;
+void Conjunction::evaluate(double& res, State const& current, ActionState const& actions) {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        DiscretePD exprRes;
-        exprs[i]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
+        exprs[i]->evaluate(res, current, actions);
 
-        if(exprRes.isFalsity()) {
-            res.assignDiracDelta(0.0);
+        if(MathUtils::doubleIsEqual(res, 0.0)) {
             return;
         } else {
-            truthProb *= exprRes.truthProbability();
+            assert(MathUtils::doubleIsEqual(res, 1.0));
         }
     }
-
-    res.assignBernoulli(truthProb);
+    res = 1.0; // The empty conjunction is true
 }
 
-void Disjunction::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    double falsityProb = 1.0;
+void Disjunction::evaluate(double& res, State const& current, ActionState const& actions) {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        DiscretePD exprRes;
-        exprs[i]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
+         exprs[i]->evaluate(res, current, actions);
 
-        if(exprRes.isTruth()) {
-            res.assignDiracDelta(1.0);
+        if(MathUtils::doubleIsEqual(res, 1.0)) {
             return;
         } else {
-            falsityProb *= exprRes.falsityProbability();
+            assert(MathUtils::doubleIsEqual(res, 0.0));
         }
     }
-
-    res.assignBernoulli(1.0 - falsityProb);
+    res = 0.0; // The empty disjunction is false
 }
 
-void EqualsExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void EqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
 
-    DiscretePD lhs;
+    double lhs = 0.0;
     exprs[0]->evaluate(lhs, current, actions);
-    assert(lhs.isWellDefined());
 
-    DiscretePD  rhs;
+    double rhs = 0.0;
     exprs[1]->evaluate(rhs, current, actions);
-    assert(rhs.isWellDefined());
 
-    // We don't check if the probability distributions are identical but we
-    // compute the probability that they evaluate to the same value!
-    double equalityProb = 0.0;
-    for(unsigned int i = 0; i < lhs.values.size(); ++i) {
-        equalityProb += (lhs.probabilities[i] * rhs.probabilityOf(lhs.values[i]));
-    }
-
-    res.assignBernoulli(equalityProb);
+    res = MathUtils::doubleIsEqual(lhs, rhs);
 }
 
-void GreaterExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void GreaterExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
 
-    DiscretePD lhs;
+    double lhs = 0.0;
     exprs[0]->evaluate(lhs, current, actions);
-    assert(lhs.isWellDefined());
 
-    DiscretePD  rhs;
+    double rhs = 0.0;
     exprs[1]->evaluate(rhs, current, actions);
-    assert(rhs.isWellDefined());
 
-    double greaterProb = 0.0;
-    for(unsigned int i = 0; i < lhs.values.size(); ++i) {
-        for(unsigned int j = 0; j < rhs.values.size(); ++j) {
-            if(MathUtils::doubleIsGreater(lhs.values[i], rhs.values[j])) {
-                greaterProb += (rhs.probabilities[j] * lhs.probabilities[i]);
-            } else {
-                break;
-            }
-        }
-    }
-
-    res.assignBernoulli(greaterProb);
+    res = MathUtils::doubleIsGreater(lhs, rhs);
 }
 
-void LowerExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void LowerExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
 
-    DiscretePD lhs;
+    double lhs = 0.0;
     exprs[0]->evaluate(lhs, current, actions);
-    assert(lhs.isWellDefined());
 
-    DiscretePD  rhs;
+    double rhs = 0.0;
     exprs[1]->evaluate(rhs, current, actions);
-    assert(rhs.isWellDefined());
 
-    double lowerProb = 0.0;
-    for(unsigned int i = 0; i < lhs.values.size(); ++i) {
-        for(int j = rhs.values.size()-1; j >= 0; --j) {
-            if(MathUtils::doubleIsSmaller(lhs.values[i], rhs.values[j])) {
-                lowerProb += (rhs.probabilities[j] * lhs.probabilities[i]);
-            } else {
-                break;
-            }
-        }
-    }
-
-    res.assignBernoulli(lowerProb);
+    res = MathUtils::doubleIsSmaller(lhs, rhs);
 }
 
-void GreaterEqualsExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void GreaterEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
 
-    DiscretePD lhs;
+    double lhs = 0.0;
     exprs[0]->evaluate(lhs, current, actions);
-    assert(lhs.isWellDefined());
 
-    DiscretePD  rhs;
+    double rhs = 0.0;
     exprs[1]->evaluate(rhs, current, actions);
-    assert(rhs.isWellDefined());
 
-    double greaterEqualProb = 0.0;
-    for(unsigned int i = 0; i < lhs.values.size(); ++i) {
-        for(unsigned int j = 0; j < rhs.values.size(); ++j) {
-            if(MathUtils::doubleIsGreaterOrEqual(lhs.values[i], rhs.values[j])) {
-                greaterEqualProb += (rhs.probabilities[j] * lhs.probabilities[i]);
-            } else {
-                break;
-            }
-        }
-    }
-
-    res.assignBernoulli(greaterEqualProb);
+    res = MathUtils::doubleIsGreaterOrEqual(lhs, rhs);
 }
 
-void LowerEqualsExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void LowerEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
     assert(exprs.size() == 2);
 
-    DiscretePD lhs;
+    double lhs = 0.0;
     exprs[0]->evaluate(lhs, current, actions);
-    assert(lhs.isWellDefined());
 
-    DiscretePD  rhs;
+    double rhs = 0.0;
     exprs[1]->evaluate(rhs, current, actions);
-    assert(rhs.isWellDefined());
 
-    double lowerEqualProb = 0.0;
-    for(unsigned int i = 0; i < lhs.values.size(); ++i) {
-        for(int j = rhs.values.size()-1; j >= 0; --j) {
-            if(MathUtils::doubleIsSmallerOrEqual(lhs.values[i], rhs.values[j])) {
-                lowerEqualProb += (rhs.probabilities[j] * lhs.probabilities[i]);
-            } else {
-                break;
-            }
-        }
-    }
-
-    res.assignBernoulli(lowerEqualProb);
+    res = MathUtils::doubleIsSmallerOrEqual(lhs, rhs);
 }
 
-void Addition::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void Addition::evaluate(double& res, State const& current, ActionState const& actions) {
+    res = 0.0;
+    for(unsigned int i = 0; i < exprs.size(); ++i) {
+        double exprRes = 0.0;
+        exprs[i]->evaluate(exprRes, current, actions);
+        res += exprRes;
+    }
+}
+
+void Subtraction::evaluate(double& res, State const& current, ActionState const& actions) {
     exprs[0]->evaluate(res, current, actions);
-    assert(res.isWellDefined());
 
-    for(unsigned int index = 1; index < exprs.size(); ++index) {
-        DiscretePD exprRes;
-        exprs[index]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
-
-        // Merge the results
-        std::map<double, double> valProbPairs;
-        for(unsigned int i = 0; i < res.values.size(); ++i) {
-            for(unsigned int j = 0; j < exprRes.values.size(); ++j) {
-                double val = res.values[i] + exprRes.values[j];
-                if(valProbPairs.find(val) == valProbPairs.end()) {
-                    valProbPairs[val] = 0.0;
-                }
-                valProbPairs[val] += (res.probabilities[i] * exprRes.probabilities[j]);
-            }            
-        }
-        res.assignDiscrete(valProbPairs);
+    for(unsigned int i = 1; i < exprs.size(); ++i) {
+        double exprRes = 0.0;
+        exprs[i]->evaluate(exprRes, current, actions);
+        res -= exprRes;
     }
-    assert(res.isWellDefined());
 }
 
-void Subtraction::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    exprs[0]->evaluate(res, current, actions);
-    assert(res.isWellDefined());
+void Multiplication::evaluate(double& res, State const& current, ActionState const& actions) {
+    res = 1.0;
+    for(unsigned int i = 0; i < exprs.size(); ++i) {
+        double exprRes = 0.0;
+        exprs[i]->evaluate(exprRes, current, actions);
+        res *= exprRes;
 
-    for(unsigned int index = 1; index < exprs.size(); ++index) {
-        DiscretePD exprRes;
-        exprs[index]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
-
-        // Merge the results
-        std::map<double, double> valProbPairs;
-        for(unsigned int i = 0; i < res.values.size(); ++i) {
-            for(unsigned int j = 0; j < exprRes.values.size(); ++j) {
-                double val = res.values[i] - exprRes.values[j];
-                if(valProbPairs.find(val) == valProbPairs.end()) {
-                    valProbPairs[val] = 0.0;
-                }
-                valProbPairs[val] += (res.probabilities[i] * exprRes.probabilities[j]);
-            }            
+        if(MathUtils::doubleIsEqual(res, 0.0)) {
+            return;
         }
-        res.assignDiscrete(valProbPairs);
     }
-    assert(res.isWellDefined());
 }
 
-void Multiplication::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+void Division::evaluate(double& res, State const& current, ActionState const& actions) {
     exprs[0]->evaluate(res, current, actions);
-    assert(res.isWellDefined());
 
-    for(unsigned int index = 1; index < exprs.size(); ++index) {
-        DiscretePD exprRes;
-        exprs[index]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
-
-        // Merge the results
-        std::map<double, double> valProbPairs;
-        for(unsigned int i = 0; i < res.values.size(); ++i) {
-            for(unsigned int j = 0; j < exprRes.values.size(); ++j) {
-                double val = res.values[i] * exprRes.values[j];
-                if(valProbPairs.find(val) == valProbPairs.end()) {
-                    valProbPairs[val] = 0.0;
-                }
-                valProbPairs[val] += (res.probabilities[i] * exprRes.probabilities[j]);
-            }            
+    for(unsigned int i = 1; i < exprs.size(); ++i) {
+        if(MathUtils::doubleIsEqual(res, 0.0)) {
+            return;
         }
-        res.assignDiscrete(valProbPairs);
+
+        double exprRes = 0.0;
+        exprs[i]->evaluate(exprRes, current, actions);
+        assert(!MathUtils::doubleIsEqual(exprRes, 0.0));
+        res /= exprRes;
     }
-    assert(res.isWellDefined());
-}
-
-void Division::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    exprs[0]->evaluate(res, current, actions);
-    assert(res.isWellDefined());
-
-    for(unsigned int index = 1; index < exprs.size(); ++index) {
-        DiscretePD exprRes;
-        exprs[index]->evaluate(exprRes, current, actions);
-        assert(exprRes.isWellDefined());
-
-        // Merge the results
-        std::map<double, double> valProbPairs;
-        for(unsigned int i = 0; i < res.values.size(); ++i) {
-            for(unsigned int j = 0; j < exprRes.values.size(); ++j) {
-                assert(!MathUtils::doubleIsEqual(exprRes.values[j], 0.0));
-                double val = res.values[i] / exprRes.values[j];
-                if(valProbPairs.find(val) == valProbPairs.end()) {
-                    valProbPairs[val] = 0.0;
-                }
-                valProbPairs[val] += (res.probabilities[i] * exprRes.probabilities[j]);
-            }            
-        }
-        res.assignDiscrete(valProbPairs);
-    }
-    assert(res.isWellDefined());
 }
 
 /*****************************************************************
                           Unaries
 *****************************************************************/
 
-void NegateExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    DiscretePD exprRes;
-    expr->evaluate(exprRes, current, actions);
-    assert(exprRes.isWellDefined());
-    res.assignBernoulli(exprRes.falsityProbability());
+void NegateExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+    expr->evaluate(res, current, actions);
+
+    res = MathUtils::doubleIsEqual(res, 0.0);
 }
 
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    DiscretePD exprRes;
-    expr->evaluate(exprRes, current, actions);
-    assert(exprRes.isWellDefined());
-
-    // the expression must evaluate to a real number which is converted to the
-    // probability that this is true
-    assert(exprRes.isDeterministic()); 
-    res.assignBernoulli(exprRes.values[0]);
+void BernoulliDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+    SystemUtils::abort("Fatal Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
-void DiscreteDistribution::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    std::map<double, double> valProbPairs;
-    res.reset();
-    for(unsigned int i = 0; i < values.size(); ++i) {
-        DiscretePD val;
-        values[i]->evaluate(val, current, actions);
-
-        DiscretePD prob;
-        probabilities[i]->evaluate(prob, current, actions);
-
-        // Both value and prob must be determinstic
-        assert(val.isDeterministic());
-        assert(prob.isDeterministic());
-
-        if(MathUtils::doubleIsGreater(prob.values[0], 0.0)) {
-            if(valProbPairs.find(val.values[0]) == valProbPairs.end()) {
-                valProbPairs[val.values[0]] = 0.0;
-            }
-            valProbPairs[val.values[0]] += prob.values[0];
-        }
-    }
-
-    res.assignDiscrete(valProbPairs);
-    assert(res.isWellDefined());
+void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+    SystemUtils::abort("Fatal Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
 /*****************************************************************
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    DiscretePD cond;
-    condition->evaluate(cond, current, actions);
+void IfThenElseExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+    condition->evaluate(res, current, actions);
 
-    if(cond.isFalsity()) {
+    if(MathUtils::doubleIsEqual(res, 0.0)) {
         valueIfFalse->evaluate(res, current, actions);
-    } else if(cond.isTruth()) {
-        valueIfTrue->evaluate(res, current, actions);
     } else {
-        DiscretePD truthRes;
-        valueIfTrue->evaluate(truthRes, current, actions);
-        assert(truthRes.isWellDefined());
-
-        DiscretePD falsityRes;
-        valueIfFalse->evaluate(falsityRes, current, actions);
-        assert(falsityRes.isWellDefined());
-
-        std::map<double, double> valProbPairs;
-        for(unsigned int i = 0; i < truthRes.values.size(); ++i) {
-            valProbPairs[truthRes.values[i]] = (truthRes.probabilities[i] * cond.truthProbability());
-        }
-
-        for(unsigned int i = 0; i < falsityRes.values.size(); ++i) {
-            if(valProbPairs.find(falsityRes.values[i]) == valProbPairs.end()) {
-                valProbPairs[falsityRes.values[i]] = 0.0;
-            }
-            valProbPairs[falsityRes.values[i]] += (falsityRes.probabilities[i] * cond.falsityProbability());
-        }
-        res.assignDiscrete(valProbPairs);
-        assert(res.isWellDefined());
+        valueIfTrue->evaluate(res, current, actions);
     }
 }
 
-void MultiConditionChecker::evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
-    std::map<double, double> valProbPairs;
-    double remainingProb = 1.0;
-
+void MultiConditionChecker::evaluate(double& res, State const& current, ActionState const& actions) {
     for(unsigned int index = 0; index < conditions.size(); ++index) {
-        DiscretePD prob;
-        conditions[index]->evaluate(prob, current, actions);
-        assert(prob.isWellDefined());
+        conditions[index]->evaluate(res, current, actions);
 
-        if(!prob.isFalsity()) {
-            DiscretePD exprRes;
-            effects[index]->evaluate(exprRes, current, actions);
-            assert(exprRes.isWellDefined());
-
-            for(unsigned int i = 0; i < exprRes.values.size(); ++i) {
-                if(valProbPairs.find(exprRes.values[i]) == valProbPairs.end()) {
-                    valProbPairs[exprRes.values[i]] = 0.0;
-                }
-                valProbPairs[exprRes.values[i]] += (prob.truthProbability() * remainingProb * exprRes.probabilities[i]);
-            }
-        }
-
-
-        remainingProb *= prob.falsityProbability();
-        if(MathUtils::doubleIsEqual(remainingProb, 0.0)) {
-            break;
+        if(!MathUtils::doubleIsEqual(res, 0.0)) {
+            effects[index]->evaluate(res, current, actions);
+            return;
         }
     }
-
-    res.assignDiscrete(valProbPairs);
-    assert(res.isWellDefined());
+    assert(false);
 }

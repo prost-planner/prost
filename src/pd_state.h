@@ -33,6 +33,24 @@ public:
         return remSteps;
     }
 
+    void reset(int _remSteps) {
+        for(unsigned int i = 0; i < state.size(); ++i) {
+            state[i].reset();
+        }
+        remSteps = _remSteps;
+    }
+
+    void transferDeterministicPart(State& detState) {
+        assert(remSteps == detState.remainingSteps());
+        assert(detState.state.size() == state.size());
+
+        for(unsigned int i = 0; i < state.size(); ++i) {
+            if(state[i].isDeterministic()) {
+                detState.state[i] = state[i].values[0];
+            }
+        }
+    }
+
     struct CompareIgnoringRemainingSteps {
         bool operator() (PDState const& lhs, PDState const& rhs) const {
             assert(lhs.state.size() == rhs.state.size());

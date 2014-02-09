@@ -155,7 +155,7 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     --remainingSteps;
     vector<string> result;
     probabilisticTask->actionState(chosenActionIndex).getActions(result);
-    assert(false);
+    // assert(false);
     // SystemUtils::abort("");
     return result;
 }

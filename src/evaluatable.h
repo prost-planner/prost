@@ -10,8 +10,11 @@ public:
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
 
-    // Evaluate
-    void evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+    // This function is called in state transitions if and only if this
+    // Evaluatable is deterministic
+    void evaluate(double& res, State const& current, ActionState const& actions) {
+        assert(!isProbabilistic());
+
         switch(cachingType) {
         case NONE:
             formula->evaluate(res, current, actions);
@@ -43,7 +46,7 @@ public:
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
             assert(stateHashKey < evaluationCacheVector.size());
 
-            if(evaluationCacheVector[stateHashKey].isUndefined()) {
+            if(MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
                 formula->evaluate(res, current, actions);
                 evaluationCacheVector[stateHashKey] = res;
             } else {
@@ -53,11 +56,65 @@ public:
         }
     }
 
-    void evaluateToKleeneOutcome(std::set<double>& res, KleeneState const& current, ActionState const& actions) {
+    // This function is called in state transitions if this Evaluatable is
+    // probabilistic or if it is deterministic but part of a probabilistic
+    // planning state
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) {
+        assert(res.isUndefined());
+
+        if(isProbabilistic()) {
+            switch(cachingType) {
+            case NONE:
+                formula->evaluateToPD(res, current, actions);
+                break;
+            case MAP:
+                stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+                assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+
+                if(pdEvaluationCacheMap.find(stateHashKey) != pdEvaluationCacheMap.end()) {
+                    res = pdEvaluationCacheMap[stateHashKey];
+                } else {
+                    formula->evaluateToPD(res, current, actions);
+                    pdEvaluationCacheMap[stateHashKey] = res;
+                }
+                break;
+            case DISABLED_MAP:
+                stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+                assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+
+                if(pdEvaluationCacheMap.find(stateHashKey) != pdEvaluationCacheMap.end()) {
+                    res = pdEvaluationCacheMap[stateHashKey];
+                } else {
+                    formula->evaluateToPD(res, current, actions);
+                }
+                break;
+            case VECTOR:
+                stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+                assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+                assert(stateHashKey < pdEvaluationCacheVector.size());
+
+                if(pdEvaluationCacheVector[stateHashKey].isUndefined()) {
+                    formula->evaluateToPD(res, current, actions);
+                    pdEvaluationCacheVector[stateHashKey] = res;
+                } else {
+                    res = pdEvaluationCacheVector[stateHashKey];
+                }
+                break;
+            }
+        } else {
+            double tmp;
+            evaluate(tmp, current, actions);
+            res.assignDiracDelta(tmp);
+        }
+    }
+
+    // This function is called for state transitions with KleeneStates
+    // (regardless of deterministic / probabilistic)
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) {
         assert(res.empty());
         switch(kleeneCachingType) {
         case NONE:
-            formula->evaluateToKleeneOutcome(res, current, actions);
+            formula->evaluateToKleene(res, current, actions);
             break;
         case MAP:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
@@ -66,7 +123,7 @@ public:
             if(kleeneEvaluationCacheMap.find(stateHashKey) != kleeneEvaluationCacheMap.end()) {
                 res = kleeneEvaluationCacheMap[stateHashKey];
             } else {
-                formula->evaluateToKleeneOutcome(res, current, actions);
+                formula->evaluateToKleene(res, current, actions);
                 kleeneEvaluationCacheMap[stateHashKey] = res;
             }
             break;
@@ -77,7 +134,7 @@ public:
             if(kleeneEvaluationCacheMap.find(stateHashKey) != kleeneEvaluationCacheMap.end()) {
                 res = kleeneEvaluationCacheMap[stateHashKey];
             } else {
-                formula->evaluateToKleeneOutcome(res, current, actions);
+                formula->evaluateToKleene(res, current, actions);
             }
 
             break;
@@ -87,7 +144,7 @@ public:
             assert(stateHashKey < kleeneEvaluationCacheVector.size());
 
             if(kleeneEvaluationCacheVector[stateHashKey].empty()) {
-                formula->evaluateToKleeneOutcome(res, current, actions);
+                formula->evaluateToKleene(res, current, actions);
                 kleeneEvaluationCacheVector[stateHashKey] = res;
             } else {
                 res = kleeneEvaluationCacheVector[stateHashKey];
@@ -124,11 +181,6 @@ public:
         return hasArithmeticFunction;
     }
 
-    // void addProbHashKeyPart(double const& value, long& hashKey) {
-    //     assert(probDomainMap.find(value) != probDomainMap.end());
-    //     hashKey += probDomainMap[value];
-    // }
-
     virtual bool isBoolean() const = 0;
 
 protected:
@@ -149,7 +201,8 @@ protected:
         //probDomainMap(other.probDomainMap),
         hashIndex(other.hashIndex),
         cachingType(other.cachingType),
-        evaluationCacheVector(other.evaluationCacheVector.size(), DiscretePD()),
+        evaluationCacheVector(other.pdEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
+        pdEvaluationCacheVector(other.pdEvaluationCacheVector.size(), DiscretePD()),
         kleeneCachingType(other.kleeneCachingType),
         kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size()),
         actionHashKeyMap(other.actionHashKeyMap) {}
@@ -182,15 +235,18 @@ protected:
         VECTOR // only few variables influence formula, so we use a vector for caching
     };
 
-    // CachingType describes which of the two (if any) datastructures
-    // is used to cache computed values
+    // CachingType describes which of the two (if any) datastructures is used to
+    // cache computed values. If this Evaluatable is probabilistic, the
+    // datastructures that start with 'pd' are used and other if the Evaluatable
+    // is deterministic
     CachingType cachingType;
-    std::map<long, DiscretePD> evaluationCacheMap;
-    std::vector<DiscretePD> evaluationCacheVector;
+    std::map<long, double> evaluationCacheMap;
+    std::map<long, DiscretePD> pdEvaluationCacheMap;
+    std::vector<double> evaluationCacheVector;
+    std::vector<DiscretePD> pdEvaluationCacheVector;
 
-    // KleeneCachingType describes which of the two (if any)
-    // datastructures is used to cache computed values on Kleene
-    // states
+    // KleeneCachingType describes which of the two (if any) datastructures is
+    // used to cache computed values on Kleene states
     CachingType kleeneCachingType;
     std::map<long, std::set<double> > kleeneEvaluationCacheMap;
     std::vector<std::set<double> > kleeneEvaluationCacheVector;
@@ -209,7 +265,7 @@ private:
     long getActionHashKey(std::vector<ActionState> const& actionStates, std::vector<ActionFluent*>& scheduledActions);
 
     void initializeStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                                       std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap);
+                                         std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap);
     void initializeKleeneStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
                                              std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap);
     bool dependsOnActionFluent(ActionFluent* fluent) {

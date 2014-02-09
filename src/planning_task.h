@@ -80,6 +80,8 @@ public:
         cacheApplicableActions(true),
         hasUnreasonableActions(true),
         noopIsOptimalFinalAction(other.noopIsOptimalFinalAction),
+        hashKeyBases(other.hashKeyBases),
+        kleeneHashKeyBases(other.kleeneHashKeyBases),
         indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
         indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap) {}
 
@@ -92,6 +94,7 @@ public:
 
     bool learn(std::vector<State> const& trainingSet);
 
+    // TODO: Make State constructor private and only allow the construction via this class.
     State getState(std::vector<double> const& stateVec, int const& remainingSteps) const {
         State res(stateVec, remainingSteps, numberOfStateFluentHashKeys);
         calcStateFluentHashKeys(res);
@@ -103,55 +106,74 @@ public:
         return PDState(getStateSize(), remainingSteps);
     }
 
-    // Calculates the probabiltity distribution that results from applying
-    // action with index actionIndex in the state current
-    void calcSuccessorState(State const& current, int const& actionIndex, PDState& nextAsProbDistr) const {
-        for(int i = 0; i < stateSize; ++i) {
-            CPFs[i]->evaluate(nextAsProbDistr[i], current, actionStates[actionIndex]);
+/*****************************************************************
+                Calculation of state transition
+*****************************************************************/
+
+    // In a deterministic task(!), apply action 'actionIndex' to 'current' and
+    // get // 'next' and yield reward 'reward'
+    void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
+        assert(isDeterministic());
+        calcSuccessorState(current, actionIndex, next);
+        calcReward(current, actionIndex, reward);
+    }
+
+    // Apply action 'actionIndex' to 'current', resulting in 'next'. Can only be
+    // used with deterministic planning tasks! TODO: Maybe it's better to have
+    // different classes for deterministic and probabilistic planning tasks
+    void calcSuccessorState(State const& current, int const& actionIndex, State& next) const {
+        assert(isDeterministic());
+        for(int index = 0; index < stateSize; ++index) {
+            CPFs[index]->evaluate(next[index], current, actionStates[actionIndex]);
+        }
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
+    }
+
+    // Apply action 'actionIndex' to 'current', resulting in 'next'
+    void calcSuccessorState(State const& current, int const& actionIndex, PDState& next) const {
+        for(int index = 0; index < stateSize; ++index) {
+            CPFs[index]->evaluateToPD(next[index], current, actionStates[actionIndex]);
         }
     }
 
-    // Sample a successor state from a state given as a probability distribution
-    // (and overwrite the state)
-    void sampleSuccessorStateFromProbabilityDistribution(State& next) const {
-        // Sample all probabilistic variables according to their probability
-        // distribution
-        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(next[i], 0.0) || MathUtils::doubleIsEqual(next[i], 1.0)) {
-                continue;
-            } else {
-                next[i] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), next[i]) ? 1.0 : 0.0);
-            }
-        }
+    // Calculate the reward 'reward' of applying action 'actionIndex' in
+    // 'current'
+    void calcReward(State const& current, int const& actionIndex, double& reward) const {
+        rewardCPF->evaluate(reward, current, actionStates[actionIndex]);
     }
 
-    // Sample a successor state from a state given as a probability distribution
-    // (and write to another state)
-    void sampleSuccessorStateFromProbabilityDistribution(State const& nextAsProbDistr, State& next) const {
-        // All deterministic variables are already 0 or 1
-        for(int i = 0; i < firstProbabilisticVarIndex; ++i) {
-            next[i] = nextAsProbDistr[i];
-        }
+    // As we are currently assuming that the reward is independent of the
+    // successor state the last reward can be optimized by simply applying all
+    // applicable actions and returning the highest reward
+    void calcOptimalFinalReward(State const& current, double& reward);
 
-        // Sample all probabilistic variables according to their
-        // probability distribution
-        for(int i = firstProbabilisticVarIndex; i < stateSize; ++i) {
-            if(MathUtils::doubleIsEqual(nextAsProbDistr[i], 0.0) || MathUtils::doubleIsEqual(nextAsProbDistr[i], 1.0)) {
-                next[i] = nextAsProbDistr[i];
-                continue;
-            } else {
-                next[i] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), nextAsProbDistr[i]) ? 1.0 : 0.0);
-            }
-        }
+    // Return the index of the optimal last action
+    int getOptimalFinalActionIndex(State const& current);
+
+/*****************************************************************
+                Sampling of state transition
+*****************************************************************/
+
+    // Apply action 'actionIndex' to 'current', sample one outcome in 'next' and
+    // yield reward 'reward'
+    void sampleStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
+        sampleSuccessorState(current, actionIndex, next);
+        calcReward(current, actionIndex, reward);
     }
 
-    // Samples a single variable within a state given as a probability distribution
-    void sampleVariable(State& stateAsProbDistr, unsigned int const& varIndex) const {
-        if(!MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 0.0) && !MathUtils::doubleIsEqual(stateAsProbDistr[varIndex], 1.0)) {
-            stateAsProbDistr[varIndex] = (MathUtils::doubleIsSmaller(MathUtils::generateRandomNumber(), stateAsProbDistr[varIndex]) ? 1.0 : 0.0);
+    // Apply action 'actionIndex' to 'current' and sample one outcome in 'next'
+    void sampleSuccessorState(State const& current, int const& actionIndex, State& next) const {
+        PDState pdNext = getPDState(next.remainingSteps());
+        calcSuccessorState(current, actionIndex, pdNext);
+        for(unsigned int varIndex = 0; varIndex < stateSize; ++varIndex) {
+            next[varIndex] = sampleVariable(pdNext[varIndex]);
         }
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
     }
 
+    // Return the outcome of sampling variable 'pd'
     double sampleVariable(DiscretePD const& pd) const {
         assert(pd.isWellDefined());
         double randNum = MathUtils::generateRandomNumber();
@@ -166,57 +188,64 @@ public:
         return 0.0;
     }
 
-    // Samples the successor state
-    void sampleSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        PDState pdNext = getPDState(next.remainingSteps());
-        calcSuccessorState(current, actionIndex, pdNext);
-        for(unsigned int varIndex = 0; varIndex < stateSize; ++varIndex) {
-            next[varIndex] = sampleVariable(pdNext[varIndex]);
-        }
-        calcStateFluentHashKeys(next);
-        calcStateHashKey(next);
-    }    
-
-    // Samples the whole state transition
-    void sampleStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
-        sampleSuccessorState(current, actionIndex, next);
-        calcReward(current, actionIndex, reward);
-    }
-
-    // Calulate the reward
-    void calcReward(State const& current, int const& actionIndex, double& reward) const {
-        DiscretePD tmp;
-        rewardCPF->evaluate(tmp, current, actionStates[actionIndex]);
-        assert(tmp.isDeterministic());
-        reward = tmp.values[0];
-    }
-
-    // Calculate reward and optimal action of last state transition
-    void calcOptimalFinalReward(State const& current, double& reward);
-
-    // Get index of optimal action in last state transition
-    int getOptimalFinalActionIndex(State const& current);
+/*****************************************************************
+             Calculation of Kleene state transition
+*****************************************************************/
 
     // Calculate successor in Kleene logic
     void calcKleeneSuccessor(KleeneState const& current, int const& actionIndex, KleeneState& next) const {
         for(unsigned int i = 0; i < stateSize; ++i) {
-            CPFs[i]->evaluateToKleeneOutcome(next[i], current, actionStates[actionIndex]);
-        }
-    }
-
-    // Merge two states in Kleene logic
-    void mergeKleeneStates(KleeneState const& state, KleeneState& res) const {
-        assert(state.state.size() == res.state.size());
-
-        for(unsigned int i = 0; i < stateSize; ++i) {
-            res[i].insert(state[i].begin(), state[i].end());
+            CPFs[i]->evaluateToKleene(next[i], current, actionStates[actionIndex]);
         }
     }
 
     // Calulate the reward in Kleene logic
     void calcKleeneReward(KleeneState const& current, int const& actionIndex, std::set<double>& reward) const {
-        rewardCPF->evaluateToKleeneOutcome(reward, current, actionStates[actionIndex]);
+        rewardCPF->evaluateToKleene(reward, current, actionStates[actionIndex]);
     }
+
+/*****************************************************************
+                 Calculation of state hash keys
+*****************************************************************/
+
+    // Calculate the hash key of a State
+    void calcStateHashKey(State& state) const {
+        if(stateHashingPossible) {
+            state.hashKey = 0;
+            for(unsigned int index = 0; index < stateSize; ++index) {
+                state.hashKey += (((int)state[index]) * hashKeyBases[index]);
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
+    }
+
+    // Calculate the hash key of a KleeneState
+    void calcKleeneStateHashKey(KleeneState& state) const {
+        if(kleeneStateHashingPossible) {
+            state.hashKey = 0;
+            for(unsigned int index = 0; index < stateSize; ++index) {
+                int multiplier = 0;
+                for(std::set<double>::iterator it = state[index].begin(); it != state[index].end(); ++it) {
+                    multiplier |= 1<<((int)*it);
+                }
+                --multiplier;
+
+                state.hashKey += (multiplier * kleeneHashKeyBases[index]);
+            }
+        } else {
+            assert(state.hashKey == -1);
+        }
+    }
+
+    // Calculate the hash key of a PDState
+    // void calcPDStateHashKey(State& /*state*/) const {
+    //     REPAIR
+    // }
+
+/*****************************************************************
+             Calculation of state fluent hash keys
+*****************************************************************/
 
     // Calculate the hash key for each state fluent in a State
     void calcStateFluentHashKeys(State& state) const {
@@ -247,49 +276,11 @@ public:
         }
     }
 
-    // Calculate the hash key of a State
-    void calcStateHashKey(State& state) const {
-        if(stateHashingPossible) {
-            state.hashKey = 0;
-            for(int i = 0; i < stateSize; ++i) {
-                state.hashKey += (((int)state[i]) * CPFs[i]->hashKeyBase);
-            }
-        } else {
-            assert(state.hashKey == -1);
-        }
-    }
-
-    // Calculate the hash key of a KleeneState
-    void calcKleeneStateHashKey(KleeneState& state) const {
-        if(kleeneStateHashingPossible) {
-            state.hashKey = 0;
-            for(int i = 0; i < stateSize; ++i) {
-                int multiplier = 0;
-                for(std::set<double>::iterator it = state[i].begin(); it != state[i].end(); ++it) {
-                    multiplier |= 1<<((int)*it);
-                }
-                --multiplier;
-
-                state.hashKey += (multiplier * CPFs[i]->kleeneHashKeyBase);
-            }
-        } else {
-            assert(state.hashKey == -1);
-        }
-    }
-
-    // Calculate the hash key of a PDState
-    // void calcPDStateHashKey(State& /*state*/) const {
-    //     //REPAIR
-    //     // if(pdStateHashingPossible) {
-    //     //     state.hashKey = 0;
-
-    //     //     for(int index = 0; index < stateSize; ++index) {
-    //     //         CPFs[index]->addProbHashKeyPart(state[index], state.hashKey);
-    //     //     }
-    //     // } else {
-    //     //     assert(state.hashKey == -1);
-    //     // }
+    // Calculate the hash key for each state fluent in a PDState
+    // void calcPDStateFluentHashKeys(PDState& state) const {
+    //     REPAIR
     // }
+
 
     ActionState const& actionState(int const& index) const {
         assert(index < actionStates.size());
@@ -342,6 +333,10 @@ public:
 
     bool const& isDeterministic() const {
         return deterministic;
+    }
+
+    int getDomainSizeOfCPF(unsigned int const& index) const {
+        return CPFs[index]->getDomain().size();
     }
 
     // Returns a vector ("res") that encodes applicable and reasonable
@@ -508,17 +503,21 @@ private:
     // SACs and the reward CPF may not contain positive action fluents.
     bool noopIsOptimalFinalAction;
 
+    // These are used to calculate hash keys of States and KleeneStates
+    std::vector<long> hashKeyBases;
+    std::vector<long> kleeneHashKeyBases;
+
+    // The Evaluatable with index indexToStateFluentHashKeyMap[i][j].first
+    // depends on the CPF with index i, and is updated by multiplication with
+    // indexToStateFluentHashKeyMap[i][j].second
+    std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
+
     // These caches are used to save the results of
     // getApplicableActions(). One isn't sufficient as reasonable
     // action pruning is sometimes desired and sometimes it isn't.
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableActionsCache;
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableReasonableActionsCache;
-
-    // The Evaluatable with index indexToStateFluentHashKeyMap[i][j].first
-    // depends on variable i, and is updated with
-    // indexToStateFluentHashKeyMap[i][j].second
-    std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
 };
 
 #endif
