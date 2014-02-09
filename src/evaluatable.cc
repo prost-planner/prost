@@ -69,19 +69,20 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates, vect
 
 void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
                                                 vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap) {
-    cachingType = NONE;
-    return;
-
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
     // We use this to store the state fluent update rules temporary as it is
-    // possible that this evaluatable cannot use caching.
+    // possible that this evaluatable cannot use caching. This evaluatable
+    // depends on the variables tmpStateFluentDependencies[i].first, and its
+    // StateFluentHashKey is thereby increased by that variable's value
+    // multiplied with tmpStateFluentDependencies[i].second
     vector<pair<int, long> > tmpStateFluentDependencies;
 
+    // We iterate over the CPFs instead of directly over the
+    // dependentStateFluents vector as we have to access the CPF objects
     for(unsigned int index = 0; index < CPFs.size(); ++index) {
-        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[index]->getHead());
-        if(it != dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
+        if(dependentStateFluents.find(CPFs[index]->getHead()) != dependentStateFluents.end()) {
+            tmpStateFluentDependencies.push_back(make_pair(index, nextHashKeyBase));
 
             if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
                 cachingType = NONE;
@@ -90,8 +91,8 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         }
     }
 
-    for(unsigned int i = 0; i < tmpStateFluentDependencies.size(); ++i) {
-        indexToStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
+    for(unsigned int index = 0; index < tmpStateFluentDependencies.size(); ++index) {
+        indexToStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
     }
 
     // TODO: Make sure this number makes sense
@@ -99,7 +100,11 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         cachingType = MAP;
     } else {
         cachingType = VECTOR;
-        evaluationCacheVector = vector<DiscretePD>(nextHashKeyBase, DiscretePD());
+        if(isProbabilistic()) {
+            pdEvaluationCacheVector = vector<DiscretePD>(nextHashKeyBase, DiscretePD());
+        } else {
+            evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        }
     }
 }
 
@@ -116,19 +121,19 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabil
 
     // We iterate over the CPFs instead of directly over the
     // dependentStateFluents vector as we have to access the CPF objects
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(dependentStateFluents.find(CPFs[i]->getHead()) != dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair(i, nextHashKeyBase));
+    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+        if(dependentStateFluents.find(CPFs[index]->getHead()) != dependentStateFluents.end()) {
+            tmpStateFluentDependencies.push_back(make_pair(index, nextHashKeyBase));
 
-            if((CPFs[i]->getKleeneDomainSize() < 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->getKleeneDomainSize())) {
+            if((CPFs[index]->getKleeneDomainSize() < 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getKleeneDomainSize())) {
                 kleeneCachingType = NONE;
                 return;
             }
         }
     }
 
-    for(unsigned int i = 0; i < tmpStateFluentDependencies.size(); ++i) {
-        indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
+    for(unsigned int index = 0; index < tmpStateFluentDependencies.size(); ++index) {
+        indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
     }
 
     // TODO: Make sure this number makes sense

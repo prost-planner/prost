@@ -263,15 +263,12 @@ void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
                     nextState[stateVariableIndices[it->first]] = atof(it->second.c_str());
                 }
             } else {
-                bool found = false;
                 for(unsigned int i = 0; i < stateVariableValues[stateVariableIndices[it->first]].size(); ++i) {
                     if(stateVariableValues[stateVariableIndices[it->first]][i] == it->second) {
                         nextState[stateVariableIndices[it->first]] = i;
-                        found = true;
                         break;
                     }
                 }
-                assert(found);
             }
         }
     }

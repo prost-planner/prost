@@ -112,7 +112,7 @@ protected:
     void initializeDecisionNodeChild(DPUCTNode* node, unsigned int const& actionIndex, double const& initialQValue);
 
     // Outcome selection
-    DPUCTNode* selectOutcome(DPUCTNode* node, State& stateAsProbDistr, int& varIndex);
+    DPUCTNode* selectOutcome(DPUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex);
 
     // Backup functions
     void backupDecisionNodeLeaf(DPUCTNode* node, double const& immReward, double const& futReward);
@@ -125,10 +125,6 @@ protected:
     }
 
 private:
-    // Creates a successor node of a chance node that is reached with
-    // probability prob
-    void createChildNode(DPUCTNode* node, unsigned int const& childIndex, double const& prob);
-
     // Memory management
     DPUCTNode* getDPUCTNode(double const& prob) {
         DPUCTNode* res = UCTBase<DPUCTNode>::getSearchNode();

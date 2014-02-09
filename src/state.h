@@ -149,6 +149,7 @@ public:
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
     friend class KleeneState;
+    friend class PDState;
 
 protected:
     std::vector<double> state;

@@ -25,17 +25,13 @@ public:
     ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
         Evaluatable("CPF " + _head->name, _formula),
         head(_head),
-        kleeneDomainSize(0),
-        hashKeyBase(0),
-        kleeneHashKeyBase(0) {}
+        kleeneDomainSize(0) {}
 
     ConditionalProbabilityFunction(ConditionalProbabilityFunction const& other, LogicalExpression* _formula) :
         Evaluatable(other, _formula),
         head(other.head),
         domain(other.domain),
-        kleeneDomainSize(other.kleeneDomainSize),
-        hashKeyBase(other.hashKeyBase),
-        kleeneHashKeyBase(other.kleeneHashKeyBase) {}
+        kleeneDomainSize(other.kleeneDomainSize) {}
 
     bool simplify(UnprocessedPlanningTask* _task, std::map<StateFluent*, NumericConstant*>& replacements);
     ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement, UnprocessedPlanningTask* _task);
@@ -90,10 +86,6 @@ private:
 
     // Hashing of KleeneStates
     long kleeneDomainSize;
-
-    // Hashing of States
-    long hashKeyBase;
-    long kleeneHashKeyBase;
 };
 
 class ConditionalProbabilityFunctionDefinition {

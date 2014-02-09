@@ -120,6 +120,15 @@ public:
         return values.empty();
     }
 
+    int getNumberOfOutcomes() const {
+        assert(isWellDefined());
+        return values.size();
+    }
+
+    int size() const {
+        return values.size();
+    }
+
     bool isWellDefined() const;
     void print(std::ostream& out) const;
 
