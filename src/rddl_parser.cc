@@ -2,14 +2,19 @@
 
 #include "logical_expressions.h"
 #include "conditional_probability_function.h"
-#include "state_action_constraint.h"
 #include "typed_objects.h"
+
 #include "utils/string_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 #include <cstdlib>
 
 using namespace std;
+
+/*****************************************************************
+                        Toplevel parsing
+*****************************************************************/
 
 void RDDLParser::parse() {
     parseDomain();
@@ -26,7 +31,6 @@ void RDDLParser::parseDomain() {
 
     for(unsigned int i = 0; i < tokens.size(); ++i) {
         if(tokens[i].find("requirements =") == 0) {
-            //TODO: Requirements should be parsed and treated more similar to the rest: Requirements::parse(reqsAsString[i], task)
             tokens[i] = tokens[i].substr(16,tokens[i].length()-18);
             StringUtils::trim(tokens[i]);
             StringUtils::removeTRN(tokens[i]);
@@ -44,7 +48,7 @@ void RDDLParser::parseDomain() {
             vector<string> typesAsString;
             StringUtils::split(tokens[i],typesAsString,";");
             for(unsigned int j = 0; j < typesAsString.size(); ++j) {
-                Type::parse(typesAsString[j], task);
+                parseType(typesAsString[j]);
             }
         } else if(tokens[i].find("objects ") == 0) {
             tokens[i] = tokens[i].substr(9,tokens[i].length()-11);
@@ -53,7 +57,7 @@ void RDDLParser::parseDomain() {
             vector<string> objectsAsString;
             StringUtils::split(tokens[i], objectsAsString, ";");
             for(unsigned int j = 0; j < objectsAsString.size(); ++j) {
-                Object::parse(objectsAsString[j], task);
+                parseObject(objectsAsString[j]);
             }
         } else if(tokens[i].find("pvariables ") == 0) {
             tokens[i] = tokens[i].substr(12,tokens[i].length()-14);
@@ -62,7 +66,7 @@ void RDDLParser::parseDomain() {
             vector<string> pvarsAsString;
             StringUtils::split(tokens[i],pvarsAsString,";");
             for(unsigned int j = 0; j < pvarsAsString.size(); ++j) {
-                VariableDefinition::parse(pvarsAsString[j], task);
+                parseVariableDefinition(pvarsAsString[j]);
             }
         } else if((tokens[i].find("cpfs ") == 0) || (tokens[i].find("cdfs ") == 0)) {
             tokens[i] = tokens[i].substr(6,tokens[i].length()-8);
@@ -71,13 +75,20 @@ void RDDLParser::parseDomain() {
             vector<string> cpfsAsString;
             StringUtils::split(tokens[i], cpfsAsString, ";");
             for(unsigned int i = 0; i < cpfsAsString.size(); ++i) {
-                ConditionalProbabilityFunctionDefinition::parse(cpfsAsString[i], task, this);
+                parseCPFDefinition(cpfsAsString[i]);
             }
         } else if(tokens[i].find("reward = ") == 0) {
             tokens[i] = tokens[i].substr(0,tokens[i].length()-1);
             StringUtils::trim(tokens[i]);
             StringUtils::removeTRN(tokens[i]);
-            ConditionalProbabilityFunctionDefinition::parse(tokens[i], task, this);
+
+            size_t cutPos = tokens[i].find("=");
+            assert(cutPos != string::npos);
+            string formulaString = tokens[i].substr(cutPos+1);
+            StringUtils::trim(formulaString);
+
+            LogicalExpression* rewardFormula = parseRDDLFormula(formulaString, "reward");
+            task->setRewardCPF(rewardFormula);
         } else if(tokens[i].find("state-action-constraints ") == 0) {
             tokens[i] = tokens[i].substr(26,tokens[i].length()-28);
             StringUtils::trim(tokens[i]);
@@ -85,11 +96,11 @@ void RDDLParser::parseDomain() {
             vector<string> sacAsString;
             StringUtils::split(tokens[i],sacAsString,";");
             for(unsigned int i = 0; i< sacAsString.size(); ++i) {
-                StateActionConstraint::parse(sacAsString[i],task, this);
+                LogicalExpression* formula = parseRDDLFormula(sacAsString[i], "SAC");
+                task->addStateActionConstraint(formula);
             }
         } else {
-            cout << tokens[i] << " is unknown!" << endl;
-            assert(false);
+            SystemUtils::abort("Fatal error: Domain token '" + tokens[i] + "' is unknown!");
         }
     }
 }
@@ -116,7 +127,7 @@ void RDDLParser::parseNonFluents() {
                 vector<string> objectsAsString;
                 StringUtils::split(tokens[i], objectsAsString, ";");
                 for(unsigned int j = 0; j < objectsAsString.size(); ++j) {
-                    Object::parse(objectsAsString[j], task);
+                    parseObject(objectsAsString[j]);
                 }
             } else if(tokens[i].find("non-fluents ") == 0) {
                 tokens[i] = tokens[i].substr(13,tokens[i].length()-15);
@@ -125,10 +136,10 @@ void RDDLParser::parseNonFluents() {
                 vector<string> nonFluentsAsString;
                 StringUtils::split(tokens[i],nonFluentsAsString,";");
                 for(unsigned int j = 0; j < nonFluentsAsString.size(); ++j) {
-                    AtomicLogicalExpression::parse(nonFluentsAsString[j], task);
+                    parseAtomicLogicalExpression(nonFluentsAsString[j]);
                 }
             } else {
-                assert(false);
+                SystemUtils::abort("Fatal error: Non-fluents token '" + tokens[i] + "' is unknown!");
             }
         }
     }
@@ -160,7 +171,7 @@ void RDDLParser::parseInstance() {
             vector<string> initStateAsString;
             StringUtils::split(tokens[i],initStateAsString,";");
             for(unsigned int j = 0; j < initStateAsString.size(); ++j) {
-                AtomicLogicalExpression::parse(initStateAsString[j], task);
+                parseAtomicLogicalExpression(initStateAsString[j]);
             }
         } else if(tokens[i].find("max-nondef-actions =") == 0) {
             tokens[i] = tokens[i].substr(21,tokens[i].length()-22);
@@ -178,41 +189,228 @@ void RDDLParser::parseInstance() {
             StringUtils::removeTRN(tokens[i]);            
             task->discountFactor = atof(tokens[i].c_str());      
         } else {
-            assert(false);
+            SystemUtils::abort("Fatal error: Instance token '" + tokens[i] + "' is unknown!");
         }
     }
 }
 
-void RDDLParser::getTokenName(string& token, string& name, int startPos) {
-    name = token.substr(startPos,token.find("{")-startPos-1);
+/*****************************************************************
+               Parsing of entries in toplevel tokens
+*****************************************************************/
+
+void RDDLParser::parseType(string& desc) {
+    size_t cutPos = desc.find(":");
+    assert(cutPos != string::npos);
+
+    string name = desc.substr(0,cutPos);
     StringUtils::trim(name);
-    token = token.substr(token.find("{")-1,token.length());
-    StringUtils::trim(token);
-}
 
-void RDDLParser::splitToken(string& desc, vector<string>& result) {
-    assert(desc.find("{") == 0);
-    assert(desc[desc.length()-1] == '}');
-    desc = desc.substr(1,desc.length()-2);
-    stringstream tmp;
-    int openParens = 0;
-    for(size_t i = 0; i < desc.length(); ++i) {
-        tmp << desc[i];
-        if(desc[i] == '{') {
-            openParens++;
-        } else if(desc[i] == '}') {
-            openParens--;
+    string rest = desc.substr(cutPos+1, desc.length());
+    StringUtils::trim(rest);
+
+    if(rest.find("{") == 0) {
+        assert(rest[rest.length()-1] == '}');
+        rest = rest.substr(1,rest.length()-2);
+
+        ObjectType* newType = new ObjectType(name, ObjectType::enumRootInstance());
+        task->addObjectType(newType);
+
+        vector<string> valsAsString;
+        StringUtils::split(rest, valsAsString, ",");
+        for(unsigned int i = 0; i < valsAsString.size(); ++i) {
+            Object* obj = new Object(valsAsString[i], newType);
+            task->addObject(obj);
+            newType->domain.push_back(obj);
         }
-        if(openParens == 0 && desc[i] == ';') {
-            string res = tmp.str();
-            StringUtils::trim(res);
-            result.push_back(res);
-            tmp.str("");
-        }
+    } else {
+        task->addObjectType(new ObjectType(name, task->getObjectType(rest)));
     }
 }
 
-LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlanningTask* _task, string enumContext) {
+void RDDLParser::parseObject(string& desc) {
+    size_t cutPos = desc.find(":");
+    assert(cutPos != string::npos);
+
+    string type = desc.substr(0,cutPos);
+    StringUtils::trim(type);
+    assert(task->objectTypes.find(type) != task->objectTypes.end());
+    
+    string objs = desc.substr(cutPos+1,desc.length());
+    StringUtils::trim(objs);
+    assert(objs[0] == '{');
+    assert(objs[objs.length()-1] == '}');
+    objs = objs.substr(1,objs.length()-2);
+
+    vector<string> objectNames;
+    StringUtils::split(objs, objectNames, ",");
+    for(unsigned int i = 0; i < objectNames.size(); ++i) {
+        Object* obj = new Object(objectNames[i],task->getObjectType(type));
+        task->addObject(obj);
+        task->getObjectType(type)->domain.push_back(obj);
+    }
+}
+
+void RDDLParser::parseVariableDefinition(string& desc) {
+    size_t cutPos = desc.find(":");
+    assert(cutPos != string::npos);
+
+    string nameAndParams = desc.substr(0,cutPos);
+    StringUtils::trim(nameAndParams);
+    string rest = desc.substr(cutPos+1);
+    StringUtils::trim(rest);
+
+    string name;
+    vector<ObjectType*> params;
+
+    if(nameAndParams[nameAndParams.length()-1] != ')') {
+        name = nameAndParams;
+    } else {
+        cutPos = nameAndParams.find("(");
+        name = nameAndParams.substr(0,cutPos);
+
+        string allParams = nameAndParams.substr(cutPos+1,nameAndParams.length()-cutPos-2);
+        vector<string> allParamsAsString;
+        StringUtils::split(allParams, allParamsAsString, ",");
+        for(unsigned int i = 0; i < allParamsAsString.size(); ++i) {
+            params.push_back(task->getObjectType(allParamsAsString[i]));
+        }
+    }
+
+    assert(rest[0] == '{');
+    assert(rest[rest.length()-1] == '}');
+    rest = rest.substr(1,rest.length()-2);
+    vector<string> optionals;
+    StringUtils::split(rest,optionals,",");
+
+    assert(optionals.size() == 3);
+    VariableDefinition::VariableType varType = VariableDefinition::NON_FLUENT;
+    if(optionals[0] == "state-fluent") {
+        varType = VariableDefinition::STATE_FLUENT;
+    } else if(optionals[0] == "action-fluent") {
+        varType = VariableDefinition::ACTION_FLUENT;
+    } else if(optionals[0] == "interm-fluent") {
+        varType = VariableDefinition::INTERM_FLUENT;
+    } else {
+        assert(optionals[0] == "non-fluent");
+    }
+
+    Type* type = Type::typeFromName(optionals[1], task);
+    assert(type);
+
+    double defaultVal = -1.0;
+    string defaultValString;
+    int level = 0;
+
+    switch(varType) {
+    case VariableDefinition::NON_FLUENT:
+    case VariableDefinition::STATE_FLUENT:
+    case VariableDefinition::ACTION_FLUENT:  
+        assert(optionals[2].find("default =") == 0);
+        defaultValString = optionals[2].substr(9,optionals[2].length());
+        StringUtils::trim(defaultValString);
+        defaultVal = type->valueStringToDouble(defaultValString);
+        break;
+    case VariableDefinition::INTERM_FLUENT:
+        assert(optionals[2].find("level =") == 0);
+        optionals[2] = optionals[2].substr(7,optionals[2].length());
+        StringUtils::trim(optionals[2]);
+        level = atoi(optionals[2].c_str());
+        break;
+    }
+
+    task->addVariableDefinition(new VariableDefinition(name,params,varType,type,defaultVal,level));
+}
+
+void RDDLParser::parseCPFDefinition(string& desc) {
+    size_t cutPos = desc.find("=");
+    assert(cutPos != string::npos);
+
+    string nameAndParams = desc.substr(0,cutPos);
+    StringUtils::trim(nameAndParams);
+    string rest = desc.substr(cutPos+1);
+    StringUtils::trim(rest);
+
+    string name;
+    vector<string> params;
+    StringUtils::trim(nameAndParams);
+
+    // assert(nameAndParams.compare("reward") != 0) {
+    //     assert
+    StringUtils::removeFirstAndLastCharacter(nameAndParams);
+    //}
+
+    vector<string> nameAndParamsVec;
+    StringUtils::split(nameAndParams,nameAndParamsVec," ");
+
+    assert(nameAndParamsVec.size() > 0);
+    name = nameAndParamsVec[0];
+    StringUtils::trim(name);
+
+    if(name[name.length()-1] == '\'') {
+        name = name.substr(0,name.length()-1);
+    }
+
+    VariableDefinition* headParent = task->getVariableDefinition(name);
+
+    vector<string> headParams;
+    for(unsigned int i = 1; i < nameAndParamsVec.size(); ++i) {
+        headParams.push_back(nameAndParamsVec[i]);
+    }
+    UninstantiatedVariable* head = new UninstantiatedVariable(headParent, headParams);
+    LogicalExpression* formula = parseRDDLFormula(rest, head->parent->valueType->name);
+
+    task->addCPFDefinition(make_pair(head,formula));
+}
+
+void RDDLParser::parseAtomicLogicalExpression(string& desc) {
+    if(desc.find("~") == 0) {
+        assert(desc.find("=") == string::npos);
+        desc = desc.substr(1) + " = 0";
+    } else if(desc.find("=") == string::npos) {
+        desc += " = 1";
+    }
+    size_t cutPos = desc.find("=");
+    assert(cutPos != string::npos);
+
+    string nameAndParams = desc.substr(0,cutPos);
+    StringUtils::trim(nameAndParams);
+
+    string valString = desc.substr(cutPos+1);
+    StringUtils::trim(valString);
+
+    string name;
+    vector<Object*> paramsAsObjects;
+    if((cutPos = nameAndParams.find("(")) == string::npos) {
+        name = nameAndParams;
+    } else {
+        name = nameAndParams.substr(0,cutPos);
+        string paramsAsString = nameAndParams.substr(cutPos+1);
+        assert(paramsAsString[paramsAsString.size()-1] == ')');
+        paramsAsString = paramsAsString.substr(0,paramsAsString.size()-1);
+        vector<string> paramStrings;
+        StringUtils::split(paramsAsString,paramStrings,",");
+        for(unsigned int i = 0; i < paramStrings.size(); ++i) {
+            paramsAsObjects.push_back(task->getObject(paramStrings[i]));
+        }
+    }
+    VariableDefinition* parent = task->getVariableDefinition(name);
+    switch(parent->variableType) {
+    case VariableDefinition::STATE_FLUENT:
+        task->addStateFluent(new StateFluent(parent,paramsAsObjects,atof(valString.c_str())));
+        break;
+    case VariableDefinition::INTERM_FLUENT:
+        SystemUtils::abort("Fatal error: Interm fluents are not supported (yet).");
+        break;
+    case VariableDefinition::ACTION_FLUENT:
+        SystemUtils::abort("Fatal error: No action fluent allowed here.");
+        break;
+    case VariableDefinition::NON_FLUENT:
+        task->addNonFluent(new NonFluent(parent,paramsAsObjects,atof(valString.c_str())));
+        break;
+    }
+}
+
+LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, string enumContext) {
     // This is used for the actual context of an enum
     vector<pair<string, string> > context;
     context.push_back(make_pair("root", enumContext));
@@ -243,13 +441,13 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
             } else if(isParameterDefinition(newKeyWords)) {
                 assert(numberOfOpenParanthesis > 0);
                 assert(newKeyWords.size() == 3);
-                parameterDefintions[numberOfOpenParanthesis-1].push_back(new ParameterDefinition(newKeyWords[0], _task->getObjectType(newKeyWords[2])));
+                parameterDefintions[numberOfOpenParanthesis-1].push_back(new ParameterDefinition(newKeyWords[0], task->getObjectType(newKeyWords[2])));
                 newKeyWords.clear();
                 numberOfOpenParanthesis--;
             } else {
                 //is it a variable?
-                if(_task->isAVariableDefinition(newKeyWords[0])) {
-                    VariableDefinition* varDef = _task->getVariableDefinition(newKeyWords[0]);
+                if(task->isAVariableDefinition(newKeyWords[0])) {
+                    VariableDefinition* varDef = task->getVariableDefinition(newKeyWords[0]);
                     vector<string> varParams;
                     for(unsigned int i = 1; i < newKeyWords.size(); ++i) {
                         varParams.push_back(newKeyWords[i]);
@@ -452,7 +650,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
                 token = "0.0";
             }
             double val = atof(token.c_str());
-            readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+            readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
 
         } else if(token.c_str()[0] == '@') {
             assert(context.size() > 0);
@@ -464,20 +662,20 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, UnprocessedPlannin
             if(afterCase) {
                 assert(context.back().second.size() > 0);
                 assert(context.back().first.compare("switch") == 0);
-                double val = _task->getObjectType(context.back().second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+                double val = task->getObjectType(context.back().second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
             } else if(context.back().first.compare("switch") == 0) {
                 // if we are not right after 'case', but still in the context of switch, we should use the root-context
                 assert(context.size() > 1);
                 assert(context[0].second.size() > 0);
                 assert(context[0].first.compare("root") == 0);
-                double val = _task->getObjectType(context[0].second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+                double val = task->getObjectType(context[0].second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
             } else {
                 assert(context.size() > 0);
                 assert(context.back().second.size() > 0);
-                double val = _task->getObjectType(context.back().second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(_task->getConstant(val));
+                double val = task->getObjectType(context.back().second)->valueStringToDouble(token);
+                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
             }
         } else if(token.compare("switch") == 0) {
         	context.push_back(make_pair("switch", ""));
@@ -546,6 +744,39 @@ bool RDDLParser::isNumericConstant(string& token) {
         return true;
     }
     return false;
+}
+
+/*****************************************************************
+                      Helper Functions
+*****************************************************************/
+
+void RDDLParser::getTokenName(string& token, string& name, int startPos) {
+    name = token.substr(startPos,token.find("{")-startPos-1);
+    StringUtils::trim(name);
+    token = token.substr(token.find("{")-1,token.length());
+    StringUtils::trim(token);
+}
+
+void RDDLParser::splitToken(string& desc, vector<string>& result) {
+    assert(desc.find("{") == 0);
+    assert(desc[desc.length()-1] == '}');
+    desc = desc.substr(1,desc.length()-2);
+    stringstream tmp;
+    int openParens = 0;
+    for(size_t i = 0; i < desc.length(); ++i) {
+        tmp << desc[i];
+        if(desc[i] == '{') {
+            openParens++;
+        } else if(desc[i] == '}') {
+            openParens--;
+        }
+        if(openParens == 0 && desc[i] == ';') {
+            string res = tmp.str();
+            StringUtils::trim(res);
+            result.push_back(res);
+            tmp.str("");
+        }
+    }
 }
 
 void RDDLParser::tokenizeFormula(string& text, vector<string>& tokens) {

@@ -9,6 +9,13 @@
 class ProstPlanner;
 class UnprocessedPlanningTask;
 class PlanningTask;
+class StateFluent;
+class NumericConstant;
+class Evaluatable;
+class ConditionalProbabilityFunction;
+class State;
+class ActionFluent;
+class ActionState;
 
 class Preprocessor {
 public:
@@ -22,8 +29,27 @@ private:
     UnprocessedPlanningTask* task;
     PlanningTask* probPlanningTask;
 
-    void simplifyFormulas();
-    void createProbabilisticPlanningTaskRepresentation(std::map<std::string,int>& stateVariableIndices, std::vector<std::vector<std::string> >& stateVariableValues);
+    void prepareSACs(std::vector<Evaluatable*>& dynamicSACs,
+                     std::vector<Evaluatable*>& staticSACs,
+                     std::vector<Evaluatable*>& stateInvariants);
+    void prepareCPFs(std::vector<ConditionalProbabilityFunction*>& cpfs,
+                     ConditionalProbabilityFunction*& rewardCPF);
+    void prepareActions(std::vector<ConditionalProbabilityFunction*> const& cpfs,
+                        std::vector<Evaluatable*> const& staticSACs,
+                        std::vector<Evaluatable*> const& dynamicSACs,
+                        std::vector<ActionFluent*>& actionFluents,
+                        std::vector<ActionState>& actionStates);
+    void calcPossiblyLegalActionStates(std::vector<ActionFluent*> const& actionFluents,
+                                       int actionsToSchedule,
+                                       std::list<std::vector<int> >& result,
+                                       std::vector<int> addTo = std::vector<int>());
+    void calculateDomains(std::vector<ConditionalProbabilityFunction*>& cpfs,
+                          ConditionalProbabilityFunction*& rewardCPF,
+                          std::vector<ActionState> const& actionStates);
+    void finalizeFormulas(std::vector<Evaluatable*>& dynamicSACs,
+                          std::vector<Evaluatable*>& stateInvariants,
+                          std::vector<ConditionalProbabilityFunction*>& cpfs,
+                          ConditionalProbabilityFunction*& rewardCPF);
 };
 
 #endif

@@ -17,14 +17,14 @@ public:
 
     virtual LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     virtual LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    virtual LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    virtual LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     virtual void collectInitialInfo(bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/, std::set<StateFluent*>& /*dependentStateFluents*/, 
                                     std::set<ActionFluent*>& /*positiveDependentActionFluents*/, std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
-    virtual void calculateDomain(ActionState const& actions, std::set<double>& res);
-    virtual void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    virtual void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     virtual void evaluate(double& res, State const& current, ActionState const& actions);
     virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -39,8 +39,6 @@ public:
 
 class VariableDefinition {
 public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
-
     static VariableDefinition* rewardInstance() {
         static VariableDefinition* rewardInst = new VariableDefinition("reward", std::vector<ObjectType*>(), VariableDefinition::STATE_FLUENT, RealType::instance());
         return rewardInst;
@@ -61,7 +59,6 @@ public:
 
     void print(std::ostream& out);
 
-private:
     VariableDefinition(std::string _name, std::vector<ObjectType*> _params, VariableType _variableType, Type* _valueType, double _defaultValue = 0.0, int _level = 1) :
         name(_name), params(_params), variableType(_variableType), valueType(_valueType), defaultValue(_defaultValue), level(_level) {}
 };
@@ -109,7 +106,7 @@ public:
 
 class AtomicLogicalExpression : public LogicalExpression {
 public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
+    AtomicLogicalExpression(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue);
 
     VariableDefinition* parent;
     std::string name;
@@ -119,13 +116,13 @@ public:
     int index;
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void print(std::ostream& out);
 
 protected:
-    AtomicLogicalExpression(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue);
+
 };
 
 class StateFluent : public AtomicLogicalExpression {
@@ -140,12 +137,12 @@ public:
     StateFluent(VariableDefinition* _parent, std::vector<Object*> _params) :
         AtomicLogicalExpression(_parent, _params, _parent->defaultValue) {}
 
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -159,8 +156,8 @@ public:
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -194,12 +191,12 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -285,14 +282,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -308,14 +305,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -331,14 +328,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -354,14 +351,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -377,14 +374,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -400,14 +397,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -423,14 +420,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -446,14 +443,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -469,14 +466,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -492,14 +489,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -515,14 +512,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -544,14 +541,14 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -572,7 +569,7 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     void print(std::ostream& out);
 
@@ -587,14 +584,14 @@ public:
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -615,14 +612,14 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -646,14 +643,14 @@ public:
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
@@ -666,21 +663,20 @@ class MultiConditionChecker : public LogicalExpression {
 public:
     std::vector<LogicalExpression*> conditions;
     std::vector<LogicalExpression*> effects;
-    bool hasUncertainCondition;
 
     MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
-        conditions(_conditions), effects(_effects), hasUncertainCondition(false) {}
+        conditions(_conditions), effects(_effects) {}
 
     LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                                     std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(ActionState const& actions, std::set<double>& res);
-    void calculateProbDomain(ActionState const& actions, std::set<double>& res);
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions);
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);

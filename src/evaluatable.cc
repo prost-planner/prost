@@ -20,18 +20,19 @@ void Evaluatable::initializeHashKeys(int _hashIndex, vector<ActionState> const& 
                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
     hashIndex = _hashIndex;
 
-    initializeActionHashKeys(actionStates);
-    initializeStateFluentHashKeys(CPFs, indexToStateFluentHashKeyMap);
-    initializeKleeneStateFluentHashKeys(CPFs, indexToKleeneStateFluentHashKeyMap);
+    long firstStateFluentHashKeyBase = initializeActionHashKeys(actionStates);
+    initializeStateFluentHashKeys(CPFs, indexToStateFluentHashKeyMap, firstStateFluentHashKeyBase);
+    initializeKleeneStateFluentHashKeys(CPFs, indexToKleeneStateFluentHashKeyMap, firstStateFluentHashKeyBase);
 }
 
-void Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
-    firstStateFluentHashKeyBase = 1;
+long Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
+    long firstStateFluentHashKeyBase = 1;
     actionHashKeyMap = vector<long>(actionStates.size(), 0);
 
     for(unsigned int j =  0; j < actionStates.size(); ++j) {
         calculateActionHashKey(actionStates, actionStates[j], firstStateFluentHashKeyBase);
     }
+    return firstStateFluentHashKeyBase;
 }
 
 void Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates, ActionState const& action, long& nextKey) {
@@ -68,7 +69,8 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates, vect
 }
 
 void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
-                                                vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap) {
+                                                vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap,
+                                                long const& firstStateFluentHashKeyBase) {
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
     // We use this to store the state fluent update rules temporary as it is
@@ -109,7 +111,8 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
 }
 
 void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
-                                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
+                                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap,
+                                                      long const& firstStateFluentHashKeyBase) {
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
     // We use this to store the state fluent update rules temporary as it is

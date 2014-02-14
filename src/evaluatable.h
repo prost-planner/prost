@@ -5,10 +5,34 @@
 
 class Evaluatable {
 public:
-    //TODO: This is very very ugly, but cpfs, planning tasks and
-    //states are very tightly coupled. Nevertheless, there must be a
-    //way to get rid of this, even if it takes some work!
+    Evaluatable(std::string _name, LogicalExpression* _formula) :
+        name(_name),
+        formula(_formula),
+        isProb(false),
+        hasArithmeticFunction(false),
+        hashIndex(-1),
+        cachingType(NONE),
+        kleeneCachingType(NONE) {}
+
+    Evaluatable(Evaluatable const& other, LogicalExpression* _formula) :
+        name(other.name),
+        formula(_formula),
+        isProb(other.isProb),
+        hasArithmeticFunction(other.hasArithmeticFunction),
+        //probDomainMap(other.probDomainMap),
+        hashIndex(other.hashIndex),
+        cachingType(other.cachingType),
+        evaluationCacheVector(other.pdEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
+        pdEvaluationCacheVector(other.pdEvaluationCacheVector.size(), DiscretePD()),
+        kleeneCachingType(other.kleeneCachingType),
+        kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size()),
+        actionHashKeyMap(other.actionHashKeyMap) {}
+
+    //TODO: This is very very ugly, but cpfs, planning tasks and states are very
+    //tightly coupled. Nevertheless, there must be a way to get rid of this,
+    //even if it takes some work!
     friend class PlanningTask;
+    friend class Preprocessor;
 
     // This function is called in state transitions if and only if this
     // Evaluatable is deterministic
@@ -155,7 +179,6 @@ public:
 
     // Initialization
     void initialize();
-    //virtual void initializeDomains(std::vector<ActionState> const& actionStates);
     void initializeHashKeys(int _hashIndex, std::vector<ActionState> const& actionStates,
                             std::vector<ConditionalProbabilityFunction*> const& CPFs,
                             std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
@@ -177,55 +200,45 @@ public:
         return (positiveActionDependencies.empty() && negativeActionDependencies.empty());
     }
 
-    bool const& containsArithmeticFunction() const {
+    bool containsArithmeticFunction() const {
         return hasArithmeticFunction;
     }
 
-    virtual bool isBoolean() const = 0;
+    bool containsStateFluent() const {
+        return !dependentStateFluents.empty();
+    }
+
+    bool containsActionFluent() const {
+        return !(positiveActionDependencies.empty() && negativeActionDependencies.empty());
+    }
+
+    std::set<ActionFluent*> const& getPositiveDependentActionFluents() {
+        return positiveActionDependencies;
+    }
+
+    std::set<ActionFluent*>const& getNegativeDependentActionFluents() {
+        return negativeActionDependencies;
+    }
 
 protected:
-    Evaluatable(std::string _name, LogicalExpression* _formula) :
-        name(_name),
-        formula(_formula),
-        isProb(false),
-        hasArithmeticFunction(false),
-        hashIndex(-1),
-        cachingType(NONE),
-        kleeneCachingType(NONE) {}
-
-    Evaluatable(Evaluatable const& other, LogicalExpression* _formula) :
-        name(other.name),
-        formula(_formula),
-        isProb(other.isProb),
-        hasArithmeticFunction(other.hasArithmeticFunction),
-        //probDomainMap(other.probDomainMap),
-        hashIndex(other.hashIndex),
-        cachingType(other.cachingType),
-        evaluationCacheVector(other.pdEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
-        pdEvaluationCacheVector(other.pdEvaluationCacheVector.size(), DiscretePD()),
-        kleeneCachingType(other.kleeneCachingType),
-        kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size()),
-        actionHashKeyMap(other.actionHashKeyMap) {}
-
     // A unique string that describes this (only used for print)
     std::string name;
 
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // Some properties of formula
+    // Properties of this Evaluatable
     std::set<StateFluent*> dependentStateFluents;
     std::set<ActionFluent*> positiveActionDependencies;
     std::set<ActionFluent*> negativeActionDependencies;
     bool isProb;
     bool hasArithmeticFunction;
 
-    //hashing of states as probability distributions
-    //REPAIRstd::map<double, long> probDomainMap;
+    // Hashing of states as probability distributions
+    // REPAIRstd::map<double, long> probDomainMap;
 
-    // hashIndex gives the position in the stateFluentHashKey vector
-    // of a state where the state fluent hash key of this Evaluatable
-    // is stored
+    // hashIndex is the index in the stateFluentHashKey vector of a state where
+    // the state fluent hash key of this Evaluatable is stored
     int hashIndex;
 
     enum CachingType {
@@ -237,8 +250,8 @@ protected:
 
     // CachingType describes which of the two (if any) datastructures is used to
     // cache computed values. If this Evaluatable is probabilistic, the
-    // datastructures that start with 'pd' are used and other if the Evaluatable
-    // is deterministic
+    // datastructures that start with 'pd' are used and the other ones if the
+    // Evaluatable is deterministic
     CachingType cachingType;
     std::map<long, double> evaluationCacheMap;
     std::map<long, DiscretePD> pdEvaluationCacheMap;
@@ -251,37 +264,35 @@ protected:
     std::map<long, std::set<double> > kleeneEvaluationCacheMap;
     std::vector<std::set<double> > kleeneEvaluationCacheVector;
 
-    // ActionHashKeyMap contains the hash keys of the actions that
-    // influence this Evaluatable
+    // ActionHashKeyMap contains the hash keys of the actions that influence
+    // this Evaluatable (these are added to the state fluent hash keys of a
+    // state)
     std::vector<long> actionHashKeyMap;
 
 private:
-    // These function are used to calculate the two parts of state
-    // fluent hash keys: the action part (that is stored in the
-    // actionHashKeyMap of Evaluatable), and the state fluent part
-    // (that is stored in PlanningTask).
-    void initializeActionHashKeys(std::vector<ActionState> const& actionStates);
+    // These function are used to calculate the two parts of state fluent hash
+    // keys: the action part (that is stored in the actionHashKeyMap of
+    // Evaluatable), and the state fluent part (that is stored in PlanningTask
+    // and computed within states).
+    long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
     void calculateActionHashKey(std::vector<ActionState> const& actionStates, ActionState const& action, long& nextKey);
     long getActionHashKey(std::vector<ActionState> const& actionStates, std::vector<ActionFluent*>& scheduledActions);
 
     void initializeStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                                         std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap);
+                                       std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
+                                       long const& firstStateFluentHashKeyBase);
     void initializeKleeneStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                                             std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap);
+                                             std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap,
+                                             long const& firstStateFluentHashKeyBase);
     bool dependsOnActionFluent(ActionFluent* fluent) {
         return (positiveActionDependencies.find(fluent) != positiveActionDependencies.end() ||
                 negativeActionDependencies.find(fluent) != negativeActionDependencies.end());
     }
 
-    // This is a temporary variable used in evaluate. It is a member
-    // var as initializing variables in case statements leads to
-    // strange syntactical rules (we'd need parens)
+    // This is a temporary variable used in evaluate. It is a member var as
+    // initializing variables in case statements is only possible if additional
+    // parentheses are used
     long stateHashKey;
-
-    // This is the hash key base of the first
-    // state fluent, which depends on the number of dependent actions
-    // (and is the same for states and Kleene states and thus saved)
-    long firstStateFluentHashKeyBase;
 };
 
 #endif

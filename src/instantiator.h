@@ -22,6 +22,7 @@ private:
 
     void instantiateVariables();
     void instantiateCPFs();
+    void instantiateCPF(std::pair<UninstantiatedVariable*, LogicalExpression*>& CPFDef);
     void instantiateSACs();
 };
 

@@ -12,7 +12,6 @@ public:
         task(_task) {}
 
     void parse();
-    LogicalExpression* parseRDDLFormula(std::string& desc, UnprocessedPlanningTask* _task, std::string enumContext);
 
 private:
     UnprocessedPlanningTask* task;
@@ -20,6 +19,13 @@ private:
     void parseDomain();
     void parseNonFluents();
     void parseInstance();
+
+    void parseType(std::string& desc);
+    void parseObject(std::string& desc);
+    void parseVariableDefinition(std::string& desc);
+    void parseCPFDefinition(std::string& desc);
+    void parseAtomicLogicalExpression(std::string& desc);
+    LogicalExpression* parseRDDLFormula(std::string& desc, std::string enumContext);
 
     void getTokenName(std::string& token, std::string& name, int startPos);
     void splitToken(std::string& desc, std::vector<std::string>& result);

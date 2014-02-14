@@ -23,14 +23,17 @@ using namespace std;
 ******************************************************************/
 
 SearchEngine::SearchEngine(std::string _name, ProstPlanner* _planner, bool useProbabilisticTask) :
-    CachingComponent(_planner),
-    LearningComponent(_planner),
-    name(_name),
-    planner(_planner), 
-    cachingEnabled(true) {
-
-    useProbabilisticPlanningTask(useProbabilisticTask);
-    maxSearchDepth = successorGenerator->getHorizon();
+        CachingComponent(_planner),
+        LearningComponent(_planner),
+        name(_name),
+        planner(_planner),
+        cachingEnabled(true) {
+    if(useProbabilisticTask) {
+        task = planner->getProbabilisticTask();
+    } else {
+        task = planner->getDeterministicTask();
+    }
+    maxSearchDepth = task->getHorizon();
 }
 
 SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
@@ -73,8 +76,7 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
         desc = desc.substr(7,desc.size());
         result = new UniformEvaluationSearch(planner);
     } else {
-        cout << "Unknown Search Engine: " << desc << endl;
-        assert(false);
+        SystemUtils::abort("Unknown Search Engine: " + desc);
     }
 
     StringUtils::trim(desc);
@@ -95,9 +97,6 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     if(param == "-uc") {
         setCachingEnabled(atoi(value.c_str()));
         return true;
-    } else if(param == "-prob") {
-        useProbabilisticPlanningTask(atoi(value.c_str()));
-        return true;
     } else if(param == "-sd") {
         setMaxSearchDepth(atoi(value.c_str()));
         return true;
@@ -107,29 +106,11 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 }
 
 /******************************************************************
-                            Parameter
-******************************************************************/
-
-void SearchEngine::useProbabilisticPlanningTask(bool const& useProbabilisticTask) {
-    if(useProbabilisticTask) {
-        successorGenerator = planner->getProbabilisticTask();
-        if(successorGenerator->isPruningEquivalentToDeterminization()) {
-            applicableActionGenerator = planner->getDeterministicTask();
-        } else {
-            applicableActionGenerator = planner->getProbabilisticTask();
-        }
-    } else {
-        successorGenerator = planner->getDeterministicTask();
-        applicableActionGenerator = planner->getDeterministicTask();
-    }
-}
-
-/******************************************************************
                             Learning
 ******************************************************************/
 
 bool SearchEngine::learn(std::vector<State> const& trainingSet) {
-    if(!successorGenerator->learningFinished() || !applicableActionGenerator->learningFinished()) {
+    if(!task->learningFinished()) {
         return false;
     }
     cout << name << ": learning..." << endl;
@@ -143,8 +124,8 @@ bool SearchEngine::learn(std::vector<State> const& trainingSet) {
 ******************************************************************/
 
 bool SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
-    vector<double> qValues(applicableActionGenerator->getNumberOfActions());
-    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(_rootState);
+    vector<double> qValues(task->getNumberOfActions());
+    vector<int> actionsToExpand = task->getApplicableActions(_rootState);
 
     if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
         return false;
@@ -166,8 +147,8 @@ bool SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>
 }
 
 bool SearchEngine::estimateStateValue(State const& _rootState, double& stateValue) {
-    vector<double> qValues(applicableActionGenerator->getNumberOfActions());
-    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(_rootState);
+    vector<double> qValues(task->getNumberOfActions());
+    vector<int> actionsToExpand = task->getApplicableActions(_rootState);
 
     if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
         return false;

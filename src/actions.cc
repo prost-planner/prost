@@ -1,7 +1,6 @@
 #include "actions.h"
 
 #include "conditional_probability_function.h"
-#include "state_action_constraint.h"
 
 #include "utils/math_utils.h"
 
@@ -18,7 +17,7 @@ void ActionState::getActions(vector<string>& result) const {
     }
 }
 
-void ActionState::calculateProperties(vector<ActionFluent*> const& actionFluents, vector<StateActionConstraint*> const& dynamicSACs) {
+void ActionState::calculateProperties(vector<ActionFluent*> const& actionFluents, vector<Evaluatable*> const& dynamicSACs) {
     // Determine which action fluents are scheduled in this action
     for(unsigned int i = 0; i < state.size(); ++i) {
         if(state[i]) {
@@ -48,7 +47,7 @@ void ActionState::calculateProperties(vector<ActionFluent*> const& actionFluents
     }
 }
 
-inline bool ActionState::containsNegativeActionFluent(StateActionConstraint* sac) const {
+inline bool ActionState::containsNegativeActionFluent(Evaluatable* sac) const {
     set<ActionFluent*> const& actionFluents = sac->getNegativeDependentActionFluents();
 
     for(unsigned int index = 0; index < scheduledActionFluents.size(); ++index) {
@@ -59,7 +58,7 @@ inline bool ActionState::containsNegativeActionFluent(StateActionConstraint* sac
     return false;
 }
 
-bool ActionState::containsAdditionalPositiveActionFluent(StateActionConstraint* sac) const {
+bool ActionState::containsAdditionalPositiveActionFluent(Evaluatable* sac) const {
     set<ActionFluent*> const& actionFluents = sac->getPositiveDependentActionFluents();
 
     for(set<ActionFluent*>::iterator it = actionFluents.begin(); it != actionFluents.end(); ++it) {

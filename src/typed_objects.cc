@@ -11,35 +11,6 @@ using namespace std;
                               Type
 *****************************************************************/
 
-void Type::parse(string& desc, UnprocessedPlanningTask* task) {
-    size_t cutPos = desc.find(":");
-    assert(cutPos != string::npos);
-
-    string name = desc.substr(0,cutPos);
-    StringUtils::trim(name);
-
-    string rest = desc.substr(cutPos+1, desc.length());
-    StringUtils::trim(rest);
-
-    if(rest.find("{") == 0) {
-        assert(rest[rest.length()-1] == '}');
-        rest = rest.substr(1,rest.length()-2);
-
-        ObjectType* newType = new ObjectType(name, ObjectType::enumRootInstance());
-        task->addObjectType(newType);
-
-        vector<string> valsAsString;
-        StringUtils::split(rest, valsAsString, ",");
-        for(unsigned int i = 0; i < valsAsString.size(); ++i) {
-            Object* obj = new Object(valsAsString[i], newType);
-            task->addObject(obj);
-            newType->domain.push_back(obj);
-        }
-    } else {
-        task->addObjectType(new ObjectType(name, task->getObjectType(rest)));
-    }
-}
-
 void Type::print(ostream& out) {
     out << name << endl;
 }
@@ -113,29 +84,6 @@ double ObjectType::valueStringToDouble(string& val) {
 /*****************************************************************
                              Object
 *****************************************************************/
-
-void Object::parse(string& desc, UnprocessedPlanningTask* task) {
-    size_t cutPos = desc.find(":");
-    assert(cutPos != string::npos);
-
-    string type = desc.substr(0,cutPos);
-    StringUtils::trim(type);
-    //assert(task->objectTypes.find(type) != task->objectTypes.end());
-    
-    string objs = desc.substr(cutPos+1,desc.length());
-    StringUtils::trim(objs);
-    assert(objs[0] == '{');
-    assert(objs[objs.length()-1] == '}');
-    objs = objs.substr(1,objs.length()-2);
-
-    vector<string> objectNames;
-    StringUtils::split(objs, objectNames, ",");
-    for(unsigned int i = 0; i < objectNames.size(); ++i) {
-        Object* obj = new Object(objectNames[i],task->getObjectType(type));
-        task->addObject(obj);
-        task->getObjectType(type)->domain.push_back(obj);
-    }
-}
 
 void Object::getObjectTypes(vector<ObjectType*>& objectTypes) {
     ObjectType* objType = type;

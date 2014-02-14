@@ -3,7 +3,6 @@
 #include "typed_objects.h"
 #include "logical_expressions.h"
 #include "conditional_probability_function.h"
-#include "state_action_constraint.h"
 
 using namespace std;
 
@@ -14,25 +13,43 @@ void Instantiator::instantiate() {
 }
 
 void Instantiator::instantiateSACs() {
-    vector<StateActionConstraint*> sacs;
-    task->getStateActionConstraints(sacs);
-    for(unsigned int i = 0; i < sacs.size(); ++i) {
-        sacs[i]->replaceQuantifier(task, this);
-        sacs[i]->instantiate(task);
+    for(unsigned int i = 0; i < task->SACs.size(); ++i) {
+        map<string, string> quantifierReplacements;
+        task->SACs[i] = task->SACs[i]->replaceQuantifier(task, quantifierReplacements, this);
+        map<string, Object*> replacements;
+        task->SACs[i] = task->SACs[i]->instantiate(task, replacements);
     }
 }
 
 void Instantiator::instantiateCPFs() {
-    vector<ConditionalProbabilityFunction*> result;
-    vector<ConditionalProbabilityFunctionDefinition*> CPFDefs;
-    task->getCPFDefinitions(CPFDefs, true);
-    for(unsigned int i = 0; i < CPFDefs.size(); ++i) {
-        CPFDefs[i]->replaceQuantifier(task, this);
-        vector<AtomicLogicalExpression*> instantiatedVars;
-        task->getVariablesOfSchema(CPFDefs[i]->head->parent, instantiatedVars);
-        for(unsigned int j = 0; j < instantiatedVars.size(); ++j) {
-            task->addCPF(CPFDefs[i]->instantiate(task, instantiatedVars[j]));
+    for(unsigned int i = 0; i < task->CPFDefs.size(); ++i) {
+        instantiateCPF(task->CPFDefs[i]);
+    }
+    map<string, string> quantifierReplacements;
+    task->rewardCPF = task->rewardCPF->replaceQuantifier(task, quantifierReplacements, this);
+    map<string, Object*> replacements;
+    task->rewardCPF = task->rewardCPF->instantiate(task,replacements);
+}
+
+void Instantiator::instantiateCPF(pair<UninstantiatedVariable*, LogicalExpression*>& CPFDef) {
+    map<string, string> quantifierReplacements;
+    CPFDef.second = CPFDef.second->replaceQuantifier(task, quantifierReplacements, this);
+
+    vector<AtomicLogicalExpression*> instantiatedVars;
+    task->getVariablesOfSchema(CPFDef.first->parent, instantiatedVars);
+    for(unsigned int i = 0; i < instantiatedVars.size(); ++i) {
+        assert(CPFDef.first->params.size() == instantiatedVars[i]->params.size());
+
+        map<string, Object*> replacements;
+        for(unsigned int j = 0; j < CPFDef.first->params.size(); ++j) {
+            assert(replacements.find(CPFDef.first->params[j]) == replacements.end());
+            replacements[CPFDef.first->params[j]] = instantiatedVars[i]->params[j];
         }
+        LogicalExpression* instantiatedFormula = CPFDef.second->instantiate(task,replacements);
+        StateFluent* instantiatedHead = dynamic_cast<StateFluent*>(instantiatedVars[i]);
+        assert(instantiatedHead);
+
+        task->addCPF(make_pair(instantiatedHead, instantiatedFormula));
     }
 }
 

@@ -5,7 +5,6 @@
 
 class Type {
 public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
     static Type* typeFromName(std::string& typeName, UnprocessedPlanningTask* task);
 
     std::string name;
@@ -108,8 +107,6 @@ public:
     Object(std::string Name, ObjectType* Type) :
         name(Name), type(Type) {} 
     ~Object() {}
-
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
 
     void getObjectTypes(std::vector<ObjectType*>& objectTypes);
     void print(std::ostream& out);

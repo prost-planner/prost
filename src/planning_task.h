@@ -19,14 +19,6 @@ class ActionFluent;
 
 class PlanningTask : public CachingComponent, public LearningComponent {
 public:
-    // This is only to sort transition functions by their name to
-    // ensure deterministic behaviour
-    struct TransitionFunctionSort {
-        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
-            return lhs->head->name < rhs->head->name;
-        }
-    };
-
     PlanningTask(ProstPlanner* _planner) :
         CachingComponent(_planner),
         LearningComponent(_planner),
@@ -85,12 +77,21 @@ public:
         indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
         indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap) {}
 
-    void initialize(std::vector<ActionFluent*>& _actionFluents, std::vector<ConditionalProbabilityFunction*>& _CPFs, 
-                    std::vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
-                    int _horizon, double _discountFactor, std::map<std::string,int>& stateVariableIndices,
+    void initialize(std::vector<ConditionalProbabilityFunction*>& _CPFs,
+                    ConditionalProbabilityFunction* _rewardCPF,
+                    State& _initialState,
+                    std::vector<Evaluatable*>& _dynamicSACs, 
+                    std::vector<Evaluatable*>& _staticSACs,
+                    std::vector<Evaluatable*>& _stateInvariants,
+                    std::vector<ActionFluent*>& _actionFluents,
+                    std::vector<ActionState>& _actionStates,
+                    int _numberOfConcurrentActions,
+                    int _horizon,
+                    double _discountFactor,
+                    std::map<std::string,int>& stateVariableIndices,
                     std::vector<std::vector<std::string> >& stateVariableValues);
 
-    PlanningTask* determinizeMostLikely(UnprocessedPlanningTask* task);
+    PlanningTask* determinizeMostLikely();
 
     bool learn(std::vector<State> const& trainingSet);
 
@@ -109,26 +110,6 @@ public:
 /*****************************************************************
                 Calculation of state transition
 *****************************************************************/
-
-    // In a deterministic task(!), apply action 'actionIndex' to 'current' and
-    // get // 'next' and yield reward 'reward'
-    void calcStateTransition(State const& current, int const& actionIndex, State& next, double& reward) const {
-        assert(isDeterministic());
-        calcSuccessorState(current, actionIndex, next);
-        calcReward(current, actionIndex, reward);
-    }
-
-    // Apply action 'actionIndex' to 'current', resulting in 'next'. Can only be
-    // used with deterministic planning tasks! TODO: Maybe it's better to have
-    // different classes for deterministic and probabilistic planning tasks
-    void calcSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        assert(isDeterministic());
-        for(int index = 0; index < stateSize; ++index) {
-            CPFs[index]->evaluate(next[index], current, actionStates[actionIndex]);
-        }
-        calcStateFluentHashKeys(next);
-        calcStateHashKey(next);
-    }
 
     // Apply action 'actionIndex' to 'current', resulting in 'next'
     void calcSuccessorState(State const& current, int const& actionIndex, PDState& next) const {
@@ -150,6 +131,25 @@ public:
 
     // Return the index of the optimal last action
     int getOptimalFinalActionIndex(State const& current);
+
+    // Apply action 'actionIndex' in the determinization to 'current', get state
+    // 'next' and yield reward 'reward'
+    void calcStateTransitionInDeterminization(State const& current, int const& actionIndex, State& next, double& reward) const {
+        assert(isDeterministic());
+        calcSuccessorStateInDeterminization(current, actionIndex, next);
+        calcReward(current, actionIndex, reward);
+    }
+
+    // Apply action 'actionIndex' in the determinization to 'current', resulting
+    // in 'next'.
+    void calcSuccessorStateInDeterminization(State const& current, int const& actionIndex, State& next) const {
+        assert(isDeterministic());
+        for(int index = 0; index < stateSize; ++index) {
+            CPFs[index]->evaluate(next[index], current, actionStates[actionIndex]);
+        }
+        calcStateFluentHashKeys(next);
+        calcStateHashKey(next);
+    }
 
 /*****************************************************************
                 Sampling of state transition
@@ -281,6 +281,9 @@ public:
     //     REPAIR
     // }
 
+/*****************************************************************
+           Getter functions for properties of the task
+*****************************************************************/
 
     ActionState const& actionState(int const& index) const {
         assert(index < actionStates.size());
@@ -339,12 +342,11 @@ public:
         return CPFs[index]->getDomain().size();
     }
 
-    // Returns a vector ("res") that encodes applicable and reasonable
-    // actions. If res[i] = i, the action with index i is applicable,
-    // and if res[i] = -1 it is not. Otherwise, the action with index
-    // i is unreasonable as the action with index res[i] leads to the
-    // same distribution over successor states (this is only checked
-    // if pruneUnreasonableActions is true).
+    // Returns a vector ("res") that encodes applicable and reasonable actions.
+    // If res[i] = i, the action with index i is applicable, and if res[i] = -1
+    // it is not. Otherwise, the action with index i is unreasonable as the
+    // action with index res[i] leads to the same distribution over successor
+    // states (this is only checked if pruneUnreasonableActions is true).
     std::vector<int> getApplicableActions(State const& state);
     std::vector<int> getIndicesOfApplicableActions(State const& state) {
         std::vector<int> applicableActions = getApplicableActions(state);
@@ -356,14 +358,25 @@ public:
         }
         return result;
     }
+    // std::vector<int> getApplicableActionsInDeterminization(State const& state);
+    // std::vector<int> getIndicesOfApplicableActionsInDeterminization(State const& state) {
+    //     std::vector<int> applicableActions = getApplicableActions(state);
+    //     std::vector<int> result;
+    //     for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+    //         if(applicableActions[actionIndex] == actionIndex) {
+    //             result.push_back(actionIndex);
+    //         }
+    //     }
+    //     return result;
+    // }
 
-    // Checks if current is a reward lock (actually, currently this
-    // checks only if it is a dead end or a goal, i.e., a reward lock
-    // with minimal or maximal reward).
+    // Checks if current is a reward lock (actually, currently this checks only
+    // if it is a dead end or a goal, i.e., a reward lock with minimal or
+    // maximal reward).
     bool isARewardLock(State const& current);
 
-    // If caching is disabled due to exceeding memory consumption,
-    // this is called (this disables caching of all kinds)
+    // If caching is disabled due to exceeding memory consumption, this is
+    // called (this disables caching of all kinds)
     void disableCaching();
 
     // Printer functions
@@ -394,14 +407,6 @@ public:
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;
 
 private:
-    void initializeSACs(std::vector<StateActionConstraint*>& _SACs);
-    void initializeCPFs(std::vector<ConditionalProbabilityFunction*>& _CPFs);
-    void initializeActions(std::vector<ActionFluent*>& _actionFluents);
-    void calcPossiblyLegalActionStates(int actionsToSchedule, std::list<std::vector<int> >& result,
-                                       std::vector<int> addTo = std::vector<int>());
-
-    void initializeDomains();
-
     void initializeStateFluentHashKeys();
     void initializeStateHashKeys();
     void initializeKleeneStateHashKeys();
@@ -435,9 +440,9 @@ private:
     ConditionalProbabilityFunction* rewardCPF;
 
     // The SACs
-    std::vector<StateActionConstraint*> staticSACs;
-    std::vector<StateActionConstraint*> dynamicSACs;
-    std::vector<StateActionConstraint*> stateInvariants;
+    std::vector<Evaluatable*> staticSACs;
+    std::vector<Evaluatable*> dynamicSACs;
+    std::vector<Evaluatable*> stateInvariants;
 
     // The number of actions (this is equal to actionStates.size())
     int numberOfActions;

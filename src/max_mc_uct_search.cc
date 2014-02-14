@@ -15,7 +15,7 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initializing child ";
-    // successorGenerator->printAction(cout,index);
+    // task->printAction(cout,index);
     // cout << " with " << initialQValue << " leading to init of " << node->children[index]->accumulatedReward << endl;
 }
 
@@ -26,10 +26,10 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
 MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(successorGenerator->getDomainSizeOfCPF(varIndex), NULL);
+        node->children.resize(task->getDomainSizeOfCPF(varIndex), NULL);
     }
 
-    int childIndex = (int)successorGenerator->sampleVariable(nextPDState[varIndex]);
+    int childIndex = (int)task->sampleVariable(nextPDState[varIndex]);
     nextState[varIndex] = childIndex;
 
     if(!node->children[childIndex]) {
