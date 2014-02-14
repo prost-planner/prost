@@ -35,7 +35,7 @@ LogicalExpression* UninstantiatedVariable::instantiate(UnprocessedPlanningTask* 
         return task->getActionFluent(this);
         break;
     case VariableDefinition::NON_FLUENT:
-        return task->getConstant(this);
+        return new NumericConstant(task->getNonFluent(this)->initialValue);
         break;
     }
     assert(false);
@@ -65,7 +65,6 @@ LogicalExpression* Conjunction::instantiate(UnprocessedPlanningTask* task, map<s
     }
     return new Conjunction(newExpr);
 }
-
 LogicalExpression* Disjunction::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
     vector<LogicalExpression*> newExpr;
     for(unsigned int i = 0; i < exprs.size(); ++i) {

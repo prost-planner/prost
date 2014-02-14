@@ -27,7 +27,7 @@ DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner) :
 bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> const& actionsToExpand, vector<double>& qValues) {
     assert(_rootState.remainingSteps() > 0);
     assert(_rootState.remainingSteps() <= maxSearchDepth);
-    assert(qValues.size() == successorGenerator->getNumberOfActions());
+    assert(qValues.size() == task->getNumberOfActions());
 
     for(unsigned int index = 0; index < qValues.size(); ++index) {
         if(actionsToExpand[index] == index) {
@@ -38,18 +38,18 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> cons
 }
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
-    State nxt(successorGenerator->getStateSize(), state.remainingSteps()-1, successorGenerator->getNumberOfStateFluentHashKeys());
-    successorGenerator->calcStateTransition(state, actionIndex, nxt, reward);
+    State nxt(task->getStateSize(), state.remainingSteps()-1, task->getNumberOfStateFluentHashKeys());
+    task->calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
 
     // Check if the next state is already cached
-    if(successorGenerator->stateValueCache.find(nxt) != successorGenerator->stateValueCache.end()) {
-        reward += successorGenerator->stateValueCache[nxt];
+    if(task->stateValueCache.find(nxt) != task->stateValueCache.end()) {
+        reward += task->stateValueCache[nxt];
         return;
     }
 
     // Check if we have reached a leaf
     if(nxt.remainingSteps() == 1) {
-        successorGenerator->calcOptimalFinalReward(nxt, rewardHelperVar);
+        task->calcOptimalFinalReward(nxt, rewardHelperVar);
         reward += rewardHelperVar;
         return;
     }
@@ -62,11 +62,11 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
 
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
-    assert(successorGenerator->stateValueCache.find(state) == successorGenerator->stateValueCache.end());
+    assert(task->stateValueCache.find(state) == task->stateValueCache.end());
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions
-    vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(state);
+    vector<int> actionsToExpand = task->getApplicableActions(state);
 
     // Apply applicable actions and determine best one
     for(unsigned int index = 0; index < actionsToExpand.size(); ++index) {
@@ -82,6 +82,6 @@ void DepthFirstSearch::expandState(State const& state, double& result) {
 
     // Cache state value if caching is enabled
     if(cachingEnabled) {
-        successorGenerator->stateValueCache[state] = result;
+        task->stateValueCache[state] = result;
     }
 }

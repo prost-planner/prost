@@ -1,11 +1,9 @@
 #include "planning_task.h"
 
 #include "logical_expressions.h"
-#include "state_action_constraint.h"
 
 #include <cassert>
 #include <iostream>
-#include <algorithm>
 
 using namespace std;
 
@@ -13,22 +11,46 @@ using namespace std;
                          Initialization
 *****************************************************************/
 
-void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<ConditionalProbabilityFunction*>& _CPFs, 
-                              vector<StateActionConstraint*>& _SACs, int _numberOfConcurrentActions,
+void PlanningTask::initialize(vector<ConditionalProbabilityFunction*>& _CPFs, 
+                              ConditionalProbabilityFunction* _rewardCPF,
+                              State& _initialState,
+                              vector<Evaluatable*>& _dynamicSACs, 
+                              vector<Evaluatable*>& _staticSACs,
+                              vector<Evaluatable*>& _stateInvariants,
+                              vector<ActionFluent*>& _actionFluents,
+                              vector<ActionState>& _actionStates,
+                              int _numberOfConcurrentActions,
                               int _horizon, double _discountFactor, map<string, int>& stateVariableIndices,
                               vector<vector<string> >& stateVariableValues) {
-    //Set member vars
+    // Set primitive member vars
     numberOfConcurrentActions = _numberOfConcurrentActions;
     horizon = _horizon;
     discountFactor = _discountFactor;
 
-    // Initialize SACs, CPFs, initial state and actions
-    initializeSACs(_SACs);
-    initializeCPFs(_CPFs);
-    initializeActions(_actionFluents);
+    // Set SACs, CPFs and actions
+    dynamicSACs = _dynamicSACs;
+    staticSACs = _staticSACs;
+    stateInvariants = _stateInvariants;
+    CPFs = _CPFs;
+    rewardCPF = _rewardCPF;
+    initialState = State(_initialState);
 
-    // Initialize Domains of Evaluatables
-    initializeDomains();
+    actionFluents = _actionFluents;
+    actionStates = _actionStates;
+
+    // Set member vars that depend on SACs and CPFs
+    numberOfStateFluentHashKeys = dynamicSACs.size() + CPFs.size() + 1;
+    stateSize = (int)CPFs.size();
+    firstProbabilisticVarIndex = (int)CPFs.size();
+    deterministic = true;
+    for(unsigned int i = 0; i < stateSize; ++i) {
+        if(CPFs[i]->isProbabilistic()) {
+            firstProbabilisticVarIndex = i;
+            deterministic = false;
+            break;
+        }
+    }
+    numberOfActions = (int)actionStates.size();
 
     // Prepare hash key calculation
     initializeStateFluentHashKeys();
@@ -58,158 +80,6 @@ void PlanningTask::initialize(vector<ActionFluent*>& _actionFluents, vector<Cond
         }
         stateVariableValues.push_back(values);
     }
-}
-
-void PlanningTask::initializeSACs(vector<StateActionConstraint*>& _SACs) {
-    // Initialize SACs, then divide them into dynamic SACs, static
-    // SACs and state invariants.
-    for(unsigned int index = 0; index < _SACs.size(); ++index) {
-        _SACs[index]->initialize();
-
-    	if(_SACs[index]->containsStateFluent()) {
-             if(_SACs[index]->containsActionFluent()) {
-                 // An SAC that contain both state and action fluents
-                 // must be evaluated like a precondition for actions.
-                 dynamicSACs.push_back(_SACs[index]);
-            } else {
-                // An SAC that only contains state fluents represents
-                // a state invariant that must be true in every state.
-                stateInvariants.push_back(_SACs[index]);
-            }
-    	} else {
-            // An SAC that only contains action fluents is used to
-            // statically forbid action combinations.
-            staticSACs.push_back(_SACs[index]);
-    	}
-    }
-
-    numberOfStateFluentHashKeys += dynamicSACs.size();
-}
-
-void PlanningTask::initializeCPFs(vector<ConditionalProbabilityFunction*>& _CPFs) {
-    std::sort(_CPFs.begin(), _CPFs.end(), PlanningTask::TransitionFunctionSort());
-
-    // Calculate basic properties
-    for(unsigned int index = 0; index < _CPFs.size(); ++index) {
-        _CPFs[index]->initialize();
-    }
-
-    // Order CPFs and get reward CPF
-    vector<ConditionalProbabilityFunction*> probCPFs;
-    for(unsigned int index = 0; index < _CPFs.size(); ++index) {
-        if(_CPFs[index]->head == StateFluent::rewardInstance()) {
-            rewardCPF = _CPFs[index];
-        } else if(_CPFs[index]->isProbabilistic()) {
-            probCPFs.push_back(_CPFs[index]);
-        } else {
-            CPFs.push_back(_CPFs[index]);
-        }
-    }
-    assert(rewardCPF);
-
-    // Set constants based on CPFs
-    if(probCPFs.empty()) {
-        deterministic = true;
-    } else {
-        deterministic = false;
-    }
-
-    // Set variables that depend on CPFs
-    firstProbabilisticVarIndex = (int)CPFs.size();
-    CPFs.insert(CPFs.end(), probCPFs.begin(), probCPFs.end());
-    stateSize = (int)CPFs.size();
- 
-    // Set indices
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        CPFs[i]->head->index = i;
-    }
-
-    numberOfStateFluentHashKeys += (CPFs.size() + 1);
-
-    // Set initial state
-    initialState = State(stateSize, horizon, numberOfStateFluentHashKeys);
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        initialState[i] = CPFs[i]->head->initialValue;
-    }
-}
-
-void PlanningTask::initializeActions(vector<ActionFluent*>& _actionFluents) {
-    // Initialize action fluents
-    actionFluents = _actionFluents;
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        actionFluents[i]->index = i;
-    }
-
-    // Calculate all possible action combinations with up to
-    // numberOfConcurrentActions concurrent actions
-    list<vector<int> > actionCombinations;    
-    calcPossiblyLegalActionStates(numberOfConcurrentActions, actionCombinations);
-
-    State current(initialState);
-    set<ActionState> legalActions;
-
-    // Remove all illegal action combinations by checking the SACs
-    // that are state independent
-    for(list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
-        vector<int>& tmp = *it;
-
-        ActionState actionState((int)actionFluents.size());
-        for(unsigned int i = 0; i < tmp.size(); ++i) {
-            actionState[tmp[i]] = 1;
-        }
-
-        bool isLegal = true;
-        for(unsigned int i = 0; i < staticSACs.size(); ++i) {
-            double res = 0.0;
-            staticSACs[i]->evaluate(res, current, actionState);
-            if(MathUtils::doubleIsEqual(res, 0.0)) {
-                isLegal = false;
-                break;
-            }
-        }
-
-        if(isLegal) {
-            legalActions.insert(actionState);
-        }
-    }
-
-    // All remaining action states might be legal in some state.
-    // initialize the actionStates vector and set their index
-    for(set<ActionState>::iterator it = legalActions.begin(); it != legalActions.end(); ++it) {
-        actionStates.push_back(*it);
-    }
-
-    for(unsigned int i = 0; i < actionStates.size(); ++i) {
-        actionStates[i].index = i;
-        actionStates[i].calculateProperties(actionFluents, dynamicSACs);
-    }
-
-    numberOfActions = (int)actionStates.size();
-}
-
-void PlanningTask::calcPossiblyLegalActionStates(int actionsToSchedule, list<vector<int> >& result, vector<int> addTo) {
-    int nextVal = 0;
-    result.push_back(addTo);
-
-    if(!addTo.empty()) {
-        nextVal = addTo[addTo.size()-1]+1;
-    }
-
-    for(unsigned int i = nextVal; i < actionFluents.size(); ++i) {
-        vector<int> copy = addTo;
-        copy.push_back(i);
-        if(actionsToSchedule > 0) {
-            calcPossiblyLegalActionStates(actionsToSchedule -1, result, copy);
-        }
-    }
-}
-
-void PlanningTask::initializeDomains() {
-    for(unsigned int index = 0; index < stateSize; ++index) {
-        CPFs[index]->initializeDomains(actionStates);
-    }
-
-    rewardCPF->initializeDomains(actionStates);
 }
 
 void PlanningTask::initializeStateFluentHashKeys() {
@@ -384,7 +254,7 @@ void PlanningTask::initializeRewardDependentVariables() {
 // very error prone (and possibly contains several). We should really
 // split planning task to different kinds of classes to make
 // everything nice and clean.
-PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task) {
+PlanningTask* PlanningTask::determinizeMostLikely() {
     // There is nothing to do in deterministic problems
     if(deterministic) {
         return this;
@@ -395,10 +265,10 @@ PlanningTask* PlanningTask::determinizeMostLikely(UnprocessedPlanningTask* task)
 
     // Clear the CPFs and determinize them
     detPlanningTask->CPFs.clear();
-    NumericConstant* randomNumberReplacement = task->getConstant(0.5);
+    NumericConstant* randomNumberReplacement = new NumericConstant(0.5);
 
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        ConditionalProbabilityFunction* detCPF = CPFs[i]->determinizeMostLikely(randomNumberReplacement, task);
+        ConditionalProbabilityFunction* detCPF = CPFs[i]->determinizeMostLikely(randomNumberReplacement);
         detPlanningTask->CPFs.push_back(detCPF);
     }
 
@@ -536,7 +406,7 @@ inline void PlanningTask::setApplicableReasonableActions(State const& state, std
             if(actionStates[actionIndex].isApplicable(state)) {
                 // This action is applicable
                 State nxt(stateSize, -1, numberOfStateFluentHashKeys);
-                calcSuccessorState(state, actionIndex, nxt);
+                calcSuccessorStateInDeterminization(state, actionIndex, nxt);
                 calcStateHashKey(nxt);
 
                 if(childStates.find(nxt) == childStates.end()) {

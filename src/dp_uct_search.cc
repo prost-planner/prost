@@ -17,7 +17,7 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
-    // successorGenerator->printAction(cout, actionIndex);
+    // task->printAction(cout, actionIndex);
     // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
     // node->children[actionIndex]->print(cout);
     // cout << endl;
@@ -36,7 +36,7 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, Sta
     int childIndex = 0;
  
     if(node->children.empty()) {
-        node->children.resize(successorGenerator->getDomainSizeOfCPF(varIndex), NULL);
+        node->children.resize(task->getDomainSizeOfCPF(varIndex), NULL);
     } else {
         // Determine the sum of the probabilities of unsolved outcomes
         for(unsigned int i = 0; i < pd.size(); ++i) {

@@ -4,10 +4,10 @@
 #include "logical_expressions.h"
 #include "actions.h"
 #include "conditional_probability_function.h"
-#include "state_action_constraint.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
@@ -15,7 +15,7 @@ using namespace std;
 
 UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _problemDesc) :
     domainDesc(_domainDesc), numberOfConcurrentActions (1), horizon (1), discountFactor(1.0), 
-    rewardVariableDefinition(NULL), rewardCPFDef(NULL), rewardVariable(NULL), rewardCPF(NULL) {
+    rewardVariableDefinition(NULL), rewardVariable(NULL), rewardCPF(NULL) {
 
     preprocessInput(_problemDesc);
 
@@ -128,34 +128,21 @@ bool UnprocessedPlanningTask::isAVariableDefinition(string& name) {
     return (variableDefinitions.find(name) != variableDefinitions.end());
 }
 
-void UnprocessedPlanningTask::addCPFDefinition(ConditionalProbabilityFunctionDefinition* cpf) {
-    assert(CPFDefs.find(cpf->head->parent->name) == CPFDefs.end());
-    CPFDefs[cpf->head->parent->name] = cpf;
-    if(cpf->head->parent != VariableDefinition::rewardInstance()) {
-        CPFDefsVec.push_back(cpf);
-    } else {
-        assert(!rewardCPFDef);
-        rewardCPFDef = cpf;
+void UnprocessedPlanningTask::addCPFDefinition(pair<UninstantiatedVariable*, LogicalExpression*> const& CPFDef) {
+    for(unsigned int i = 0; i < CPFDefs.size(); ++i) {
+        if(CPFDefs[i].first->parent->name == CPFDef.first->parent->name) {
+            SystemUtils::abort("Error: Ambiguous definition of CPF: " + CPFDef.first->parent->name);
+        }
     }
+    CPFDefs.push_back(CPFDef);
 }
 
-void UnprocessedPlanningTask::getCPFDefinitions(std::vector<ConditionalProbabilityFunctionDefinition*>& result, bool includeRewardCPF) {
-    result = CPFDefsVec;
-    if(includeRewardCPF) {
-        result.push_back(rewardCPFDef);
-    }
-}
-
-void UnprocessedPlanningTask::addStateActionConstraint(StateActionConstraint* sac) {
+void UnprocessedPlanningTask::addStateActionConstraint(LogicalExpression* sac) {
     SACs.push_back(sac);
 }
 
-void UnprocessedPlanningTask::getStateActionConstraints(vector<StateActionConstraint*>& result) {
-    result = SACs;
-}
-
-void UnprocessedPlanningTask::removeStateActionConstraint(StateActionConstraint* sac) {
-    for(vector<StateActionConstraint*>::iterator it = SACs.begin(); it != SACs.end(); ++it) {
+void UnprocessedPlanningTask::removeStateActionConstraint(LogicalExpression* sac) {
+    for(vector<LogicalExpression*>::iterator it = SACs.begin(); it != SACs.end(); ++it) {
         if(*it == sac) {
             SACs.erase(it);
             break;
@@ -264,43 +251,35 @@ void UnprocessedPlanningTask::getInitialState(std::vector<AtomicLogicalExpressio
     }
 }
 
-NumericConstant* UnprocessedPlanningTask::getConstant(double val) {
-    if(constants.find(val) == constants.end()) {
-        constants[val] = new NumericConstant(val);
-    }
-    return constants[val];
-}
-
-NumericConstant* UnprocessedPlanningTask::getConstant(UninstantiatedVariable* var) {
-    return getConstant(getNonFluent(var)->initialValue);
-}
-
-void UnprocessedPlanningTask::addCPF(ConditionalProbabilityFunction* cpf) {
-    if(cpf->isRewardCPF()) {
-        assert(!rewardCPF);
-        rewardCPF = cpf;
-    } else {
-        assert(CPFs.find(cpf->getHead()) == CPFs.end());
-        CPFs[cpf->getHead()] = cpf;
-        CPFsVec.push_back(cpf);
-    }
-}
-
-void UnprocessedPlanningTask::getCPFs(vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF) {
-    result = CPFsVec;
-    if(includeRewardCPF) {
-        result.push_back(rewardCPF);
-    }
-}
-
-void UnprocessedPlanningTask::removeCPF(ConditionalProbabilityFunction* cpf) {
-    assert(!cpf->isRewardCPF());
-    assert(CPFs.find(cpf->getHead()) != CPFs.end());
-    CPFs.erase(cpf->getHead());
-    for(vector<ConditionalProbabilityFunction*>::iterator it = CPFsVec.begin(); it != CPFsVec.end(); ++it) {
-        if(*it == cpf) {
-            CPFsVec.erase(it);
-            break;
+void UnprocessedPlanningTask::addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf) {
+    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+        if(cpf.first->name == CPFs[i].first->name) {
+            SystemUtils::abort("Error: CPF with same name exists already: " + cpf.first->name);
         }
     }
+    CPFs.push_back(cpf);
 }
+
+void UnprocessedPlanningTask::setRewardCPF(LogicalExpression* const& _rewardCPF) {
+    if(rewardCPF) {
+        SystemUtils::abort("Error: RewardCPF exists already.");
+    }
+    rewardCPF = _rewardCPF;
+}
+
+// void UnprocessedPlanningTask::getCPFs(vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF) {
+//     result = CPFs;
+//     if(includeRewardCPF) {
+//         result.push_back(rewardCPF);
+//     }
+// }
+
+// void UnprocessedPlanningTask::removeCPF(ConditionalProbabilityFunction* cpf) {
+//     assert(!cpf->isRewardCPF());
+//     for(vector<ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
+//         if(*it == cpf) {
+//             CPFs.erase(it);
+//             break;
+//         }
+//     }
+// }

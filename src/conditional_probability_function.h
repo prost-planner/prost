@@ -7,13 +7,9 @@
 
 #include "utils/math_utils.h"
 
-#include <limits>
 #include <map>
 
 class UninstantiatedVariable;
-class RDDLParser;
-class Instantiator;
-class PlanningTask;
 
 class ConditionalProbabilityFunction : public Evaluatable {
 public:
@@ -21,6 +17,14 @@ public:
     //states are very tightly coupled. Nevertheless, there must be a
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
+
+    // This is used to sort transition functions by their name to ensure
+    // deterministic behaviour
+    struct TransitionFunctionSort {
+        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
+            return lhs->head->name < rhs->head->name;
+        }
+    };
 
     ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
         Evaluatable("CPF " + _head->name, _formula),
@@ -33,8 +37,11 @@ public:
         domain(other.domain),
         kleeneDomainSize(other.kleeneDomainSize) {}
 
-    bool simplify(UnprocessedPlanningTask* _task, std::map<StateFluent*, NumericConstant*>& replacements);
-    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement, UnprocessedPlanningTask* _task);
+    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actionState, std::set<double>& res) {
+        formula->calculateDomain(domains, actionState, res);
+    }
 
     void initializeDomains(std::vector<ActionState> const& actionStates);
 
@@ -50,6 +57,10 @@ public:
 
     bool isBoolean() const {
         return head->parent->valueType->type == Type::BOOL;
+    }
+
+    void setDomain(std::set<double> _domain) {
+        domain = _domain;
     }
 
     std::set<double> const& getDomain() const {
@@ -78,6 +89,18 @@ public:
         return kleeneDomainSize;
     }
 
+    void setIndex(int _index) {
+        head->index = _index;
+    }
+
+    double getInitialValue() const {
+        return head->initialValue;
+    }
+
+    void setKleeneDomainSize(long _kleeneDomainSize) {
+        kleeneDomainSize = _kleeneDomainSize;
+    }
+
 private:
     StateFluent* head;
 
@@ -86,23 +109,6 @@ private:
 
     // Hashing of KleeneStates
     long kleeneDomainSize;
-};
-
-class ConditionalProbabilityFunctionDefinition {
-public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task, RDDLParser* parser);
-
-    UninstantiatedVariable* head;
-    LogicalExpression* formula;
-
-    ConditionalProbabilityFunction* instantiate(UnprocessedPlanningTask* task, AtomicLogicalExpression* variable);
-    void replaceQuantifier(UnprocessedPlanningTask* task, Instantiator* instantiator);
-
-    void print(std::ostream& out);
-
-private:
-    ConditionalProbabilityFunctionDefinition(UninstantiatedVariable* _head, LogicalExpression* _formula) :
-        head(_head), formula(_formula) {}
 };
 
 #endif
