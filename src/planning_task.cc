@@ -812,7 +812,12 @@ void PlanningTask::print(ostream& out) const {
 void PlanningTask::printState(ostream& out, State const& state) const {
     assert(state.state.size() == stateSize);
     for(unsigned int index = 0; index < stateSize; ++index) {
-        out << CPFs[index]->head->name << ": " << state[index] << endl;
+        out << CPFs[index]->head->name << ": ";
+        if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
+            out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
+        } else {
+            out << state[index] << endl;
+        }
     }
     out << "Remaining Steps: " << state.remainingSteps() << endl;
     out << "StateHashKey: " << state.hashKey << endl;

@@ -121,7 +121,6 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
     // cout << "updated dec node with immediate reward " << immReward << endl;
     // node->print(cout);
     // cout << endl;
-    
 }
 
 void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/) {

@@ -10,11 +10,9 @@ LogicalExpression* LogicalExpression::instantiate(UnprocessedPlanningTask* /*tas
 LogicalExpression* UninstantiatedVariable::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
     vector<Object*> newParams;
     for(unsigned int i = 0; i < params.size(); ++i) {
-        if(replacements.find(params[i]) != replacements.end()) {
-            newParams.push_back(replacements[params[i]]);
-        } else {
-            newParams.push_back(task->getObject(params[i]));
-        }
+        Object* param = dynamic_cast<Object*>(params[i]->instantiate(task, replacements));
+        assert(param);
+        newParams.push_back(param);
     }
 
     name = parent->name + "(";
@@ -51,6 +49,15 @@ LogicalExpression* AtomicLogicalExpression::instantiate(UnprocessedPlanningTask*
 *****************************************************************/
 
 LogicalExpression* NumericConstant::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
+    return this;
+}
+
+LogicalExpression* Parameter::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& replacements) {
+    assert(replacements.find(name) != replacements.end());
+    return replacements[name];
+}
+
+LogicalExpression* Object::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
     return this;
 }
 
@@ -149,9 +156,9 @@ LogicalExpression* Division::instantiate(UnprocessedPlanningTask* task, map<stri
                           Unaries
 *****************************************************************/
 
-LogicalExpression* NegateExpression::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Negation::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
     LogicalExpression* newExpr = expr->instantiate(task, replacements);
-    return new NegateExpression(newExpr);
+    return new Negation(newExpr);
 }
 
 /*****************************************************************

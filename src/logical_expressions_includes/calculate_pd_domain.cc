@@ -29,6 +29,13 @@ void NumericConstant::calculatePDDomain(vector<set<DiscretePD> > const& /*domain
     res.insert(resPD);
 }
 
+void Object::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& res) {
+    assert(res.empty());
+    DiscretePD resPD;
+    resPD.assignDiracDelta(value);
+    res.insert(resPD);
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -249,7 +256,7 @@ void Division::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, Ac
                           Unaries
 *****************************************************************/
 
-void NegateExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Negation::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
     // set<double> tmp;
     // expr->calculatePDDomain(actions, tmp);
     // for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {

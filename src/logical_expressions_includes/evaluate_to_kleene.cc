@@ -21,6 +21,11 @@ void NumericConstant::evaluateToKleene(set<double>& res, KleeneState const& /*cu
     res.insert(value);
 }
 
+void Object::evaluateToKleene(set<double>& res, KleeneState const& /*current*/, ActionState const& /*actions*/) {
+    assert(res.empty());
+    res.insert(value);
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -260,7 +265,7 @@ void Division::evaluateToKleene(set<double>& res, KleeneState const& current, Ac
                           Unaries
 *****************************************************************/
 
-void NegateExpression::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& actions) {
+void Negation::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& actions) {
     assert(res.empty());
 
     expr->evaluateToKleene(res, current, actions);

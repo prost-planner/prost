@@ -54,22 +54,15 @@ void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& im
 }
 
 void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immReward, double const& /*futReward*/) {
-    // TODO: Store the best child. Then:
+    assert(!node->children.empty());
 
-    // 1. The best child has been sampled. If futReward is at least as
-    // good as that child's reward before it is still the best child
-    // (it got better). Only otherwise check for the best child again.
+    node->immediateReward = immReward;
 
-    // 2. Another child has been sampled. Check if it is better than
-    // the former best child. If so, it is the new best child,
-    // otherwise the former best child is still the best child.
-
-    // Identify best child and take its reward estimate
     if(selectedActionIndex() != -1) {
         ++node->numberOfVisits;
     }
 
-    node->immediateReward = immReward;
+    // set best child dependent values to noop child first
     node->futureReward = node->children[0]->getExpectedRewardEstimate();
 
     for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
@@ -92,8 +85,10 @@ void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node, double const& /*futRew
 
     // Propagate values from children
     for(unsigned int i = 0; i < node->children.size(); ++i) {
-        node->futureReward += (node->children[i]->numberOfVisits * node->children[i]->getExpectedRewardEstimate());
-        numberOfChildVisits += node->children[i]->numberOfVisits;
+        if(node->children[i]) {
+            node->futureReward += (node->children[i]->numberOfVisits * node->children[i]->getExpectedRewardEstimate());
+            numberOfChildVisits += node->children[i]->numberOfVisits;
+        }
     }
 
     node->futureReward /= numberOfChildVisits;

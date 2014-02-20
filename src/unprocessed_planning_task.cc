@@ -32,9 +32,6 @@ UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _pro
     addObjectType(ObjectType::objectRootInstance());
     addObjectType(ObjectType::enumRootInstance());
 
-    constants[NumericConstant::falsity()->value] = NumericConstant::falsity();
-    constants[NumericConstant::truth()->value] = NumericConstant::truth();
-
     addVariableDefinition(VariableDefinition::rewardInstance());
     addStateFluent(StateFluent::rewardInstance());
 }
@@ -76,7 +73,9 @@ void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {
 }
 
 ObjectType* UnprocessedPlanningTask::getObjectType(string& name) {
-    assert(objectTypes.find(name) != objectTypes.end());
+    if(objectTypes.find(name) == objectTypes.end()) {
+        return NULL;
+    }
     return objectTypes[name];
 }
 
@@ -92,7 +91,9 @@ void UnprocessedPlanningTask::addObject(Object* object) {
 }
 
 Object* UnprocessedPlanningTask::getObject(string& name) {
-    assert(objects.find(name) != objects.end());
+    if(objects.find(name) == objects.end()) {
+        return NULL;
+    }
     return objects[name];
 }
 

@@ -18,6 +18,10 @@ void NumericConstant::evaluateToPD(DiscretePD& res, State const& /*current*/, Ac
     res.assignDiracDelta(value);
 }
 
+void Object::evaluateToPD(DiscretePD& res, State const& /*current*/, ActionState const& /*actions*/) {
+    res.assignDiracDelta(value);
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -284,7 +288,7 @@ void Division::evaluateToPD(DiscretePD& res, State const& current, ActionState c
                           Unaries
 *****************************************************************/
 
-void NegateExpression::evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) {
+void Negation::evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) {
     DiscretePD exprRes;
     expr->evaluateToPD(exprRes, current, actions);
     assert(exprRes.isWellDefined());

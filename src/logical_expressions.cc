@@ -17,12 +17,12 @@ using namespace std;
                         Constructors
 *****************************************************************/
 
-UninstantiatedVariable::UninstantiatedVariable(VariableDefinition* _parent, std::vector<std::string> _params) :
+UninstantiatedVariable::UninstantiatedVariable(VariableDefinition* _parent, vector<Parameter*> _params) :
     parent(_parent), params(_params) {
     assert(params.size() == parent->params.size());
     name = parent->name + "(";
     for(unsigned int i = 0; i < params.size(); ++i) {
-        name += params[i];
+        name += params[i]->name;
         if(i != params.size()-1) {
             name += ", ";
         }
@@ -30,7 +30,7 @@ UninstantiatedVariable::UninstantiatedVariable(VariableDefinition* _parent, std:
     name += ")";
 }
 
-AtomicLogicalExpression::AtomicLogicalExpression(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue) :
+AtomicLogicalExpression::AtomicLogicalExpression(VariableDefinition* _parent, vector<Object*> _params, double _initialValue) :
     parent(_parent), params(_params), initialValue(_initialValue), index(-1) {
 
     assert(_parent->params.size() == params.size());
@@ -44,11 +44,16 @@ AtomicLogicalExpression::AtomicLogicalExpression(VariableDefinition* _parent, st
     name += ")";
 }
 
-Quantifier::Quantifier(std::vector<LogicalExpression*>& _exprs) {
-    assert(_exprs.size() == 2);
-    parameterDefsSet = dynamic_cast<ParameterDefinitionSet*>(_exprs[0]);
-    assert(parameterDefsSet);
-    expr = _exprs[1];
+/*****************************************************************
+                             Object
+*****************************************************************/
+
+void Object::getObjectTypes(vector<ObjectType*>& objectTypes) {
+    ObjectType* objType = type;
+    while(objType != NULL) {
+        objectTypes.push_back(objType);
+        objType = objType->superType;
+    }
 }
 
 #include "logical_expressions_includes/instantiate.cc"

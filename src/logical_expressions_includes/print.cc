@@ -28,19 +28,17 @@ void VariableDefinition::print(ostream& out) {
     out << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
 }
 
-void ParameterDefinition::print(ostream& out) {
-    out << "(";
-    out << parameterName;
-    out << " : ";
-    out << parameterType->name;
-    out << ") ";
+void Parameter::print(ostream& out) {
+    out << name << " ";
 }
 
-void ParameterDefinitionSet::print(ostream& out) {
+void ParameterList::print(ostream& out) {
     out << "(";
-    for(unsigned int i = 0; i < parameterDefs.size(); ++i) {
-        parameterDefs[i]->print(out);
-        out << " ";
+    for(unsigned int i = 0; i < params.size(); ++i) {
+        out << params[i]->name << " : " << types[i]->name;
+        if(i != (params.size() -1)) {
+            out << ", ";
+        }
     }
     out << ") ";
 }
@@ -61,12 +59,19 @@ void NumericConstant::print(ostream& out) {
     out << value;
 }
 
+void Object::print(ostream& out) {
+    assert(value < type->domain.size());
+    assert(name == type->domain[value]->name);
+    out << name << " (" << value << ") ";
+}
+
+
 /*****************************************************************
                           Quantifier
 *****************************************************************/
 
 void Quantifier::print(ostream& out) {
-    parameterDefsSet->print(out);
+    paramList->print(out);
     expr->print(out);
 }
 
@@ -118,7 +123,7 @@ void Disjunction::print(ostream& out) {
 }
 
 void EqualsExpression::print(ostream& out) {
-    out << "(=";
+    out << "(==";
     Connective::print(out);
     out << ") ";
 }
@@ -179,7 +184,7 @@ void Division::print(ostream& out) {
                           Unaries
 *****************************************************************/
 
-void NegateExpression::print(ostream& out) {
+void Negation::print(ostream& out) {
     out << "(not ";
     expr->print(out);
     out << ") ";
@@ -236,7 +241,7 @@ void MultiConditionChecker::print(ostream& out) {
             out << " then ";
         } else if(i == conditions.size() -1) {
             out << "(default ";
-            assert(dynamic_cast<NumericConstant*>(conditions[i]) == NumericConstant::truth());
+            assert(MathUtils::doubleIsEqual(dynamic_cast<NumericConstant*>(conditions[i])->value, 1.0));
         } else {
             out << "(elif ";
             conditions[i]->print(out);
