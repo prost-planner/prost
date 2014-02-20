@@ -12,8 +12,7 @@ public:
         planner(_planner), task(_task) {}
 
     void instantiate();
-
-    void instantiateParams(UnprocessedPlanningTask* _task, std::vector<ObjectType*> params, std::vector<std::vector<Object*> >& result, 
+    void instantiateParams(std::vector<ObjectType*> params, std::vector<std::vector<Object*> >& result, 
                            std::vector<Object*> addTo = std::vector<Object*>(), int indexToProcess = 0);
 
 private:

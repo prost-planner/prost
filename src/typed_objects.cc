@@ -1,5 +1,7 @@
 #include "typed_objects.h"
 
+#include "logical_expressions.h"
+
 #include "utils/string_utils.h"
 
 #include <iostream>
@@ -19,16 +21,14 @@ double Type::valueStringToDouble(string& val) {
     return atof(val.c_str());
 }
 
-Type* Type::typeFromName(string& typeName, UnprocessedPlanningTask* task) {//DomainToken* domain) {
+Type* Type::typeFromName(string& typeName, UnprocessedPlanningTask* task) {
     if((typeName == BoolType::instance()->name)) {
         return BoolType::instance();
     } else if(typeName == IntType::instance()->name) {
         return IntType::instance();
     } else if(typeName == RealType::instance()->name) {
         return RealType::instance();
-    } //else { if(task->objectTypes.find(typeName) != task->objectTypes.end()) {
-    //    return task->objectTypes[typeName];
-    //}
+    }
     return task->getObjectType(typeName);
 }
 
@@ -50,10 +50,6 @@ void IntType::printDomain(ostream& out) {
 
 void RealType::printDomain(ostream& out) {
     out << "R" << endl;
-}
-
-ObjectType::ObjectType(string Name, ObjectType* SuperType) :Type(Name, Type::OBJECT), superType(SuperType) {
-    assert(superType);
 }
 
 void ObjectType::print(ostream& out) {
@@ -79,21 +75,5 @@ double ObjectType::valueStringToDouble(string& val) {
     }
     assert(false);
     return -1.0;
-}
-
-/*****************************************************************
-                             Object
-*****************************************************************/
-
-void Object::getObjectTypes(vector<ObjectType*>& objectTypes) {
-    ObjectType* objType = type;
-    while(objType != NULL) {
-        objectTypes.push_back(objType);
-        objType = objType->superType;
-    }
-}
-
-void Object::print(ostream& out) {
-    out << name << " : " << type->name << endl;
 }
 

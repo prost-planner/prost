@@ -25,6 +25,11 @@ void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/, A
     res.insert(value);
 }
 
+void Object::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& /*actions*/, set<double>& res) {
+    assert(res.empty());
+    res.insert(value);
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -266,7 +271,7 @@ void Division::calculateDomain(vector<set<double> > const& domains, ActionState 
                           Unaries
 *****************************************************************/
 
-void NegateExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+void Negation::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
     set<double> tmp;
     expr->calculateDomain(domains, actions, tmp);
 

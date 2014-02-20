@@ -3,6 +3,8 @@
 
 #include "unprocessed_planning_task.h"
 
+class Object;
+
 class Type {
 public:
     static Type* typeFromName(std::string& typeName, UnprocessedPlanningTask* task);
@@ -88,7 +90,8 @@ public:
         return inst;
     }
 
-    ObjectType(std::string Name, ObjectType* SuperType);
+    ObjectType(std::string _name, ObjectType* _superType) :
+        Type(_name, Type::OBJECT), superType(_superType) {}
     ~ObjectType() {}
 
     ObjectType* superType;
@@ -98,21 +101,8 @@ public:
     double valueStringToDouble(std::string& val);
 
 private:
-    ObjectType(std::string Name) :
-        Type(Name, Type::OBJECT), superType(NULL) {}
-};
-
-class Object {
-public:
-    Object(std::string Name, ObjectType* Type) :
-        name(Name), type(Type) {} 
-    ~Object() {}
-
-    void getObjectTypes(std::vector<ObjectType*>& objectTypes);
-    void print(std::ostream& out);
-
-    std::string name;
-    ObjectType* type;
+    ObjectType(std::string _name) :
+        Type(_name, Type::OBJECT), superType(NULL) {}
 };
 
 #endif

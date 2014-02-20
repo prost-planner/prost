@@ -18,6 +18,10 @@ void NumericConstant::evaluate(double& res, State const& /*current*/, ActionStat
     res = value;
 }
 
+void Object::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) {
+    res = value;
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -159,7 +163,7 @@ void Division::evaluate(double& res, State const& current, ActionState const& ac
                           Unaries
 *****************************************************************/
 
-void NegateExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void Negation::evaluate(double& res, State const& current, ActionState const& actions) {
     expr->evaluate(res, current, actions);
 
     res = MathUtils::doubleIsEqual(res, 0.0);
@@ -170,11 +174,11 @@ void NegateExpression::evaluate(double& res, State const& current, ActionState c
 *****************************************************************/
 
 void BernoulliDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
-    SystemUtils::abort("Fatal Error: (deterministic) evaluate applied to a probabilistic formula!");
+    SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
 void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
-    SystemUtils::abort("Fatal Error: (deterministic) evaluate applied to a probabilistic formula!");
+    SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
 /*****************************************************************

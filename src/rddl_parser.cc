@@ -87,7 +87,7 @@ void RDDLParser::parseDomain() {
             string formulaString = tokens[i].substr(cutPos+1);
             StringUtils::trim(formulaString);
 
-            LogicalExpression* rewardFormula = parseRDDLFormula(formulaString, "reward");
+            LogicalExpression* rewardFormula = parseRDDLFormula(formulaString);
             task->setRewardCPF(rewardFormula);
         } else if(tokens[i].find("state-action-constraints ") == 0) {
             tokens[i] = tokens[i].substr(26,tokens[i].length()-28);
@@ -96,11 +96,11 @@ void RDDLParser::parseDomain() {
             vector<string> sacAsString;
             StringUtils::split(tokens[i],sacAsString,";");
             for(unsigned int i = 0; i< sacAsString.size(); ++i) {
-                LogicalExpression* formula = parseRDDLFormula(sacAsString[i], "SAC");
+                LogicalExpression* formula = parseRDDLFormula(sacAsString[i]);
                 task->addStateActionConstraint(formula);
             }
         } else {
-            SystemUtils::abort("Fatal error: Domain token '" + tokens[i] + "' is unknown!");
+            SystemUtils::abort("Error: Domain token '" + tokens[i] + "' is unknown!");
         }
     }
 }
@@ -139,7 +139,7 @@ void RDDLParser::parseNonFluents() {
                     parseAtomicLogicalExpression(nonFluentsAsString[j]);
                 }
             } else {
-                SystemUtils::abort("Fatal error: Non-fluents token '" + tokens[i] + "' is unknown!");
+                SystemUtils::abort("Error: Non-fluents token '" + tokens[i] + "' is unknown!");
             }
         }
     }
@@ -189,7 +189,7 @@ void RDDLParser::parseInstance() {
             StringUtils::removeTRN(tokens[i]);            
             task->discountFactor = atof(tokens[i].c_str());      
         } else {
-            SystemUtils::abort("Fatal error: Instance token '" + tokens[i] + "' is unknown!");
+            SystemUtils::abort("Error: Instance token '" + tokens[i] + "' is unknown!");
         }
     }
 }
@@ -218,9 +218,9 @@ void RDDLParser::parseType(string& desc) {
         vector<string> valsAsString;
         StringUtils::split(rest, valsAsString, ",");
         for(unsigned int i = 0; i < valsAsString.size(); ++i) {
-            Object* obj = new Object(valsAsString[i], newType);
-            task->addObject(obj);
+            Object* obj = new Object(valsAsString[i], newType, newType->domain.size());
             newType->domain.push_back(obj);
+            task->addObject(obj);
         }
     } else {
         task->addObjectType(new ObjectType(name, task->getObjectType(rest)));
@@ -244,9 +244,9 @@ void RDDLParser::parseObject(string& desc) {
     vector<string> objectNames;
     StringUtils::split(objs, objectNames, ",");
     for(unsigned int i = 0; i < objectNames.size(); ++i) {
-        Object* obj = new Object(objectNames[i],task->getObjectType(type));
-        task->addObject(obj);
+        Object* obj = new Object(objectNames[i],task->getObjectType(type), task->getObjectType(type)->domain.size());
         task->getObjectType(type)->domain.push_back(obj);
+        task->addObject(obj);
     }
 }
 
@@ -334,10 +334,7 @@ void RDDLParser::parseCPFDefinition(string& desc) {
     vector<string> params;
     StringUtils::trim(nameAndParams);
 
-    // assert(nameAndParams.compare("reward") != 0) {
-    //     assert
     StringUtils::removeFirstAndLastCharacter(nameAndParams);
-    //}
 
     vector<string> nameAndParamsVec;
     StringUtils::split(nameAndParams,nameAndParamsVec," ");
@@ -351,13 +348,17 @@ void RDDLParser::parseCPFDefinition(string& desc) {
     }
 
     VariableDefinition* headParent = task->getVariableDefinition(name);
+    assert(headParent);
+    assert(headParent->params.size() == (nameAndParamsVec.size()-1));
 
-    vector<string> headParams;
+    // TODO: Currently, we don't allow constants in the head of a CPF, even
+    // though there'd be nothing wrong with that
+    vector<Parameter*> headParams;
     for(unsigned int i = 1; i < nameAndParamsVec.size(); ++i) {
-        headParams.push_back(nameAndParamsVec[i]);
+        headParams.push_back(new Parameter(nameAndParamsVec[i]));
     }
     UninstantiatedVariable* head = new UninstantiatedVariable(headParent, headParams);
-    LogicalExpression* formula = parseRDDLFormula(rest, head->parent->valueType->name);
+    LogicalExpression* formula = parseRDDLFormula(rest);
 
     task->addCPFDefinition(make_pair(head,formula));
 }
@@ -399,10 +400,10 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
         task->addStateFluent(new StateFluent(parent,paramsAsObjects,atof(valString.c_str())));
         break;
     case VariableDefinition::INTERM_FLUENT:
-        SystemUtils::abort("Fatal error: Interm fluents are not supported (yet).");
+        SystemUtils::abort("Error: Interm fluents are not supported (yet).");
         break;
     case VariableDefinition::ACTION_FLUENT:
-        SystemUtils::abort("Fatal error: No action fluent allowed here.");
+        SystemUtils::abort("Error: No action fluent allowed here.");
         break;
     case VariableDefinition::NON_FLUENT:
         task->addNonFluent(new NonFluent(parent,paramsAsObjects,atof(valString.c_str())));
@@ -410,334 +411,407 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
     }
 }
 
-LogicalExpression* RDDLParser::parseRDDLFormula(string& desc, string enumContext) {
-    // This is used for the actual context of an enum
-    vector<pair<string, string> > context;
-    context.push_back(make_pair("root", enumContext));
+LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
+    vector<string> tokens = tokenizeFormula(desc);
+    assert(!tokens.empty());
 
-    // The pairs needed for switch/discrete
-    vector<vector<pair<LogicalExpression*, LogicalExpression*> > > enumStatements;
-    // This is used to determine if we are in the second part of a case - there is another context
-    bool afterCase = false;
-
-    vector<string> tokens;
-    tokenizeFormula(desc, tokens);
-
-    vector<vector<string> > keyWords(100); //TODO: 100 is ein HACK
-    vector<vector<LogicalExpression*> > readyExpressions(100); //TODO: 100 is ein HACK
-    vector<vector<ParameterDefinition*> > parameterDefintions(100);
-    int numberOfOpenParanthesis = 0;
-    for(unsigned int i = 0; i < tokens.size(); ++i) {
-        string& token = tokens[i];
-        if(token.compare("(") == 0) {
-            numberOfOpenParanthesis++;
-        } else if(token.compare(")") == 0) {
-            vector<string>& newKeyWords = keyWords[numberOfOpenParanthesis];
-            if(newKeyWords.size() == 0) {
-                assert(numberOfOpenParanthesis > 0);
-                readyExpressions[numberOfOpenParanthesis-1].push_back(new ParameterDefinitionSet(parameterDefintions[numberOfOpenParanthesis]));
-                parameterDefintions[numberOfOpenParanthesis].clear();
-                numberOfOpenParanthesis--;
-            } else if(isParameterDefinition(newKeyWords)) {
-                assert(numberOfOpenParanthesis > 0);
-                assert(newKeyWords.size() == 3);
-                parameterDefintions[numberOfOpenParanthesis-1].push_back(new ParameterDefinition(newKeyWords[0], task->getObjectType(newKeyWords[2])));
-                newKeyWords.clear();
-                numberOfOpenParanthesis--;
-            } else {
-                //is it a variable?
-                if(task->isAVariableDefinition(newKeyWords[0])) {
-                    VariableDefinition* varDef = task->getVariableDefinition(newKeyWords[0]);
-                    vector<string> varParams;
-                    for(unsigned int i = 1; i < newKeyWords.size(); ++i) {
-                        varParams.push_back(newKeyWords[i]);
-                    }
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new UninstantiatedVariable(varDef,varParams));
-                    // The variable may be a definition for switch or compare
-                    if((context.back().first.compare("switch") == 0 || context.back().first.compare("==") == 0) && (context.back().second.size() == 0)) {
-                        context.back().second = varDef->valueType->name;
-                    }
-                } else if(newKeyWords[0].compare("^") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Conjunction(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("|") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Disjunction(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("~") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new NegateExpression(readyExpressions[numberOfOpenParanthesis][0]));
-                } else if(newKeyWords[0].compare("sum") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Sumation(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("prod") == 0) { //TODO: make sure prod is indeed the keyword!
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Product(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("exists") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new ExistentialQuantification(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("forall") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new UniversalQuantification(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare(">=") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new GreaterEqualsExpression(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare(">") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new GreaterExpression(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("<=") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new LowerEqualsExpression(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("==") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new EqualsExpression(readyExpressions[numberOfOpenParanthesis]));
-                    assert(context.back().first.compare("==") == 0);
-                    context.pop_back();
-                } else if(newKeyWords[0].compare("!=") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new NegateExpression(new EqualsExpression(readyExpressions[numberOfOpenParanthesis])));
-                    assert(context.back().first.compare("==") == 0);
-                    context.pop_back();
-                } else if(newKeyWords[0].compare("~=") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new NegateExpression(new EqualsExpression(readyExpressions[numberOfOpenParanthesis])));
-                    assert(context.back().first.compare("==") == 0);
-                    context.pop_back();
-                } else if(newKeyWords[0].compare("=>") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis][0] = new NegateExpression(readyExpressions[numberOfOpenParanthesis][0]);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Disjunction(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("<=>") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    NegateExpression* neg1 = new NegateExpression(readyExpressions[numberOfOpenParanthesis][0]);
-                    NegateExpression* neg2 = new NegateExpression(readyExpressions[numberOfOpenParanthesis][1]);
-                    vector<LogicalExpression*> negs;
-                    negs.push_back(neg1);
-                    negs.push_back(neg2);
-                    Conjunction* negConj = new Conjunction(negs);
-                    vector<LogicalExpression*> poss;
-                    poss.push_back(readyExpressions[numberOfOpenParanthesis][0]);
-                    poss.push_back(readyExpressions[numberOfOpenParanthesis][1]);
-                    Conjunction* posConj = new Conjunction(poss);
-                    vector<LogicalExpression*> disj;
-                    disj.push_back(negConj);
-                    disj.push_back(posConj);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Disjunction(disj));
-                } else if(newKeyWords[0].compare("<") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new LowerExpression(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("-") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Subtraction(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("+") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Addition(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("*") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Multiplication(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("/") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 2);//TODO: muss die assertion gelten?
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new Division(readyExpressions[numberOfOpenParanthesis]));
-                } else if(newKeyWords[0].compare("Bernoulli") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new BernoulliDistribution(readyExpressions[numberOfOpenParanthesis][0]));
-                } else if(newKeyWords[0].compare("KronDelta") == 0) {
-                    assert(newKeyWords.size() == 1);
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 1);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new KronDeltaDistribution(readyExpressions[numberOfOpenParanthesis][0]));
-                } else if(newKeyWords[0].compare("if") == 0) {
-                    assert(newKeyWords.size() == 3);
-                    assert(newKeyWords[1].compare("then") == 0);
-                    assert(newKeyWords[2].compare("else") == 0); //TODO: if ohne else!!
-                    assert(readyExpressions[numberOfOpenParanthesis].size() == 3);
-                    assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                    readyExpressions[numberOfOpenParanthesis-1].push_back(new IfThenElseExpression(
-                            readyExpressions[numberOfOpenParanthesis][0],
-                            readyExpressions[numberOfOpenParanthesis][1],
-                            readyExpressions[numberOfOpenParanthesis][2]));
-                } else if(newKeyWords[0].compare("case") == 0) { 
-                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2);
-                	enumStatements.back().push_back(make_pair(readyExpressions[numberOfOpenParanthesis][0], readyExpressions[numberOfOpenParanthesis][1]));
-                } else if(newKeyWords[0].compare("switch") == 0) {
-                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2); // The second one is empty, the first one is the variable
-                        std::vector<LogicalExpression*> conditions;
-                        std::vector<LogicalExpression*> effects;
-                        for(unsigned int i = 0; i < enumStatements.back().size(); ++i) {
-                            if(i == (enumStatements.back().size() - 1)) {
-                                // We assume that the last case must be true, otherwise this is maldefined
-                                conditions.push_back(NumericConstant::truth());
-                            } else {
-                                std::vector<LogicalExpression*> equalsExpr;
-                                equalsExpr.push_back(readyExpressions[numberOfOpenParanthesis][0]);
-                                equalsExpr.push_back(enumStatements.back()[i].first);
-                                conditions.push_back(new EqualsExpression(equalsExpr));
-                            }
-                            effects.push_back(enumStatements.back()[i].second);
-                        }
-                        readyExpressions[numberOfOpenParanthesis-1].push_back(new MultiConditionChecker(conditions, effects));
-                	// Remove the context-entry and the cases
-                	enumStatements.pop_back();
-                	assert(context.back().first.compare("switch") == 0);
-                	context.pop_back();
-                } else if(newKeyWords[0].compare("Discrete") == 0) { 
-                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                	assert(readyExpressions[numberOfOpenParanthesis].size() == 1); // It is an empty expression
-                        std::vector<LogicalExpression*> values;
-                        std::vector<LogicalExpression*> probabilities;
-                        for(unsigned int i = 0; i < enumStatements.back().size(); ++i) {
-                            values.push_back(enumStatements.back()[i].first);
-                            probabilities.push_back(enumStatements.back()[i].second);
-                        }
-                	readyExpressions[numberOfOpenParanthesis-1].push_back(new DiscreteDistribution(values, probabilities));
-                	// Remove the context-entry and the cases
-                	enumStatements.pop_back();
-                	assert(context.back().first.compare("discrete") == 0);
-                	context.pop_back();
-                } else if(newKeyWords[0].c_str()[0] == '@') { // This is neccessary for discrete
-                	assert(parameterDefintions[numberOfOpenParanthesis].size() == 0);
-                	assert(readyExpressions[numberOfOpenParanthesis].size() == 2);
-                	enumStatements.back().push_back(make_pair(readyExpressions[numberOfOpenParanthesis][0], readyExpressions[numberOfOpenParanthesis][1]));
-                } else {
-                    cout << "Unknown Keyword: " << newKeyWords[0] << " ?" << endl;
-                    assert(false);
-                }
-                newKeyWords.clear();
-                readyExpressions[numberOfOpenParanthesis].clear();
-                numberOfOpenParanthesis--;
-                assert(numberOfOpenParanthesis >= 0);
+    if(tokens.size() == 1) {
+        if(isNumericConstant(tokens[0])) {
+            double val = atof(tokens[0].c_str());
+            return new NumericConstant(val);
+        } else {
+            Parameter* param = parseParameter(tokens[0]);
+            if(param) {
+                return param;
             }
-        } else if(isNumericConstant(token) || token.compare("true") == 0 || token.compare("false") == 0) {
-            if(token.compare("true") == 0) {
-                token = "1.0";
-            } else if(token.compare("false") == 0) {
-                token = "0.0";
-            }
-            double val = atof(token.c_str());
-            readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
-
-        } else if(token.c_str()[0] == '@') {
-            assert(context.size() > 0);
-            // if we are in a discrete statement, this is a keyword
-            if(context.back().first.compare("discrete") == 0) {
-                keyWords[numberOfOpenParanthesis].push_back(token);
-            }
-            // We have to take care of the context
-            if(afterCase) {
-                assert(context.back().second.size() > 0);
-                assert(context.back().first.compare("switch") == 0);
-                double val = task->getObjectType(context.back().second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
-            } else if(context.back().first.compare("switch") == 0) {
-                // if we are not right after 'case', but still in the context of switch, we should use the root-context
-                assert(context.size() > 1);
-                assert(context[0].second.size() > 0);
-                assert(context[0].first.compare("root") == 0);
-                double val = task->getObjectType(context[0].second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
-            } else {
-                assert(context.size() > 0);
-                assert(context.back().second.size() > 0);
-                double val = task->getObjectType(context.back().second)->valueStringToDouble(token);
-                readyExpressions[numberOfOpenParanthesis].push_back(new NumericConstant(val));
-            }
-        } else if(token.compare("switch") == 0) {
-        	context.push_back(make_pair("switch", ""));
-        	enumStatements.push_back(vector<pair<LogicalExpression*, LogicalExpression*> >());
-        	keyWords[numberOfOpenParanthesis].push_back(token);
-        } else if(token.compare("~=") == 0 || token.compare("==") == 0) {
-            context.push_back(make_pair("==", ""));
-            // we have to check if there is an enum constant
-            // if it is (== enum fluent) we have to swap enum and fluent to get the right context
-            assert(tokens.size() > i+1);
-            if(tokens[i+1].c_str()[0] == '@') {
-                string enumExpression = tokens[i+1];
-                vector<string>::iterator it = tokens.begin();
-                tokens.erase(it+i+1);
-                // Determine the new position for the enum
-                int paranthesis = 0;
-                int index = i;
-                while(index < tokens.size()) {
-                    if(tokens[index].compare("(") == 0) {
-                        ++paranthesis;
-                    } else if(tokens[index].compare(")") == 0) {
-                        --paranthesis;
-                    }
-                    if(paranthesis < 0) {
-                        break;
-                    }
-                    ++index;
-                }
-                assert(paranthesis == -1);
-                // insert the enum
-                it = tokens.begin();
-                tokens.insert(it+index, enumExpression);
-            }
-            keyWords[numberOfOpenParanthesis].push_back(token);
-        } else if(token.compare("Discrete") == 0) {
-            assert(tokens.size() > i+1);
-            context.push_back(make_pair("discrete", tokens[i+1]));
-            enumStatements.push_back(vector<pair<LogicalExpression*, LogicalExpression*> >());
-            keyWords[numberOfOpenParanthesis].push_back(token);
-            i++;
-        } else if(token.compare("case") == 0) {
-            afterCase = true;
-            keyWords[numberOfOpenParanthesis].push_back(token);
-        } else if(token.compare(":") == 0) {
-            if(context.back().first.compare("switch") == 0) {
-                afterCase = false;
-            }
-            keyWords[numberOfOpenParanthesis].push_back(token);
-        }  else {
-            keyWords[numberOfOpenParanthesis].push_back(token);
-        }
+        } // otherwise, this could be a parameterless fluent
     }
 
-    return readyExpressions[0][0];
+    if(task->isAVariableDefinition(tokens[0])) {
+        // Fluent (Note that tokens.size can be 1 here as well if this is a
+        // parameterless fluent)
+        VariableDefinition* var = task->getVariableDefinition(tokens[0]);
+        assert(var->params.size() == (tokens.size()-1));
+
+        vector<Parameter*> params;
+        for(unsigned int i = 1; i <tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            assert(param);
+            params.push_back(param);
+        }
+        return new UninstantiatedVariable(var, params);
+    } else if(tokens[0] == "sum") {
+        // Sumation
+        assert(tokens.size() == 3);
+        ParameterList* paramList = parseParameterList(tokens[1]);
+        LogicalExpression* expr = parseRDDLFormula(tokens[2]);
+        return new Sumation(paramList, expr);
+    } else if(tokens[0] == "prod") {
+        // Product
+        assert(tokens.size() == 3);
+        ParameterList* paramList = parseParameterList(tokens[1]);
+        LogicalExpression* expr = parseRDDLFormula(tokens[2]);
+        return new Product(paramList, expr);
+    } else if(tokens[0] == "forall") {
+        // UniversalQuantification
+        assert(tokens.size() == 3);
+        ParameterList* paramList = parseParameterList(tokens[1]);
+        LogicalExpression* expr = parseRDDLFormula(tokens[2]);
+        return new UniversalQuantification(paramList, expr);
+    } else if(tokens[0] == "exists") {
+        // ExistentialQuantification
+        assert(tokens.size() == 3);
+        ParameterList* paramList = parseParameterList(tokens[1]);
+        LogicalExpression* expr = parseRDDLFormula(tokens[2]);
+        return new ExistentialQuantification(paramList, expr);
+    } else if((tokens[0] == "^") || (tokens[0] == "&")) {
+        // Conjunction
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+            exprs.push_back(expr);
+        }
+        return new Conjunction(exprs);
+    } else if(tokens[0] == "|") {
+        // Disjunction
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+            exprs.push_back(expr);
+        }
+        return new Disjunction(exprs);
+    }  else if(tokens[0] == "=>") {
+        // Implication
+        assert(tokens.size() == 3);
+
+        vector<LogicalExpression*> exprs;
+
+        LogicalExpression* expr1 = parseRDDLFormula(tokens[1]);
+        exprs.push_back(new Negation(expr1));
+
+        LogicalExpression* expr2 = parseRDDLFormula(tokens[2]);
+        exprs.push_back(expr2);
+
+        return new Disjunction(exprs);
+    } else if(tokens[0] == "<=>") {
+        // Logical Equivalence 
+        assert(tokens.size() == 3);
+
+        vector<LogicalExpression*> posExprs;
+        vector<LogicalExpression*> negExprs;
+
+        LogicalExpression* expr1 = parseRDDLFormula(tokens[1]);
+        posExprs.push_back(expr1);
+        LogicalExpression* expr1Copy(expr1);
+        negExprs.push_back(new Negation(expr1Copy));
+
+        LogicalExpression* expr2 = parseRDDLFormula(tokens[2]);
+        posExprs.push_back(expr2);
+        LogicalExpression* expr2Copy(expr2);
+        negExprs.push_back(new Negation(expr2Copy));
+
+        vector<LogicalExpression*> exprs;
+        exprs.push_back(new Conjunction(posExprs));
+        exprs.push_back(new Conjunction(negExprs));
+
+        return new Disjunction(exprs);
+    } else if(tokens[0] == "==") {
+        // EqualsExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new EqualsExpression(exprs);
+    } else if((tokens[0] == "~=") || (tokens[0] == "!=")) {
+        // Negation of EqualsExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new Negation(new EqualsExpression(exprs));
+    } else if(tokens[0] == ">") {
+        // GreaterExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new GreaterExpression(exprs);
+    } else if(tokens[0] == "<") {
+        // LowerExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new LowerExpression(exprs);
+    } else if(tokens[0] == ">=") {
+        // GreaterEqualsExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new GreaterEqualsExpression(exprs);
+    } else if(tokens[0] == "<=") {
+        // LowerEqualsExpression
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new LowerEqualsExpression(exprs);
+    } else if(tokens[0] == "+") {
+        // Addition
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new Addition(exprs);
+    } else if(tokens[0] == "-") {
+        // Subtraction
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new Subtraction(exprs);
+    } else if(tokens[0] == "*") {
+        // Multiplication
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new Multiplication(exprs);
+    } else if(tokens[0] == "/") {
+        // Division
+
+        vector<LogicalExpression*> exprs;
+        for(unsigned int i = 1; i < tokens.size(); ++i) {
+            Parameter* param = parseParameter(tokens[i]);
+            if(param) {
+                exprs.push_back(param);
+            } else {
+                LogicalExpression* expr = parseRDDLFormula(tokens[i]);
+                exprs.push_back(expr);
+            }
+        }
+        return new Division(exprs);
+    } else if(tokens[0] == "~") {
+        // Negation
+        assert(tokens.size() == 2);
+        LogicalExpression* expr = parseRDDLFormula(tokens[1]);
+        return new Negation(expr);
+    } else if(tokens[0] == "KronDelta") {
+        // KronDeltaDistribution
+
+        // TODO: Can we return expr instead of the KronDelta?
+        assert(tokens.size() == 2);
+        LogicalExpression* expr = parseRDDLFormula(tokens[1]);
+        return new KronDeltaDistribution(expr);
+    } else if(tokens[0] == "Bernoulli") {
+        // BernoulliDistribution
+        assert(tokens.size() == 2);
+        LogicalExpression* expr = parseRDDLFormula(tokens[1]);
+        return new BernoulliDistribution(expr);
+    } else if(tokens[0] == "Discrete") {
+        // DiscreteDistribution
+
+        // TODO: The return value (tokens[1]) is optional in RDDL2.0
+        assert(tokens.size() == 3);
+
+        vector<string> valProbPairs = tokenizeFormula(tokens[2]);
+
+        vector<LogicalExpression*> values;
+        vector<LogicalExpression*> probabilities;
+
+        for(unsigned int i = 0; i < valProbPairs.size(); ++i) {
+            assert(valProbPairs[i][0] == '(');
+            assert(valProbPairs[i][valProbPairs[i].length()-1] == ')');
+            StringUtils::removeFirstAndLastCharacter(valProbPairs[i]);
+
+            size_t cutPos = valProbPairs[i].find(":");
+            assert(cutPos != string::npos);
+
+            string valueString = valProbPairs[i].substr(0,cutPos);
+            StringUtils::trim(valueString);
+            LogicalExpression* value = parseRDDLFormula(valueString);
+            values.push_back(value);
+
+            string probString = valProbPairs[i].substr(cutPos+1);
+            StringUtils::trim(probString);
+            LogicalExpression* prob = parseRDDLFormula(probString);
+            probabilities.push_back(prob);
+        }
+        return new DiscreteDistribution(values, probabilities);
+    } else if(tokens[0] == "if") {
+        // IfThenElseExpression
+        assert(tokens.size() == 6);
+        assert(tokens[2].find("then") == 0);
+        assert(tokens[4].find("else") == 0);
+        LogicalExpression* condition = parseRDDLFormula(tokens[1]);
+        LogicalExpression* valueIfTrue = parseRDDLFormula(tokens[3]);
+        LogicalExpression* valueIfFalse = parseRDDLFormula(tokens[5]);
+        return new IfThenElseExpression(condition, valueIfTrue, valueIfFalse);
+    } else if(tokens[0] == "switch") {
+        // Switch (MultiConditionChecker)
+        assert(tokens.size() == 3);
+     
+        LogicalExpression* switchVar = parseRDDLFormula(tokens[1]);
+
+        vector<string> cases = tokenizeFormula(tokens[2]);
+
+        vector<LogicalExpression*> conditions;
+        vector<LogicalExpression*> effects;
+
+        for(unsigned int i = 0; i < cases.size(); ++i) {
+            assert(cases[i][0] == '(');
+            assert(cases[i][cases[i].length()-1] == ')');
+            StringUtils::removeFirstAndLastCharacter(cases[i]);
+            StringUtils::trim(cases[i]);
+            assert(cases[i].find("case ") == 0);
+            cases[i] = cases[i].substr(5);
+
+            size_t cutPos = cases[i].find(":");
+            assert(cutPos != string::npos);
+
+            if(i == (cases.size() -1)) {
+                // The last one must be true (we should thereby support the
+                // otherwise keyword already)
+                conditions.push_back(new NumericConstant(1.0));
+            } else {
+                // Otherwise we build the condition that says switchVar == value
+
+                string valueString = cases[i].substr(0,cutPos);
+                StringUtils::trim(valueString);
+
+                LogicalExpression* value = parseRDDLFormula(valueString);
+
+                vector<LogicalExpression*> switchVarEquality;
+                switchVarEquality.push_back(switchVar);
+                switchVarEquality.push_back(value);
+                conditions.push_back(new EqualsExpression(switchVarEquality));
+            }            
+
+            string effString = cases[i].substr(cutPos+1);
+            StringUtils::trim(effString);
+
+            LogicalExpression* eff = parseRDDLFormula(effString);
+            effects.push_back(eff);            
+        }
+
+        return new MultiConditionChecker(conditions, effects);
+    }
+
+    SystemUtils::abort("Error: Unsupported RDDL Formula: " + desc);
+    return NULL;
 }
 
-bool RDDLParser::isParameterDefinition(vector<string>& tokens) {
-    //TODO: This should work, but have a look at it
-    return ((tokens[0].find("?") != -1) && tokens[1].find(":") != -1);
+ParameterList* RDDLParser::parseParameterList(string& desc) {
+    vector<string> tokens = tokenizeFormula(desc);
+
+    vector<Parameter*> params;
+    vector<ObjectType*> types;
+
+    // TODO: Also allow lists of the form ( (?x1, ?x2 : type_x) )
+
+    for(unsigned int i = 0; i < tokens.size(); ++i) {
+        assert(tokens[i][0] == '(');
+        assert(tokens[i][tokens[i].length()-1] == ')');
+        StringUtils::removeFirstAndLastCharacter(tokens[i]);
+
+        size_t cutPos = tokens[i].find(":");
+        assert(cutPos != string::npos);
+
+        string name = tokens[i].substr(0,cutPos);
+        StringUtils::trim(name);
+        assert(!name.empty());
+        assert(name[0] == '?');
+
+        string type = tokens[i].substr(cutPos+1, tokens[i].length());
+        StringUtils::trim(type);
+        assert(task->getObjectType(type));
+
+        params.push_back(new Parameter(name));
+        types.push_back(task->getObjectType(type));
+    }
+
+    return new ParameterList(params, types);
+}
+
+Parameter* RDDLParser::parseParameter(string& desc) {
+    if(task->getObject(desc)) {
+        return task->getObject(desc);
+    } else if(desc[0] == '?') {
+        return new Parameter(desc);
+    }
+    return NULL;
 }
 
 bool RDDLParser::isNumericConstant(string& token) {
+    if(token.compare("true") == 0) {
+        token = "1.0";
+    } else if(token.compare("false") == 0) {
+        token = "0.0";
+    }
     istringstream inpStream(token);
     double inpValue;
     if(inpStream >> inpValue) {
@@ -779,57 +853,42 @@ void RDDLParser::splitToken(string& desc, vector<string>& result) {
     }
 }
 
-void RDDLParser::tokenizeFormula(string& text, vector<string>& tokens) {
+vector<string> RDDLParser::tokenizeFormula(string& text) {
+    vector<string> tokens;
+    if(text[0] == '(') {
+        assert(text[text.length()-1] == ')');
+        StringUtils::removeFirstAndLastCharacter(text);
+    }
+
     string buffer = "";
+    int openParens = 0;
     for(size_t pos = 0; pos < text.length(); ++pos) {
         const char& c = text[pos];
-        if(c==' ' || pos == text.length() || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '{' ||
-           c == '|' || c == '^' || c == '+' || (c == '-' && (pos == 0 || !isalpha(text[pos-1]))) || 
-           c == '*' || c == '/' || c == '~' || c == '<' || c == '>') {
-            if(buffer.length() > 0) {
+        if(c == '(') {
+            ++openParens;
+        }
+        buffer += text[pos];
+
+        if(c == ')') {
+            --openParens;
+            if(openParens == 0) {
+                StringUtils::trim(buffer);
+                if(!buffer.empty()) {
+                    tokens.push_back(buffer);
+                    buffer = "";
+                }
+            }
+        } else if((c == ' ') && (openParens == 0)) {
+            StringUtils::trim(buffer);
+            if(!buffer.empty()) {
                 tokens.push_back(buffer);
                 buffer = "";
             }
-            if(c==' ') {
-                continue;
-            }
-            buffer += c;
-            if(c == '~') {
-            	assert(pos < text.length());
-            	if(text[pos+1] == ' ') {
-                    pos++;
-            	}
-            	assert(pos < text.length());
-            	if(text[pos+1] == '=') {
-                    buffer += text[pos+1];
-                    pos++;
-            	}
-            }
-            
-            if(c == '<' || c == '>') {
-                assert(pos < text.length());
-                if(text[pos+1] == '=') {
-                    buffer += text[pos+1];
-                    pos++;
-                    if(text[pos+1] == '>') {
-                        buffer += text[pos+1];
-                        pos++;
-                    }
-                }
-            }
-            
-            tokens.push_back(buffer);
-            buffer = "";
-        } else if(c == '=') {
-            assert(pos > 0 && pos < text.length());
-            assert((text[pos+1] == '>') || (text[pos+1] == '='));
-            buffer += text[pos];
-            buffer += text[pos+1];
-            pos++;
-            tokens.push_back(buffer);
-            buffer = "";
-        } else {
-            buffer += c;
         }
     }
+    StringUtils::trim(buffer);
+    if(!buffer.empty()) {
+        tokens.push_back(buffer);
+    }
+    return tokens;
 }

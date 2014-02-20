@@ -11,7 +11,6 @@ class Object;
 class VariableDefinition;
 class LogicalExpression;
 class UninstantiatedVariable;
-class NumericConstant;
 class AtomicLogicalExpression;
 class NonFluent;
 class StateFluent;
@@ -96,9 +95,6 @@ public:
     std::map<std::string, NonFluent*> nonFluents;
     StateFluent* rewardVariable;
     std::map<VariableDefinition*, std::vector<AtomicLogicalExpression*> > variablesBySchema;
-
-    //constants
-    std::map<double, NumericConstant*> constants;
 
     //instantiated CPFs
     LogicalExpression* rewardCPF;

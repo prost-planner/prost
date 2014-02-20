@@ -15,6 +15,10 @@ LogicalExpression* NumericConstant::determinizeMostLikely(NumericConstant* /*ran
     return this;
 }
 
+LogicalExpression* Object::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
+    return this;
+}
+
 /*****************************************************************
                            Connectives
 *****************************************************************/
@@ -122,9 +126,9 @@ LogicalExpression* Division::determinizeMostLikely(NumericConstant* randomNumber
                           Unaries
 *****************************************************************/
 
-LogicalExpression* NegateExpression::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
+LogicalExpression* Negation::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
     LogicalExpression* newExpr = expr->determinizeMostLikely(randomNumberReplacement);
-    return new NegateExpression(newExpr);
+    return new Negation(newExpr);
 }
 
 /*****************************************************************

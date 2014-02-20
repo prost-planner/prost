@@ -10,12 +10,13 @@
 
 class RDDLParser;
 class Instantiator;
+class NumericConstant;
 
 class LogicalExpression {
 public:
     virtual ~LogicalExpression() {}
 
-    virtual LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    virtual LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     virtual LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     virtual LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
@@ -63,38 +64,29 @@ public:
         name(_name), params(_params), variableType(_variableType), valueType(_valueType), defaultValue(_defaultValue), level(_level) {}
 };
 
-class ParameterDefinition : public LogicalExpression {
+class Parameter : public LogicalExpression {
 public:
-    std::string parameterName;
-    ObjectType* parameterType;
+    Parameter(std::string _name):
+        name(_name) {}
 
-    ParameterDefinition(std::string _parameterName, ObjectType* _parameterType):
-        parameterName(_parameterName), parameterType(_parameterType) {}
+    std::string name;
 
-    void print(std::ostream& out);
-};
-
-class ParameterDefinitionSet : public LogicalExpression {
-public:
-    std::vector<ParameterDefinition*> parameterDefs;
-
-    ParameterDefinitionSet(std::vector<ParameterDefinition*>& _defs) :
-        parameterDefs(_defs) {}
-    ParameterDefinitionSet() {}
-
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     void print(std::ostream& out);
 };
 
 class UninstantiatedVariable : public LogicalExpression {
 public:
-    UninstantiatedVariable(VariableDefinition* _parent, std::vector<std::string> _params);
+    //TODO: Replace Parameter with a /yet undefined) superclass of Object and Parameter
+    UninstantiatedVariable(VariableDefinition* _parent, std::vector<Parameter*> _params);
 
     VariableDefinition* parent;
 
     std::string name;
-    std::vector<std::string> params;
+    std::vector<Parameter*> params;
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
 
     void print(std::ostream& out);
@@ -174,22 +166,39 @@ public:
 
 class NumericConstant : public LogicalExpression {
 public:
-    static NumericConstant* truth() {
-        static NumericConstant* truthInst = new NumericConstant(1.0);
-        return truthInst;
-    }
-
-    static NumericConstant* falsity() {
-        static NumericConstant* falsityInst = new NumericConstant(0.0);
-        return falsityInst;
-    }
-
-    double value;
-
     NumericConstant(double _value) :
         value(_value) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    double value;
+
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+
+    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
+
+    void evaluate(double& res, State const& current, ActionState const& actions);
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+
+    void print(std::ostream& out);
+};
+
+class Object : public Parameter {
+public:
+    Object(std::string _name, ObjectType* _type, double _value) :
+        Parameter(_name), type(_type), value(_value) {}
+    ~Object() {}
+
+    ObjectType* type;
+    double value;
+
+    void getObjectTypes(std::vector<ObjectType*>& objectTypes);
+
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
@@ -209,54 +218,67 @@ public:
                           Quantifier
 *****************************************************************/
 
+class ParameterList : public LogicalExpression {
+public:
+    std::vector<Parameter*> params;
+    std::vector<ObjectType*> types;
+
+    ParameterList(std::vector<Parameter*> _params, std::vector<ObjectType*> _types) :
+        params(_params), types(_types) {}
+    ParameterList() {}
+
+    void print(std::ostream& out);
+};
+
 class Quantifier : public LogicalExpression {
 public:
-    ParameterDefinitionSet* parameterDefsSet;
+    Quantifier(ParameterList* _paramList, LogicalExpression* _expr) :
+        paramList(_paramList), expr(_expr) {}
+
+    ParameterList* paramList;
     LogicalExpression* expr;
 
-    Quantifier(std::vector<LogicalExpression*>& _exprs);
-
-    void getReplacements(UnprocessedPlanningTask* task, std::vector<std::string>& parameterNames, std::vector<std::vector<Object*> >& replacements, Instantiator* instantiator);
+    void getReplacements(std::vector<std::string>& parameterNames, std::vector<std::vector<Object*> >& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);
 };
 
 class Sumation : public Quantifier {
 public:
-    Sumation(std::vector<LogicalExpression*>& _exprs) :
-        Quantifier(_exprs) {}
+    Sumation(ParameterList* _paramList, LogicalExpression* _expr) :
+        Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);
 };
 
 class Product : public Quantifier {
 public:
-    Product(std::vector<LogicalExpression*>& _exprs) :
-        Quantifier(_exprs) {}
+    Product(ParameterList* _paramList, LogicalExpression* _expr) :
+        Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);    
 };
 
 class UniversalQuantification : public Quantifier {
 public:
-    UniversalQuantification(std::vector<LogicalExpression*>& _exprs) :
-        Quantifier(_exprs) {}
+    UniversalQuantification(ParameterList* _paramList, LogicalExpression* _expr) :
+        Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);
 };
 
-class ExistentialQuantification: public Quantifier {
+class ExistentialQuantification : public Quantifier {
 public:
-    ExistentialQuantification(std::vector<LogicalExpression*>& _exprs) :
-        Quantifier(_exprs) {}
+    ExistentialQuantification(ParameterList* _paramList, LogicalExpression* _expr) :
+        Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);
 };
@@ -281,7 +303,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -304,7 +326,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -327,7 +349,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -350,7 +372,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -373,7 +395,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -396,7 +418,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -419,7 +441,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -442,7 +464,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -465,7 +487,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -488,7 +510,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -511,7 +533,7 @@ public:
         Connective(_exprs) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -532,14 +554,14 @@ public:
                           Unaries
 *****************************************************************/
 
-class NegateExpression : public LogicalExpression {
+class Negation : public LogicalExpression {
 public:
     LogicalExpression* expr;
 
-    NegateExpression(LogicalExpression* _expr) :
+    Negation(LogicalExpression* _expr) :
         expr(_expr) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
@@ -568,7 +590,7 @@ public:
         expr(_expr) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     void print(std::ostream& out);
@@ -583,7 +605,7 @@ public:
         expr(_expr) {}
 
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
@@ -610,7 +632,7 @@ public:
     DiscreteDistribution(std::vector<LogicalExpression*> _values, std::vector<LogicalExpression*> _probabilities) :
     	LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
@@ -641,7 +663,7 @@ public:
     IfThenElseExpression(LogicalExpression* _condition, LogicalExpression* _valueIfTrue, LogicalExpression* _valueIfFalse) :
         condition(_condition), valueIfTrue(_valueIfTrue), valueIfFalse(_valueIfFalse) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
@@ -667,7 +689,7 @@ public:
     MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
         conditions(_conditions), effects(_effects) {}
 
-    LogicalExpression* replaceQuantifier(UnprocessedPlanningTask* task, std::map<std::string, std::string>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 

@@ -233,11 +233,11 @@ void Division::collectInitialInfo(bool& isProbabilistic,
                           Unaries
 *****************************************************************/
 
-void NegateExpression::collectInitialInfo(bool& isProbabilistic,
-                                          bool& containsArithmeticFunction,
-                                          set<StateFluent*>& dependentStateFluents,
-                                          set<ActionFluent*>& positiveDependentActionFluents,
-                                          set<ActionFluent*>& negativeDependentActionFluents) {
+void Negation::collectInitialInfo(bool& isProbabilistic,
+                                  bool& containsArithmeticFunction,
+                                  set<StateFluent*>& dependentStateFluents,
+                                  set<ActionFluent*>& positiveDependentActionFluents,
+                                  set<ActionFluent*>& negativeDependentActionFluents) {
     expr->collectInitialInfo(isProbabilistic, containsArithmeticFunction, dependentStateFluents, negativeDependentActionFluents, positiveDependentActionFluents);
 }
 

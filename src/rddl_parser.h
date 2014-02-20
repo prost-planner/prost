@@ -5,6 +5,8 @@
 
 class ProstPlanner;
 class LogicalExpression;
+class ParameterList;
+class Parameter;
 
 class RDDLParser {
 public:
@@ -25,13 +27,14 @@ private:
     void parseVariableDefinition(std::string& desc);
     void parseCPFDefinition(std::string& desc);
     void parseAtomicLogicalExpression(std::string& desc);
-    LogicalExpression* parseRDDLFormula(std::string& desc, std::string enumContext);
+    LogicalExpression* parseRDDLFormula(std::string desc);
+    ParameterList* parseParameterList(std::string& desc);
+    Parameter* parseParameter(std::string& desc);
 
     void getTokenName(std::string& token, std::string& name, int startPos);
     void splitToken(std::string& desc, std::vector<std::string>& result);
 
-    void tokenizeFormula(std::string& text, std::vector<std::string>& tokens);
-    bool isParameterDefinition(std::vector<std::string>& tokens);
+    std::vector<std::string> tokenizeFormula(std::string& text);
     bool isNumericConstant(std::string& token);
 };
 
