@@ -8,7 +8,7 @@
 #include "state.h"
 
 class ActionFluent;
-class StateActionConstraint;
+class Evaluatable;
 
 class ActionState {
 public:
@@ -30,19 +30,19 @@ public:
     }
 
     void getActions(std::vector<std::string>& result) const;
-    void calculateProperties(std::vector<ActionFluent*> const& actionFluents, std::vector<StateActionConstraint*> const& sacs);
+    void calculateProperties(std::vector<ActionFluent*> const& actionFluents, std::vector<Evaluatable*> const& sacs);
     bool isApplicable(State const& current) const; 
 
     std::vector<int> state;
     std::vector<ActionFluent*> scheduledActionFluents;
-    std::vector<StateActionConstraint*> relevantSACs;
+    std::vector<Evaluatable*> relevantSACs;
     int index;
 
 private:
     ActionState() {}
 
-    bool containsNegativeActionFluent(StateActionConstraint* sac) const;
-    bool containsAdditionalPositiveActionFluent(StateActionConstraint* sac) const;
+    bool containsNegativeActionFluent(Evaluatable* sac) const;
+    bool containsAdditionalPositiveActionFluent(Evaluatable* sac) const;
 };
 
 inline bool operator<(ActionState const& lhs, ActionState const& rhs) {

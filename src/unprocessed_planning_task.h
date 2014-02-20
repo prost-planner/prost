@@ -9,10 +9,8 @@
 class ObjectType;
 class Object;
 class VariableDefinition;
-class ConditionalProbabilityFunctionDefinition;
-class StateActionConstraint;
+class LogicalExpression;
 class UninstantiatedVariable;
-class NumericConstant;
 class AtomicLogicalExpression;
 class NonFluent;
 class StateFluent;
@@ -37,12 +35,10 @@ public:
     void getVariableDefinitions(std::vector<VariableDefinition*>& result, bool includeRewardDef = false);
     bool isAVariableDefinition(std::string& name);
 
-    void addCPFDefinition(ConditionalProbabilityFunctionDefinition* cpf);
-    void getCPFDefinitions(std::vector<ConditionalProbabilityFunctionDefinition*>& result, bool includeRewardCPF = true);
+    void addCPFDefinition(std::pair<UninstantiatedVariable*, LogicalExpression*> const& CPFDef);
 
-    void addStateActionConstraint(StateActionConstraint* sac);
-    void getStateActionConstraints(std::vector<StateActionConstraint*>& result);
-    void removeStateActionConstraint(StateActionConstraint* sac);
+    void addStateActionConstraint(LogicalExpression* sac);
+    void removeStateActionConstraint(LogicalExpression* sac);
 
     void addStateFluent(StateFluent* var);
     StateFluent* getStateFluent(UninstantiatedVariable* var);
@@ -57,14 +53,8 @@ public:
     void getVariablesOfSchema(VariableDefinition* schema, std::vector<AtomicLogicalExpression*>& result);
     void getInitialState(std::vector<AtomicLogicalExpression*>& result);
 
-    NumericConstant* getConstant(double val);
-    NumericConstant* getConstant(UninstantiatedVariable* var);
-
-    void addCPF(ConditionalProbabilityFunction* cpf);
-    void getCPFs(std::vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF = true);
-    void removeCPF(ConditionalProbabilityFunction* cpf);
-
-    void print(std::ostream& out);
+    void addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf);
+    void setRewardCPF(LogicalExpression* const& _rewardCPF);
 
     //string description
     std::string domainDesc;
@@ -84,7 +74,6 @@ public:
     int horizon;
     double discountFactor;
 
-private:
     //objects
     std::map<std::string, ObjectType*> objectTypes;
     std::map<std::string, Object*> objects;
@@ -95,12 +84,10 @@ private:
     VariableDefinition* rewardVariableDefinition;
     std::vector<VariableDefinition*> variableDefinitionsVec;
 
-    std::map<std::string, ConditionalProbabilityFunctionDefinition*> CPFDefs;
-    std::vector<ConditionalProbabilityFunctionDefinition*> CPFDefsVec;
-    ConditionalProbabilityFunctionDefinition* rewardCPFDef;
+    std::vector<std::pair<UninstantiatedVariable*, LogicalExpression*> > CPFDefs;
 
     //state action constraints
-    std::vector<StateActionConstraint*> SACs;
+    std::vector<LogicalExpression*> SACs;
 
     //variables
     std::map<std::string, StateFluent*> variables;
@@ -109,13 +96,9 @@ private:
     StateFluent* rewardVariable;
     std::map<VariableDefinition*, std::vector<AtomicLogicalExpression*> > variablesBySchema;
 
-    //constants
-    std::map<double, NumericConstant*> constants;
-
     //instantiated CPFs
-    std::map<StateFluent*, ConditionalProbabilityFunction*> CPFs;
-    ConditionalProbabilityFunction* rewardCPF;
-    std::vector<ConditionalProbabilityFunction*> CPFsVec;
+    LogicalExpression* rewardCPF;
+    std::vector<std::pair<StateFluent*, LogicalExpression*> > CPFs;
 };
 
 #endif

@@ -3,6 +3,10 @@ LogicalExpression* LogicalExpression::determinizeMostLikely(NumericConstant* /*r
     return NULL;
 }
 
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
 LogicalExpression* AtomicLogicalExpression::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
     return this;
 }
@@ -10,6 +14,14 @@ LogicalExpression* AtomicLogicalExpression::determinizeMostLikely(NumericConstan
 LogicalExpression* NumericConstant::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
     return this;
 }
+
+LogicalExpression* Object::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
+    return this;
+}
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
 
 LogicalExpression* Conjunction::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
     vector<LogicalExpression*> newExprs;
@@ -110,6 +122,19 @@ LogicalExpression* Division::determinizeMostLikely(NumericConstant* randomNumber
     return new Division(newExprs);
 }
 
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+LogicalExpression* Negation::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
+    LogicalExpression* newExpr = expr->determinizeMostLikely(randomNumberReplacement);
+    return new Negation(newExpr);
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
 LogicalExpression* BernoulliDistribution::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
     LogicalExpression* newExpr = expr->determinizeMostLikely(randomNumberReplacement);
 
@@ -119,6 +144,31 @@ LogicalExpression* BernoulliDistribution::determinizeMostLikely(NumericConstant*
 
     return new LowerEqualsExpression(newExprs);
 }
+
+LogicalExpression* DiscreteDistribution::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
+    int highestIndex = 0;
+    double highestProb = 0.0;
+
+    for(unsigned int i = 0; i < probabilities.size(); ++i) {
+        LogicalExpression* prob = probabilities[i]->determinizeMostLikely(randomNumberReplacement);
+        NumericConstant* nc = dynamic_cast<NumericConstant*>(prob);
+        // Determinization with conditional probabilities is a lot harder so we
+        // exclude it for now. (TODO!!!)
+        if(!nc) {
+            SystemUtils::abort("NOT SUPPORTED: Discrete statement with conditional probability detected.");
+        }
+
+        if(MathUtils::doubleIsGreater(nc->value, highestProb)) {
+            highestProb = nc->value;
+            highestIndex = i;
+        }
+    }
+    return values[highestIndex];
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 LogicalExpression* IfThenElseExpression::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
     LogicalExpression* newCondition = condition->determinizeMostLikely(randomNumberReplacement);
@@ -139,9 +189,5 @@ LogicalExpression* MultiConditionChecker::determinizeMostLikely(NumericConstant*
     return new MultiConditionChecker(newConds, newEffs);
 }
 
-LogicalExpression* NegateExpression::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
-    LogicalExpression* newExpr = expr->determinizeMostLikely(randomNumberReplacement);
-    return new NegateExpression(newExpr);
-}
 
 

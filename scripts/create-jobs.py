@@ -12,8 +12,8 @@ benchmarkDir="../testbed/benchmarks/ippc2011/rddl/"
 # defines which queue to use for one task. Possible values are
 # "athlon.q" and "athlon_core.q". The former value configures the use
 # of a whole cpu, while the latter option configures the use of a
-# single cpu core. queue = "opteron_core.q"
-queue = "opteron_core.q"
+# single cpu core.
+queue = "gki_core.q"
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
@@ -26,15 +26,15 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev19"
+revision = "rev45"
 
 configs = [
-    "[IDS]",
     "[MC-UCT -i [IDS]]",
     "[IPPC2011]",
     "[DP-UCT -i [IDS]]",    
     "[UCTStar -i [IDS]]",
     "[MaxMC-UCT -i [IDS]]",
+    #"[IDS]",
     #"[Uniform]",
     #"[MC-UCT -i [Uniform]]",
     #"[MC-UCT -sd 15 -i [Uniform]]",

@@ -5,6 +5,8 @@
 
 class ProstPlanner;
 class LogicalExpression;
+class ParameterList;
+class Parameter;
 
 class RDDLParser {
 public:
@@ -12,7 +14,6 @@ public:
         task(_task) {}
 
     void parse();
-    LogicalExpression* parseRDDLFormula(std::string& desc, UnprocessedPlanningTask* _task);
 
 private:
     UnprocessedPlanningTask* task;
@@ -21,11 +22,19 @@ private:
     void parseNonFluents();
     void parseInstance();
 
+    void parseType(std::string& desc);
+    void parseObject(std::string& desc);
+    void parseVariableDefinition(std::string& desc);
+    void parseCPFDefinition(std::string& desc);
+    void parseAtomicLogicalExpression(std::string& desc);
+    LogicalExpression* parseRDDLFormula(std::string desc);
+    ParameterList* parseParameterList(std::string& desc);
+    Parameter* parseParameter(std::string& desc);
+
     void getTokenName(std::string& token, std::string& name, int startPos);
     void splitToken(std::string& desc, std::vector<std::string>& result);
 
-    void tokenizeFormula(std::string& text, std::vector<std::string>& tokens);
-    bool isParameterDefinition(std::vector<std::string>& tokens);
+    std::vector<std::string> tokenizeFormula(std::string& text);
     bool isNumericConstant(std::string& token);
 };
 

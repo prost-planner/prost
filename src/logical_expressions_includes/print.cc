@@ -1,3 +1,7 @@
+/*****************************************************************
+                         Schematics
+*****************************************************************/
+
 void VariableDefinition::print(ostream& out) {
     out << name << "(";
     for(unsigned int i = 0; i < params.size(); ++i) {
@@ -24,19 +28,17 @@ void VariableDefinition::print(ostream& out) {
     out << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
 }
 
-void ParameterDefinition::print(ostream& out) {
-    out << "(";
-    out << parameterName;
-    out << " : ";
-    out << parameterType->name;
-    out << ") ";
+void Parameter::print(ostream& out) {
+    out << name << " ";
 }
 
-void ParameterDefinitionSet::print(ostream& out) {
+void ParameterList::print(ostream& out) {
     out << "(";
-    for(unsigned int i = 0; i < parameterDefs.size(); ++i) {
-        parameterDefs[i]->print(out);
-        out << " ";
+    for(unsigned int i = 0; i < params.size(); ++i) {
+        out << params[i]->name << " : " << types[i]->name;
+        if(i != (params.size() -1)) {
+            out << ", ";
+        }
     }
     out << ") ";
 }
@@ -44,6 +46,10 @@ void ParameterDefinitionSet::print(ostream& out) {
 void UninstantiatedVariable::print(ostream& out) {
     out << name;
 }
+
+/*****************************************************************
+                           Atomics
+*****************************************************************/
 
 void AtomicLogicalExpression::print(ostream& out) {
     out << name;
@@ -53,8 +59,19 @@ void NumericConstant::print(ostream& out) {
     out << value;
 }
 
+void Object::print(ostream& out) {
+    assert(value < type->domain.size());
+    assert(name == type->domain[value]->name);
+    out << name << " (" << value << ") ";
+}
+
+
+/*****************************************************************
+                          Quantifier
+*****************************************************************/
+
 void Quantifier::print(ostream& out) {
-    parameterDefsSet->print(out);
+    paramList->print(out);
     expr->print(out);
 }
 
@@ -82,6 +99,10 @@ void ExistentialQuantification::print(ostream& out) {
     out << ")";
 }
 
+/*****************************************************************
+                           Connectives
+*****************************************************************/
+
 void Connective::print(ostream& out) {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
@@ -102,7 +123,7 @@ void Disjunction::print(ostream& out) {
 }
 
 void EqualsExpression::print(ostream& out) {
-    out << "(=";
+    out << "(==";
     Connective::print(out);
     out << ") ";
 }
@@ -159,17 +180,47 @@ void Division::print(ostream& out) {
     out << ") ";
 }
 
-void BernoulliDistribution::print(ostream& out) {
-    out << "Bernoulli(";
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void Negation::print(ostream& out) {
+    out << "(not ";
     expr->print(out);
     out << ") ";
 }
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
 
 void KronDeltaDistribution::print(ostream& out) {
     out << "KronDelta(";
     expr->print(out);
     out << ") ";
 }
+
+void BernoulliDistribution::print(ostream& out) {
+    out << "Bernoulli(";
+    expr->print(out);
+    out << ") ";
+}
+
+void DiscreteDistribution::print(ostream& out) {
+    out << "Discrete( ";
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        out << "[";
+        values[i]->print(out);
+        out << " : ";
+        probabilities[i]->print(out);
+        out << "] ";	
+    }
+    out << ")";
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
 void IfThenElseExpression::print(ostream& out) {
     out << "(if ";
@@ -190,7 +241,7 @@ void MultiConditionChecker::print(ostream& out) {
             out << " then ";
         } else if(i == conditions.size() -1) {
             out << "(default ";
-            assert(dynamic_cast<NumericConstant*>(conditions[i]) == NumericConstant::truth());
+            assert(MathUtils::doubleIsEqual(dynamic_cast<NumericConstant*>(conditions[i])->value, 1.0));
         } else {
             out << "(elif ";
             conditions[i]->print(out);
@@ -200,10 +251,4 @@ void MultiConditionChecker::print(ostream& out) {
         out << " ) ";
     }
     out << " ] ";
-}
-
-void NegateExpression::print(ostream& out) {
-    out << "(not ";
-    expr->print(out);
-    out << ") ";
 }
