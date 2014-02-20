@@ -18,7 +18,7 @@ UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner) :
 bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     if(param == "-val") {
         if(value == "INFTY") {
-            setInitialValue(successorGenerator->getMaxReward());
+            setInitialValue(task->getMaxReward());
         } else {
             setInitialValue(atof(value.c_str()));
         }
@@ -33,7 +33,7 @@ bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
 ******************************************************************/
 
 bool UniformEvaluationSearch::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
-    bestActions = applicableActionGenerator->getIndicesOfApplicableActions(_rootState);
+    bestActions = task->getIndicesOfApplicableActions(_rootState);
     return true;
 }
 

@@ -20,18 +20,19 @@ void Evaluatable::initializeHashKeys(int _hashIndex, vector<ActionState> const& 
                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
     hashIndex = _hashIndex;
 
-    initializeActionHashKeys(actionStates);
-    initializeStateFluentHashKeys(CPFs, indexToStateFluentHashKeyMap);
-    initializeKleeneStateFluentHashKeys(CPFs, indexToKleeneStateFluentHashKeyMap);
+    long firstStateFluentHashKeyBase = initializeActionHashKeys(actionStates);
+    initializeStateFluentHashKeys(CPFs, indexToStateFluentHashKeyMap, firstStateFluentHashKeyBase);
+    initializeKleeneStateFluentHashKeys(CPFs, indexToKleeneStateFluentHashKeyMap, firstStateFluentHashKeyBase);
 }
 
-void Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
-    firstStateFluentHashKeyBase = 1;
+long Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
+    long firstStateFluentHashKeyBase = 1;
     actionHashKeyMap = vector<long>(actionStates.size(), 0);
 
     for(unsigned int j =  0; j < actionStates.size(); ++j) {
         calculateActionHashKey(actionStates, actionStates[j], firstStateFluentHashKeyBase);
     }
+    return firstStateFluentHashKeyBase;
 }
 
 void Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates, ActionState const& action, long& nextKey) {
@@ -68,68 +69,82 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates, vect
 }
 
 void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
-                                                vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap) {
+                                                vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap,
+                                                long const& firstStateFluentHashKeyBase) {
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
-    // We use this to store the state fluent update rules temporary as
-    // it is possible that this evaluatable cannot use caching.
+    // We use this to store the state fluent update rules temporary as it is
+    // possible that this evaluatable cannot use caching. This evaluatable
+    // depends on the variables tmpStateFluentDependencies[i].first, and its
+    // StateFluentHashKey is thereby increased by that variable's value
+    // multiplied with tmpStateFluentDependencies[i].second
     vector<pair<int, long> > tmpStateFluentDependencies;
 
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[i]->getHead());
-        if(it != dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
+    // We iterate over the CPFs instead of directly over the
+    // dependentStateFluents vector as we have to access the CPF objects
+    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+        if(dependentStateFluents.find(CPFs[index]->getHead()) != dependentStateFluents.end()) {
+            tmpStateFluentDependencies.push_back(make_pair(index, nextHashKeyBase));
 
-            // When we generalize this to finite-domain variables we
-            // use domain size rather than 2 here!
-            if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 2)) {
+            if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
                 cachingType = NONE;
                 return;
             }
         }
     }
 
-    for(unsigned int i = 0; i < tmpStateFluentDependencies.size(); ++i) {
-        indexToStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
+    for(unsigned int index = 0; index < tmpStateFluentDependencies.size(); ++index) {
+        indexToStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
     }
 
+    // TODO: Make sure this number makes sense
     if(nextHashKeyBase > 50000) {
         cachingType = MAP;
     } else {
         cachingType = VECTOR;
-        evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        if(isProbabilistic()) {
+            pdEvaluationCacheVector = vector<DiscretePD>(nextHashKeyBase, DiscretePD());
+        } else {
+            evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        }
     }
 }
 
 void Evaluatable::initializeKleeneStateFluentHashKeys(vector<ConditionalProbabilityFunction*> const& CPFs,
-                                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
+                                                      vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap,
+                                                      long const& firstStateFluentHashKeyBase) {
     long nextHashKeyBase = firstStateFluentHashKeyBase;
 
-    // We use this to store the state fluent update rules temporary as
-    // it is possible that this evaluatable cannot use caching.
+    // We use this to store the state fluent update rules temporary as it is
+    // possible that this evaluatable cannot use caching. This evaluatable
+    // depends on the variables tmpStateFluentDependencies[i].first, and its
+    // KleeneStateFluentHashKey is thereby increased by that variable's value
+    // multiplied with tmpStateFluentDependencies[i].second
     vector<pair<int, long> > tmpStateFluentDependencies;
 
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        set<StateFluent*>::iterator it = dependentStateFluents.find(CPFs[i]->getHead());
-        if(it != dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair((*it)->index, nextHashKeyBase));
+    // We iterate over the CPFs instead of directly over the
+    // dependentStateFluents vector as we have to access the CPF objects
+    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+        if(dependentStateFluents.find(CPFs[index]->getHead()) != dependentStateFluents.end()) {
+            tmpStateFluentDependencies.push_back(make_pair(index, nextHashKeyBase));
 
-            if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, 3)) {
+            if((CPFs[index]->getKleeneDomainSize() < 0) || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getKleeneDomainSize())) {
                 kleeneCachingType = NONE;
                 return;
             }
         }
     }
 
-    for(unsigned int i = 0; i < tmpStateFluentDependencies.size(); ++i) {
-        indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[i].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[i].second));
+    for(unsigned int index = 0; index < tmpStateFluentDependencies.size(); ++index) {
+        indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
     }
 
+    // TODO: Make sure this number makes sense
     if(nextHashKeyBase > 50000) {
         kleeneCachingType = MAP;
     } else {
         kleeneCachingType = VECTOR;
-        kleeneEvaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
+        kleeneEvaluationCacheVector = vector<set<double> >(nextHashKeyBase);
     }
 }
 

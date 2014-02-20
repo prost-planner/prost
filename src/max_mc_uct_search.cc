@@ -15,7 +15,7 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initializing child ";
-    // successorGenerator->printAction(cout,index);
+    // task->printAction(cout,index);
     // cout << " with " << initialQValue << " leading to init of " << node->children[index]->accumulatedReward << endl;
 }
 
@@ -23,13 +23,14 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
                          Outcome selection
 ******************************************************************/
 
-MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, State& stateAsProbDistr, int& varIndex) {
+MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+    // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(2,NULL);
+        node->children.resize(task->getDomainSizeOfCPF(varIndex), NULL);
     }
 
-    successorGenerator->sampleVariable(stateAsProbDistr, varIndex);
-    unsigned int childIndex = (unsigned int)stateAsProbDistr[varIndex];
+    int childIndex = (int)task->sampleVariable(nextPDState[varIndex]);
+    nextState[varIndex] = childIndex;
 
     if(!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
@@ -53,22 +54,15 @@ void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& im
 }
 
 void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immReward, double const& /*futReward*/) {
-    // TODO: Store the best child. Then:
+    assert(!node->children.empty());
 
-    // 1. The best child has been sampled. If futReward is at least as
-    // good as that child's reward before it is still the best child
-    // (it got better). Only otherwise check for the best child again.
+    node->immediateReward = immReward;
 
-    // 2. Another child has been sampled. Check if it is better than
-    // the former best child. If so, it is the new best child,
-    // otherwise the former best child is still the best child.
-
-    // Identify best child and take its reward estimate
     if(selectedActionIndex() != -1) {
         ++node->numberOfVisits;
     }
 
-    node->immediateReward = immReward;
+    // set best child dependent values to noop child first
     node->futureReward = node->children[0]->getExpectedRewardEstimate();
 
     for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
@@ -83,22 +77,21 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
 }
 
 void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node, double const& /*futReward*/) {
-    assert(node->children.size() == 2);
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
+    node->futureReward = 0.0;
+    int numberOfChildVisits = 0;
 
     // Propagate values from children
-    if(node->children[0] && node->children[1]) {
-        node->futureReward = (((node->children[0]->numberOfVisits * node->children[0]->getExpectedRewardEstimate()) + 
-                              (node->children[1]->numberOfVisits * node->children[1]->getExpectedRewardEstimate())) /
-                              (node->children[0]->numberOfVisits + node->children[1]->numberOfVisits));
-    } else if(node->children[0]) {
-        node->futureReward = node->children[0]->getExpectedRewardEstimate();
-    } else {
-        assert(node->children[1]);
-        node->futureReward = node->children[1]->getExpectedRewardEstimate();
+    for(unsigned int i = 0; i < node->children.size(); ++i) {
+        if(node->children[i]) {
+            node->futureReward += (node->children[i]->numberOfVisits * node->children[i]->getExpectedRewardEstimate());
+            numberOfChildVisits += node->children[i]->numberOfVisits;
+        }
     }
+
+    node->futureReward /= numberOfChildVisits;
 }
 
 

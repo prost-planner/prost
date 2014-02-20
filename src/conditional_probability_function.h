@@ -7,13 +7,9 @@
 
 #include "utils/math_utils.h"
 
-#include <limits>
 #include <map>
 
 class UninstantiatedVariable;
-class RDDLParser;
-class Instantiator;
-class PlanningTask;
 
 class ConditionalProbabilityFunction : public Evaluatable {
 public:
@@ -22,27 +18,32 @@ public:
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
 
+    // This is used to sort transition functions by their name to ensure
+    // deterministic behaviour
+    struct TransitionFunctionSort {
+        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
+            return lhs->head->name < rhs->head->name;
+        }
+    };
+
     ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
         Evaluatable("CPF " + _head->name, _formula),
         head(_head),
-        probDomainSize(0),
-        probHashKeyBase(0),
-        hashKeyBase(0),
-        minVal(0.0), 
-        maxVal(0.0) {}
+        kleeneDomainSize(0) {}
 
     ConditionalProbabilityFunction(ConditionalProbabilityFunction const& other, LogicalExpression* _formula) :
         Evaluatable(other, _formula),
         head(other.head),
-        probDomainMap(other.probDomainMap),
-        probDomainSize(other.probDomainSize),
-        probHashKeyBase(other.probHashKeyBase),
-        hashKeyBase(other.hashKeyBase),
-        minVal(other.minVal), 
-        maxVal(other.maxVal) {}
+        domain(other.domain),
+        kleeneDomainSize(other.kleeneDomainSize) {}
 
-    bool simplify(UnprocessedPlanningTask* _task, std::map<StateFluent*, NumericConstant*>& replacements);
-    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement, UnprocessedPlanningTask* _task);
+    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actionState, std::set<double>& res) {
+        formula->calculateDomain(domains, actionState, res);
+    }
+
+    void initializeDomains(std::vector<ActionState> const& actionStates);
 
     bool isRewardCPF() const {
         assert(head != NULL);
@@ -54,44 +55,60 @@ public:
         return head;
     }
 
+    bool isBoolean() const {
+        return head->parent->valueType->type == Type::BOOL;
+    }
+
+    void setDomain(std::set<double> _domain) {
+        domain = _domain;
+    }
+
+    std::set<double> const& getDomain() const {
+        return domain;
+    }
+
+    bool hasFiniteDomain() const {
+        return (!domain.empty());
+    }
+
     double const& getMinVal() const {
-        return minVal;
+        assert(!domain.empty());
+        return *domain.begin();
     }
 
     double const& getMaxVal() const {
-        return maxVal;
+        assert(!domain.empty());
+        return *domain.rbegin();
+    }
+
+    bool hasFiniteKleeneDomain() const {
+        return (kleeneDomainSize > 0);
+    }
+
+    long getKleeneDomainSize() const {
+        return kleeneDomainSize;
+    }
+
+    void setIndex(int _index) {
+        head->index = _index;
+    }
+
+    double getInitialValue() const {
+        return head->initialValue;
+    }
+
+    void setKleeneDomainSize(long _kleeneDomainSize) {
+        kleeneDomainSize = _kleeneDomainSize;
     }
 
 private:
     StateFluent* head;
 
-    //hashing of states as probability distributions
-    std::map<double, long> probDomainMap;
-    int probDomainSize;
+    // The values this CPF can take
+    std::set<double> domain;
 
-    //hashing of states
-    long probHashKeyBase;
-    long hashKeyBase;
-
-    double minVal;
-    double maxVal;
-};
-
-class ConditionalProbabilityFunctionDefinition {
-public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task, RDDLParser* parser);
-
-    UninstantiatedVariable* head;
-    LogicalExpression* formula;
-
-    ConditionalProbabilityFunction* instantiate(UnprocessedPlanningTask* task, AtomicLogicalExpression* variable);
-    void replaceQuantifier(UnprocessedPlanningTask* task, Instantiator* instantiator);
-
-    void print(std::ostream& out);
-
-private:
-    ConditionalProbabilityFunctionDefinition(UninstantiatedVariable* _head, LogicalExpression* _formula) :
-        head(_head), formula(_formula) {}
+    // Hashing of KleeneStates
+    long kleeneDomainSize;
 };
 
 #endif

@@ -15,7 +15,7 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initializing child ";
-    // successorGenerator->printAction(cout,index);
+    // task->printAction(cout,index);
     // cout << " with " << initialQValue << " leading to init of " << node->children[index]->accumulatedReward << endl;
 }
 
@@ -23,13 +23,14 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
                          Outcome selection
 ******************************************************************/
 
-MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, State& stateAsProbDistr, int& varIndex) {
+MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+    // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(2,NULL);
+        node->children.resize(task->getDomainSizeOfCPF(varIndex), NULL);
     }
 
-    successorGenerator->sampleVariable(stateAsProbDistr, varIndex);
-    unsigned int childIndex = (unsigned int)stateAsProbDistr[varIndex];
+    int childIndex = (int)task->sampleVariable(nextPDState[varIndex]);
+    nextState[varIndex] = childIndex;
 
     if(!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
@@ -49,7 +50,6 @@ void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& immReward, d
 }
 
 void MCUCTSearch::backupChanceNode(MCUCTNode* node, double const& futReward) {
-    assert(node->children.size() == 2);
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     node->futureReward += futReward;

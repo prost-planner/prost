@@ -42,8 +42,6 @@ public:
     virtual void setCachingEnabled(bool _cachingEnabled) {
         cachingEnabled = _cachingEnabled;
     }
-
-    virtual void useProbabilisticPlanningTask(bool const& useProbabilisticTask);
    
     virtual void setMaxSearchDepth(int _maxSearchDepth) {
         maxSearchDepth = _maxSearchDepth;
@@ -74,10 +72,8 @@ protected:
     // The main planner
     ProstPlanner* planner;
 
-    // The planning tasks that are used for successor and applicable
-    // action generation
-    PlanningTask* successorGenerator;
-    PlanningTask* applicableActionGenerator;
+    // The planning task
+    PlanningTask* task;
 
     // Parameter
     bool cachingEnabled;
