@@ -26,12 +26,13 @@ private:
     bool submitAction(std::vector<std::string>& action, std::vector<double>& nextState);
 
     void readState(const XMLNode* node, std::vector<double>& nextState);
-    void readVariable(const XMLNode* node, std::map<std::string, double>& result);
+    void readVariable(const XMLNode* node, std::map<std::string, std::string>& result);
 
     std::string hostName;
     unsigned short port;
     int socket;
     std::map<std::string,int> stateVariableIndices;
+    std::vector<std::vector<std::string> > stateVariableValues;
     double accumulatedReward;
     int numberOfRounds;
 };

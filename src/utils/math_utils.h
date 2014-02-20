@@ -35,10 +35,10 @@ public:
         return doubleIsEqual(d1,-std::numeric_limits<double>::max());
     }
 
-    static bool multiplyWithOverflowCheck(long& x, unsigned int const& y) {
+    static bool multiplyWithOverflowCheck(long& x, unsigned long const& y) {
         long base = x;
         x = 0;
-        for(unsigned int i = 0; i < y; ++i) {
+        for(unsigned long i = 0; i < y; ++i) {
             x += base;
             if(x < base) {
                 return false;
@@ -47,8 +47,18 @@ public:
         return true;
     }
 
+    static bool toThePowerOfWithOverflowCheck(long& x, unsigned int const& y) {
+        long base = x;
+        for(unsigned int i = 1; i < y; ++i) {
+            if(!multiplyWithOverflowCheck(x, base)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     static double generateRandomNumber() {
-        return ((double)(rand() % 1000001) / 1000000.0);
+        return ((double)(rand() % 1000001) / 1000001.0);
     }
 
 private:

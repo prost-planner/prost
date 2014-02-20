@@ -3,9 +3,10 @@
 
 #include "unprocessed_planning_task.h"
 
+class Object;
+
 class Type {
 public:
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
     static Type* typeFromName(std::string& typeName, UnprocessedPlanningTask* task);
 
     std::string name;
@@ -16,8 +17,12 @@ public:
         OBJECT
     } type;
 
+    // If the domain is empty, it is infinte
+    std::vector<Object*> domain;
+
     virtual ~Type() {}
     virtual void print(std::ostream& out);
+    virtual void printDomain(std::ostream& out) = 0;
     virtual double valueStringToDouble(std::string& val);
 
     Type(std::string _name, TypeType _type) :
@@ -31,6 +36,7 @@ public:
         return inst;
     }
 
+    void printDomain(std::ostream& out);
     double valueStringToDouble(std::string& val);
 
     ~BoolType() {}
@@ -49,6 +55,8 @@ public:
 
     ~IntType() {}
 
+    void printDomain(std::ostream& out);
+
 private:
     IntType() :
         Type("int", Type::INT) {}
@@ -62,6 +70,8 @@ public:
     }
 
     ~RealType() {}
+
+    void printDomain(std::ostream& out);
 
 private:
     RealType() :
@@ -80,32 +90,19 @@ public:
         return inst;
     }
 
-    ObjectType(std::string Name, ObjectType* SuperType);
+    ObjectType(std::string _name, ObjectType* _superType) :
+        Type(_name, Type::OBJECT), superType(_superType) {}
     ~ObjectType() {}
 
     ObjectType* superType;
 
     void print(std::ostream& out);
+    void printDomain(std::ostream& out);
     double valueStringToDouble(std::string& val);
 
 private:
-    ObjectType(std::string Name) :
-        Type(Name, Type::OBJECT), superType(NULL) {}
+    ObjectType(std::string _name) :
+        Type(_name, Type::OBJECT), superType(NULL) {}
 };
 
-class Object {
-public:
-    Object(std::string Name, ObjectType* Type) :
-        name(Name), type(Type) {} 
-    ~Object() {}
-
-    static void parse(std::string& desc, UnprocessedPlanningTask* task);
-
-    void getObjectTypes(std::vector<ObjectType*>& objectTypes);
-    void print(std::ostream& out);
-
-    std::string name;
-    ObjectType* type;
-};
-
-#endif /* TYPED_OBJECTS_H */
+#endif
