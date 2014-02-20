@@ -1,279 +1,367 @@
-void LogicalExpression::calculateDomain(ActionState const& /*actions*/, set<double>& /*res*/) {
+void LogicalExpression::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& /*actions*/, set<double>& /*res*/) {
     assert(false);
 }
 
-void StateFluent::calculateDomain(ActionState const& /*actions*/, set<double>& res) {
-    res.insert(0.0);
-    res.insert(1.0);
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
+void StateFluent::calculateDomain(vector<set<double> > const& domains, ActionState const& /*actions*/, set<double>& res) {
+    assert(res.empty());
+    assert(index < domains.size());
+    assert(!domains[index].empty());
+
+    res.insert(domains[index].begin(), domains[index].end());
 }
 
-void ActionFluent::calculateDomain(ActionState const& actions, set<double>& res) {
+void ActionFluent::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& actions, set<double>& res) {
+    assert(res.empty());
     assert(index < actions.state.size());
     res.insert(actions[index]);
 }
 
-void NumericConstant::calculateDomain(ActionState const& /*actions*/, set<double>& res) {
+void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& /*actions*/, set<double>& res) {
+    assert(res.empty());
     res.insert(value);
 }
 
-void Conjunction::calculateDomain(ActionState const& actions, set<double>& res) {
+void Object::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& /*actions*/, set<double>& res) {
     assert(res.empty());
-    set<double> tmp1;
-    tmp1.insert(1.0);
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        res.clear();
-        set<double> tmp;
-        exprs[i]->calculateDomain(actions, tmp);
-        for(set<double>::iterator it = tmp1.begin(); it != tmp1.end(); ++it) {
-            for(set<double>::iterator it2 = tmp.begin(); it2 != tmp.end(); ++it2) {
-                res.insert(*it * *it2);
-            }
-        }
-        tmp1.clear();
-        tmp1 = res;
-    }
+    res.insert(value);
 }
 
-void Disjunction::calculateDomain(ActionState const& actions, set<double>& res) {
+/*****************************************************************
+                           Connectives
+*****************************************************************/
+
+void Conjunction::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
     assert(res.empty());
-    set<double> tmp1;
-    tmp1.insert(1.0);
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+
+    // This must be true if all variables are true
+    bool mustBeTrue = true;
+
+     for(unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
-        set<double> tmp;
-        exprs[i]->calculateDomain(actions, tmp);
-        for(set<double>::iterator it = tmp1.begin(); it != tmp1.end(); ++it) {
-            for(set<double>::iterator it2 = tmp.begin(); it2 != tmp.end(); ++it2) {
-                res.insert(*it * (1-0-*it2));
-            }
+        exprs[i]->calculateDomain(domains, actions, res);
+        if((res.size() == 1) && MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
+            // This element and the whole conjunction must be false
+            return;
         }
-        tmp1.clear();
-        tmp1 = res;
+
+        // This element might be false
+        if(res.find(0.0) != res.end()) {
+            mustBeTrue = false;
+        }
     }
 
-    res.clear();
-    for(set<double>::iterator it = tmp1.begin(); it != tmp1.end(); ++it) {
-        res.insert(1.0 - *it);
-    }
+     res.clear();
+     res.insert(1.0);
+     if(!mustBeTrue) {
+         res.insert(0.0);
+     }
 }
 
-void EqualsExpression::calculateDomain(ActionState const& actions, set<double>& res) {
+void Disjunction::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(res.empty());
+
+    // This must be false if all variables are false
+    bool mustBeFalse= true;
+
+     for(unsigned int i = 0; i < exprs.size(); ++i) {
+        res.clear();
+        exprs[i]->calculateDomain(domains, actions, res);
+        if((res.size() == 1) && !MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
+            // This element and the whole conjunction must be true
+            res.clear();
+            res.insert(1.0);
+            return;
+        }
+
+        // This element might be true
+        if((res.find(0.0) == res.end()) || res.size() > 1) {
+            mustBeFalse = false;
+        }
+    }
+
+     res.clear();
+     res.insert(0.0);
+     if(!mustBeFalse) {
+         res.insert(1.0);
+     }
+}
+
+void EqualsExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
-    set<double> childRes;
-    exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
-    set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
-    if(childRes.size() == 1 || childRes2.size() == 1) {
-        if(MathUtils::doubleIsEqual(*childRes.begin(),*childRes2.begin())) {
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+
+    if(lhs.size() != rhs.size()) {
+        res.insert(0.0);
+    }
+
+    for(set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
+        if(rhs.find(*it) != rhs.end()) {
             res.insert(1.0);
         } else {
             res.insert(0.0);
         }
-        return;
+
+        if(res.size() == 2) {
+            break;
+        }
+    }
+}
+
+void GreaterExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+
+    // If the largest lhs is bigger than the smallest rhs this can be true
+    if(MathUtils::doubleIsGreater(*lhs.rbegin(), *rhs.begin())) {
+        res.insert(1.0);
     }
 
-    res.insert(0.0);
-    for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        if(childRes2.find(*it) != childRes2.end()) {
+    // If the smallest lhs is not bigger than the largest rhs this can be false
+    if(!MathUtils::doubleIsGreater(*lhs.begin(),*rhs.rbegin())) {
+        res.insert(0.0);
+    }
+}
+
+void LowerExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+
+    if(MathUtils::doubleIsSmaller(*lhs.rbegin(), *rhs.begin())) {
+        res.insert(1.0);
+    }
+
+    if(!MathUtils::doubleIsSmaller(*lhs.begin(),*rhs.rbegin())) {
+        res.insert(0.0);
+    }
+}
+
+void GreaterEqualsExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+
+    if(MathUtils::doubleIsGreaterOrEqual(*lhs.rbegin(), *rhs.begin())) {
+        res.insert(1.0);
+    }
+
+    if(!MathUtils::doubleIsGreaterOrEqual(*lhs.begin(),*rhs.rbegin())) {
+        res.insert(0.0);
+    }
+}
+
+void LowerEqualsExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+
+    if(MathUtils::doubleIsSmallerOrEqual(*lhs.rbegin(), *rhs.begin())) {
+        res.insert(1.0);
+    }
+
+    if(!MathUtils::doubleIsSmallerOrEqual(*lhs.begin(),*rhs.rbegin())) {
+        res.insert(0.0);
+    }
+}
+
+void Addition::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(res.empty());
+    set<double> sums;
+    exprs[0]->calculateDomain(domains, actions, sums);
+
+    for(unsigned int i = 1; i < exprs.size(); ++i) {
+        set<double> element;
+        exprs[i]->calculateDomain(domains, actions, element);
+        res.clear();
+
+        for(set<double>::iterator it = sums.begin(); it != sums.end(); ++it) {
+            for(set<double>::iterator it2 = element.begin(); it2 != element.end(); ++it2) {
+                res.insert(*it + *it2);
+            }
+        }
+        sums.clear();
+        sums = res;
+    }
+}
+
+void Subtraction::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+    for(set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
+        for(set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
+            res.insert(*it - *it2);
+        }
+    }
+}
+
+void Multiplication::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(res.empty());
+    set<double> prods;
+    exprs[0]->calculateDomain(domains, actions, prods);
+
+    for(unsigned int i = 1; i < exprs.size(); ++i) {
+        set<double> element;
+        exprs[i]->calculateDomain(domains, actions, element);
+        res.clear();
+
+        for(set<double>::iterator it = prods.begin(); it != prods.end(); ++it) {
+            for(set<double>::iterator it2 = element.begin(); it2 != element.end(); ++it2) {
+                res.insert(*it * *it2);
+            }
+        }
+        prods.clear();
+        prods = res;
+    }
+}
+
+void Division::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    assert(exprs.size() == 2);
+    assert(res.empty());
+
+    set<double> lhs;
+    exprs[0]->calculateDomain(domains, actions, lhs);
+
+    set<double> rhs;
+    exprs[1]->calculateDomain(domains, actions, rhs);
+    for(set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
+        for(set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
+            res.insert(*it / *it2);
+        }
+    }
+}
+
+/*****************************************************************
+                          Unaries
+*****************************************************************/
+
+void Negation::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    set<double> tmp;
+    expr->calculateDomain(domains, actions, tmp);
+
+    if(tmp.find(0.0) != tmp.end()) {
+        res.insert(1.0);
+    }
+    if((tmp.size() > 1) || (tmp.find(0.0) == tmp.end())) {
+        res.insert(0.0);
+    }
+}
+
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
+void BernoulliDistribution::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    set<double> tmp;
+    expr->calculateDomain(domains, actions, tmp);
+
+    for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+        if(!MathUtils::doubleIsEqual(*it, 0.0)) {
             res.insert(1.0);
+        }
+
+        if(MathUtils::doubleIsGreaterOrEqual(*it, 0.0) && MathUtils::doubleIsSmaller(*it, 1.0)) {
+            res.insert(0.0);
+        }
+
+        if(res.size() == 2) {
             break;
         }
     }
 
 }
 
-void GreaterExpression::calculateDomain(ActionState const& /*actions*/, set<double>& /*res*/) {
-    assert(false);
-}
-
-void LowerExpression::calculateDomain(ActionState const& /*actions*/, set<double>& /*res*/) {
-    assert(false);
-}
-
-void GreaterEqualsExpression::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(exprs.size() == 2);
-    assert(res.empty());
-    set<double> childRes;
-    exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
-    set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
-
-
-    if(MathUtils::doubleIsGreaterOrEqual(*childRes.rbegin(),*childRes2.begin())) {
-        res.insert(1.0);
-        //cout << "might be bigger or equal" << endl;
-    } else {
-        res.insert(0.0);
-    }
-
-    if(!MathUtils::doubleIsGreaterOrEqual(*childRes.begin(),*childRes2.rbegin())) {
-        res.insert(0.0);
-        //cout << "might be smaller" << endl;
-    } else {
-        res.insert(1.0);
-    }
-}
-
-void LowerEqualsExpression::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(exprs.size() == 2);
-    assert(res.empty());
-    set<double> childRes;
-    exprs[0]->calculateDomain(actions, childRes);
-    //for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-        //cout << *it << " ";
-        //}
-    //cout << endl;
-    set<double> childRes2;
-    exprs[0]->calculateDomain(actions, childRes2);
-    //for(set<double>::iterator it = childRes2.begin(); it != childRes2.end(); ++it) {
-    //    cout << *it << " ";
-    //}
-    //cout << endl;
-
-
-    if(MathUtils::doubleIsSmallerOrEqual(*childRes.rbegin(),*childRes2.begin())) {
-        res.insert(1.0);
-        //cout << "might be bigger or equal" << endl;
-    } else {
-        res.insert(0.0);
-    }
-
-    if(!MathUtils::doubleIsSmallerOrEqual(*childRes.begin(),*childRes2.rbegin())) {
-        res.insert(0.0);
-        //cout << "might be smaller" << endl;
-    } else {
-        res.insert(1.0);
-    } 
-}
-
-void Addition::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(res.empty());
-    set<double> childRes;
-    exprs[0]->calculateDomain(actions, childRes);
-
-    for(unsigned int i = 1; i < exprs.size(); ++i) {
-        res.clear();
-        set<double> childRes2;
-        exprs[i]->calculateDomain(actions, childRes2);
-        for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-            for(set<double>::iterator it2 = childRes2.begin(); it2 != childRes2.end(); ++it2) {
-                res.insert(*it + *it2);
-            }
-        }
-        childRes.clear();
-        childRes = res;
-    }
-}
-
-void Subtraction::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(exprs.size() == 2);
-    assert(res.empty());
-    set<double> childRes1;
-    exprs[0]->calculateDomain(actions, childRes1);
-    set<double> childRes2;
-    exprs[1]->calculateDomain(actions, childRes2);
-    for(set<double>::iterator it = childRes1.begin(); it != childRes1.end(); ++it) {
-        for(set<double>::iterator it2 = childRes2.begin(); it2 != childRes2.end(); ++it2) {
-            res.insert(*it - *it2);
+void DiscreteDistribution::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        set<double> probs;
+        probabilities[i]->calculateDomain(domains, actions, probs);
+        if((probs.size() > 1) || (probs.find(0.0) == probs.end())) {
+            set<double> vals;
+            values[i]->calculateDomain(domains, actions, vals);
+            res.insert(vals.begin(), vals.end());
         }
     }
 }
 
-void Multiplication::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(res.empty());
-    set<double> childRes;
-    exprs[0]->calculateDomain(actions, childRes);
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
 
-    for(unsigned int i = 1; i < exprs.size(); ++i) {
-        res.clear();
-        set<double> childRes2;
-        exprs[i]->calculateDomain(actions, childRes2);
-        for(set<double>::iterator it = childRes.begin(); it != childRes.end(); ++it) {
-            for(set<double>::iterator it2 = childRes2.begin(); it2 != childRes2.end(); ++it2) {
-                res.insert(*it * *it2);
-            }
+void IfThenElseExpression::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
+    set<double> cond;
+    condition->calculateDomain(domains, actions, cond);
+    if(cond.size() > 1) {
+        // cond has more than one value, one of which must represent 'true'
+        valueIfTrue->calculateDomain(domains, actions, res);
+        if(cond.find(0.0) != cond.end()) {
+            // and false is also possible
+            set<double> tmp;
+            valueIfFalse->calculateDomain(domains, actions, tmp);
+            res.insert(tmp.begin(), tmp.end());
         }
-        childRes.clear();
-        childRes = res;
-    }
-}
-
-void Division::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(exprs.size() == 2);
-    assert(res.empty());
-
-    set<double> childRes1;
-    exprs[0]->calculateDomain(actions, childRes1);
-    set<double> childRes2;
-    exprs[1]->calculateDomain(actions, childRes2);
-    for(set<double>::iterator it = childRes1.begin(); it != childRes1.end(); ++it) {
-        for(set<double>::iterator it2 = childRes2.begin(); it2 != childRes2.end(); ++it2) {
-            res.insert(*it / *it2);
-        }
-    }
-
-}
-
-void BernoulliDistribution::calculateDomain(ActionState const& actions, set<double>& res) {
-    expr->calculateDomain(actions,res);
-}
-
-void IfThenElseExpression::calculateDomain(ActionState const& actions, set<double>& res) {
-    assert(res.empty());
-    condition->calculateDomain(actions, res);
-    assert(!res.empty());
-    if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),0.0))) {
-        res.clear();
-        valueIfFalse->calculateDomain(actions, res);
-    } else if(res.size() == 1 && (MathUtils::doubleIsEqual(*res.begin(),1.0))) {
-        res.clear();
-        valueIfTrue->calculateDomain(actions, res);
+    } else if(cond.find(0.0) != cond.end()) {
+        // there is only one value in cond which is 'false'
+        valueIfFalse->calculateDomain(domains, actions, res);
     } else {
-        res.clear();
-        valueIfTrue->calculateDomain(actions, res);
-        set<double> tmp;
-        valueIfFalse->calculateDomain(actions, tmp);
-        res.insert(tmp.begin(),tmp.end());
+        valueIfTrue->calculateDomain(domains, actions, res);
     }
 }
 
-void MultiConditionChecker::calculateDomain(ActionState const& actions, set<double>& res) {
+void MultiConditionChecker::calculateDomain(vector<set<double> > const& domains, ActionState const& actions, set<double>& res) {
     for(unsigned int i = 0; i < conditions.size(); ++i) {
-        set<double> tmp;
-        conditions[i]->calculateDomain(actions, tmp);
-        assert(!tmp.empty());
-        if(tmp.size() > 1 || !MathUtils::doubleIsEqual(*tmp.begin(),0.0)) {
-            tmp.clear();
-            effects[i]->calculateDomain(actions, tmp);
-            res.insert(tmp.begin(),tmp.end());
+        set<double> cond;
+        conditions[i]->calculateDomain(domains, actions, cond);
+        if(cond.size() > 1) {
+            // cond has more than one value, one of which must represent 'true'
+            set<double> tmp;
+            effects[i]->calculateDomain(domains, actions, tmp);
+            res.insert(tmp.begin(), tmp.end());
+            if(cond.find(0.0) == cond.end()) {
+                // all values in cond represent 'true'
+                return;
+            }
+        } else if(cond.find(0.0) == cond.end()) {
+            // there is only one value in cond, and it is true
+            set<double> tmp;
+            effects[i]->calculateDomain(domains, actions, tmp);
+            res.insert(tmp.begin(), tmp.end());
+            return;
         }
     }
 }
-
-void NegateExpression::calculateDomain(ActionState const& actions, set<double>& res) {
-    set<double> tmp;
-    expr->calculateDomain(actions, tmp);
-    for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        assert(MathUtils::doubleIsSmallerOrEqual(*it,1.0));
-        res.insert(1.0 - (*it));
-    }
-}
-
-

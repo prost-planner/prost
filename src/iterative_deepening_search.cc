@@ -21,7 +21,7 @@ map<State, vector<double>, State::CompareIgnoringRemainingSteps> IterativeDeepen
 
 IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
     SearchEngine("IDS", _planner, false),
-    currentState(successorGenerator->getStateSize(), -1, successorGenerator->getNumberOfStateFluentHashKeys()),
+    currentState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys()),
     isLearning(false),
     timer(),
     time(0.0),
@@ -79,7 +79,7 @@ void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
 ******************************************************************/
 
 bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
-    if(!dfs->learningFinished() || !successorGenerator->learningFinished() || !applicableActionGenerator->learningFinished()) {
+    if(!dfs->learningFinished() || !task->learningFinished()) {
         return false;
     }
     cout << name << ": learning..." << endl;
@@ -91,10 +91,10 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     //perform ids for all states in traningSet and record the time it took
     for(unsigned int i = 0; i < trainingSet.size(); ++i) {
         State copy(trainingSet[i]);
-        copy.remainingSteps() = successorGenerator->getHorizon();
-        vector<double> res(successorGenerator->getNumberOfActions());
+        copy.remainingSteps() = task->getHorizon();
+        vector<double> res(task->getNumberOfActions());
 
-        vector<int> actionsToExpand = applicableActionGenerator->getApplicableActions(copy);
+        vector<int> actionsToExpand = task->getApplicableActions(copy);
 
         estimateQValues(copy, actionsToExpand, res);
         if(maxSearchDepth < minSearchDepth) {
@@ -237,16 +237,17 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
     }
 
     // 2. Check if we have reached the max search depth for this step
-    if(currentState.remainingSteps() >= maxSearchDepthForThisStep) {
-        return false;
-    }
+    return currentState.remainingSteps() < maxSearchDepthForThisStep;
+
+    // We don't check this anymore as it leads to nondeterministic
+    // behaviour, but if learning is very bad for some reason it is
+    // possible that the planner gets stuck here
 
     // 3. Check if the timeout is reached
-    if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
-        return false;
-    }
+    // if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
+    // return false; }
 
-    return true;
+    // return true;
 }
 
 /******************************************************************

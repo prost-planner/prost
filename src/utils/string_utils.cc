@@ -4,7 +4,7 @@
 #include <sstream>
 #include <algorithm>
 
-void StringUtils::replaceAll(std::string& s, const char& searchFor, const char& replaceBy) {
+void StringUtils::replaceAll(std::string& s, char const& searchFor, char const& replaceBy) {
     std::replace(s.begin(), s.end(), searchFor, replaceBy);
 }
 
@@ -67,7 +67,7 @@ void StringUtils::standardizeEqualSign(std::string& s) {
     while((index = s.find("=",index+2)) != std::string::npos) {
         assert(index > 0 && index < s.length()-1);
         if(s[index-1] != '<' && s[index-1] != '>' && s[index+1] != '>' && s[index-1] != '=' 
-           && s[index+1] != '=' && s[index-1] != '!') {
+           && s[index+1] != '=' && s[index-1] != '!' && s[index-1] != '~') {
             s.replace(index,1," = ");
         }
     }
@@ -160,7 +160,7 @@ void StringUtils::deleteCommentFromLine(std::string& line, std::string commentSi
     }
 }
 
-void StringUtils::tokenize(const std::string& s, std::vector<std::string>& res) {
+void StringUtils::tokenize(std::string const& s, std::vector<std::string>& res) {
     int openParens = 0;
     std::stringstream tmp;
     for(size_t pos = 0; pos < s.length(); ++pos) {
@@ -179,7 +179,7 @@ void StringUtils::tokenize(const std::string& s, std::vector<std::string>& res) 
     }
 }
 
-void StringUtils::split(const std::string& s, std::vector<std::string>& res, const std::string& delim) {
+void StringUtils::split(std::string const& s, std::vector<std::string>& res, std::string const& delim) {
     std::stringstream tmp;
     for(unsigned int i = 0; i < s.length(); i++) {
         if((s.substr(i, delim.size()).compare(delim) == 0)) {

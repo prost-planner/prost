@@ -21,7 +21,7 @@ public:
         state(other.state), remSteps(other.remSteps), stateFluentHashKeys(other.stateFluentHashKeys), hashKey(other.hashKey) {}
 
     State(int const& size, int const& _remSteps, int const& stateFluentHashKeySize) :
-        state(size,0.0), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize,0), hashKey(-1) {}
+        state(size, 0.0), remSteps(_remSteps), stateFluentHashKeys(stateFluentHashKeySize, 0), hashKey(-1) {}
 
     void setTo(State const& other) {
         for(unsigned int i = 0; i < state.size(); ++i) {
@@ -148,6 +148,8 @@ public:
     //states are very tightly coupled. Nevertheless, there must be a
     //way to get rid of this, even if it takes some work!
     friend class PlanningTask;
+    friend class KleeneState;
+    friend class PDState;
 
 protected:
     std::vector<double> state;

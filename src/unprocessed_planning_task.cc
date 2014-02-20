@@ -4,10 +4,10 @@
 #include "logical_expressions.h"
 #include "actions.h"
 #include "conditional_probability_function.h"
-#include "state_action_constraint.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
@@ -15,7 +15,7 @@ using namespace std;
 
 UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _problemDesc) :
     domainDesc(_domainDesc), numberOfConcurrentActions (1), horizon (1), discountFactor(1.0), 
-    rewardVariableDefinition(NULL), rewardCPFDef(NULL), rewardVariable(NULL), rewardCPF(NULL) {
+    rewardVariableDefinition(NULL), rewardVariable(NULL), rewardCPF(NULL) {
 
     preprocessInput(_problemDesc);
 
@@ -31,9 +31,6 @@ UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _pro
 
     addObjectType(ObjectType::objectRootInstance());
     addObjectType(ObjectType::enumRootInstance());
-
-    constants[NumericConstant::falsity()->value] = NumericConstant::falsity();
-    constants[NumericConstant::truth()->value] = NumericConstant::truth();
 
     addVariableDefinition(VariableDefinition::rewardInstance());
     addStateFluent(StateFluent::rewardInstance());
@@ -54,139 +51,18 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
 
     std::vector<string> nonFluentsAndInstance;
     StringUtils::tokenize(problemDesc, nonFluentsAndInstance);
-    assert(nonFluentsAndInstance.size() == 2);
-    assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
+    if(nonFluentsAndInstance.size() == 1) {
+        // There is no non-fluents block
+        assert(nonFluentsAndInstance[0].find("instance ") == 0);
 
-    nonFluentsDesc = nonFluentsAndInstance[0];
-    instanceDesc = nonFluentsAndInstance[1];
-}
+        instanceDesc = nonFluentsAndInstance[0];
+    } else {
+        assert(nonFluentsAndInstance.size() == 2);
+        assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
 
-void UnprocessedPlanningTask::print(ostream& /*out*/) {
-    /*
-    out << "-----------------------------------------------Planning PlanningTask---------------------------------------------" << endl;
-    out << "-----------------------------------Input---------------------------------" << endl;
-    out << "-------------Domain Description-------------" << endl;
-    out << domainDesc << endl << endl;
-
-    out << "-----------NonFluents Description-----------" << endl;
-    out << nonFluentsDesc << endl << endl;
-
-    out << "------------Instance Description------------" << endl;
-    out << instanceDesc << endl << endl;
-
-    out << "-----------------------------------Parsed--------------------------------" << endl;
-
-    out << "----------------Domain Name-----------------" << endl;
-    out << domainName << endl << endl;
-
-    out << "--------------NonFluents Name---------------" << endl;
-    out << nonFluentsName << endl << endl;
-
-    out << "---------------Instance Name----------------" << endl;
-    out << instanceName << endl << endl;
-
-    out << "----------------Requirements----------------" << endl;
-    for(map<string, bool>::iterator it = requirements.begin(); it != requirements.end(); ++it) {
-        out << it->first << ": " << (it->second ? "yes" : "no") << endl;
+        nonFluentsDesc = nonFluentsAndInstance[0];
+        instanceDesc = nonFluentsAndInstance[1];
     }
-    out << endl;
-
-    out << "--------------------Object Types-----------------" << endl;
-    for(map<string, ObjectType*>::iterator it = objectTypes.begin(); it != objectTypes.end(); ++it) {
-        it->second->print(out);
-    }
-    out << endl;
-
-    out << "-----------------Objects-------------------------" << endl;
-    for(map<string,Object*>::iterator it = objects.begin(); it != objects.end(); ++it) {
-        it->second->print(out);
-    }
-    out << endl;
-
-    out << "---------------Objects by Type-------------------" << endl;
-    for(map<ObjectType*,vector<Object*> >::iterator it = objectsByType.begin(); it != objectsByType.end(); ++it) {
-        if(!it->second.empty()) {
-            out << it->first->name << " : ";
-            for(unsigned int i = 0; i < it->second.size(); ++i) {
-                out << it->second[i]->name;
-                if(i != it->second.size()-1) {
-                    out << ", ";
-                }
-            }
-            out << endl;
-        }
-    }
-    out << endl;
-
-    out << "---------------Variable Definitions--------------" << endl;
-    for(unsigned int i = 0; i < variableDefinitionsVec.size(); ++i) {
-        variableDefinitionsVec[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "-----------------CPF Definitions-----------------" << endl;
-    for(unsigned int i = 0; i < CPFDefsVec.size(); ++i) {
-        CPFDefsVec[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "--------------Reward CPF Definition--------------" << endl;
-    rewardCPFDef->print(out);
-    out << endl;
-
-    out << "--------------------Numbers----------------------" << endl;
-    out << "Horizon: " << horizon << endl;
-    out << "NumberOfConcurrentActions: " << numberOfConcurrentActions << endl;
-    out << "DiscountFactor: " << discountFactor << endl;
-    out << endl;
-
-    out << "----------------Initial State---------------------" << endl;
-    for(map<VariableDefinition*, vector<AtomicLogicalExpression*> >::iterator it = variablesBySchema.begin(); it != variablesBySchema.end(); ++it) {
-        if(it->first->variableType != VariableDefinition::ACTION_FLUENT) {
-            for(unsigned int i = 0; i < it->second.size(); ++i) {
-                it->second[i]->print(out);
-                out << " = " << it->second[i]->initialValue << endl;
-            }
-        }
-    }
-    out << endl;
-
-    out << "-------------------Constants----------------------" << endl;
-    for(map<double, NumericConstant*>::iterator it = constants.begin(); it != constants.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "-------------------Actions------------------------" << endl;
-    for(map<string, ActionFluent*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "---------------------CPFs.------------------------" << endl;
-    for(map<StateFluent*, ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
-        it->second->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "--------------------Reward------------------------" << endl;
-    rewardCPF->print(out);
-    out << endl;
-
-    out << "-----------State Action Constraints---------------" << endl;
-    for(unsigned int i = 0; i < SACs.size(); ++i) {
-        SACs[i]->print(out);
-        out << endl;
-    }
-    out << endl;
-
-    out << "---------------------------------------------------------------------------------------------------------" << endl;
-    */
 }
 
 void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {
@@ -197,7 +73,9 @@ void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {
 }
 
 ObjectType* UnprocessedPlanningTask::getObjectType(string& name) {
-    assert(objectTypes.find(name) != objectTypes.end());
+    if(objectTypes.find(name) == objectTypes.end()) {
+        return NULL;
+    }
     return objectTypes[name];
 }
 
@@ -213,7 +91,9 @@ void UnprocessedPlanningTask::addObject(Object* object) {
 }
 
 Object* UnprocessedPlanningTask::getObject(string& name) {
-    assert(objects.find(name) != objects.end());
+    if(objects.find(name) == objects.end()) {
+        return NULL;
+    }
     return objects[name];
 }
 
@@ -249,34 +129,21 @@ bool UnprocessedPlanningTask::isAVariableDefinition(string& name) {
     return (variableDefinitions.find(name) != variableDefinitions.end());
 }
 
-void UnprocessedPlanningTask::addCPFDefinition(ConditionalProbabilityFunctionDefinition* cpf) {
-    assert(CPFDefs.find(cpf->head->parent->name) == CPFDefs.end());
-    CPFDefs[cpf->head->parent->name] = cpf;
-    if(cpf->head->parent != VariableDefinition::rewardInstance()) {
-        CPFDefsVec.push_back(cpf);
-    } else {
-        assert(!rewardCPFDef);
-        rewardCPFDef = cpf;
+void UnprocessedPlanningTask::addCPFDefinition(pair<UninstantiatedVariable*, LogicalExpression*> const& CPFDef) {
+    for(unsigned int i = 0; i < CPFDefs.size(); ++i) {
+        if(CPFDefs[i].first->parent->name == CPFDef.first->parent->name) {
+            SystemUtils::abort("Error: Ambiguous definition of CPF: " + CPFDef.first->parent->name);
+        }
     }
+    CPFDefs.push_back(CPFDef);
 }
 
-void UnprocessedPlanningTask::getCPFDefinitions(std::vector<ConditionalProbabilityFunctionDefinition*>& result, bool includeRewardCPF) {
-    result = CPFDefsVec;
-    if(includeRewardCPF) {
-        result.push_back(rewardCPFDef);
-    }
-}
-
-void UnprocessedPlanningTask::addStateActionConstraint(StateActionConstraint* sac) {
+void UnprocessedPlanningTask::addStateActionConstraint(LogicalExpression* sac) {
     SACs.push_back(sac);
 }
 
-void UnprocessedPlanningTask::getStateActionConstraints(vector<StateActionConstraint*>& result) {
-    result = SACs;
-}
-
-void UnprocessedPlanningTask::removeStateActionConstraint(StateActionConstraint* sac) {
-    for(vector<StateActionConstraint*>::iterator it = SACs.begin(); it != SACs.end(); ++it) {
+void UnprocessedPlanningTask::removeStateActionConstraint(LogicalExpression* sac) {
+    for(vector<LogicalExpression*>::iterator it = SACs.begin(); it != SACs.end(); ++it) {
         if(*it == sac) {
             SACs.erase(it);
             break;
@@ -385,43 +252,35 @@ void UnprocessedPlanningTask::getInitialState(std::vector<AtomicLogicalExpressio
     }
 }
 
-NumericConstant* UnprocessedPlanningTask::getConstant(double val) {
-    if(constants.find(val) == constants.end()) {
-        constants[val] = new NumericConstant(val);
-    }
-    return constants[val];
-}
-
-NumericConstant* UnprocessedPlanningTask::getConstant(UninstantiatedVariable* var) {
-    return getConstant(getNonFluent(var)->initialValue);
-}
-
-void UnprocessedPlanningTask::addCPF(ConditionalProbabilityFunction* cpf) {
-    if(cpf->isRewardCPF()) {
-        assert(!rewardCPF);
-        rewardCPF = cpf;
-    } else {
-        assert(CPFs.find(cpf->getHead()) == CPFs.end());
-        CPFs[cpf->getHead()] = cpf;
-        CPFsVec.push_back(cpf);
-    }
-}
-
-void UnprocessedPlanningTask::getCPFs(vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF) {
-    result = CPFsVec;
-    if(includeRewardCPF) {
-        result.push_back(rewardCPF);
-    }
-}
-
-void UnprocessedPlanningTask::removeCPF(ConditionalProbabilityFunction* cpf) {
-    assert(!cpf->isRewardCPF());
-    assert(CPFs.find(cpf->getHead()) != CPFs.end());
-    CPFs.erase(cpf->getHead());
-    for(vector<ConditionalProbabilityFunction*>::iterator it = CPFsVec.begin(); it != CPFsVec.end(); ++it) {
-        if(*it == cpf) {
-            CPFsVec.erase(it);
-            break;
+void UnprocessedPlanningTask::addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf) {
+    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+        if(cpf.first->name == CPFs[i].first->name) {
+            SystemUtils::abort("Error: CPF with same name exists already: " + cpf.first->name);
         }
     }
+    CPFs.push_back(cpf);
 }
+
+void UnprocessedPlanningTask::setRewardCPF(LogicalExpression* const& _rewardCPF) {
+    if(rewardCPF) {
+        SystemUtils::abort("Error: RewardCPF exists already.");
+    }
+    rewardCPF = _rewardCPF;
+}
+
+// void UnprocessedPlanningTask::getCPFs(vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF) {
+//     result = CPFs;
+//     if(includeRewardCPF) {
+//         result.push_back(rewardCPF);
+//     }
+// }
+
+// void UnprocessedPlanningTask::removeCPF(ConditionalProbabilityFunction* cpf) {
+//     assert(!cpf->isRewardCPF());
+//     for(vector<ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
+//         if(*it == cpf) {
+//             CPFs.erase(it);
+//             break;
+//         }
+//     }
+// }

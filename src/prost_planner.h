@@ -16,7 +16,7 @@ public:
 
     ProstPlanner(std::string domain, std::string problem, int _numberOfRounds);
 
-    void init(std::map<std::string,int>& stateVariableIndices);
+    void init(std::map<std::string,int>& stateVariableIndices, std::vector<std::vector<std::string> >& stateVariableValues);
     void initNextRound();
     std::vector<std::string> plan(std::vector<double> const& nextStateVec);
 

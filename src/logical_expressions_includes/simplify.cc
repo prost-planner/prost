@@ -1,33 +1,47 @@
-LogicalExpression* LogicalExpression::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
+LogicalExpression* LogicalExpression::simplify(map<StateFluent*, double>& /*replacements*/) {
     assert(false);
     return NULL;
 }
 
-LogicalExpression* StateFluent::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& replacements) {
+/*****************************************************************
+                           Atomics
+*****************************************************************/
+
+LogicalExpression* AtomicLogicalExpression::simplify(map<StateFluent*, double>& /*replacements*/) {
+    return this;
+}
+
+LogicalExpression* StateFluent::simplify(map<StateFluent*, double>& replacements) {
     if(replacements.find(this) != replacements.end()) {
-        return replacements[this];
+        return new NumericConstant(replacements[this]);
     }
     return this;
 }
 
-LogicalExpression* AtomicLogicalExpression::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
+LogicalExpression* NumericConstant::simplify(map<StateFluent*, double>& /*replacements*/) {
     return this;
 }
 
-LogicalExpression* NumericConstant::simplify(UnprocessedPlanningTask* /*task*/, map<StateFluent*, NumericConstant*>& /*replacements*/) {
+LogicalExpression* Object::simplify(map<StateFluent*, double>& /*replacements*/) {
     return this;
 }
 
-LogicalExpression* Conjunction::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+
+/*****************************************************************
+                           Connectives
+*****************************************************************/
+
+LogicalExpression* Conjunction::simplify(map<StateFluent*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if(nc) {
             if(MathUtils::doubleIsEqual(nc->value,0.0)) {
-                return NumericConstant::falsity();//false constant element -> Conjunction is always false
+                // False constant element -> Conjunction is always false
+                return new NumericConstant(0.0);
             }
-            //else true constant element -> can be omitted
+            // else true constant element -> can be omitted
         } else {
             Conjunction* conj = dynamic_cast<Conjunction*>(newExpr);
             if(conj) {
@@ -39,7 +53,7 @@ LogicalExpression* Conjunction::simplify(UnprocessedPlanningTask* task, map<Stat
     }
 
     if(newExprs.empty()) {
-        return NumericConstant::truth();//all elements are constants and true -> Conjunction is always true
+        return new NumericConstant(1.0);//all elements are constants and true -> Conjunction is always true
     } else if(newExprs.size() == 1) {
         return newExprs[0];
     }
@@ -47,14 +61,14 @@ LogicalExpression* Conjunction::simplify(UnprocessedPlanningTask* task, map<Stat
     return new Conjunction(newExprs);    
 }
 
-LogicalExpression* Disjunction::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* Disjunction::simplify(map<StateFluent*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if(nc) {
             if(!MathUtils::doubleIsEqual(nc->value,0.0)) {
-                return NumericConstant::truth();//true constant element -> Disjunction is always true
+                return new NumericConstant(1.0);//true constant element -> Disjunction is always true
             }
         } else {
             Disjunction* disj = dynamic_cast<Disjunction*>(newExpr);
@@ -67,7 +81,7 @@ LogicalExpression* Disjunction::simplify(UnprocessedPlanningTask* task, map<Stat
     }
 
     if(newExprs.empty()) {
-        return NumericConstant::falsity();//all elements are constants and false -> Disjunction is always false
+        return new NumericConstant(0.0);//all elements are constants and false -> Disjunction is always false
     } else if(newExprs.size() == 1) {
         return newExprs[0];
     }
@@ -75,12 +89,12 @@ LogicalExpression* Disjunction::simplify(UnprocessedPlanningTask* task, map<Stat
     return new Disjunction(newExprs);   
 }
 
-LogicalExpression* EqualsExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* EqualsExpression::simplify(map<StateFluent*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     NumericConstant* constComp = NULL;
 
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
 
         if(nc) {
@@ -88,7 +102,7 @@ LogicalExpression* EqualsExpression::simplify(UnprocessedPlanningTask* task, map
                 //...and there is already another constant one
                 if(!MathUtils::doubleIsEqual(nc->value, constComp->value)) {
                     //...which is inequal -> this is always false
-                    return NumericConstant::falsity();
+                    return new NumericConstant(0.0);
                 }
                 //...which is equal -> we dont need to compare to the second
                 //one as it is the same as the one stored in constComp
@@ -106,7 +120,7 @@ LogicalExpression* EqualsExpression::simplify(UnprocessedPlanningTask* task, map
     if(newExprs.size() == 1) {
         //either all were constant and equal to the comparator, or there was only
         //one (constant or dynamic) -> this is always true
-       return NumericConstant::truth();
+       return new NumericConstant(1.0);
     }
 
     //we must keep this and check, as there are at least 2 expressions which
@@ -114,19 +128,19 @@ LogicalExpression* EqualsExpression::simplify(UnprocessedPlanningTask* task, map
     return new EqualsExpression(newExprs);
 }
 
-LogicalExpression* GreaterExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* GreaterExpression::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(task, replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(task, replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
+    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if(nc0 && nc1) {
         if(MathUtils::doubleIsGreater(nc0->value,nc1->value)) {
-            return NumericConstant::truth();
+            return new NumericConstant(1.0);
         } else {
-            return NumericConstant::falsity();
+            return new NumericConstant(0.0);
         }
     }
 
@@ -137,19 +151,19 @@ LogicalExpression* GreaterExpression::simplify(UnprocessedPlanningTask* task, ma
     return new GreaterExpression(newExprs);
 }
 
-LogicalExpression* LowerExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* LowerExpression::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(task, replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(task, replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
+    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if(nc0 && nc1) {
         if(MathUtils::doubleIsSmaller(nc0->value,nc1->value)) {
-            return NumericConstant::truth();
+            return new NumericConstant(1.0);
         } else {
-            return NumericConstant::falsity();
+            return new NumericConstant(0.0);
         }
     }
 
@@ -160,19 +174,19 @@ LogicalExpression* LowerExpression::simplify(UnprocessedPlanningTask* task, map<
     return new LowerExpression(newExprs);
 }
 
-LogicalExpression* GreaterEqualsExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* GreaterEqualsExpression::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(task, replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(task, replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
+    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if(nc0 && nc1) {
         if(MathUtils::doubleIsGreaterOrEqual(nc0->value,nc1->value)) {
-            return NumericConstant::truth();
+            return new NumericConstant(1.0);
         } else {
-            return NumericConstant::falsity();
+            return new NumericConstant(0.0);
         }
     }
 
@@ -183,19 +197,19 @@ LogicalExpression* GreaterEqualsExpression::simplify(UnprocessedPlanningTask* ta
     return new GreaterEqualsExpression(newExprs);
 }
 
-LogicalExpression* LowerEqualsExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* LowerEqualsExpression::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(task, replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(task, replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
+    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if(nc0 && nc1) {
         if(MathUtils::doubleIsSmallerOrEqual(nc0->value,nc1->value)) {
-            return NumericConstant::truth();
+            return new NumericConstant(1.0);
         } else {
-            return NumericConstant::falsity();
+            return new NumericConstant(0.0);
         }
     }
 
@@ -206,12 +220,12 @@ LogicalExpression* LowerEqualsExpression::simplify(UnprocessedPlanningTask* task
     return new LowerEqualsExpression(newExprs);
 }
 
-LogicalExpression* Addition::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* Addition::simplify(map<StateFluent*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     double constSum = 0.0;
 
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if(nc) {
             constSum += nc->value;
@@ -221,9 +235,9 @@ LogicalExpression* Addition::simplify(UnprocessedPlanningTask* task, map<StateFl
     }
 
     if(newExprs.empty() && MathUtils::doubleIsEqual(constSum, 0.0)) {
-        return NumericConstant::falsity(); // TODO: is an empty addition equal to 1 or to 0?
+        return new NumericConstant(0.0);
     } else if(newExprs.empty() && !MathUtils::doubleIsEqual(constSum, 0.0)) {
-        return task->getConstant(constSum);
+        return new NumericConstant(constSum);
     } else if(newExprs.size() == 1 && MathUtils::doubleIsEqual(constSum, 0.0)) {
         return newExprs[0];
     }
@@ -245,18 +259,18 @@ LogicalExpression* Addition::simplify(UnprocessedPlanningTask* task, map<StateFl
     }
 
     if(!MathUtils::doubleIsEqual(constSum, 0.0)) {
-        finalExprs.push_back(task->getConstant(constSum));
+        finalExprs.push_back(new NumericConstant(constSum));
     }
 
     return new Addition(finalExprs);
 }
 
-LogicalExpression* Subtraction::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* Subtraction::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() >= 2);
     vector<LogicalExpression*> newExprs;
     double constPart = 0.0;
 
-    LogicalExpression* firstExpr = exprs[0]->simplify(task, replacements);
+    LogicalExpression* firstExpr = exprs[0]->simplify(replacements);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(firstExpr);
     bool firstPartIsConst = false;
 
@@ -268,7 +282,7 @@ LogicalExpression* Subtraction::simplify(UnprocessedPlanningTask* task, map<Stat
     }
     
     for(unsigned int i = 1; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if(nc) {
             constPart -= nc->value;
@@ -279,16 +293,16 @@ LogicalExpression* Subtraction::simplify(UnprocessedPlanningTask* task, map<Stat
 
     if(newExprs.empty()) {//all elements are constant!
         assert(firstPartIsConst);
-        return task->getConstant(constPart);
+        return new NumericConstant(constPart);
     }
 
     if(firstPartIsConst) {//the first element is a constant -> insert it at the beginning!
         assert(!newExprs.empty());
-        newExprs.insert(newExprs.begin(),task->getConstant(constPart));
+        newExprs.insert(newExprs.begin(), new NumericConstant(constPart));
     } else {//the first element is not a constant
         assert(!newExprs.empty());
         if(!MathUtils::doubleIsEqual(constPart,0.0)) {
-            newExprs.push_back(task->getConstant(constPart*-1.0));
+            newExprs.push_back(new NumericConstant(constPart*-1.0));
         }
     }
 
@@ -300,16 +314,16 @@ LogicalExpression* Subtraction::simplify(UnprocessedPlanningTask* task, map<Stat
     return new Subtraction(newExprs);
 }
 
-LogicalExpression* Multiplication::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* Multiplication::simplify(map<StateFluent*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     double constMult = 1.0;
 
     for(unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(task, replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
         NumericConstant* nc  = dynamic_cast<NumericConstant*>(newExpr);
         if(nc) {
             if(MathUtils::doubleIsEqual(nc->value, 0.0)) {
-                return NumericConstant::falsity();
+                return new NumericConstant(0.0);
             }
             constMult *= nc->value;
         } else {
@@ -318,11 +332,11 @@ LogicalExpression* Multiplication::simplify(UnprocessedPlanningTask* task, map<S
     }
 
     if(!MathUtils::doubleIsEqual(constMult, 1.0)) {
-        newExprs.push_back(task->getConstant(constMult));
+        newExprs.push_back(new NumericConstant(constMult));
     }
 
     if(newExprs.empty()) {
-        return NumericConstant::truth(); // TODO: is an empty multiplication equal to 1 or to 0?
+        return new NumericConstant(1.0); // TODO: is an empty multiplication equal to 1 or to 0?
     } else if(newExprs.size() == 1) {
         return newExprs[0];
     }
@@ -332,16 +346,16 @@ LogicalExpression* Multiplication::simplify(UnprocessedPlanningTask* task, map<S
     return new Multiplication(newExprs);
 }
 
-LogicalExpression* Division::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
+LogicalExpression* Division::simplify(map<StateFluent*, double>& replacements) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(task, replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(task, replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
+    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
 
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc2 = dynamic_cast<NumericConstant*>(expr1);
 
     if(nc1 && nc2) {
-        return task->getConstant((nc1->value / nc2->value));
+        return new NumericConstant((nc1->value / nc2->value));
     }
 
     vector<LogicalExpression*> newExprs;
@@ -351,34 +365,96 @@ LogicalExpression* Division::simplify(UnprocessedPlanningTask* task, map<StateFl
     return new Division(newExprs);
 }
 
-LogicalExpression* BernoulliDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(task, replacements);
-   NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
-   if(nc) {
-       if(!MathUtils::doubleIsGreater(nc->value,0.0)) {
-           return NumericConstant::falsity();
-       } else if(!MathUtils::doubleIsSmaller(nc->value,1.0)) {
-           return NumericConstant::truth();
-       }
-   }
+/*****************************************************************
+                          Unaries
+*****************************************************************/
 
-   AtomicLogicalExpression* sf = dynamic_cast<AtomicLogicalExpression*>(newExpr);
-   if(sf) {
-       return newExpr; //TODO: remove this for real-valued competition!!!!!!!!!!!
-   }
+LogicalExpression* Negation::simplify(map<StateFluent*, double>& replacements) {
+    LogicalExpression* newExpr = expr->simplify(replacements);
 
-   return new BernoulliDistribution(newExpr);
+    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
+    if(nc) {
+        if(MathUtils::doubleIsEqual(nc->value,0.0)) {
+            return new NumericConstant(1.0);
+        }
+        return new NumericConstant(0.0);
+    }
+
+    Negation* neg = dynamic_cast<Negation*>(newExpr);
+    if(neg) {
+        return neg->expr;
+    }
+
+    return new Negation(newExpr);
 }
 
-LogicalExpression* KronDeltaDistribution::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    return expr->simplify(task, replacements);
+/*****************************************************************
+                   Probability Distributions
+*****************************************************************/
+
+LogicalExpression* KronDeltaDistribution::simplify(map<StateFluent*, double>& replacements) {
+    return expr->simplify(replacements);
 }
 
-LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    LogicalExpression* newCondition = condition->simplify(task, replacements);
-    LogicalExpression* newValueIfTrue = valueIfTrue->simplify(task, replacements);
-    LogicalExpression* newValueIfFalse = valueIfFalse->simplify(task, replacements);
+LogicalExpression* BernoulliDistribution::simplify(map<StateFluent*, double>& replacements) {
+    LogicalExpression* newExpr = expr->simplify(replacements);
+    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
+    if(nc) {
+        if(MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            return new NumericConstant(0.0);
+        } else if(MathUtils::doubleIsGreaterOrEqual(nc->value, 1.0) || MathUtils::doubleIsSmaller(nc->value, 0.0)) {
+            return new NumericConstant(1.0);
+        }
+    }
 
+    return new BernoulliDistribution(newExpr);
+}
+
+// TODO: If there is a constant probability equal to 1 or higher (or lower than
+// 0), what do we do? Can we simplify such that the according value is always
+// true?
+LogicalExpression* DiscreteDistribution::simplify(map<StateFluent*,double>& replacements) {
+    vector<LogicalExpression*> newValues;
+    vector<LogicalExpression*> newProbs;
+
+    for(unsigned int i = 0; i < values.size(); ++i) {
+        newValues.push_back(values[i]->simplify(replacements));
+        newProbs.push_back(probabilities[i]->simplify(replacements));
+    }
+
+    // Remove all values with constant probability 0
+    for(unsigned int i = 0; i < newProbs.size(); ++i) {
+        NumericConstant* nc = dynamic_cast<NumericConstant*>(newProbs[i]);
+        if(nc && MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            swap(newValues[i], newValues[newValues.size()-1]);
+            newValues.pop_back();
+            swap(newProbs[i], newProbs[newProbs.size()-1]);
+            newProbs.pop_back();
+            --i;
+        }
+    }
+
+    assert(!newValues.empty());
+
+    // If only one value is left it must have probability 1 and this is a
+    // KronDelta distribution
+    if(newValues.size() > 1) {
+        return new DiscreteDistribution(newValues, newProbs);
+    } else {
+        return newValues[0];
+    }
+}
+
+/*****************************************************************
+                         Conditionals
+*****************************************************************/
+
+LogicalExpression* IfThenElseExpression::simplify(map<StateFluent*, double>& replacements) {
+    LogicalExpression* newCondition = condition->simplify(replacements);
+    LogicalExpression* newValueIfTrue = valueIfTrue->simplify(replacements);
+    LogicalExpression* newValueIfFalse = valueIfFalse->simplify(replacements);
+
+    // Check if the condition is a constant
     NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCondition);
     if(ncCond) {
         if(MathUtils::doubleIsEqual(ncCond->value, 0.0)) {
@@ -388,30 +464,33 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
         }
     }
 
+    // Check for cases of the form: "if a then 1 else 0" (and vice
+    // versa) and simplify to "a" ("not a"); Also check for "If a then
+    // const else const" and return "const" (TODO: This would be
+    // possible in general, but then we need a comparison operator of
+    // LogicalExpressions).
     NumericConstant* ncTrue = dynamic_cast<NumericConstant*>(newValueIfTrue);
     NumericConstant* ncFalse = dynamic_cast<NumericConstant*>(newValueIfFalse);
 
-    //check for cases of the form: if a then 1 else 0 (and vice versa)
-    //these can be simplified to: a (not a)
     if(ncTrue && ncFalse) {
-        if(MathUtils::doubleIsEqual(ncTrue->value,1.0) && MathUtils::doubleIsEqual(ncFalse->value,0.0)) {
+        if(MathUtils::doubleIsEqual(ncTrue->value, 1.0) && MathUtils::doubleIsEqual(ncFalse->value, 0.0)) {
             return newCondition;
-        } else if(MathUtils::doubleIsEqual(ncTrue->value,0.0) && MathUtils::doubleIsEqual(ncFalse->value,1.0)) {
-            NegateExpression* res = new NegateExpression(newCondition);
-            return res->simplify(task,replacements);
-        } else if(MathUtils::doubleIsEqual(ncTrue->value,ncFalse->value)) {
+        } else if(MathUtils::doubleIsEqual(ncTrue->value, 0.0) && MathUtils::doubleIsEqual(ncFalse->value, 1.0)) {
+            Negation* res = new Negation(newCondition);
+            return res->simplify(replacements);
+        } else if(MathUtils::doubleIsEqual(ncTrue->value, ncFalse->value)) {
             return ncTrue;
         }
     }
 
-    //check if this is part of if a then b else if ...
+    // Check for cases of the form "If a then b else if ..." and
+    // simplify to a MultiConditionChecker
     IfThenElseExpression* elseIf = dynamic_cast<IfThenElseExpression*>(newValueIfFalse);
-
     if(elseIf) {
         vector<LogicalExpression*> conditions;
         conditions.push_back(newCondition);
         conditions.push_back(elseIf->condition);
-        conditions.push_back(NumericConstant::truth());
+        conditions.push_back(new NumericConstant(1.0));
 
         vector<LogicalExpression*> effects;
         effects.push_back(newValueIfTrue);
@@ -419,9 +498,10 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
         effects.push_back(elseIf->valueIfFalse);
 
         MultiConditionChecker* mc = new MultiConditionChecker(conditions,effects);
-        return mc->simplify(task, replacements);
+        return mc->simplify(replacements);
     }
 
+    // Check if there is a condition checker nested inside this
     MultiConditionChecker* elseMCC = dynamic_cast<MultiConditionChecker*>(newValueIfFalse);
     if(elseMCC) {
         vector<LogicalExpression*> conditions;
@@ -433,39 +513,20 @@ LogicalExpression* IfThenElseExpression::simplify(UnprocessedPlanningTask* task,
         effects.insert(effects.end(),elseMCC->effects.begin(), elseMCC->effects.end());
 
         MultiConditionChecker* mc = new MultiConditionChecker(conditions,effects);
-        return mc->simplify(task, replacements);
+        return mc->simplify(replacements);
     }
 
     return new IfThenElseExpression(newCondition, newValueIfTrue, newValueIfFalse);
 }
 
-LogicalExpression* MultiConditionChecker::simplify(UnprocessedPlanningTask* task, std::map<StateFluent*,NumericConstant*>& replacements) {
+LogicalExpression* MultiConditionChecker::simplify(map<StateFluent*,double>& replacements) {
     vector<LogicalExpression*> newConditions;
     vector<LogicalExpression*> newEffects;
 
     for(unsigned int i = 0; i < conditions.size(); ++i) {
-        newConditions.push_back(conditions[i]->simplify(task, replacements));
-        newEffects.push_back(effects[i]->simplify(task, replacements));
+        newConditions.push_back(conditions[i]->simplify(replacements));
+        newEffects.push_back(effects[i]->simplify(replacements));
     }
 
     return new MultiConditionChecker(newConditions, newEffects);
-}
-
-LogicalExpression* NegateExpression::simplify(UnprocessedPlanningTask* task, map<StateFluent*, NumericConstant*>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(task, replacements);
-
-    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
-    if(nc) {
-        if(MathUtils::doubleIsEqual(nc->value,0.0)) {
-            return NumericConstant::truth();
-        }
-        return NumericConstant::falsity();
-    }
-
-    NegateExpression* neg = dynamic_cast<NegateExpression*>(newExpr);
-    if(neg) {
-        return neg->expr;
-    }
-
-    return new NegateExpression(newExpr);
 }

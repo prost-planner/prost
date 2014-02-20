@@ -1,5 +1,7 @@
 #include "dp_uct_search.h"
 
+//#include "probability_distribution.h"
+
 using namespace std;
 
 /******************************************************************
@@ -15,9 +17,8 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
-    // successorGenerator->printAction(cout, actionIndex);
-    // cout << endl;
-    // initialQValue.print(cout);
+    // task->printAction(cout, actionIndex);
+    // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
     // node->children[actionIndex]->print(cout);
     // cout << endl;
 }
@@ -26,37 +27,57 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
                          Outcome selection
 ******************************************************************/
 
-DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, State& stateAsProbDistr, int& varIndex) {
+DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+    // TODO: Prevent the case where nextPDState[varIndex] is deterministic
+    DiscretePD& pd = nextPDState[varIndex];
+    assert(pd.isWellDefined());
+
+    double probSum = 1.0;
+    int childIndex = 0;
+ 
     if(node->children.empty()) {
-        node->children.resize(2,NULL);
+        node->children.resize(task->getDomainSizeOfCPF(varIndex), NULL);
+    } else {
+        // Determine the sum of the probabilities of unsolved outcomes
+        for(unsigned int i = 0; i < pd.size(); ++i) {
+            childIndex = pd.values[i];
+            if(node->children[childIndex] && node->children[childIndex]->isSolved()) {
+                probSum -= pd.probabilities[i];
+            }
+        }
     }
+    assert(MathUtils::doubleIsGreater(probSum, 0.0) && MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
 
-    double prob = stateAsProbDistr[varIndex];
-    successorGenerator->sampleVariable(stateAsProbDistr, varIndex);
-    unsigned int childIndex = (unsigned int)stateAsProbDistr[varIndex];
+    double randNum = MathUtils::generateRandomNumber() * probSum;
+    //cout << "ProbSum is " << probSum << endl;
+    //cout << "RandNum is " << randNum << endl;
 
-    if(!node->children[childIndex]) {
-        createChildNode(node, childIndex, prob);
-    } else if(node->children[childIndex]->isSolved()) {
-        childIndex = 1 - childIndex;
-        stateAsProbDistr[varIndex] = childIndex;
-        if(!node->children[childIndex]) {
-            createChildNode(node, childIndex, prob);
+    probSum = 0.0;
+    double childProb = 0.0;
+
+    for(unsigned int i = 0; i < pd.size(); ++i) {
+        childIndex = pd.values[i];
+        if(!node->children[childIndex] || !node->children[childIndex]->isSolved()) {
+            probSum += pd.probabilities[i];
+            if(MathUtils::doubleIsSmaller(randNum, probSum)) {
+                childProb = pd.probabilities[i];
+                break;
+            }
         }
     }
 
-    assert(!node->children[childIndex]->isSolved());
-    return node->children[childIndex];
-}
+    //cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
 
-inline void DPUCTSearch::createChildNode(DPUCTNode* node, unsigned int const& childIndex, double const& prob) {
-    assert(!node->children[childIndex]);
+    assert((childIndex >= 0) && childIndex < node->children.size());
 
-    if(childIndex == 0) {
-        node->children[childIndex] = getDPUCTNode(1.0-prob);
-    } else {
-        node->children[childIndex] = getDPUCTNode(prob);
+    if(!node->children[childIndex]) {
+        node->children[childIndex] = getDPUCTNode(childProb);
     }
+
+    assert(!node->children[childIndex]->isSolved());
+
+    nextState[varIndex] = childIndex;
+    return node->children[childIndex];
 }
 
 /******************************************************************
@@ -99,29 +120,32 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
 
     // cout << "updated dec node with immediate reward " << immReward << endl;
     // node->print(cout);
-    // cout << endl;    
+    // cout << endl;
 }
 
 void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/) {
-    assert(node->children.size() == 2);
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
 
-    // propagate values from children
-    if(node->children[0] && node->children[1]) {
-        node->futureReward = ((node->children[0]->prob * node->children[0]->getExpectedRewardEstimate()) + 
-                              (node->children[1]->prob * node->children[1]->getExpectedRewardEstimate()));
-        node->solved = node->children[0]->solved && node->children[1]->solved;
-    } else if(node->children[0]) {
-        node->futureReward = node->children[0]->getExpectedRewardEstimate();
-        node->solved = node->children[0]->solved && MathUtils::doubleIsEqual(node->children[0]->prob, 1.0);
-    } else {
-        assert(node->children[1]);
-        
-        node->futureReward = node->children[1]->getExpectedRewardEstimate();
-        node->solved = node->children[1]->solved && MathUtils::doubleIsEqual(node->children[1]->prob, 1.0);
+    // Propagate values from children
+    node->futureReward = 0.0;
+    double solvedSum = 0.0;
+    double probSum = 0.0;
+
+    for(unsigned int i = 0; i < node->children.size(); ++i) {
+        if(node->children[i]) {
+            node->futureReward += (node->children[i]->prob * node->children[i]->getExpectedRewardEstimate());
+            probSum += node->children[i]->prob;
+
+            if(node->children[i]->solved) {
+                solvedSum += node->children[i]->prob;
+            }
+        }
     }
+
+    node->futureReward /= probSum;
+    node->solved = MathUtils::doubleIsEqual(solvedSum, 1.0);
 
     // cout << "updated chance node:" << endl;
     // node->print(cout);
