@@ -1,9 +1,6 @@
 #include "unprocessed_planning_task.h"
 
-#include "typed_objects.h"
-#include "logical_expressions.h"
-#include "actions.h"
-#include "conditional_probability_function.h"
+#include "functions.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
@@ -14,26 +11,25 @@
 using namespace std;
 
 UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _problemDesc) :
-    domainDesc(_domainDesc), numberOfConcurrentActions (1), horizon (1), discountFactor(1.0), 
-    rewardVariableDefinition(NULL), rewardVariable(NULL), rewardCPF(NULL) {
+    domainDesc(_domainDesc),
+    numberOfConcurrentActions(numeric_limits<int>::max()),
+    horizon(1),
+    discountFactor(1.0), 
+    rewardCPF(NULL) {
 
     preprocessInput(_problemDesc);
 
-    requirements["continuous"] = false;
-    requirements["multivalued"] = false;
-    requirements["reward-deterministic"] = false;
-    requirements["intermediate-nodes"] = false;
-    requirements["constrained-state"] = false;
-    requirements["partially-observed"] = false;
-    requirements["concurrent"] = false;
-    requirements["integer-valued"] = false;
-    requirements["cpf-deterministic"] = false;
+    // Add bool type
+    addType("bool");
+    addObject("bool", "false");
+    addObject("bool", "true");
 
-    addObjectType(ObjectType::objectRootInstance());
-    addObjectType(ObjectType::enumRootInstance());
+    // Add numerical types
+    addType("int");
+    addType("real");
 
-    addVariableDefinition(VariableDefinition::rewardInstance());
-    addStateFluent(StateFluent::rewardInstance());
+    // Add object super type
+    addType("object");
 }
 
 void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
@@ -53,7 +49,9 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
     StringUtils::tokenize(problemDesc, nonFluentsAndInstance);
     if(nonFluentsAndInstance.size() == 1) {
         // There is no non-fluents block
-        assert(nonFluentsAndInstance[0].find("instance ") == 0);
+        if(nonFluentsAndInstance[0].find("instance ") != 0) {
+            SystemUtils::abort("Error: No instance description found.");
+        }
 
         instanceDesc = nonFluentsAndInstance[0];
     } else {
@@ -65,197 +63,125 @@ void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
     }
 }
 
-void UnprocessedPlanningTask::addObjectType(ObjectType* objectType) {
-    assert(objectTypes.find(objectType->name) == objectTypes.end());
-    objectTypes[objectType->name] = objectType;
-    assert(objectsByType.find(objectType) == objectsByType.end());
-    objectsByType[objectType] = vector<Object*>();
-}
-
-ObjectType* UnprocessedPlanningTask::getObjectType(string& name) {
-    if(objectTypes.find(name) == objectTypes.end()) {
-        return NULL;
+void UnprocessedPlanningTask::addType(string const& name, string const& superType) {
+    if(types.find(name) != types.end()) {
+        SystemUtils::abort("Error: Type " + name + " is ambiguous.");
     }
-    return objectTypes[name];
-}
 
-void UnprocessedPlanningTask::addObject(Object* object) {
-    assert(objects.find(object->name) == objects.end());
-    objects[object->name] = object;
-    vector<ObjectType*> types;
-    object->getObjectTypes(types);
-    for(unsigned int i = 0; i < types.size(); ++i) {
-        assert(objectsByType.find(types[i]) != objectsByType.end());
-        objectsByType[types[i]].push_back(object);
-    }
-}
-
-Object* UnprocessedPlanningTask::getObject(string& name) {
-    if(objects.find(name) == objects.end()) {
-        return NULL;
-    }
-    return objects[name];
-}
-
-void UnprocessedPlanningTask::getObjectsOfType(ObjectType* objectType, std::vector<Object*>& res) {
-    assert(objectsByType.find(objectType) != objectsByType.end());
-    res = objectsByType[objectType];
-}
-
-void UnprocessedPlanningTask::addVariableDefinition(VariableDefinition* varDef) {
-    if(varDef == VariableDefinition::rewardInstance()) {
-        assert(!rewardVariableDefinition);
-        rewardVariableDefinition = varDef;
+    if(superType.empty()) {
+        types[name] = new Type(name);
+    } else if(types.find(superType) == types.end()) {
+        SystemUtils::abort("Error: Supertype not found: " + superType);
     } else {
-        variableDefinitionsVec.push_back(varDef);
-    }
-    assert(variableDefinitions.find(varDef->name) == variableDefinitions.end());
-    variableDefinitions[varDef->name] = varDef;
-}
-
-VariableDefinition* UnprocessedPlanningTask::getVariableDefinition(std::string& name) {
-    assert(variableDefinitions.find(name) != variableDefinitions.end());
-    return variableDefinitions[name];
-}
-
-void UnprocessedPlanningTask::getVariableDefinitions(vector<VariableDefinition*>& result, bool includeRewardDef) {
-    result = variableDefinitionsVec;
-    if(includeRewardDef) {
-        result.push_back(rewardVariableDefinition);
+        types[name] = new Type(name, types[superType]);
     }
 }
 
-bool UnprocessedPlanningTask::isAVariableDefinition(string& name) {
-    return (variableDefinitions.find(name) != variableDefinitions.end());
+void UnprocessedPlanningTask::addObject(string const& typeName, string const& objectName) {
+    if(types.find(typeName) == types.end()) {
+        SystemUtils::abort("Error: Type " + typeName + " not defined.");
+    }
+
+    if(objects.find(objectName) != objects.end()) {
+        SystemUtils::abort("Error: Object name " + objectName + " is ambiguous.");
+    }
+
+    Type* type = types[typeName];
+
+    Object* object = new Object(objectName, type);
+    objects[objectName] = object;
+
+    do {
+        object->types.push_back(type);
+        object->values.push_back(type->objects.size());
+        type->objects.push_back(object);
+        type = type->superType;
+    } while(type);
 }
 
-void UnprocessedPlanningTask::addCPFDefinition(pair<UninstantiatedVariable*, LogicalExpression*> const& CPFDef) {
-    for(unsigned int i = 0; i < CPFDefs.size(); ++i) {
-        if(CPFDefs[i].first->parent->name == CPFDef.first->parent->name) {
-            SystemUtils::abort("Error: Ambiguous definition of CPF: " + CPFDef.first->parent->name);
+void UnprocessedPlanningTask::addVariableDefinition(ParametrizedVariable* varDef) {
+    if(variableDefinitions.find(varDef->fullName) != variableDefinitions.end()) {
+        SystemUtils::abort("Error: Ambiguous variable name: " + varDef->fullName);
+    }
+    variableDefinitions[varDef->fullName] = varDef;
+}
+
+void UnprocessedPlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<Parameter*> const& params) {
+    addParametrizedVariable(parent, params, parent->initialValue);
+}
+
+void UnprocessedPlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<Parameter*> const& params, double initialValue) {
+    if(variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
+        SystemUtils::abort("Error: maldefined parametrized variable.");
+    }
+
+    // We declare these here as we need parentheses in the switch otherwise
+    StateFluent* sf;
+    ActionFluent* af;
+    NonFluent* nf;
+
+    switch(parent->variableType) {
+    case ParametrizedVariable::STATE_FLUENT:
+        sf = new StateFluent(*parent, params, initialValue);
+        if(stateFluents.find(sf->fullName) == stateFluents.end()) {
+            stateFluents[sf->fullName] = sf;
+            if(variablesBySchema.find(parent) == variablesBySchema.end()) {
+                variablesBySchema[parent] = vector<StateFluent*>();
+            }
+            variablesBySchema[parent].push_back(sf);
         }
+        break;
+    case ParametrizedVariable::ACTION_FLUENT:
+        af = new ActionFluent(*parent, params);
+        assert(actionFluents.find(af->fullName) == actionFluents.end());
+        actionFluents[af->fullName] = af;
+        break;
+    case ParametrizedVariable::NON_FLUENT:
+        nf = new NonFluent(*parent, params, initialValue);
+        if(nonFluents.find(nf->fullName) == nonFluents.end()) {
+            nonFluents[nf->fullName] = nf;
+        }
+        break;
+        // case ParametrizedVariable::INTERM_FLUENT:
+        // assert(false);
+        // break;
+    }    
+}
+
+StateFluent* UnprocessedPlanningTask::getStateFluent(std::string const& name) {
+    if(stateFluents.find(name) == stateFluents.end()) {
+        SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
     }
-    CPFDefs.push_back(CPFDef);
+    return stateFluents[name];
+}
+
+ActionFluent* UnprocessedPlanningTask::getActionFluent(std::string const& name) {
+    if(actionFluents.find(name) == actionFluents.end()) {
+        SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+    }
+    return actionFluents[name];
+}
+
+NonFluent* UnprocessedPlanningTask::getNonFluent(std::string const& name) {
+    if(nonFluents.find(name) == nonFluents.end()) {
+        SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+    }
+    return nonFluents[name];
+}
+
+vector<StateFluent*> UnprocessedPlanningTask::getVariablesOfSchema(ParametrizedVariable* schema) {
+    assert(variablesBySchema.find(schema) != variablesBySchema.end());
+    return variablesBySchema[schema];
 }
 
 void UnprocessedPlanningTask::addStateActionConstraint(LogicalExpression* sac) {
     SACs.push_back(sac);
 }
 
-void UnprocessedPlanningTask::removeStateActionConstraint(LogicalExpression* sac) {
-    for(vector<LogicalExpression*>::iterator it = SACs.begin(); it != SACs.end(); ++it) {
-        if(*it == sac) {
-            SACs.erase(it);
-            break;
-        }
-    }
-}
-
-void UnprocessedPlanningTask::addStateFluent(StateFluent* var) {
-    if(var == StateFluent::rewardInstance()) {
-        assert(!rewardVariable);
-        rewardVariable = var;
-    }
-
-    size_t cutPos = var->name.find("(");
-    assert(cutPos != string::npos);
-
-    string parentName = var->name.substr(0,cutPos);
-    assert(variableDefinitions.find(parentName) != variableDefinitions.end());
-    VariableDefinition* parent = variableDefinitions[parentName];
-    assert(parent->variableType == VariableDefinition::STATE_FLUENT || parent->variableType == VariableDefinition::INTERM_FLUENT);
-
-    if(variables.find(var->name) == variables.end()) {
-        variables[var->name] = var;
-        if(var != StateFluent::rewardInstance()) {
-            if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-                variablesBySchema[parent] = vector<AtomicLogicalExpression*>();
-            }
-            variablesBySchema[parent].push_back(var);
-        }
-    }
-}
-
-StateFluent* UnprocessedPlanningTask::getStateFluent(UninstantiatedVariable* var) {
-    assert(variables.find(var->name) != variables.end());
-    return variables[var->name];
-}
-
-void UnprocessedPlanningTask::addActionFluent(ActionFluent* var) {
-    size_t cutPos = var->name.find("(");
-    assert(cutPos != string::npos);
-
-    string parentName = var->name.substr(0,cutPos);
-    assert(variableDefinitions.find(parentName) != variableDefinitions.end());
-    VariableDefinition* parent = variableDefinitions[parentName];
-    assert(parent->variableType == VariableDefinition::ACTION_FLUENT);
-
-    assert(actions.find(var->name) == actions.end());
-    actions[var->name] = var;
-    if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-        variablesBySchema[parent] = vector<AtomicLogicalExpression*>();
-    }
-    variablesBySchema[parent].push_back(var);
-}
-
-ActionFluent* UnprocessedPlanningTask::getActionFluent(UninstantiatedVariable* var) {
-    assert(actions.find(var->name) != actions.end());
-    return actions[var->name];
-}
-
-void UnprocessedPlanningTask::getActionFluents(vector<ActionFluent*>& result) {
-    for(map<string, ActionFluent*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        result.push_back(it->second);
-    }
-}
-
-void UnprocessedPlanningTask::addNonFluent(NonFluent* var) {
-    size_t cutPos = var->name.find("(");
-    assert(cutPos != string::npos);
-
-    string parentName = var->name.substr(0,cutPos);
-    assert(variableDefinitions.find(parentName) != variableDefinitions.end());
-    VariableDefinition* parent = variableDefinitions[parentName];
-    assert(parent->variableType == VariableDefinition::NON_FLUENT);
-
-    if(nonFluents.find(var->name) == nonFluents.end()) {
-        nonFluents[var->name] = var;
-        if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-            variablesBySchema[parent] = vector<AtomicLogicalExpression*>();
-        }
-        variablesBySchema[parent].push_back(var);
-    }
-}
-
-NonFluent* UnprocessedPlanningTask::getNonFluent(UninstantiatedVariable* var) {
-    assert(nonFluents.find(var->name) != nonFluents.end());
-    return nonFluents[var->name];
-}
-
-void UnprocessedPlanningTask::getVariablesOfSchema(VariableDefinition* schema, std::vector<AtomicLogicalExpression*>& result) {
-    if(schema == VariableDefinition::rewardInstance()) {
-        assert(rewardVariable);
-        result.push_back(rewardVariable);
-    } else {
-        assert(variablesBySchema.find(schema) != variablesBySchema.end());
-        result = variablesBySchema[schema];
-    }
-}
-
-void UnprocessedPlanningTask::getInitialState(std::vector<AtomicLogicalExpression*>& result) {
-    for(map<VariableDefinition*, vector<AtomicLogicalExpression*> >::iterator it = variablesBySchema.begin(); it != variablesBySchema.end(); ++it) {
-        if(it->first->variableType != VariableDefinition::ACTION_FLUENT) {
-            for(unsigned int i = 0; i < it->second.size(); ++i) {
-                result.push_back(it->second[i]);
-            }
-        }
-    }
-}
-
 void UnprocessedPlanningTask::addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf) {
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(cpf.first->name == CPFs[i].first->name) {
-            SystemUtils::abort("Error: CPF with same name exists already: " + cpf.first->name);
+        if(cpf.first->fullName == CPFs[i].first->fullName) {
+            SystemUtils::abort("Error: CPF with same name exists already: " + cpf.first->fullName);
         }
     }
     CPFs.push_back(cpf);
@@ -267,20 +193,3 @@ void UnprocessedPlanningTask::setRewardCPF(LogicalExpression* const& _rewardCPF)
     }
     rewardCPF = _rewardCPF;
 }
-
-// void UnprocessedPlanningTask::getCPFs(vector<ConditionalProbabilityFunction*>& result, bool includeRewardCPF) {
-//     result = CPFs;
-//     if(includeRewardCPF) {
-//         result.push_back(rewardCPF);
-//     }
-// }
-
-// void UnprocessedPlanningTask::removeCPF(ConditionalProbabilityFunction* cpf) {
-//     assert(!cpf->isRewardCPF());
-//     for(vector<ConditionalProbabilityFunction*>::iterator it = CPFs.begin(); it != CPFs.end(); ++it) {
-//         if(*it == cpf) {
-//             CPFs.erase(it);
-//             break;
-//         }
-//     }
-// }

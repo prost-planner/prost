@@ -3,7 +3,6 @@
 #include "prost_planner.h"
 #include "planning_task.h"
 #include "depth_first_search.h"
-#include "actions.h"
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"

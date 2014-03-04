@@ -1,27 +1,28 @@
 #ifndef INSTANTIATOR_H
 #define INSTANTIATOR_H
 
-#include "planning_task.h"
-#include "unprocessed_planning_task.h"
+#include <vector>
 
-class ProstPlanner;
+class UnprocessedPlanningTask;
+class Parameter;
+class ParametrizedVariable;
+class LogicalExpression;
 
 class Instantiator {
 public:
-    Instantiator(ProstPlanner* _planner, UnprocessedPlanningTask* _task) :
-        planner(_planner), task(_task) {}
+    Instantiator(UnprocessedPlanningTask* _task) :
+        task(_task) {}
 
     void instantiate();
-    void instantiateParams(std::vector<ObjectType*> params, std::vector<std::vector<Object*> >& result, 
-                           std::vector<Object*> addTo = std::vector<Object*>(), int indexToProcess = 0);
+    void instantiateParams(std::vector<Parameter*> params, std::vector<std::vector<Parameter*> >& result, 
+                           std::vector<Parameter*> addTo = std::vector<Parameter*>(), int indexToProcess = 0);
 
 private:
-    ProstPlanner* planner;
     UnprocessedPlanningTask* task;
 
     void instantiateVariables();
     void instantiateCPFs();
-    void instantiateCPF(std::pair<UninstantiatedVariable*, LogicalExpression*>& CPFDef);
+    void instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula);
     void instantiateSACs();
 };
 

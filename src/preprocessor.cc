@@ -2,9 +2,6 @@
 
 #include "prost_planner.h"
 #include "planning_task.h"
-#include "logical_expressions.h"
-#include "actions.h"
-#include "conditional_probability_function.h"
 
 #include <iostream>
 #include <algorithm>
@@ -20,7 +17,7 @@ PlanningTask* Preprocessor::preprocess(map<string, int>& stateVariableIndices, v
 
     // Create and initialize CPFs and rewardCPF
     vector<ConditionalProbabilityFunction*> cpfs;
-    ConditionalProbabilityFunction* rewardCPF = NULL;
+    RewardFunction* rewardCPF = NULL;
     prepareCPFs(cpfs, rewardCPF);
 
     // Create action fluents and action states
@@ -65,8 +62,9 @@ void Preprocessor::prepareSACs(vector<Evaluatable*>& dynamicSACs, vector<Evaluat
         // doesn't do anything else
         map<StateFluent*, double> replacements;
         task->SACs[index] = task->SACs[index]->simplify(replacements);
-
-        Evaluatable* sac = new Evaluatable("SAC"+index, task->SACs[index]);
+        stringstream name;
+        name << "SAC " << index;
+        Evaluatable* sac = new Evaluatable(name.str(), task->SACs[index]);
         sac->initialize();
         if(sac->containsStateFluent()) {
              if(sac->containsActionFluent()) {
@@ -86,7 +84,7 @@ void Preprocessor::prepareSACs(vector<Evaluatable*>& dynamicSACs, vector<Evaluat
     }
 }
 
-void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, ConditionalProbabilityFunction*& rewardCPF) {
+void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, RewardFunction*& rewardCPF) {
     // Before we create the CPFs we remove those that simplify to their initial
     // value (we simplify again later, though)
     map<StateFluent*, double> replacements;
@@ -109,7 +107,7 @@ void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, Co
 
     // Initialize reward CPF
     task->rewardCPF = task->rewardCPF->simplify(replacements);
-    rewardCPF = new ConditionalProbabilityFunction(StateFluent::rewardInstance(), task->rewardCPF);
+    rewardCPF = new RewardFunction(task->rewardCPF);
     rewardCPF->initialize();
 
     // Create and initialize CPFs
@@ -146,11 +144,13 @@ void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, Co
                                    vector<Evaluatable*> const& dynamicSACs,
                                    vector<ActionFluent*>& actionFluents,
                                    vector<ActionState>& actionStates) {
-    // Initialize action fluents
-    task->getActionFluents(actionFluents);
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        actionFluents[i]->index = i;
-    }
+     // Initialize action fluents
+     unsigned int index = 0;
+     for(map<string, ActionFluent*>::iterator it = task->actionFluents.begin(); it != task->actionFluents.end(); ++it) {
+         it->second->index = index;
+         ++index;
+         actionFluents.push_back(it->second);
+     }
 
     // Calculate all possible action combinations with up to
     // numberOfConcurrentActions concurrent actions
@@ -161,7 +161,6 @@ void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, Co
     for(unsigned int i = 0; i < cpfs.size(); ++i) {
         current[i] = cpfs[i]->getInitialValue();
     }
-    set<ActionState> legalActions;
 
     // Remove all illegal action combinations by checking the SACs
     // that are state independent
@@ -184,23 +183,47 @@ void Preprocessor::prepareCPFs(vector<ConditionalProbabilityFunction*>& cpfs, Co
         }
 
         if(isLegal) {
-            legalActions.insert(actionState);
+            actionStates.push_back(actionState);
         }
     }
 
-    // All remaining action states might be legal in some state.
-    // initialize the actionStates vector and set their index
-    for(set<ActionState>::iterator it = legalActions.begin(); it != legalActions.end(); ++it) {
-        actionStates.push_back(*it);
-    }
+    // Sort action states for deterministic behaviour
+    sort(actionStates.begin(), actionStates.end(), ActionState::ActionStateSort());
 
+    // Set inidices and calculate properties of action states
     for(unsigned int i = 0; i < actionStates.size(); ++i) {
-        actionStates[i].index = i;
-        actionStates[i].calculateProperties(actionFluents, dynamicSACs);
+        ActionState& actionState = actionStates[i];
+        actionState.index = i;
+
+        for(unsigned int i = 0; i < actionState.state.size(); ++i) {
+            if(actionState.state[i]) {
+                actionState.scheduledActionFluents.push_back(actionFluents[i]);
+            }
+        }
+
+        // Determine which dynamic SACs might make this action state
+        // inapplicable
+        for(unsigned int i = 0; i < dynamicSACs.size(); ++i) {
+            if(dynamicSACs[i]->containsArithmeticFunction()) {
+                // If the SAC contains an arithmetic function we treat it as if
+                // it influenced this action. TODO: Implement a function that
+                // checks if it does influence this!
+                actionState.relevantSACs.push_back(dynamicSACs[i]);
+            } else if(sacContainsNegativeActionFluent(dynamicSACs[i], actionState)) {
+                // If the SAC contains one of this ActionStates' action fluents
+                // negatively it might forbid this action.
+                actionState.relevantSACs.push_back(dynamicSACs[i]);
+            } else if(sacContainsAdditionalPositiveActionFluent(dynamicSACs[i], actionState)) {
+                // If the SAC contains action fluents positively that are not in
+                // this ActionStates' action fluents it might enforce that
+                // action fluent (and thereby forbid this action)
+                actionState.relevantSACs.push_back(dynamicSACs[i]);
+            }
+        }
     }
 }
 
-void Preprocessor::calcPossiblyLegalActionStates(vector<ActionFluent*> const& actionFluents, int actionsToSchedule, list<vector<int> >& result, vector<int> addTo) {
+void Preprocessor::calcPossiblyLegalActionStates(vector<ActionFluent*> const& actionFluents, int actionsToSchedule, list<vector<int> >& result, vector<int> addTo) const {
     int nextVal = 0;
     result.push_back(addTo);
 
@@ -217,8 +240,38 @@ void Preprocessor::calcPossiblyLegalActionStates(vector<ActionFluent*> const& ac
     }
 }
 
+bool Preprocessor::sacContainsNegativeActionFluent(Evaluatable* const& sac, ActionState const& actionState) const {
+    set<ActionFluent*> const& actionFluents = sac->getNegativeDependentActionFluents();
+
+    for(unsigned int index = 0; index < actionState.scheduledActionFluents.size(); ++index) {
+        if(actionFluents.find(actionState.scheduledActionFluents[index]) != actionFluents.end()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Preprocessor::sacContainsAdditionalPositiveActionFluent(Evaluatable* const& sac, ActionState const& actionState) const {
+    set<ActionFluent*> const& actionFluents = sac->getPositiveDependentActionFluents();
+
+    for(set<ActionFluent*>::iterator it = actionFluents.begin(); it != actionFluents.end(); ++it) {
+        bool isScheduledActionFluent = false;
+        for(unsigned int index = 0; index < actionState.scheduledActionFluents.size(); ++index) {
+            if((*it) == actionState.scheduledActionFluents[index]) {
+                isScheduledActionFluent = true;
+                break;
+            }
+        }
+        if(!isScheduledActionFluent) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void Preprocessor::calculateDomains(vector<ConditionalProbabilityFunction*>& cpfs,
-                                    ConditionalProbabilityFunction*& rewardCPF,
+                                    RewardFunction*& rewardCPF,
                                     vector<ActionState> const& actionStates) {
     // Insert initial values to set of reachable values
     vector<set<double> > domains(cpfs.size());
@@ -239,7 +292,7 @@ void Preprocessor::calculateDomains(vector<ConditionalProbabilityFunction*>& cpf
         for(unsigned int varIndex = 0; varIndex < cpfs.size(); ++varIndex) {
             for(unsigned int actionIndex = 0; actionIndex < actionStates.size(); ++actionIndex) {
                 set<double> actionDependentValues;
-                cpfs[varIndex]->calculateDomain(domains, actionStates[actionIndex], actionDependentValues);
+                cpfs[varIndex]->formula->calculateDomain(domains, actionStates[actionIndex], actionDependentValues);
                 assert(!actionDependentValues.empty());
                 reachable[varIndex].insert(actionDependentValues.begin(), actionDependentValues.end());
             }
@@ -270,7 +323,7 @@ void Preprocessor::calculateDomains(vector<ConditionalProbabilityFunction*>& cpf
     set<double> rewardDomain;
     for(unsigned int actionIndex = 0; actionIndex < actionStates.size(); ++actionIndex) {
         set<double> actionDependentValues;
-        rewardCPF->calculateDomain(domains, actionStates[actionIndex], actionDependentValues);
+        rewardCPF->formula->calculateDomain(domains, actionStates[actionIndex], actionDependentValues);
         rewardDomain.insert(actionDependentValues.begin(), actionDependentValues.end());
     }
 
@@ -284,17 +337,15 @@ void Preprocessor::calculateDomains(vector<ConditionalProbabilityFunction*>& cpf
 void Preprocessor::finalizeFormulas(vector<Evaluatable*>& dynamicSACs,
                                     vector<Evaluatable*>& stateInvariants,
                                     vector<ConditionalProbabilityFunction*>& cpfs,
-                                    ConditionalProbabilityFunction*& rewardCPF) {
+                                    RewardFunction*& rewardCPF) {
     // All CPFs with a domain that only includes its initial value are removed
     map<StateFluent*, double> replacements;
     for(vector<ConditionalProbabilityFunction*>::iterator it = cpfs.begin(); it != cpfs.end(); ++it) {
-        assert(!(*it)->getDomain().empty());
+        assert(!(*it)->getDomainSize() == 0);
 
-        if((*it)->getDomain().size() == 1) {
+        if((*it)->getDomainSize() == 1) {
             // As the initial value must be included, the only value must be the
-            // initial value!
-            assert(MathUtils::doubleIsEqual(*(*it)->getDomain().begin(), (*it)->getInitialValue()));
-
+            // initial value
             replacements[(*it)->getHead()] = (*it)->getInitialValue();
             cpfs.erase(it);
             --it;
@@ -332,7 +383,7 @@ void Preprocessor::finalizeFormulas(vector<Evaluatable*>& dynamicSACs,
         // The number of possible values of this variable in Kleene states is 2^0 +
         // 2^1 + ... + 2^{n-1} = 2^n -1 with n = CPFs[i]->domain.size()
         long kleeneDomainSize = 2;
-        if(!MathUtils::toThePowerOfWithOverflowCheck(kleeneDomainSize, cpfs[index]->getDomain().size())) {
+        if(!MathUtils::toThePowerOfWithOverflowCheck(kleeneDomainSize, cpfs[index]->getDomainSize())) {
             kleeneDomainSize = 0;
         } else {
             --kleeneDomainSize;

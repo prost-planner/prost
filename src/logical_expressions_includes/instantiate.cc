@@ -7,41 +7,42 @@ LogicalExpression* LogicalExpression::instantiate(UnprocessedPlanningTask* /*tas
                          Schematics
 *****************************************************************/
 
-LogicalExpression* UninstantiatedVariable::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* ParametrizedVariable::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
     vector<Object*> newParams;
     for(unsigned int i = 0; i < params.size(); ++i) {
-        Object* param = dynamic_cast<Object*>(params[i]->instantiate(task, replacements));
-        assert(param);
+        Object* param = dynamic_cast<Object*>(params[i]);
+        if(!param) {
+            assert(replacements.find(params[i]->name) != replacements.end());
+            param = replacements[params[i]->name];
+        }
         newParams.push_back(param);
     }
 
-    name = parent->name + "(";
-    for(unsigned int i = 0; i < newParams.size(); ++i) {
-        name += newParams[i]->name;
-        if(i != newParams.size()-1) {
-            name += ", ";
+    string instantiatedName(variableName);
+    if(!newParams.empty()) {
+        instantiatedName += "(";
+        for(unsigned int i = 0; i < newParams.size(); ++i) {
+            instantiatedName += newParams[i]->name;
+            if(i != newParams.size()-1) {
+                instantiatedName += ", ";
+            }
         }
+        instantiatedName += ")";
     }
-    name += ")";
     
-    switch(parent->variableType) {
-    case VariableDefinition::STATE_FLUENT:
-    case VariableDefinition::INTERM_FLUENT:
-        return task->getStateFluent(this);
+    switch(variableType) {
+    case ParametrizedVariable::STATE_FLUENT:
+        return task->getStateFluent(instantiatedName);
         break;
-    case VariableDefinition::ACTION_FLUENT:
-        return task->getActionFluent(this);
+    case ParametrizedVariable::ACTION_FLUENT:
+        return task->getActionFluent(instantiatedName);
         break;
-    case VariableDefinition::NON_FLUENT:
-        return new NumericConstant(task->getNonFluent(this)->initialValue);
+    case ParametrizedVariable::NON_FLUENT:
+        return new NumericConstant(task->getNonFluent(instantiatedName)->initialValue);
         break;
     }
     assert(false);
     return NULL;
-}
-
-LogicalExpression* AtomicLogicalExpression::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
-    return this;
 }
 
 /*****************************************************************
@@ -52,13 +53,20 @@ LogicalExpression* NumericConstant::instantiate(UnprocessedPlanningTask* /*task*
     return this;
 }
 
-LogicalExpression* Parameter::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& replacements) {
+LogicalExpression* Parameter::instantiate(UnprocessedPlanningTask* task, map<string, Object*>& replacements) {
+    // This is only called if this is not used as parameter but as part of an
+    // EqualsExpression.
     assert(replacements.find(name) != replacements.end());
-    return replacements[name];
+    return replacements[name]->instantiate(task, replacements);
 }
 
 LogicalExpression* Object::instantiate(UnprocessedPlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
-    return this;
+    // This is only called if this is not used as parameter but as part of an
+    // EqualsExpression.
+    if(values.size() != 1) {
+        SystemUtils::abort("Error: Implement object fluents in instantiate.cc.");
+    }
+    return new NumericConstant(values[0]);
 }
 
 /*****************************************************************

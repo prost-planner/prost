@@ -2,8 +2,6 @@
 
 #include "prost_planner.h"
 #include "planning_task.h"
-#include "actions.h"
-#include "conditional_probability_function.h"
 
 #include "utils/math_utils.h"
 

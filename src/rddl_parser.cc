@@ -1,8 +1,6 @@
 #include "rddl_parser.h"
 
-#include "logical_expressions.h"
-#include "conditional_probability_function.h"
-#include "typed_objects.h"
+#include "functions.h"
 
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -31,16 +29,8 @@ void RDDLParser::parseDomain() {
 
     for(unsigned int i = 0; i < tokens.size(); ++i) {
         if(tokens[i].find("requirements =") == 0) {
-            tokens[i] = tokens[i].substr(16,tokens[i].length()-18);
-            StringUtils::trim(tokens[i]);
-            StringUtils::removeTRN(tokens[i]);
-            StringUtils::toLowerCase(tokens[i]);
-            vector<string> reqsAsString;
-            StringUtils::split(tokens[i],reqsAsString,",");
-            for(unsigned int j = 0; j < reqsAsString.size(); ++j) {
-                assert(task->requirements.find(reqsAsString[j]) != task->requirements.end());
-                task->requirements[reqsAsString[j]] = true;
-            }
+            // We ignore the requirements section
+            continue;
         } else if(tokens[i].find("types ") == 0) {
             tokens[i] = tokens[i].substr(7,tokens[i].length()-9);
             StringUtils::trim(tokens[i]);
@@ -202,8 +192,8 @@ void RDDLParser::parseType(string& desc) {
     size_t cutPos = desc.find(":");
     assert(cutPos != string::npos);
 
-    string name = desc.substr(0,cutPos);
-    StringUtils::trim(name);
+    string typeName = desc.substr(0,cutPos);
+    StringUtils::trim(typeName);
 
     string rest = desc.substr(cutPos+1, desc.length());
     StringUtils::trim(rest);
@@ -212,18 +202,14 @@ void RDDLParser::parseType(string& desc) {
         assert(rest[rest.length()-1] == '}');
         rest = rest.substr(1,rest.length()-2);
 
-        ObjectType* newType = new ObjectType(name, ObjectType::enumRootInstance());
-        task->addObjectType(newType);
-
+        task->addType(typeName);
         vector<string> valsAsString;
         StringUtils::split(rest, valsAsString, ",");
         for(unsigned int i = 0; i < valsAsString.size(); ++i) {
-            Object* obj = new Object(valsAsString[i], newType, newType->domain.size());
-            newType->domain.push_back(obj);
-            task->addObject(obj);
+            task->addObject(typeName, valsAsString[i]);
         }
     } else {
-        task->addObjectType(new ObjectType(name, task->getObjectType(rest)));
+        task->addType(typeName, rest);
     }
 }
 
@@ -231,9 +217,9 @@ void RDDLParser::parseObject(string& desc) {
     size_t cutPos = desc.find(":");
     assert(cutPos != string::npos);
 
-    string type = desc.substr(0,cutPos);
-    StringUtils::trim(type);
-    assert(task->objectTypes.find(type) != task->objectTypes.end());
+    string typeName = desc.substr(0,cutPos);
+    StringUtils::trim(typeName);
+    assert(task->types.find(typeName) != task->types.end());
     
     string objs = desc.substr(cutPos+1,desc.length());
     StringUtils::trim(objs);
@@ -244,9 +230,7 @@ void RDDLParser::parseObject(string& desc) {
     vector<string> objectNames;
     StringUtils::split(objs, objectNames, ",");
     for(unsigned int i = 0; i < objectNames.size(); ++i) {
-        Object* obj = new Object(objectNames[i],task->getObjectType(type), task->getObjectType(type)->domain.size());
-        task->getObjectType(type)->domain.push_back(obj);
-        task->addObject(obj);
+        task->addObject(typeName, objectNames[i]);
     }
 }
 
@@ -260,7 +244,7 @@ void RDDLParser::parseVariableDefinition(string& desc) {
     StringUtils::trim(rest);
 
     string name;
-    vector<ObjectType*> params;
+    vector<Parameter*> params;
 
     if(nameAndParams[nameAndParams.length()-1] != ')') {
         name = nameAndParams;
@@ -272,7 +256,10 @@ void RDDLParser::parseVariableDefinition(string& desc) {
         vector<string> allParamsAsString;
         StringUtils::split(allParams, allParamsAsString, ",");
         for(unsigned int i = 0; i < allParamsAsString.size(); ++i) {
-            params.push_back(task->getObjectType(allParamsAsString[i]));
+            if(task->types.find(allParamsAsString[i]) == task->types.end()) {
+                SystemUtils::abort("Error: undefined type " + allParamsAsString[i] + " used as parameter in " + name + ".");
+            }
+            params.push_back(new Parameter(task->types[allParamsAsString[i]]->name, task->types[allParamsAsString[i]]));
         }
     }
 
@@ -283,42 +270,63 @@ void RDDLParser::parseVariableDefinition(string& desc) {
     StringUtils::split(rest,optionals,",");
 
     assert(optionals.size() == 3);
-    VariableDefinition::VariableType varType = VariableDefinition::NON_FLUENT;
+    ParametrizedVariable::VariableType varType;
     if(optionals[0] == "state-fluent") {
-        varType = VariableDefinition::STATE_FLUENT;
+        varType = ParametrizedVariable::STATE_FLUENT;
     } else if(optionals[0] == "action-fluent") {
-        varType = VariableDefinition::ACTION_FLUENT;
-    } else if(optionals[0] == "interm-fluent") {
-        varType = VariableDefinition::INTERM_FLUENT;
-    } else {
+        varType = ParametrizedVariable::ACTION_FLUENT;
+    } /*else if(optionals[0] == "interm-fluent") {
+        varType = ParametrizedVariable::INTERM_FLUENT;
+        } else if(optionals[0] == "derived-fluent") {
+        varType = ParametrizedVariable::DERIVED_FLUENT;
+        } */else {
         assert(optionals[0] == "non-fluent");
+        varType =  ParametrizedVariable::NON_FLUENT;
     }
 
-    Type* type = Type::typeFromName(optionals[1], task);
-    assert(type);
+    assert(task->types.find(optionals[1]) != task->types.end());
+    Type* valueType = task->types[optionals[1]];
 
-    double defaultVal = -1.0;
+    double defaultVal = 0.0;
     string defaultValString;
-    int level = 0;
+    //int level = 0;
 
     switch(varType) {
-    case VariableDefinition::NON_FLUENT:
-    case VariableDefinition::STATE_FLUENT:
-    case VariableDefinition::ACTION_FLUENT:  
+    case ParametrizedVariable::NON_FLUENT:
+    case ParametrizedVariable::STATE_FLUENT:
+    case ParametrizedVariable::ACTION_FLUENT:  
         assert(optionals[2].find("default =") == 0);
         defaultValString = optionals[2].substr(9,optionals[2].length());
         StringUtils::trim(defaultValString);
-        defaultVal = type->valueStringToDouble(defaultValString);
+        if((valueType->name == "int") || (valueType->name == "real")) {
+            defaultVal = atof(defaultValString.c_str());
+        } else {
+            if(task->objects.find(defaultValString) == task->objects.end()) {
+                SystemUtils::abort("Error: Default value " + defaultValString + " of variable " + name + " not defined.");
+            }
+            Object* val = task->objects[defaultValString];
+            int typeIndex = -1;
+            for(unsigned int i = 0; i < val->types.size(); ++i) {
+                if(val->types[i] == valueType) {
+                    typeIndex = i;
+                    break;
+                }
+            }
+            if(typeIndex < 0) {
+                SystemUtils::abort("Error: Default value " + defaultValString + " of variable " + name + " is of wrong type.");
+            }
+            defaultVal = val->values[typeIndex];
+        }
         break;
-    case VariableDefinition::INTERM_FLUENT:
-        assert(optionals[2].find("level =") == 0);
-        optionals[2] = optionals[2].substr(7,optionals[2].length());
-        StringUtils::trim(optionals[2]);
-        level = atoi(optionals[2].c_str());
-        break;
+        //case ParametrizedVariable::INTERM_FLUENT:
+        // assert(optionals[2].find("level =") == 0);
+        // optionals[2] = optionals[2].substr(7,optionals[2].length());
+        // StringUtils::trim(optionals[2]);
+        // level = atoi(optionals[2].c_str());
+        //break;
     }
 
-    task->addVariableDefinition(new VariableDefinition(name,params,varType,type,defaultVal,level));
+    task->addVariableDefinition(new ParametrizedVariable(name, params, varType, valueType, defaultVal));
 }
 
 void RDDLParser::parseCPFDefinition(string& desc) {
@@ -347,20 +355,22 @@ void RDDLParser::parseCPFDefinition(string& desc) {
         name = name.substr(0,name.length()-1);
     }
 
-    VariableDefinition* headParent = task->getVariableDefinition(name);
-    assert(headParent);
-    assert(headParent->params.size() == (nameAndParamsVec.size()-1));
-
-    // TODO: Currently, we don't allow constants in the head of a CPF, even
-    // though there'd be nothing wrong with that
-    vector<Parameter*> headParams;
-    for(unsigned int i = 1; i < nameAndParamsVec.size(); ++i) {
-        headParams.push_back(new Parameter(nameAndParamsVec[i]));
+    if(task->variableDefinitions.find(name) == task->variableDefinitions.end()) {
+        SystemUtils::abort("Error: no according variable to CPF " + name + ".");
     }
-    UninstantiatedVariable* head = new UninstantiatedVariable(headParent, headParams);
-    LogicalExpression* formula = parseRDDLFormula(rest);
+    ParametrizedVariable* head = task->variableDefinitions[name];
+    assert(head->params.size() == (nameAndParamsVec.size()-1));
 
-    task->addCPFDefinition(make_pair(head,formula));
+    // TODO: Currently, we don't allow constants in the head of a CPF, as the
+    // RDDL specification is not really clear if it is allowed.
+    for(unsigned int i = 0; i < head->params.size(); ++i) {
+        // Set the parameter names
+        head->params[i]->name = nameAndParamsVec[i+1];
+    }
+    if(task->CPFDefinitions.find(head) != task->CPFDefinitions.end()) {
+        SystemUtils::abort("Error: Multiple definition of CPF " + name + ".");
+    }
+    task->CPFDefinitions[head] = parseRDDLFormula(rest);
 }
 
 void RDDLParser::parseAtomicLogicalExpression(string& desc) {
@@ -380,7 +390,7 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
     StringUtils::trim(valString);
 
     string name;
-    vector<Object*> paramsAsObjects;
+    vector<Parameter*> params;
     if((cutPos = nameAndParams.find("(")) == string::npos) {
         name = nameAndParams;
     } else {
@@ -391,24 +401,21 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
         vector<string> paramStrings;
         StringUtils::split(paramsAsString,paramStrings,",");
         for(unsigned int i = 0; i < paramStrings.size(); ++i) {
-            paramsAsObjects.push_back(task->getObject(paramStrings[i]));
+            if(task->objects.find(paramStrings[i]) == task->objects.end()) {
+                SystemUtils::abort("Error: Undefined object " + paramStrings[i] + " referenced in " + desc + ".");
+            }
+            params.push_back(task->objects[paramStrings[i]]);
         }
     }
-    VariableDefinition* parent = task->getVariableDefinition(name);
-    switch(parent->variableType) {
-    case VariableDefinition::STATE_FLUENT:
-        task->addStateFluent(new StateFluent(parent,paramsAsObjects,atof(valString.c_str())));
-        break;
-    case VariableDefinition::INTERM_FLUENT:
-        SystemUtils::abort("Error: Interm fluents are not supported (yet).");
-        break;
-    case VariableDefinition::ACTION_FLUENT:
-        SystemUtils::abort("Error: No action fluent allowed here.");
-        break;
-    case VariableDefinition::NON_FLUENT:
-        task->addNonFluent(new NonFluent(parent,paramsAsObjects,atof(valString.c_str())));
-        break;
+
+    if(task->variableDefinitions.find(name) == task->variableDefinitions.end()) {
+        SystemUtils::abort("Error: variable " + name + " used but not defined.");
     }
+    ParametrizedVariable* parent = task->variableDefinitions[name];
+
+    // Instantiation is not performed yet, so the according fluents don't exist
+    // and we have to create them here
+    task->addParametrizedVariable(parent, params, atof(valString.c_str()));
 }
 
 LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
@@ -424,22 +431,19 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
             if(param) {
                 return param;
             }
-        } // otherwise, this could be a parameterless fluent
+        } // Otherwise, this is a parameterless fluent
     }
 
-    if(task->isAVariableDefinition(tokens[0])) {
-        // Fluent (Note that tokens.size can be 1 here as well if this is a
-        // parameterless fluent)
-        VariableDefinition* var = task->getVariableDefinition(tokens[0]);
-        assert(var->params.size() == (tokens.size()-1));
-
+    if(task->variableDefinitions.find(tokens[0]) != task->variableDefinitions.end()) {
+        // Fluent
         vector<Parameter*> params;
         for(unsigned int i = 1; i <tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             assert(param);
             params.push_back(param);
         }
-        return new UninstantiatedVariable(var, params);
+        // Copy the schematic variable and replace the params
+        return new ParametrizedVariable(*task->variableDefinitions[tokens[0]], params);
     } else if(tokens[0] == "sum") {
         // Sumation
         assert(tokens.size() == 3);
@@ -550,6 +554,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -564,6 +569,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -578,6 +584,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -592,6 +599,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -606,6 +614,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -620,6 +629,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -634,6 +644,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -648,6 +659,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         for(unsigned int i = 1; i < tokens.size(); ++i) {
             Parameter* param = parseParameter(tokens[i]);
             if(param) {
+                assert(false); // This can only occur with ranged ints
                 exprs.push_back(param);
             } else {
                 LogicalExpression* expr = parseRDDLFormula(tokens[i]);
@@ -769,7 +781,7 @@ ParameterList* RDDLParser::parseParameterList(string& desc) {
     vector<string> tokens = tokenizeFormula(desc);
 
     vector<Parameter*> params;
-    vector<ObjectType*> types;
+    vector<Type*> types;
 
     // TODO: Also allow lists of the form ( (?x1, ?x2 : type_x) )
 
@@ -788,18 +800,21 @@ ParameterList* RDDLParser::parseParameterList(string& desc) {
 
         string type = tokens[i].substr(cutPos+1, tokens[i].length());
         StringUtils::trim(type);
-        assert(task->getObjectType(type));
 
-        params.push_back(new Parameter(name));
-        types.push_back(task->getObjectType(type));
+        if(task->types.find(type) == task->types.end()) {
+            SystemUtils::abort("Error: Type " + type + " not defined.");
+        }
+
+        params.push_back(new Parameter(name, task->types[type]));
+        types.push_back(task->types[type]);
     }
 
     return new ParameterList(params, types);
 }
 
 Parameter* RDDLParser::parseParameter(string& desc) {
-    if(task->getObject(desc)) {
-        return task->getObject(desc);
+    if(task->objects.find(desc) != task->objects.end()) {
+        return task->objects[desc];
     } else if(desc[0] == '?') {
         return new Parameter(desc);
     }

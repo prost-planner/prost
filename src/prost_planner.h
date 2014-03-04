@@ -2,8 +2,10 @@
 #define PROST_PLANNER_H
 
 #include "search_engine.h"
+#include "states.h"
 
 #include <map>
+#include <cassert>
 
 class UnprocessedPlanningTask;
 class PlanningTask;

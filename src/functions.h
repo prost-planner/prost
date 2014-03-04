@@ -19,7 +19,6 @@ public:
         formula(_formula),
         isProb(other.isProb),
         hasArithmeticFunction(other.hasArithmeticFunction),
-        //probDomainMap(other.probDomainMap),
         hashIndex(other.hashIndex),
         cachingType(other.cachingType),
         evaluationCacheVector(other.pdEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
@@ -192,32 +191,34 @@ public:
         return isProb;
     }
 
-    bool hasPositiveActionDependencies() const {
-        return !positiveActionDependencies.empty();
-    }
-
-    bool isActionIndependent() const {
-        return (positiveActionDependencies.empty() && negativeActionDependencies.empty());
-    }
-
+    // SAC only
     bool containsArithmeticFunction() const {
         return hasArithmeticFunction;
     }
 
+    // SAC only
     bool containsStateFluent() const {
         return !dependentStateFluents.empty();
     }
 
+    // SAC only
     bool containsActionFluent() const {
         return !(positiveActionDependencies.empty() && negativeActionDependencies.empty());
     }
 
+    // SAC & Reward
     std::set<ActionFluent*> const& getPositiveDependentActionFluents() {
         return positiveActionDependencies;
     }
 
+    // SAC only
     std::set<ActionFluent*>const& getNegativeDependentActionFluents() {
         return negativeActionDependencies;
+    }
+
+    // Reward only (apart from print in PlanningTask)
+    bool isActionIndependent() const {
+        return (positiveActionDependencies.empty() && negativeActionDependencies.empty());
     }
 
 protected:
@@ -233,9 +234,6 @@ protected:
     std::set<ActionFluent*> negativeActionDependencies;
     bool isProb;
     bool hasArithmeticFunction;
-
-    // Hashing of states as probability distributions
-    // REPAIRstd::map<double, long> probDomainMap;
 
     // hashIndex is the index in the stateFluentHashKey vector of a state where
     // the state fluent hash key of this Evaluatable is stored
@@ -294,5 +292,104 @@ private:
     // parentheses are used
     long stateHashKey;
 };
+
+class RewardFunction : public Evaluatable {
+public:
+    RewardFunction(LogicalExpression* _formula) :
+        Evaluatable("Reward" , _formula) {}
+
+    void setDomain(std::set<double> _domain) {
+        domain = _domain;
+    }
+
+    double const& getMinVal() const {
+        assert(!domain.empty());
+        return *domain.begin();
+    }
+
+    double const& getMaxVal() const {
+        assert(!domain.empty());
+        return *domain.rbegin();
+    }
+
+private:
+    std::set<double> domain;
+};
+
+class ConditionalProbabilityFunction : public Evaluatable {
+public:
+    //TODO: This is very very ugly, but cpfs, planning tasks and
+    //states are very tightly coupled. Nevertheless, there must be a
+    //way to get rid of this, even if it takes some work!
+    friend class PlanningTask;
+
+    // This is used to sort transition functions by their name to ensure
+    // deterministic behaviour
+    struct TransitionFunctionSort {
+        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
+            return lhs->name < rhs->name;
+        }
+    };
+
+    ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
+        Evaluatable(_head->fullName, _formula),
+        head(_head),
+        kleeneDomainSize(0) {}
+
+    ConditionalProbabilityFunction(ConditionalProbabilityFunction const& other, LogicalExpression* _formula) :
+        Evaluatable(other, _formula),
+        head(other.head),
+        domain(other.domain),
+        kleeneDomainSize(other.kleeneDomainSize) {}
+
+    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    StateFluent* getHead() const {
+        assert(head);
+        return head;
+    }
+
+    void setDomain(std::set<double> _domain) {
+        domain = _domain;
+    }
+
+    int getDomainSize() const {
+        return domain.size();
+    }
+
+    bool hasFiniteDomain() const {
+        return (!domain.empty());
+    }
+
+    void setKleeneDomainSize(long _kleeneDomainSize) {
+        kleeneDomainSize = _kleeneDomainSize;
+    }
+
+    long getKleeneDomainSize() const {
+        return kleeneDomainSize;
+    }
+
+    bool hasFiniteKleeneDomain() const {
+        return (kleeneDomainSize > 0);
+    }
+
+    void setIndex(int _index) {
+        head->index = _index;
+    }
+
+    double getInitialValue() const {
+        return head->initialValue;
+    }
+
+private:
+    StateFluent* head;
+
+    // The values this CPF can take
+    std::set<double> domain;
+
+    // Hashing of KleeneStates
+    long kleeneDomainSize;
+};
+
 
 #endif

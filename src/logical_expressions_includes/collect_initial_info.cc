@@ -1,3 +1,12 @@
+void LogicalExpression::collectInitialInfo(bool& /*isProbabilistic*/,
+                                           bool& /*containsArithmeticFunction*/,
+                                           std::set<StateFluent*>& /*dependentStateFluents*/, 
+                                           std::set<ActionFluent*>& /*positiveDependentActionFluents*/,
+                                           std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {
+    print(cout);
+    assert(false);
+}
+
 /*****************************************************************
                            Atomics
 *****************************************************************/
@@ -17,6 +26,12 @@ void ActionFluent::collectInitialInfo(bool& /*isProbabilistic*/,
                                       set<ActionFluent*>& /*negativeDependentActionFluents*/) {
     positiveDependentActionFluents.insert(this);
 }
+
+void NumericConstant::collectInitialInfo(bool& /*isProbabilistic*/,
+                                   bool& /*containsArithmeticFunction*/,
+                                   std::set<StateFluent*>& /*dependentStateFluents*/, 
+                                   std::set<ActionFluent*>& /*positiveDependentActionFluents*/,
+                                   std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
 
 /*****************************************************************
                            Connectives

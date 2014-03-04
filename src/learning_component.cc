@@ -17,3 +17,8 @@ LearningComponent::LearningComponent(LearningComponent const& other) :
 LearningComponent::~LearningComponent() {
     learningComponentAdmin->unregisterLearningComponent(this);
 }
+
+bool LearningComponent::learn(std::vector<State> const& /*trainingSet*/) {
+    hasLearned = true;
+    return true;
+}

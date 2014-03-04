@@ -8,14 +8,14 @@ LogicalExpression* LogicalExpression::replaceQuantifier(map<string, Object*>& /*
                          Schematics
 *****************************************************************/
 
-LogicalExpression* UninstantiatedVariable::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
+LogicalExpression* ParametrizedVariable::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
     vector<Parameter*> newParams;
     for(unsigned int i = 0; i < params.size(); ++i) {
         Parameter* param = dynamic_cast<Parameter*>(params[i]->replaceQuantifier(replacements, instantiator));
         assert(param);
         newParams.push_back(param);
     }
-    return new UninstantiatedVariable(parent, newParams);
+    return new ParametrizedVariable(*this, newParams);
 }
 
 /*****************************************************************
@@ -41,11 +41,11 @@ LogicalExpression* Object::replaceQuantifier(map<string, Object*>& /*replacement
                           Quantifier
 *****************************************************************/
 
-void Quantifier::getReplacements(vector<string>& parameterNames, vector<vector<Object*> >& replacements, Instantiator* instantiator) {
-    vector<ObjectType*> parameterTypes;
+void Quantifier::getReplacements(vector<string>& parameterNames, vector<vector<Parameter*> >& replacements, Instantiator* instantiator) {
+    vector<Parameter*> parameterTypes;
     for(unsigned int i = 0; i < paramList->params.size(); ++i) {
         parameterNames.push_back(paramList->params[i]->name);
-        parameterTypes.push_back(paramList->types[i]);
+        parameterTypes.push_back(new Parameter(paramList->params[i]->name, paramList->types[i]));
     }
     instantiator->instantiateParams(parameterTypes, replacements);
 }
@@ -53,14 +53,16 @@ void Quantifier::getReplacements(vector<string>& parameterNames, vector<vector<O
 LogicalExpression* Sumation::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Object*> > newParams;
+    vector<vector<Parameter*> > newParams;
     getReplacements(parameterNames, newParams, instantiator);
     for(unsigned int i = 0; i < newParams.size(); ++i) {
         map<string, Object*> replacementsCopy = replacements;
         assert(newParams[i].size() == parameterNames.size());
         for(unsigned int j = 0; j < newParams[i].size(); ++j) {
             assert(replacementsCopy.find(parameterNames[j]) == replacementsCopy.end());
-            replacementsCopy[parameterNames[j]] = newParams[i][j];
+            Object* obj = dynamic_cast<Object*>(newParams[i][j]);
+            assert(obj);
+            replacementsCopy[parameterNames[j]] = obj;
         }
         LogicalExpression* e = expr->replaceQuantifier(replacementsCopy, instantiator);
         newExprs.push_back(e);
@@ -71,14 +73,16 @@ LogicalExpression* Sumation::replaceQuantifier(map<string, Object*>& replacement
 LogicalExpression* Product::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Object*> > newParams;
+    vector<vector<Parameter*> > newParams;
     getReplacements(parameterNames, newParams, instantiator);
     for(unsigned int i = 0; i < newParams.size(); ++i) {
         map<string, Object*> replacementsCopy = replacements;
         assert(newParams[i].size() == parameterNames.size());
         for(unsigned int j = 0; j < newParams[i].size(); ++j) {
             assert(replacementsCopy.find(parameterNames[j]) == replacementsCopy.end());
-            replacementsCopy[parameterNames[j]] = newParams[i][j];
+            Object* obj = dynamic_cast<Object*>(newParams[i][j]);
+            assert(obj);
+            replacementsCopy[parameterNames[j]] = obj;
         }
         LogicalExpression* e = expr->replaceQuantifier(replacementsCopy, instantiator);
         newExprs.push_back(e);
@@ -89,14 +93,16 @@ LogicalExpression* Product::replaceQuantifier(map<string, Object*>& replacements
 LogicalExpression* UniversalQuantification::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Object*> > newParams;
+    vector<vector<Parameter*> > newParams;
     getReplacements(parameterNames, newParams, instantiator);
     for(unsigned int i = 0; i < newParams.size(); ++i) {
         map<string, Object*> replacementsCopy(replacements);
         assert(newParams[i].size() == parameterNames.size());
         for(unsigned int j = 0; j < newParams[i].size(); ++j) {
             assert(replacementsCopy.find(parameterNames[j]) == replacementsCopy.end());
-            replacementsCopy[parameterNames[j]] = newParams[i][j];
+            Object* obj = dynamic_cast<Object*>(newParams[i][j]);
+            assert(obj);
+            replacementsCopy[parameterNames[j]] = obj;
         }
         LogicalExpression* e = expr->replaceQuantifier(replacementsCopy, instantiator);
         newExprs.push_back(e);
@@ -107,7 +113,7 @@ LogicalExpression* UniversalQuantification::replaceQuantifier(map<string, Object
 LogicalExpression* ExistentialQuantification::replaceQuantifier(map<string, Object*>& replacements, Instantiator* instantiator) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Object*> > newParams;
+    vector<vector<Parameter*> > newParams;
     getReplacements(parameterNames, newParams, instantiator);
 
     for(unsigned int i = 0; i < newParams.size(); ++i) {
@@ -115,7 +121,9 @@ LogicalExpression* ExistentialQuantification::replaceQuantifier(map<string, Obje
         assert(newParams[i].size() == parameterNames.size());
         for(unsigned int j = 0; j < newParams[i].size(); ++j) {
             assert(replacementsCopy.find(parameterNames[j]) == replacementsCopy.end());
-            replacementsCopy[parameterNames[j]] = newParams[i][j];
+            Object* obj = dynamic_cast<Object*>(newParams[i][j]);
+            assert(obj);
+            replacementsCopy[parameterNames[j]] = obj;
         }
         LogicalExpression* e = expr->replaceQuantifier(replacementsCopy, instantiator);
         newExprs.push_back(e);

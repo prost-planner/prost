@@ -13,17 +13,12 @@ HEADERS = prost_planner.h \
 	  rddl_parser.h \
 	  instantiator.h \
 	  preprocessor.h \
-	  state.h \
-	  kleene_state.h \
-	  pd_state.h \
+	  states.h \
 	  planning_task.h \
 	  unprocessed_planning_task.h \
-	  typed_objects.h \
+	  functions.h \
 	  logical_expressions.h \
 	  probability_distribution.h \
-	  actions.h \
-	  evaluatable.h \
-	  conditional_probability_function.h \
 	  caching_component.h \
 	  learning_component.h \
 	  utils/strxml.h \
