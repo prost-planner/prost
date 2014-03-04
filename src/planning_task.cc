@@ -12,7 +12,7 @@ using namespace std;
 *****************************************************************/
 
 void PlanningTask::initialize(vector<ConditionalProbabilityFunction*>& _CPFs, 
-                              ConditionalProbabilityFunction* _rewardCPF,
+                              RewardFunction* _rewardCPF,
                               State& _initialState,
                               vector<Evaluatable*>& _dynamicSACs, 
                               vector<Evaluatable*>& _staticSACs,
@@ -69,14 +69,14 @@ void PlanningTask::initialize(vector<ConditionalProbabilityFunction*>& _CPFs,
     initializeRewardDependentVariables();
 
     // Set mapping of variables to variable names and of values as strings to
-    // internal valued for communication with environment
+    // internal values for communication with environment
     for(unsigned int i = 0; i < stateSize; ++i) {
-        assert(stateVariableIndices.find(CPFs[i]->head->name) == stateVariableIndices.end());
-        stateVariableIndices[CPFs[i]->head->name] = i;
+        assert(stateVariableIndices.find(CPFs[i]->name) == stateVariableIndices.end());
+        stateVariableIndices[CPFs[i]->name] = i;
 
         vector<string> values;
-        for(unsigned int j = 0; j < CPFs[i]->head->parent->valueType->domain.size(); ++j) {
-            values.push_back(CPFs[i]->head->parent->valueType->domain[j]->name);
+        for(unsigned int j = 0; j < CPFs[i]->head->valueType->objects.size(); ++j) {
+            values.push_back(CPFs[i]->head->valueType->objects[j]->name);
         }
         stateVariableValues.push_back(values);
     }
@@ -106,7 +106,7 @@ void PlanningTask::initializeStateHashKeys() {
 
     for(unsigned int index = 0; index < stateSize; ++index) {
         hashKeyBases.push_back(nextHashKeyBase);
-        if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
+        if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomainSize())) {
             hashKeyBases.clear();
             stateHashingPossible = false;
             return;
@@ -208,42 +208,46 @@ void PlanningTask::initializeRewardDependentVariables() {
     noopIsOptimalFinalAction = false;
     useRewardLockDetection = true;
 
-    // TODO: goalTestActionIndex should actually be a vector that
-    // contains all actions indices that could potentially be the
-    // action that is necessary to stay in a goal. Currently, we just
-    // set it to noop or to -1, as there is no domain with a
-    // "stayInGoal" action that is different from noop. Moreover, it
-    // could also be that there are several such actions, e.g.
-    // stayInGoal_1 and stayInGoal_2 which are used for different goal
-    // states. What we do currently is sound but makes the
-    // rewardLockDetection even more incomplete.
-    if(rewardCPF->hasPositiveActionDependencies()) {
+    // TODO: goalTestActionIndex should actually be a vector that contains all
+    // actions indices that could potentially be the action that is necessary to
+    // stay in a goal. Currently, we just set it to noop or to -1, as there is
+    // no domain with a "stayInGoal" action that is different from noop.
+    // Moreover, it could also be that there are several such actions, e.g.
+    // stayInGoal_1 and stayInGoal_2 which are used for different goal states.
+    // What we do currently is sound but makes the rewardLockDetection even more
+    // incomplete.
+    if(!rewardCPF->getPositiveDependentActionFluents().empty()) {
+        // If the reward can be influenced positively by action fluents, we omit
+        // reward lock detection. TODO: In a first step, we could check if all
+        // positive action fluents are only positive and if the action state
+        // that consist of all positive action fluents is always applicable.
+        // Then we can use that action state.
         goalTestActionIndex = -1;
         useRewardLockDetection = false;
     } else {
         goalTestActionIndex = 0;
 
         if(actionStates[0].scheduledActionFluents.empty() && actionStates[0].relevantSACs.empty()) {
-            // If no action fluent occurs positively in the reward, if
-            // noop is not forbidden due to static SACs, and if noop
-            // has no SACs that might make it inapplicable, noop is
-            // always at least as good as other actions in the final
-            // state transition.
+            // If no action fluent occurs positively in the reward, if noop is
+            // not forbidden due to static SACs, and if noop has no SACs that
+            // might make it inapplicable, noop is always at least as good as
+            // other actions in the final state transition.
             noopIsOptimalFinalAction = true;
         }
-    }
 
-    // TODO: These numbers are rather random and chosen s.t. the bdd
-    // operations do not output anything even on bigger problems.
-    // Nevertheless, I know only little on what they actually mean,
-    // one could readjust these if it were different.
-    bdd_init(5000000,20000);
 
-    int* domains = new int[stateSize];
-    for(unsigned int index = 0; index < CPFs.size(); ++index) {
-        domains[index] = CPFs[index]->getDomain().size();
+        // TODO: These numbers are rather random and chosen s.t. the bdd
+        // operations do not output anything even on bigger problems.
+        // Nevertheless, I know only little on what they actually mean, one
+        // could readjust these if it were different.
+        bdd_init(5000000,20000);
+
+        int* domains = new int[stateSize];
+        for(unsigned int index = 0; index < CPFs.size(); ++index) {
+            domains[index] = CPFs[index]->getDomainSize();
+        }
+        fdd_extdomain(domains, stateSize);
     }
-    fdd_extdomain(domains, stateSize);
 }
 
 /*****************************************************************
@@ -403,7 +407,7 @@ inline void PlanningTask::setApplicableReasonableActions(State const& state, std
         map<State, int, State::CompareIgnoringRemainingSteps> childStates;
     
         for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
-            if(actionStates[actionIndex].isApplicable(state)) {
+            if(actionIsApplicable(actionStates[actionIndex], state)) {
                 // This action is applicable
                 State nxt(stateSize, -1, numberOfStateFluentHashKeys);
                 calcSuccessorStateInDeterminization(state, actionIndex, nxt);
@@ -426,9 +430,9 @@ inline void PlanningTask::setApplicableReasonableActions(State const& state, std
         map<PDState, int, PDState::CompareIgnoringRemainingSteps> childStates;
     
         for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
-            if(actionStates[actionIndex].isApplicable(state)) {
+            if(actionIsApplicable(actionStates[actionIndex], state)) {
                 // This action is applicable
-                PDState nxt = getPDState(state.remainingSteps()-1);
+                PDState nxt(stateSize, state.remainingSteps()-1);
                 calcSuccessorState(state, actionIndex, nxt);
                 //REPAIR calcHashKeyOfProbabilityDistribution(nxt);
 
@@ -450,12 +454,23 @@ inline void PlanningTask::setApplicableReasonableActions(State const& state, std
 
 inline void PlanningTask::setApplicableActions(State const& state, vector<int>& res) const {
     for(unsigned int actionIndex = 0; actionIndex < getNumberOfActions(); ++actionIndex) {
-        if(!actionStates[actionIndex].isApplicable(state)) {
-            res[actionIndex] = -1;
-        } else {
+        if(actionIsApplicable(actionStates[actionIndex], state)) {
             res[actionIndex] = actionIndex;
+        } else {
+            res[actionIndex] = -1;
         }
     }
+}
+
+inline bool PlanningTask::actionIsApplicable(ActionState const& action, State const& current) const {
+    double res = 0.0;
+    for(unsigned int sacIndex = 0; sacIndex < action.relevantSACs.size(); ++sacIndex) {
+        action.relevantSACs[sacIndex]->evaluate(res, current, action);
+        if(MathUtils::doubleIsEqual(res, 0.0)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /******************************************************************
@@ -812,12 +827,12 @@ void PlanningTask::print(ostream& out) const {
 void PlanningTask::printState(ostream& out, State const& state) const {
     assert(state.state.size() == stateSize);
     for(unsigned int index = 0; index < stateSize; ++index) {
-        out << CPFs[index]->head->name << ": ";
-        if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
-            out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
-        } else {
-            out << state[index] << endl;
-        }
+        out << CPFs[index]->name << ": ";
+        //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
+        //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
+        //} else {
+        out << state[index] << endl;
+        //}
     }
     out << "Remaining Steps: " << state.remainingSteps() << endl;
     out << "StateHashKey: " << state.hashKey << endl;
@@ -826,7 +841,7 @@ void PlanningTask::printState(ostream& out, State const& state) const {
 void PlanningTask::printKleeneState(ostream& out, KleeneState const& state) const {
     assert(state.state.size() == stateSize);
     for(unsigned int index = 0; index < stateSize; ++index) {
-        out << CPFs[index]->head->name << ": { ";
+        out << CPFs[index]->name << ": { ";
         for(std::set<double>::iterator it = state[index].begin(); it != state[index].end(); ++it) {
             cout << *it << " ";
         }
@@ -837,7 +852,7 @@ void PlanningTask::printKleeneState(ostream& out, KleeneState const& state) cons
 void PlanningTask::printPDState(ostream& out, PDState const& state) const {
     assert(state.state.size() == stateSize);
     for(unsigned int index = 0; index < stateSize; ++index) {
-        out << CPFs[index]->head->name << ": ";
+        out << CPFs[index]->name << ": ";
         state[index].print(out);
     }
     out << "Remaining Steps: " << state.remainingSteps() << endl;
@@ -848,7 +863,7 @@ void PlanningTask::printAction(ostream& out, int const& actionIndex) const {
         out << "noop() ";
     } else {
         for(unsigned int index = 0; index < actionStates[actionIndex].scheduledActionFluents.size(); ++index) {
-            out << actionStates[actionIndex].scheduledActionFluents[index]->name << " ";
+            out << actionStates[actionIndex].scheduledActionFluents[index]->fullName << " ";
         }
     }
 }
@@ -979,7 +994,7 @@ void PlanningTask::printEvaluatableInDetail(ostream& out, Evaluatable* eval) con
     if(!eval->dependentStateFluents.empty()) {
         out << "  Depends on state fluents:" << endl;
         for(set<StateFluent*>::iterator it = eval->dependentStateFluents.begin(); it != eval->dependentStateFluents.end(); ++it) {
-            out << "    " << (*it)->name << endl;
+            out << "    " << (*it)->fullName << endl;
         }
     } else {
         out << "  Has no dependencies on state fluents." << endl;

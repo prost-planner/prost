@@ -18,10 +18,6 @@ void NumericConstant::evaluate(double& res, State const& /*current*/, ActionStat
     res = value;
 }
 
-void Object::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) {
-    res = value;
-}
-
 /*****************************************************************
                            Connectives
 *****************************************************************/

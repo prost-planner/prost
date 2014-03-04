@@ -6,6 +6,7 @@
 // by Keller and Eyerich (2012).
 
 #include "search_engine.h"
+#include "states.h"
 
 #include "utils/timer.h"
 

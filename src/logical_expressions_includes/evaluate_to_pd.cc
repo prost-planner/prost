@@ -18,10 +18,6 @@ void NumericConstant::evaluateToPD(DiscretePD& res, State const& /*current*/, Ac
     res.assignDiracDelta(value);
 }
 
-void Object::evaluateToPD(DiscretePD& res, State const& /*current*/, ActionState const& /*actions*/) {
-    res.assignDiracDelta(value);
-}
-
 /*****************************************************************
                            Connectives
 *****************************************************************/

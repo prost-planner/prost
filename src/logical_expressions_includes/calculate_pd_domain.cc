@@ -29,13 +29,6 @@ void NumericConstant::calculatePDDomain(vector<set<DiscretePD> > const& /*domain
     res.insert(resPD);
 }
 
-void Object::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& res) {
-    assert(res.empty());
-    DiscretePD resPD;
-    resPD.assignDiracDelta(value);
-    res.insert(resPD);
-}
-
 /*****************************************************************
                            Connectives
 *****************************************************************/

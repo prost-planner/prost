@@ -9,8 +9,11 @@
 #include "learning_component.h"
 
 #include <sstream>
+#include <vector>
 
 class ProstPlanner;
+class PlanningTask;
+class State;
 
 class SearchEngine : public CachingComponent, public LearningComponent {
 public:

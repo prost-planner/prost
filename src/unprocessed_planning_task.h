@@ -6,99 +6,74 @@
 #include <map>
 #include <cassert>
 
-class ObjectType;
+class Type;
+class Parameter;
 class Object;
-class VariableDefinition;
+class ParametrizedVariable;
 class LogicalExpression;
-class UninstantiatedVariable;
-class AtomicLogicalExpression;
 class NonFluent;
 class StateFluent;
 class ActionFluent;
-class ConditionalProbabilityFunction;
 
-class UnprocessedPlanningTask {
-public:
+struct UnprocessedPlanningTask {
     UnprocessedPlanningTask(std::string _domainDesc, std::string _problemDesc);
 
     void preprocessInput(std::string& problemDesc);
 
-    void addObjectType(ObjectType* objectType);
-    ObjectType* getObjectType(std::string& name);
+    void addType(std::string const& name, std::string const& superType = "");
+    void addObject(std::string const& typeName, std::string const& objectName);
 
-    void addObject(Object* object);
-    Object* getObject(std::string& name);
-    void getObjectsOfType(ObjectType* objectType, std::vector<Object*>& res);
+    void addVariableDefinition(ParametrizedVariable* varDef);
 
-    void addVariableDefinition(VariableDefinition* varDef);
-    VariableDefinition* getVariableDefinition(std::string& name);
-    void getVariableDefinitions(std::vector<VariableDefinition*>& result, bool includeRewardDef = false);
-    bool isAVariableDefinition(std::string& name);
+    void addParametrizedVariable(ParametrizedVariable* parent, std::vector<Parameter*> const& params);
+    void addParametrizedVariable(ParametrizedVariable* parent, std::vector<Parameter*> const& params, double initialValue);
 
-    void addCPFDefinition(std::pair<UninstantiatedVariable*, LogicalExpression*> const& CPFDef);
+    StateFluent* getStateFluent(std::string const& name);
+    ActionFluent* getActionFluent(std::string const& name);
+    NonFluent* getNonFluent(std::string const& name);
+
+    std::vector<StateFluent*> getVariablesOfSchema(ParametrizedVariable* schema);
 
     void addStateActionConstraint(LogicalExpression* sac);
-    void removeStateActionConstraint(LogicalExpression* sac);
-
-    void addStateFluent(StateFluent* var);
-    StateFluent* getStateFluent(UninstantiatedVariable* var);
-
-    void addNonFluent(NonFluent* var);
-    NonFluent* getNonFluent(UninstantiatedVariable* var);
-
-    void addActionFluent(ActionFluent* var);
-    ActionFluent* getActionFluent(UninstantiatedVariable* var);
-    void getActionFluents(std::vector<ActionFluent*>& result);
-
-    void getVariablesOfSchema(VariableDefinition* schema, std::vector<AtomicLogicalExpression*>& result);
-    void getInitialState(std::vector<AtomicLogicalExpression*>& result);
-
     void addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf);
     void setRewardCPF(LogicalExpression* const& _rewardCPF);
 
-    //string description
+    // Task description as string
     std::string domainDesc;
     std::string nonFluentsDesc;
     std::string instanceDesc;
 
-    //general info
+    // Names
     std::string domainName;
     std::string nonFluentsName;
     std::string instanceName;
 
-    //requirements
-    std::map<std::string, bool> requirements;
-
-    //numbers
+    // Simple numeric properties
     int numberOfConcurrentActions;
     int horizon;
     double discountFactor;
 
-    //objects
-    std::map<std::string, ObjectType*> objectTypes;
+    // Object types
+    std::map<std::string, Type*> types;
     std::map<std::string, Object*> objects;
-    std::map<ObjectType*,std::vector<Object*> > objectsByType;
 
-    //schematic variables and cpfs
-    std::map<std::string, VariableDefinition*> variableDefinitions;
-    VariableDefinition* rewardVariableDefinition;
-    std::vector<VariableDefinition*> variableDefinitionsVec;
+    // Schematic variables and CPFs
+    std::map<std::string, ParametrizedVariable*> variableDefinitions;
+    std::map<ParametrizedVariable*, LogicalExpression*> CPFDefinitions;
 
-    std::vector<std::pair<UninstantiatedVariable*, LogicalExpression*> > CPFDefs;
+    // Instantiated Variables
+    std::map<std::string, StateFluent*> stateFluents;
+    std::map<std::string, ActionFluent*> actionFluents;
+    std::map<std::string, NonFluent*> nonFluents;
+    std::map<ParametrizedVariable*, std::vector<StateFluent*> > variablesBySchema;
 
-    //state action constraints
+    // State action constraints
     std::vector<LogicalExpression*> SACs;
 
-    //variables
-    std::map<std::string, StateFluent*> variables;
-    std::map<std::string, ActionFluent*> actions;
-    std::map<std::string, NonFluent*> nonFluents;
-    StateFluent* rewardVariable;
-    std::map<VariableDefinition*, std::vector<AtomicLogicalExpression*> > variablesBySchema;
-
-    //instantiated CPFs
+    // Instantiated CPFs
     LogicalExpression* rewardCPF;
     std::vector<std::pair<StateFluent*, LogicalExpression*> > CPFs;
 };
 
 #endif
+

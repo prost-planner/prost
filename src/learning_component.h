@@ -1,9 +1,10 @@
 #ifndef LEARNING_COMPONENT_H
 #define LEARNING_COMPONENT_H
 
-#include "state.h"
-
 class ProstPlanner;
+class State;
+
+#include <vector>
 
 class LearningComponent {
 public:
@@ -11,12 +12,9 @@ public:
     LearningComponent(LearningComponent const& other);
     virtual ~LearningComponent();
 
-    virtual bool learn(std::vector<State> const& /*trainingSet*/) {
-        hasLearned = true;
-        return true;
-    }
+    virtual bool learn(std::vector<State> const& trainingSet);
 
-    bool learningFinished() {
+    bool learningFinished() const {
         return hasLearned;
     }
 

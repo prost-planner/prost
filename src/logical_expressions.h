@@ -1,16 +1,17 @@
 #ifndef LOGICAL_EXPRESSIONS_H
 #define LOGICAL_EXPRESSIONS_H
 
-#include "typed_objects.h"
-#include "kleene_state.h"
-#include "actions.h"
-#include "probability_distribution.h"
+#include "unprocessed_planning_task.h"
+#include "states.h"
 
 #include <set>
 
 class RDDLParser;
 class Instantiator;
 class NumericConstant;
+class UnprocessedPlanningTask;
+class StateFluent;
+class ConditionalProbabilityFunction;
 
 class LogicalExpression {
 public:
@@ -22,8 +23,8 @@ public:
 
     virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    virtual void collectInitialInfo(bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/, std::set<StateFluent*>& /*dependentStateFluents*/, 
-                                    std::set<ActionFluent*>& /*positiveDependentActionFluents*/, std::set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
+    virtual void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                                    std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     virtual void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
@@ -38,56 +39,92 @@ public:
                          Schematics
 *****************************************************************/
 
-class VariableDefinition {
+class Type {
 public:
-    static VariableDefinition* rewardInstance() {
-        static VariableDefinition* rewardInst = new VariableDefinition("reward", std::vector<ObjectType*>(), VariableDefinition::STATE_FLUENT, RealType::instance());
-        return rewardInst;
-    }
+    Type(std::string _name, Type* _superType = NULL) :
+        name(_name), superType(_superType) {}
 
     std::string name;
-    std::vector<ObjectType*> params;
-
-    enum VariableType {
-        STATE_FLUENT, 
-        ACTION_FLUENT, 
-        INTERM_FLUENT, 
-        NON_FLUENT} variableType;
-
-    Type* valueType;
-    double defaultValue;
-    int level;
-
-    void print(std::ostream& out);
-
-    VariableDefinition(std::string _name, std::vector<ObjectType*> _params, VariableType _variableType, Type* _valueType, double _defaultValue = 0.0, int _level = 1) :
-        name(_name), params(_params), variableType(_variableType), valueType(_valueType), defaultValue(_defaultValue), level(_level) {}
+    Type* superType;
+    std::vector<Object*> objects;
 };
+
+// We need Parameter and Object as LogicalExpressions because of 
+
+// 1. It simplifies parsing of static parameters, but that does not mean they
+// are necessary.
+
+// 2. (In-)Equality checks of the form (?p1 == ?p2), (?p == object-name) or (?p
+// ~= @enum-val). These are replaced in instantiate.
+
+// 3. Dynamic parameters like var( var2( type2 ) ) where var2( type2 ) is an
+// object or enum fluent that evaluates to type1, the parameter type of var(
+// type1 ). TODO: These are currently not supported, change that!
+
 
 class Parameter : public LogicalExpression {
 public:
-    Parameter(std::string _name):
-        name(_name) {}
+    Parameter(std::string _name, Type* _type = NULL):
+        name(_name), type(_type) {}
 
     std::string name;
+    Type* type;
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
     void print(std::ostream& out);
 };
 
-class UninstantiatedVariable : public LogicalExpression {
+class Object : public Parameter {
 public:
-    //TODO: Replace Parameter with a /yet undefined) superclass of Object and Parameter
-    UninstantiatedVariable(VariableDefinition* _parent, std::vector<Parameter*> _params);
+    Object(std::string _name, Type* _type) :
+        Parameter(_name, _type), types(), values() {}
+    ~Object() {}
 
-    VariableDefinition* parent;
-
-    std::string name;
-    std::vector<Parameter*> params;
+    // This was just one type and value, but each object can be referenced in
+    // the context of each of its types in the type hierarchy and it may have a
+    // different value for each type. As we only support enums so far, the size
+    // of types and values must always be 1 as enums have only one type.
+    std::vector<Type*> types;
+    std::vector<double> values;
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
+    void print(std::ostream& out);
+};
+
+class ParametrizedVariable : public LogicalExpression {
+public:
+    enum VariableType {
+        STATE_FLUENT, 
+        ACTION_FLUENT, 
+        //DERIVED_FLUENT,
+        //INTERM_FLUENT, 
+        NON_FLUENT};
+
+    ParametrizedVariable(std::string _variableName, std::vector<Parameter*> _params, VariableType _variableType, Type* _valueType, double _initialValue) :
+        LogicalExpression(),
+        variableName(_variableName),
+        fullName(_variableName),
+        params(_params),
+        variableType(_variableType),
+        valueType(_valueType),
+        initialValue(_initialValue) {}
+    ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params);
+    ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue);
+
+    std::string variableName;
+    std::string fullName;
+    std::vector<Parameter*> params;
+    VariableType variableType;
+    Type* valueType;
+    double initialValue;
+
+    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+
+    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void print(std::ostream& out);
 };
@@ -96,39 +133,15 @@ public:
                            Atomics
 *****************************************************************/
 
-class AtomicLogicalExpression : public LogicalExpression {
+class StateFluent : public ParametrizedVariable {
 public:
-    AtomicLogicalExpression(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue);
+    StateFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+        ParametrizedVariable(source, _params, _initialValue), index(-1) {}
+    StateFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+        ParametrizedVariable(source, _params), index(-1) {}
 
-    VariableDefinition* parent;
-    std::string name;
-    std::vector<Object*> params;
-
-    double initialValue;
     int index;
 
-    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
-
-    void print(std::ostream& out);
-
-protected:
-
-};
-
-class StateFluent : public AtomicLogicalExpression {
-public:
-    static StateFluent* rewardInstance() {
-        static StateFluent* rewardInst = new StateFluent(VariableDefinition::rewardInstance(), std::vector<Object*>());
-        return rewardInst;
-    }
-
-    StateFluent(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue) :
-        AtomicLogicalExpression(_parent, _params, _initialValue) {}
-    StateFluent(VariableDefinition* _parent, std::vector<Object*> _params) :
-        AtomicLogicalExpression(_parent, _params, _parent->defaultValue) {}
-
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
@@ -141,10 +154,12 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 };
 
-class ActionFluent : public AtomicLogicalExpression {
+class ActionFluent : public ParametrizedVariable {
 public:
-    ActionFluent(VariableDefinition* _parent, std::vector<Object*> _params) :
-        AtomicLogicalExpression(_parent, _params, 0.0) {}
+    ActionFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+        ParametrizedVariable(source, _params, 0.0), index(-1) {}
+
+    int index;
 
     void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
                             std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
@@ -156,12 +171,12 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
 };
 
-class NonFluent : public AtomicLogicalExpression {
+class NonFluent : public ParametrizedVariable {
 public:
-    NonFluent(VariableDefinition* _parent, std::vector<Object*> _params, double _initialValue) :
-        AtomicLogicalExpression(_parent, _params, _initialValue) {}
-    NonFluent(VariableDefinition* _parent, std::vector<Object*> _params) :
-        AtomicLogicalExpression(_parent, _params, _parent->defaultValue) {}
+    NonFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+        ParametrizedVariable(source, _params, _initialValue) {}
+    NonFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+        ParametrizedVariable(source, _params) {}
 };
 
 class NumericConstant : public LogicalExpression {
@@ -177,33 +192,8 @@ public:
 
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
-    void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
-
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
-
-    void print(std::ostream& out);
-};
-
-class Object : public Parameter {
-public:
-    Object(std::string _name, ObjectType* _type, double _value) :
-        Parameter(_name), type(_type), value(_value) {}
-    ~Object() {}
-
-    ObjectType* type;
-    double value;
-
-    void getObjectTypes(std::vector<ObjectType*>& objectTypes);
-
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(UnprocessedPlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
-
+    void collectInitialInfo(bool& isProbabilistic, bool& containsArithmeticFunction, std::set<StateFluent*>& dependentStateFluents, 
+                            std::set<ActionFluent*>& positiveDependentActionFluents, std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
@@ -220,12 +210,12 @@ public:
 
 class ParameterList : public LogicalExpression {
 public:
-    std::vector<Parameter*> params;
-    std::vector<ObjectType*> types;
-
-    ParameterList(std::vector<Parameter*> _params, std::vector<ObjectType*> _types) :
+    ParameterList(std::vector<Parameter*> _params, std::vector<Type*> _types) :
         params(_params), types(_types) {}
     ParameterList() {}
+
+    std::vector<Parameter*> params;
+    std::vector<Type*> types;
 
     void print(std::ostream& out);
 };
@@ -238,7 +228,7 @@ public:
     ParameterList* paramList;
     LogicalExpression* expr;
 
-    void getReplacements(std::vector<std::string>& parameterNames, std::vector<std::vector<Object*> >& replacements, Instantiator* instantiator);
+    void getReplacements(std::vector<std::string>& parameterNames, std::vector<std::vector<Parameter*> >& replacements, Instantiator* instantiator);
 
     void print(std::ostream& out);
 };

@@ -3,7 +3,6 @@
 #include "rddl_parser.h"
 #include "instantiator.h"
 #include "search_engine.h"
-#include "typed_objects.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
@@ -17,42 +16,62 @@ using namespace std;
                         Constructors
 *****************************************************************/
 
-UninstantiatedVariable::UninstantiatedVariable(VariableDefinition* _parent, vector<Parameter*> _params) :
-    parent(_parent), params(_params) {
-    assert(params.size() == parent->params.size());
-    name = parent->name + "(";
+// This constructor is used for instantiation
+ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+    LogicalExpression(),
+    variableName(source.variableName),
+    fullName(source.variableName),
+    params(_params),
+    variableType(source.variableType),
+    valueType(source.valueType),
+    initialValue(source.initialValue) {
+    assert(params.size() == source.params.size());
     for(unsigned int i = 0; i < params.size(); ++i) {
-        name += params[i]->name;
-        if(i != params.size()-1) {
-            name += ", ";
+        if(!params[i]->type) {
+            params[i]->type = source.params[i]->type;
+        } else {
+            assert(params[i]->type == source.params[i]->type);
         }
     }
-    name += ")";
+
+    if(!params.empty()) {
+        fullName += "(";
+        for(unsigned int i = 0; i < params.size(); ++i) {
+            fullName += params[i]->name;
+            if(i != params.size()-1) {
+                fullName += ", ";
+            }
+        }
+        fullName += ")";
+    }
 }
 
-AtomicLogicalExpression::AtomicLogicalExpression(VariableDefinition* _parent, vector<Object*> _params, double _initialValue) :
-    parent(_parent), params(_params), initialValue(_initialValue), index(-1) {
-
-    assert(_parent->params.size() == params.size());
-    name = _parent->name + "(";
+ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+    LogicalExpression(),
+    variableName(source.variableName),
+    fullName(source.variableName),
+    params(_params),
+    variableType(source.variableType),
+    valueType(source.valueType),
+    initialValue(_initialValue) {
+    assert(params.size() == source.params.size());
     for(unsigned int i = 0; i < params.size(); ++i) {
-        name += params[i]->name;
-        if(i != params.size()-1) {
-            name += ", ";
+        if(!params[i]->type) {
+            params[i]->type = source.params[i]->type;
+        } else {
+            assert(params[i]->type == source.params[i]->type);
         }
     }
-    name += ")";
-}
 
-/*****************************************************************
-                             Object
-*****************************************************************/
-
-void Object::getObjectTypes(vector<ObjectType*>& objectTypes) {
-    ObjectType* objType = type;
-    while(objType != NULL) {
-        objectTypes.push_back(objType);
-        objType = objType->superType;
+    if(!params.empty()) {
+        fullName += "(";
+        for(unsigned int i = 0; i < params.size(); ++i) {
+            fullName += params[i]->name;
+            if(i != params.size()-1) {
+                fullName += ", ";
+            }
+        }
+        fullName += ")";
     }
 }
 

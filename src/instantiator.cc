@@ -1,8 +1,6 @@
 #include "instantiator.h"
 
-#include "typed_objects.h"
-#include "logical_expressions.h"
-#include "conditional_probability_function.h"
+#include "functions.h"
 
 using namespace std;
 
@@ -10,6 +8,54 @@ void Instantiator::instantiate() {
     instantiateVariables();
     instantiateCPFs();
     instantiateSACs();
+}
+
+void Instantiator::instantiateVariables() {
+    for(map<string, ParametrizedVariable*>::iterator it = task->variableDefinitions.begin(); it != task->variableDefinitions.end(); ++it) {
+        ParametrizedVariable*& var = it->second;
+        if(!var->params.empty()) {
+            vector<vector<Parameter*> > instantiatedParams;
+            instantiateParams(var->params, instantiatedParams);
+            for(unsigned int j = 0; j < instantiatedParams.size(); ++j) {
+                task->addParametrizedVariable(var, instantiatedParams[j]);
+            }
+        } else {
+            task->addParametrizedVariable(var, vector<Parameter*>());
+         }
+    }
+}
+
+void Instantiator::instantiateCPFs() {
+    for(map<ParametrizedVariable*, LogicalExpression*>::iterator it = task->CPFDefinitions.begin(); it != task->CPFDefinitions.end(); ++it) {
+        instantiateCPF(it->first, it->second);
+    }
+
+    // Instantiate rewardCPF
+    map<string, Object*> quantifierReplacements;
+    task->rewardCPF = task->rewardCPF->replaceQuantifier(quantifierReplacements, this);
+    map<string, Object*> replacements;
+    task->rewardCPF = task->rewardCPF->instantiate(task,replacements);
+}
+
+void Instantiator::instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula) {
+    map<string, Object*> quantifierReplacements;
+    formula = formula->replaceQuantifier(quantifierReplacements, this);
+
+    vector<StateFluent*> instantiatedVars = task->getVariablesOfSchema(head);
+    for(unsigned int i = 0; i < instantiatedVars.size(); ++i) {
+        assert(head->params.size() == instantiatedVars[i]->params.size());
+
+        map<string, Object*> replacements;
+        for(unsigned int j = 0; j < head->params.size(); ++j) {
+            assert(replacements.find(head->params[j]->name) == replacements.end());
+            Object* obj = dynamic_cast<Object*>(instantiatedVars[i]->params[j]);
+            assert(obj);
+            replacements[head->params[j]->name] = obj;
+        }
+        LogicalExpression* instantiatedFormula = formula->instantiate(task, replacements);
+
+        task->addCPF(make_pair(instantiatedVars[i], instantiatedFormula));
+    }
 }
 
 void Instantiator::instantiateSACs() {
@@ -21,87 +67,16 @@ void Instantiator::instantiateSACs() {
     }
 }
 
-void Instantiator::instantiateCPFs() {
-    for(unsigned int i = 0; i < task->CPFDefs.size(); ++i) {
-        instantiateCPF(task->CPFDefs[i]);
-    }
-    map<string, Object*> quantifierReplacements;
-    task->rewardCPF = task->rewardCPF->replaceQuantifier(quantifierReplacements, this);
-    map<string, Object*> replacements;
-    task->rewardCPF = task->rewardCPF->instantiate(task,replacements);
-}
-
-void Instantiator::instantiateCPF(pair<UninstantiatedVariable*, LogicalExpression*>& CPFDef) {
-    map<string, Object*> quantifierReplacements;
-    CPFDef.second = CPFDef.second->replaceQuantifier(quantifierReplacements, this);
-
-    vector<AtomicLogicalExpression*> instantiatedVars;
-    task->getVariablesOfSchema(CPFDef.first->parent, instantiatedVars);
-    for(unsigned int i = 0; i < instantiatedVars.size(); ++i) {
-        assert(CPFDef.first->params.size() == instantiatedVars[i]->params.size());
-
-        map<string, Object*> replacements;
-        for(unsigned int j = 0; j < CPFDef.first->params.size(); ++j) {
-            assert(replacements.find(CPFDef.first->params[j]->name) == replacements.end());
-            replacements[CPFDef.first->params[j]->name] = instantiatedVars[i]->params[j];
-        }
-        LogicalExpression* instantiatedFormula = CPFDef.second->instantiate(task,replacements);
-        StateFluent* instantiatedHead = dynamic_cast<StateFluent*>(instantiatedVars[i]);
-        assert(instantiatedHead);
-
-        task->addCPF(make_pair(instantiatedHead, instantiatedFormula));
-    }
-}
-
-void Instantiator::instantiateVariables() {
-    vector<VariableDefinition*> variableDefinitions;
-    task->getVariableDefinitions(variableDefinitions, false);
-    for(unsigned int i = 0; i < variableDefinitions.size(); ++i) {
-        if(!variableDefinitions[i]->params.empty()) {
-            vector<vector<Object*> > instantiatedParams;
-            instantiateParams(variableDefinitions[i]->params, instantiatedParams);
-            for(unsigned int j = 0; j < instantiatedParams.size(); ++j) {
-                switch(variableDefinitions[i]->variableType) {
-                case VariableDefinition::STATE_FLUENT:
-                case VariableDefinition::INTERM_FLUENT:
-                    task->addStateFluent(new StateFluent(variableDefinitions[i], instantiatedParams[j]));
-                    break;
-                case VariableDefinition::ACTION_FLUENT:
-                    task->addActionFluent(new ActionFluent(variableDefinitions[i], instantiatedParams[j]));
-                    break;
-                case VariableDefinition::NON_FLUENT:
-                    task->addNonFluent(new NonFluent(variableDefinitions[i], instantiatedParams[j]));
-                    break;
-                }
-            }
-        } else {
-            switch(variableDefinitions[i]->variableType) {
-            case VariableDefinition::STATE_FLUENT:
-            case VariableDefinition::INTERM_FLUENT:
-                task->addStateFluent(new StateFluent(variableDefinitions[i], vector<Object*>()));
-                    break;
-            case VariableDefinition::ACTION_FLUENT:
-                task->addActionFluent(new ActionFluent(variableDefinitions[i], vector<Object*>()));
-                break;
-            case VariableDefinition::NON_FLUENT:
-                task->addNonFluent(new NonFluent(variableDefinitions[i], vector<Object*>()));
-                break;
-            }
-        }
-    }
-}
-
-void Instantiator::instantiateParams(vector<ObjectType*> params, vector<vector<Object*> >& result, vector<Object*> addTo, int indexToProcess) {
+void Instantiator::instantiateParams(vector<Parameter*> params, vector<vector<Parameter*> >& result, vector<Parameter*> addTo, int indexToProcess) {
     assert(indexToProcess < params.size());
 
     int nextIndex = indexToProcess + 1;
 
-    vector<Object*> objs;
-    task->getObjectsOfType(params[indexToProcess], objs);
-    assert(!objs.empty());
+    assert(params[indexToProcess]->type);
+    vector<Object*>& objs = params[indexToProcess]->type->objects;
 
     for(unsigned int i = 0; i < objs.size(); ++i) {
-        vector<Object*> copy = addTo;
+        vector<Parameter*> copy = addTo;
         copy.push_back(objs[i]);
         if(nextIndex < params.size()) {
             instantiateParams(params, result, copy, nextIndex);
