@@ -1,4 +1,5 @@
 LogicalExpression* LogicalExpression::simplify(map<StateFluent*, double>& /*replacements*/) {
+    print(cout);
     assert(false);
     return NULL;
 }
@@ -7,7 +8,7 @@ LogicalExpression* LogicalExpression::simplify(map<StateFluent*, double>& /*repl
                            Atomics
 *****************************************************************/
 
-LogicalExpression* AtomicLogicalExpression::simplify(map<StateFluent*, double>& /*replacements*/) {
+LogicalExpression* ParametrizedVariable::simplify(map<StateFluent*, double>& /*replacements*/) {
     return this;
 }
 
@@ -21,11 +22,6 @@ LogicalExpression* StateFluent::simplify(map<StateFluent*, double>& replacements
 LogicalExpression* NumericConstant::simplify(map<StateFluent*, double>& /*replacements*/) {
     return this;
 }
-
-LogicalExpression* Object::simplify(map<StateFluent*, double>& /*replacements*/) {
-    return this;
-}
-
 
 /*****************************************************************
                            Connectives

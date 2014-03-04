@@ -2,7 +2,6 @@
 
 #include "prost_planner.h"
 #include "planning_task.h"
-#include "actions.h"
 
 #include "mc_uct_search.h"
 #include "max_mc_uct_search.h"

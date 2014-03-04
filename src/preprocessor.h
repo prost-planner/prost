@@ -13,6 +13,7 @@ class StateFluent;
 class NumericConstant;
 class Evaluatable;
 class ConditionalProbabilityFunction;
+class RewardFunction;
 class State;
 class ActionFluent;
 class ActionState;
@@ -33,7 +34,7 @@ private:
                      std::vector<Evaluatable*>& staticSACs,
                      std::vector<Evaluatable*>& stateInvariants);
     void prepareCPFs(std::vector<ConditionalProbabilityFunction*>& cpfs,
-                     ConditionalProbabilityFunction*& rewardCPF);
+                     RewardFunction*& rewardCPF);
     void prepareActions(std::vector<ConditionalProbabilityFunction*> const& cpfs,
                         std::vector<Evaluatable*> const& staticSACs,
                         std::vector<Evaluatable*> const& dynamicSACs,
@@ -42,14 +43,16 @@ private:
     void calcPossiblyLegalActionStates(std::vector<ActionFluent*> const& actionFluents,
                                        int actionsToSchedule,
                                        std::list<std::vector<int> >& result,
-                                       std::vector<int> addTo = std::vector<int>());
+                                       std::vector<int> addTo = std::vector<int>()) const;
+    bool sacContainsNegativeActionFluent(Evaluatable* const& sac, ActionState const& actionState) const;
+    bool sacContainsAdditionalPositiveActionFluent(Evaluatable* const& sac, ActionState const& actionState) const;
     void calculateDomains(std::vector<ConditionalProbabilityFunction*>& cpfs,
-                          ConditionalProbabilityFunction*& rewardCPF,
+                          RewardFunction*& rewardCPF,
                           std::vector<ActionState> const& actionStates);
     void finalizeFormulas(std::vector<Evaluatable*>& dynamicSACs,
                           std::vector<Evaluatable*>& stateInvariants,
                           std::vector<ConditionalProbabilityFunction*>& cpfs,
-                          ConditionalProbabilityFunction*& rewardCPF);
+                          RewardFunction*& rewardCPF);
 };
 
 #endif

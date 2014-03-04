@@ -2,32 +2,6 @@
                          Schematics
 *****************************************************************/
 
-void VariableDefinition::print(ostream& out) {
-    out << name << "(";
-    for(unsigned int i = 0; i < params.size(); ++i) {
-        out << params[i]->name;
-        if(i != params.size()-1) {
-            out << ", ";
-        }
-    }
-    out << ") : " << "VariableType = ";
-    switch(variableType) {
-    case VariableDefinition::STATE_FLUENT:
-        out << "state-fluent, ";
-        break;
-    case VariableDefinition::ACTION_FLUENT:
-        out << "action-fluent, ";
-        break;
-    case VariableDefinition::INTERM_FLUENT:
-        out << "interm-fluent, ";
-        break;
-    case VariableDefinition::NON_FLUENT:
-        out << "non-fluent, ";
-        break;
-    }
-    out << "ValueType = " << valueType->name << ", defaultValue = " << defaultValue << ", level = " << level;
-}
-
 void Parameter::print(ostream& out) {
     out << name << " ";
 }
@@ -43,26 +17,25 @@ void ParameterList::print(ostream& out) {
     out << ") ";
 }
 
-void UninstantiatedVariable::print(ostream& out) {
-    out << name;
+void ParametrizedVariable::print(ostream& out) {
+    out << fullName;
 }
 
 /*****************************************************************
                            Atomics
 *****************************************************************/
 
-void AtomicLogicalExpression::print(ostream& out) {
-    out << name;
-}
-
 void NumericConstant::print(ostream& out) {
     out << value;
 }
 
 void Object::print(ostream& out) {
-    assert(value < type->domain.size());
-    assert(name == type->domain[value]->name);
-    out << name << " (" << value << ") ";
+    if(types.size() != 1) {
+        SystemUtils::abort("Implement object fluents in print.cc");
+    }
+    assert(values[0] < types[0]->objects.size());
+    assert(name == types[0]->objects[values[0]]->name);
+    out << name << "(" << values[0] << ") ";
 }
 
 

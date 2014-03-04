@@ -21,11 +21,6 @@ void NumericConstant::evaluateToKleene(set<double>& res, KleeneState const& /*cu
     res.insert(value);
 }
 
-void Object::evaluateToKleene(set<double>& res, KleeneState const& /*current*/, ActionState const& /*actions*/) {
-    assert(res.empty());
-    res.insert(value);
-}
-
 /*****************************************************************
                            Connectives
 *****************************************************************/

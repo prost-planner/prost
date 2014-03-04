@@ -25,11 +25,6 @@ void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/, A
     res.insert(value);
 }
 
-void Object::calculateDomain(vector<set<double> > const& /*domains*/, ActionState const& /*actions*/, set<double>& res) {
-    assert(res.empty());
-    res.insert(value);
-}
-
 /*****************************************************************
                            Connectives
 *****************************************************************/

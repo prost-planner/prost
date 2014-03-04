@@ -5,9 +5,7 @@
 #include "preprocessor.h"
 #include "search_engine.h"
 #include "state_set_generator.h"
-#include "actions.h"
-#include "conditional_probability_function.h"
-#include "caching_component.h"
+#include "planning_task.h"
 
 #include "utils/timer.h"
 #include "utils/math_utils.h"
@@ -83,7 +81,7 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices, vector<vector<str
 
     t.reset();
     cout << "instantiating..." << endl;
-    Instantiator instantiator(this, unprocessedTask);
+    Instantiator instantiator(unprocessedTask);
     instantiator.instantiate();
     cout << "...finished (" << t << ")." << endl;
 
@@ -153,8 +151,14 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     monitorRAMUsage();
 
     --remainingSteps;
+
+    // PROST's communication with the environment works with strings, so we
+    // collect the names of all true action fluents of the chosen action
     vector<string> result;
-    probabilisticTask->actionState(chosenActionIndex).getActions(result);
+    for(unsigned int i = 0; i < probabilisticTask->actionState(chosenActionIndex).scheduledActionFluents.size(); ++i) {
+        result.push_back(probabilisticTask->actionState(chosenActionIndex).scheduledActionFluents[i]->fullName);
+    }
+
     // assert(false);
     // SystemUtils::abort("");
     return result;
