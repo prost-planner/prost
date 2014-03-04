@@ -7,15 +7,11 @@
 
 #include "caching_component.h"
 #include "learning_component.h"
-#include "kleene_state.h"
-#include "pd_state.h"
-#include "actions.h"
-#include "unprocessed_planning_task.h"
-#include "logical_expressions.h"
-#include "conditional_probability_function.h"
+#include "functions.h"
 
 class ProstPlanner;
 class ActionFluent;
+class ActionState;
 
 class PlanningTask : public CachingComponent, public LearningComponent {
 public:
@@ -78,7 +74,7 @@ public:
         indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap) {}
 
     void initialize(std::vector<ConditionalProbabilityFunction*>& _CPFs,
-                    ConditionalProbabilityFunction* _rewardCPF,
+                    RewardFunction* _rewardCPF,
                     State& _initialState,
                     std::vector<Evaluatable*>& _dynamicSACs, 
                     std::vector<Evaluatable*>& _staticSACs,
@@ -101,10 +97,6 @@ public:
         calcStateFluentHashKeys(res);
         calcStateHashKey(res);
         return res;
-    }
-
-    PDState getPDState(int remainingSteps) const {
-        return PDState(getStateSize(), remainingSteps);
     }
 
 /*****************************************************************
@@ -164,7 +156,7 @@ public:
 
     // Apply action 'actionIndex' to 'current' and sample one outcome in 'next'
     void sampleSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        PDState pdNext = getPDState(next.remainingSteps());
+        PDState pdNext(stateSize, next.remainingSteps());
         calcSuccessorState(current, actionIndex, pdNext);
         for(unsigned int varIndex = 0; varIndex < stateSize; ++varIndex) {
             next[varIndex] = sampleVariable(pdNext[varIndex]);
@@ -339,7 +331,7 @@ public:
     }
 
     int getDomainSizeOfCPF(unsigned int const& index) const {
-        return CPFs[index]->getDomain().size();
+        return CPFs[index]->getDomainSize();
     }
 
     // Returns a vector ("res") that encodes applicable and reasonable actions.
@@ -418,6 +410,7 @@ private:
     // functions for action applicability and pruning
     void setApplicableReasonableActions(State const& state, std::vector<int>& res) const;
     void setApplicableActions(State const& state, std::vector<int>& res) const;
+    bool actionIsApplicable(ActionState const& action, State const& current) const;
 
     // functions for reward lock detection
     bool checkDeadEnd(KleeneState const& state);
@@ -437,7 +430,9 @@ private:
 
     // The CPFs
     std::vector<ConditionalProbabilityFunction*> CPFs;
-    ConditionalProbabilityFunction* rewardCPF;
+
+    // The reward formula
+    RewardFunction* rewardCPF;
 
     // The SACs
     std::vector<Evaluatable*> staticSACs;

@@ -1,8 +1,8 @@
 #ifndef DEPTH_FIRST_SEARCH_H
 #define DEPTH_FIRST_SEARCH_H
 
-// Implements a depth first search engine. Is currently only called
-// from within IDS search.
+// Implements a depth first search engine on the determinized task. Is currently
+// only called from within IDS search.
 
 #include "search_engine.h"
 

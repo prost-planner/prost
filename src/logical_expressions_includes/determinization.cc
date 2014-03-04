@@ -7,15 +7,11 @@ LogicalExpression* LogicalExpression::determinizeMostLikely(NumericConstant* /*r
                            Atomics
 *****************************************************************/
 
-LogicalExpression* AtomicLogicalExpression::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
+LogicalExpression* ParametrizedVariable::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
     return this;
 }
 
 LogicalExpression* NumericConstant::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
-    return this;
-}
-
-LogicalExpression* Object::determinizeMostLikely(NumericConstant* /*randomNumberReplacement*/) {
     return this;
 }
 

@@ -1,4 +1,4 @@
-#include "evaluatable.h"
+#include "functions.h"
 
 #include "planning_task.h"
 
@@ -7,7 +7,7 @@
 using namespace std;
 
 /*****************************************************************
-                           Initialization
+                           Evaluatable
 *****************************************************************/
 
 void Evaluatable::initialize() {
@@ -86,7 +86,7 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         if(dependentStateFluents.find(CPFs[index]->getHead()) != dependentStateFluents.end()) {
             tmpStateFluentDependencies.push_back(make_pair(index, nextHashKeyBase));
 
-            if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomain().size())) {
+            if(!CPFs[index]->hasFiniteDomain() || !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[index]->getDomainSize())) {
                 cachingType = NONE;
                 return;
             }
@@ -158,4 +158,42 @@ void Evaluatable::disableCaching() {
     if(kleeneCachingType == MAP) {
         kleeneCachingType = DISABLED_MAP;
     }
+}
+
+/*****************************************************************
+                 ConditionalProbabilityFunction
+*****************************************************************/
+
+ConditionalProbabilityFunction* ConditionalProbabilityFunction::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
+    // If this is not probabilistic, we return this to reuse the caches as often
+    // as possible. This is nevertheless a potential error source that should be
+    // kept in mind!
+    if(!isProbabilistic()) {
+        return this;
+    }
+
+    LogicalExpression* detFormula = formula->determinizeMostLikely(randomNumberReplacement);
+    ConditionalProbabilityFunction* res = new ConditionalProbabilityFunction(*this, detFormula);
+
+    // We know these because detFormula must be deterministic, and therefore
+    // this has a domain of 2 with values 0 and 1.
+    res->isProb = false;
+    // res->probDomainMap.clear();
+    // res->probDomainMap[0.0] = 0;
+    // res->probDomainMap[1.0] = res->hashKeyBase;
+
+    // We run initialization again, as things might have changed compared to the
+    // probabilistic task. Therefore, we need to reset some member variables to
+    // their initial value
+    res->dependentStateFluents.clear();
+    res->initialize();
+
+    // The same is true for simplification. Rather than calling simplify(),
+    // though, we call formula->simplify. This is because the function also
+    // checks if this CPF can be omitted entirely, which is never true in a
+    // determinization
+    map<StateFluent*, double> replacements;
+    res->formula = res->formula->simplify(replacements);
+
+    return res;
 }
