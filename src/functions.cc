@@ -14,15 +14,12 @@ void Evaluatable::initialize() {
     formula->collectInitialInfo(isProb, hasArithmeticFunction, dependentStateFluents, positiveActionDependencies, negativeActionDependencies);
 }
 
-void Evaluatable::initializeHashKeys(int _hashIndex, vector<ActionState> const& actionStates,
-                                     vector<ConditionalProbabilityFunction*> const& CPFs,
-                                     vector<vector<pair<int,long> > >& indexToStateFluentHashKeyMap,
-                                     vector<vector<pair<int,long> > >& indexToKleeneStateFluentHashKeyMap) {
-    hashIndex = _hashIndex;
+void Evaluatable::initializeHashKeys(UnprocessedPlanningTask* task) {
+    assert(hashIndex >= 0);
 
-    long firstStateFluentHashKeyBase = initializeActionHashKeys(actionStates);
-    initializeStateFluentHashKeys(CPFs, indexToStateFluentHashKeyMap, firstStateFluentHashKeyBase);
-    initializeKleeneStateFluentHashKeys(CPFs, indexToKleeneStateFluentHashKeyMap, firstStateFluentHashKeyBase);
+    long firstStateFluentHashKeyBase = initializeActionHashKeys(task->actionStates);
+    initializeStateFluentHashKeys(task->CPFs, task->indexToStateFluentHashKeyMap, firstStateFluentHashKeyBase);
+    initializeKleeneStateFluentHashKeys(task->CPFs, task->indexToKleeneStateFluentHashKeyMap, firstStateFluentHashKeyBase);
 }
 
 long Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
@@ -102,10 +99,9 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         cachingType = MAP;
     } else {
         cachingType = VECTOR;
+        evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
         if(isProbabilistic()) {
             pdEvaluationCacheVector = vector<DiscretePD>(nextHashKeyBase, DiscretePD());
-        } else {
-            evaluationCacheVector = vector<double>(nextHashKeyBase, -numeric_limits<double>::max());
         }
     }
 }
@@ -160,40 +156,3 @@ void Evaluatable::disableCaching() {
     }
 }
 
-/*****************************************************************
-                 ConditionalProbabilityFunction
-*****************************************************************/
-
-ConditionalProbabilityFunction* ConditionalProbabilityFunction::determinizeMostLikely(NumericConstant* randomNumberReplacement) {
-    // If this is not probabilistic, we return this to reuse the caches as often
-    // as possible. This is nevertheless a potential error source that should be
-    // kept in mind!
-    if(!isProbabilistic()) {
-        return this;
-    }
-
-    LogicalExpression* detFormula = formula->determinizeMostLikely(randomNumberReplacement);
-    ConditionalProbabilityFunction* res = new ConditionalProbabilityFunction(*this, detFormula);
-
-    // We know these because detFormula must be deterministic, and therefore
-    // this has a domain of 2 with values 0 and 1.
-    res->isProb = false;
-    // res->probDomainMap.clear();
-    // res->probDomainMap[0.0] = 0;
-    // res->probDomainMap[1.0] = res->hashKeyBase;
-
-    // We run initialization again, as things might have changed compared to the
-    // probabilistic task. Therefore, we need to reset some member variables to
-    // their initial value
-    res->dependentStateFluents.clear();
-    res->initialize();
-
-    // The same is true for simplification. Rather than calling simplify(),
-    // though, we call formula->simplify. This is because the function also
-    // checks if this CPF can be omitted entirely, which is never true in a
-    // determinization
-    map<StateFluent*, double> replacements;
-    res->formula = res->formula->simplify(replacements);
-
-    return res;
-}

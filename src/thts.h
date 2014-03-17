@@ -117,8 +117,8 @@ public:
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
-    THTS<SearchNode>(std::string _name, ProstPlanner* _planner) :
-        SearchEngine(_name, _planner, true),
+    THTS<SearchNode>(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
+    SearchEngine(_name, _planner, _task, false),
         currentRootNode(NULL),
         chosenOutcome(NULL),
         states(task->getHorizon()+1, State(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys())),
@@ -301,13 +301,13 @@ bool THTS<SearchNode>::setValueFromString(std::string& param, std::string& value
 
 template <class SearchNode>
 bool THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
-    if(!initializer->learningFinished() || !task->learningFinished()) {
+    if(!initializer->learningFinished()) {
         return false;
     }
     std::cout << name << ": learning..." << std::endl;
 
     if(initializer->getMaxSearchDepth() == 0) {
-        UniformEvaluationSearch* _initializer = new UniformEvaluationSearch(planner);
+        UniformEvaluationSearch* _initializer = new UniformEvaluationSearch(planner, task);
         setInitializer(_initializer);
         std::cout << "Aborted initialization as search depth is too low!" << std::endl;
     }
@@ -506,7 +506,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
             // This node is a leaf (the last action is optimally calculated in
             // the planning task)
 
-            task->calcOptimalFinalReward(states[1], futureReward);
+            calcOptimalFinalReward(states[1], futureReward);
             backupDecisionNodeLeaf(node, reward, futureReward);
             return (reward + futureReward);
         } else if(task->stateValueCache.find(states[nextStateIndex]) != task->stateValueCache.end()) {
@@ -643,7 +643,7 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     // std::cout << "initializing state: " << std::endl;
     // task->printState(std::cout, states[currentStateIndex]);
 
-    std::vector<int> actionsToExpand = task->getApplicableActions(states[currentStateIndex]);
+    std::vector<int> actionsToExpand = getApplicableActions(states[currentStateIndex]);
     initializer->estimateQValues(states[currentStateIndex], actionsToExpand, initialQValues);
 
     for(unsigned int i = 0; i < node->children.size(); ++i) {
@@ -672,10 +672,10 @@ template <class SearchNode>
 int THTS<SearchNode>::getUniquePolicy() {
     if(currentStateIndex == 1) {
         outStream << "Returning the optimal last action!" << std::endl;
-        return task->getOptimalFinalActionIndex(states[1]);
+        return getOptimalFinalActionIndex(states[1]);
     }
 
-    std::vector<int> actionsToExpand = task->getApplicableActions(states[currentStateIndex]);
+    std::vector<int> actionsToExpand = getApplicableActions(states[currentStateIndex]);
 
     if(task->isARewardLock(states[currentStateIndex])) {
         outStream << "Current root state is a reward lock state!" << std::endl;
@@ -689,7 +689,7 @@ int THTS<SearchNode>::getUniquePolicy() {
         assert(false);
     }
 
-    std::vector<int> applicableActionIndices = task->getIndicesOfApplicableActions(states[currentStateIndex]);
+    std::vector<int> applicableActionIndices = getIndicesOfApplicableActions(states[currentStateIndex]);
     assert(!applicableActionIndices.empty());
 
     if(applicableActionIndices.size() == 1) {

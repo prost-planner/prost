@@ -54,14 +54,8 @@ public:
     }
 
     //getters for global variables and parameters
-    PlanningTask* getProbabilisticTask() {
-        assert(probabilisticTask != NULL);
-        return probabilisticTask;
-    }
-
-    PlanningTask* getDeterministicTask() {
-        assert(deterministicTask != NULL);
-        return deterministicTask;
+    PlanningTask* getTask() const {
+        return task;
     }
 
     int const& getNumberOfRounds() const {
@@ -87,8 +81,7 @@ private:
     void printStep(int result, bool printSearchEngineLogs = true);
 
     UnprocessedPlanningTask* unprocessedTask;
-    PlanningTask* probabilisticTask;
-    PlanningTask* deterministicTask;
+    PlanningTask* task;
 
     std::string searchEngineDesc;
     SearchEngine* searchEngine;

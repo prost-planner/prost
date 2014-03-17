@@ -32,9 +32,9 @@ void Instantiator::instantiateCPFs() {
 
     // Instantiate rewardCPF
     map<string, Object*> quantifierReplacements;
-    task->rewardCPF = task->rewardCPF->replaceQuantifier(quantifierReplacements, this);
+    task->rewardCPF->formula = task->rewardCPF->formula->replaceQuantifier(quantifierReplacements, this);
     map<string, Object*> replacements;
-    task->rewardCPF = task->rewardCPF->instantiate(task,replacements);
+    task->rewardCPF->formula = task->rewardCPF->formula->instantiate(task,replacements);
 }
 
 void Instantiator::instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula) {
@@ -54,7 +54,7 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head, LogicalExpression*
         }
         LogicalExpression* instantiatedFormula = formula->instantiate(task, replacements);
 
-        task->addCPF(make_pair(instantiatedVars[i], instantiatedFormula));
+        task->addCPF(new ConditionalProbabilityFunction(instantiatedVars[i], instantiatedFormula));
     }
 }
 

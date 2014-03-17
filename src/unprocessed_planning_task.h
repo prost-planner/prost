@@ -14,6 +14,10 @@ class LogicalExpression;
 class NonFluent;
 class StateFluent;
 class ActionFluent;
+class ActionState;
+class Evaluatable;
+class ConditionalProbabilityFunction;
+class RewardFunction;
 
 struct UnprocessedPlanningTask {
     UnprocessedPlanningTask(std::string _domainDesc, std::string _problemDesc);
@@ -35,8 +39,8 @@ struct UnprocessedPlanningTask {
     std::vector<StateFluent*> getVariablesOfSchema(ParametrizedVariable* schema);
 
     void addStateActionConstraint(LogicalExpression* sac);
-    void addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf);
-    void setRewardCPF(LogicalExpression* const& _rewardCPF);
+    void addCPF(ConditionalProbabilityFunction* const& cpf);
+    void setRewardCPF(LogicalExpression* const& rewardFormula);
 
     // Task description as string
     std::string domainDesc;
@@ -48,7 +52,7 @@ struct UnprocessedPlanningTask {
     std::string nonFluentsName;
     std::string instanceName;
 
-    // Simple numeric properties
+    // (Trivial) properties
     int numberOfConcurrentActions;
     int horizon;
     double discountFactor;
@@ -61,7 +65,7 @@ struct UnprocessedPlanningTask {
     std::map<std::string, ParametrizedVariable*> variableDefinitions;
     std::map<ParametrizedVariable*, LogicalExpression*> CPFDefinitions;
 
-    // Instantiated Variables
+    // Instantiated variables
     std::map<std::string, StateFluent*> stateFluents;
     std::map<std::string, ActionFluent*> actionFluents;
     std::map<std::string, NonFluent*> nonFluents;
@@ -69,10 +73,27 @@ struct UnprocessedPlanningTask {
 
     // State action constraints
     std::vector<LogicalExpression*> SACs;
+    std::vector<Evaluatable*> dynamicSACs;
+    std::vector<Evaluatable*> staticSACs;
+    std::vector<Evaluatable*> stateInvariants;
 
     // Instantiated CPFs
-    LogicalExpression* rewardCPF;
-    std::vector<std::pair<StateFluent*, LogicalExpression*> > CPFs;
+    std::vector<ConditionalProbabilityFunction*> CPFs;
+    RewardFunction* rewardCPF;
+
+    // Legal action states
+    std::vector<ActionState> actionStates;
+
+    // (Non-trivial) properties
+    bool noopIsOptimalFinalAction;
+    bool rewardFormulaAllowsRewardLockDetection;
+
+    // Hash Keys
+    std::vector<std::vector<long> > stateHashKeys;
+    std::vector<long> kleeneStateHashKeyBases;
+
+    std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
 };
 
 #endif

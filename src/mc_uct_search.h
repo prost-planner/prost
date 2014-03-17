@@ -74,8 +74,8 @@ private:
 
 class MCUCTSearch : public UCTBase<MCUCTNode> {
 public:
-    MCUCTSearch(ProstPlanner* _planner) :
-        UCTBase<MCUCTNode>("MC-UCT", _planner) {}
+    MCUCTSearch(ProstPlanner* _planner, PlanningTask* _task) :
+    UCTBase<MCUCTNode>("MC-UCT", _planner, _task) {}
 
 protected:
     // Initialization

@@ -40,8 +40,8 @@ public:
     }
 
 protected:
-    UCTBase(std::string _name, ProstPlanner* _planner) :
-        THTS<SearchNode>(_name, _planner), 
+    UCTBase(std::string _name, ProstPlanner* _planner, PlanningTask* _task) :
+        THTS<SearchNode>(_name, _planner, _task), 
         numberOfInitialVisits(5),
         magicConstantScaleFactor(1.0) {}
 

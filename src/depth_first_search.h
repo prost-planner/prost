@@ -14,7 +14,7 @@ class UCTSearchEngine;
 
 class DepthFirstSearch : public SearchEngine {
 public:
-    DepthFirstSearch(ProstPlanner* _planner);
+    DepthFirstSearch(ProstPlanner* _planner, PlanningTask* _task);
 
     // Start the search engine for Q-value estimation
     bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);

@@ -1,7 +1,6 @@
 #include "search_engine.h"
 
 #include "prost_planner.h"
-#include "planning_task.h"
 
 #include "mc_uct_search.h"
 #include "max_mc_uct_search.h"
@@ -20,20 +19,6 @@ using namespace std;
 /******************************************************************
                      Search Engine Creation
 ******************************************************************/
-
-SearchEngine::SearchEngine(std::string _name, ProstPlanner* _planner, bool useProbabilisticTask) :
-        CachingComponent(_planner),
-        LearningComponent(_planner),
-        name(_name),
-        planner(_planner),
-        cachingEnabled(true) {
-    if(useProbabilisticTask) {
-        task = planner->getProbabilisticTask();
-    } else {
-        task = planner->getDeterministicTask();
-    }
-    maxSearchDepth = task->getHorizon();
-}
 
 SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
     StringUtils::trim(desc);
@@ -58,22 +43,22 @@ SearchEngine* SearchEngine::fromString(string& desc, ProstPlanner* planner) {
 
     if(desc.find("MC-UCT") == 0) {
         desc = desc.substr(6,desc.size());
-        result = new MCUCTSearch(planner);
+        result = new MCUCTSearch(planner, planner->getTask());
     } else if(desc.find("MaxMC-UCT") == 0) {
         desc = desc.substr(9,desc.size());
-        result = new MaxMCUCTSearch(planner);
+        result = new MaxMCUCTSearch(planner, planner->getTask());
     } else if(desc.find("DP-UCT") == 0) { 
         desc = desc.substr(6,desc.size());
-        result = new DPUCTSearch(planner);
+        result = new DPUCTSearch(planner, planner->getTask());
     } else if(desc.find("IDS") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new IterativeDeepeningSearch(planner);
+        result = new IterativeDeepeningSearch(planner, planner->getTask());
     } else if(desc.find("DFS") == 0) {
         desc = desc.substr(3,desc.size());
-        result = new DepthFirstSearch(planner);
+        result = new DepthFirstSearch(planner, planner->getTask());
     } else if(desc.find("Uniform") == 0) {
         desc = desc.substr(7,desc.size());
-        result = new UniformEvaluationSearch(planner);
+        result = new UniformEvaluationSearch(planner, planner->getTask());
     } else {
         SystemUtils::abort("Unknown Search Engine: " + desc);
     }
@@ -109,9 +94,6 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 ******************************************************************/
 
 bool SearchEngine::learn(std::vector<State> const& trainingSet) {
-    if(!task->learningFinished()) {
-        return false;
-    }
     cout << name << ": learning..." << endl;
     bool res = LearningComponent::learn(trainingSet);
     cout << name << ": ...finished" << endl;
@@ -124,7 +106,7 @@ bool SearchEngine::learn(std::vector<State> const& trainingSet) {
 
 bool SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
     vector<double> qValues(task->getNumberOfActions());
-    vector<int> actionsToExpand = task->getApplicableActions(_rootState);
+    vector<int> actionsToExpand = getApplicableActions(_rootState);
 
     if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
         return false;
@@ -147,7 +129,7 @@ bool SearchEngine::estimateBestActions(State const& _rootState, std::vector<int>
 
 bool SearchEngine::estimateStateValue(State const& _rootState, double& stateValue) {
     vector<double> qValues(task->getNumberOfActions());
-    vector<int> actionsToExpand = task->getApplicableActions(_rootState);
+    vector<int> actionsToExpand = getApplicableActions(_rootState);
 
     if(!estimateQValues(_rootState, actionsToExpand, qValues)) {
         return false;

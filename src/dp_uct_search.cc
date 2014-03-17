@@ -1,7 +1,5 @@
 #include "dp_uct_search.h"
 
-//#include "probability_distribution.h"
-
 using namespace std;
 
 /******************************************************************
@@ -66,7 +64,7 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, Sta
         }
     }
 
-    //cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
+    // cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
 
     assert((childIndex >= 0) && childIndex < node->children.size());
 

@@ -17,7 +17,7 @@ class DepthFirstSearch;
 
 class IterativeDeepeningSearch : public SearchEngine {
 public:
-    IterativeDeepeningSearch(ProstPlanner* _planner);
+    IterativeDeepeningSearch(ProstPlanner* _planner, PlanningTask* _task);
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);

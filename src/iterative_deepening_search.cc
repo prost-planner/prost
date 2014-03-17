@@ -18,9 +18,9 @@ using namespace std;
 
 map<State, vector<double>, State::CompareIgnoringRemainingSteps> IterativeDeepeningSearch::rewardCache;
 
-IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
-    SearchEngine("IDS", _planner, false),
-    currentState(task->getStateSize(), -1, task->getNumberOfStateFluentHashKeys()),
+IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner, PlanningTask* _task) :
+    SearchEngine("IDS", _planner, _task, true),
+    currentState(_task->getStateSize(), -1, _task->getNumberOfStateFluentHashKeys()),
     isLearning(false),
     timer(),
     time(0.0),
@@ -36,7 +36,7 @@ IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner) :
 
     elapsedTime.resize(maxSearchDepth+1);
 
-    dfs = new DepthFirstSearch(planner);
+    dfs = new DepthFirstSearch(planner, task);
     dfs->setMaxSearchDepth(maxSearchDepth);
 }
 
@@ -78,7 +78,7 @@ void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
 ******************************************************************/
 
 bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
-    if(!dfs->learningFinished() || !task->learningFinished()) {
+    if(!dfs->learningFinished()) {
         return false;
     }
     cout << name << ": learning..." << endl;
@@ -93,7 +93,7 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
         copy.remainingSteps() = task->getHorizon();
         vector<double> res(task->getNumberOfActions());
 
-        vector<int> actionsToExpand = task->getApplicableActions(copy);
+        vector<int> actionsToExpand = getApplicableActions(copy);
 
         estimateQValues(copy, actionsToExpand, res);
         if(maxSearchDepth < minSearchDepth) {
@@ -173,9 +173,9 @@ bool IterativeDeepeningSearch::estimateQValues(State const& _rootState, vector<i
             }
         }
 
-        // TODO: Currently, we cache every result, but we should only
-        // do so if the result was achieved with a reasonable action,
-        // with a timeout or on a state with sufficient depth
+        // TODO: Currently, we cache every result, but we should only do so if
+        // the result was achieved with a reasonable action, with a timeout or
+        // on a state with sufficient depth
         if(cachingEnabled) {
             IterativeDeepeningSearch::rewardCache[currentState] = qValues;
         }
