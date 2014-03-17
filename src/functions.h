@@ -3,44 +3,26 @@
 
 #include "logical_expressions.h"
 
+class UnprocessedPlanningTask;
+
 class Evaluatable {
 public:
     Evaluatable(std::string _name, LogicalExpression* _formula) :
         name(_name),
         formula(_formula),
+        determinizedFormula(_formula),
         isProb(false),
         hasArithmeticFunction(false),
         hashIndex(-1),
         cachingType(NONE),
         kleeneCachingType(NONE) {}
 
-    Evaluatable(Evaluatable const& other, LogicalExpression* _formula) :
-        name(other.name),
-        formula(_formula),
-        isProb(other.isProb),
-        hasArithmeticFunction(other.hasArithmeticFunction),
-        hashIndex(other.hashIndex),
-        cachingType(other.cachingType),
-        evaluationCacheVector(other.pdEvaluationCacheVector.size(), -std::numeric_limits<double>::max()),
-        pdEvaluationCacheVector(other.pdEvaluationCacheVector.size(), DiscretePD()),
-        kleeneCachingType(other.kleeneCachingType),
-        kleeneEvaluationCacheVector(other.kleeneEvaluationCacheVector.size()),
-        actionHashKeyMap(other.actionHashKeyMap) {}
-
-    //TODO: This is very very ugly, but cpfs, planning tasks and states are very
-    //tightly coupled. Nevertheless, there must be a way to get rid of this,
-    //even if it takes some work!
-    friend class PlanningTask;
-    friend class Preprocessor;
-
-    // This function is called in state transitions if and only if this
-    // Evaluatable is deterministic
+    // Evaluates determinizedFormula (which is equivalent to formula if this
+    // evaluatable is deterministic)
     void evaluate(double& res, State const& current, ActionState const& actions) {
-        assert(!isProbabilistic());
-
         switch(cachingType) {
         case NONE:
-            formula->evaluate(res, current, actions);
+            determinizedFormula->evaluate(res, current, actions);
             break;
         case MAP:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
@@ -49,7 +31,7 @@ public:
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
-                formula->evaluate(res, current, actions);
+                determinizedFormula->evaluate(res, current, actions);
                 evaluationCacheMap[stateHashKey] = res;
             }
             break;
@@ -60,7 +42,7 @@ public:
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
-                formula->evaluate(res, current, actions);
+                determinizedFormula->evaluate(res, current, actions);
             }
 
             break;
@@ -70,7 +52,7 @@ public:
             assert(stateHashKey < evaluationCacheVector.size());
 
             if(MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
-                formula->evaluate(res, current, actions);
+                determinizedFormula->evaluate(res, current, actions);
                 evaluationCacheVector[stateHashKey] = res;
             } else {
                 res = evaluationCacheVector[stateHashKey];
@@ -79,9 +61,8 @@ public:
         }
     }
 
-    // This function is called in state transitions if this Evaluatable is
-    // probabilistic or if it is deterministic but part of a probabilistic
-    // planning state
+    // Evaluates the probabilistic (original) formula. If this is deterministic,
+    // evaluate is called and the result is transformed in a pd.
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) {
         assert(res.isUndefined());
 
@@ -131,8 +112,9 @@ public:
         }
     }
 
-    // This function is called for state transitions with KleeneStates
-    // (regardless of deterministic / probabilistic)
+    // This function is called for state transitions with KleeneStates, which
+    // works on the probabilistic (original) formula. TODO: it might be
+    // necessary to distinguish between original and determinized formula
     void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) {
         assert(res.empty());
         switch(kleeneCachingType) {
@@ -178,16 +160,13 @@ public:
 
     // Initialization
     void initialize();
-    void initializeHashKeys(int _hashIndex, std::vector<ActionState> const& actionStates,
-                            std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                            std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
-                            std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap);
+    void initializeHashKeys(UnprocessedPlanningTask* task);
 
     // Disable caching
     void disableCaching();
 
     // Properties
-    bool const& isProbabilistic() const {
+    bool isProbabilistic() const {
         return isProb;
     }
 
@@ -221,12 +200,14 @@ public:
         return (positiveActionDependencies.empty() && negativeActionDependencies.empty());
     }
 
-protected:
     // A unique string that describes this (only used for print)
     std::string name;
 
     // The formula that is evaluatable
     LogicalExpression* formula;
+
+    // If formula is probabilistic, this is a determinized version of it
+    LogicalExpression* determinizedFormula;
 
     // Properties of this Evaluatable
     std::set<StateFluent*> dependentStateFluents;
@@ -235,8 +216,8 @@ protected:
     bool isProb;
     bool hasArithmeticFunction;
 
-    // hashIndex is the index in the stateFluentHashKey vector of a state where
-    // the state fluent hash key of this Evaluatable is stored
+    // All evaluatables have a hash index that is used to quckly update the
+    // state fluent hash key of this evaluatable
     int hashIndex;
 
     enum CachingType {
@@ -318,11 +299,6 @@ private:
 
 class ConditionalProbabilityFunction : public Evaluatable {
 public:
-    //TODO: This is very very ugly, but cpfs, planning tasks and
-    //states are very tightly coupled. Nevertheless, there must be a
-    //way to get rid of this, even if it takes some work!
-    friend class PlanningTask;
-
     // This is used to sort transition functions by their name to ensure
     // deterministic behaviour
     struct TransitionFunctionSort {
@@ -335,14 +311,6 @@ public:
         Evaluatable(_head->fullName, _formula),
         head(_head),
         kleeneDomainSize(0) {}
-
-    ConditionalProbabilityFunction(ConditionalProbabilityFunction const& other, LogicalExpression* _formula) :
-        Evaluatable(other, _formula),
-        head(other.head),
-        domain(other.domain),
-        kleeneDomainSize(other.kleeneDomainSize) {}
-
-    ConditionalProbabilityFunction* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     StateFluent* getHead() const {
         assert(head);
@@ -381,7 +349,6 @@ public:
         return head->initialValue;
     }
 
-private:
     StateFluent* head;
 
     // The values this CPF can take

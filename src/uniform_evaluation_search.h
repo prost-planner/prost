@@ -9,7 +9,7 @@
 
 class UniformEvaluationSearch : public SearchEngine {
 public:
-    UniformEvaluationSearch(ProstPlanner* _planner);
+    UniformEvaluationSearch(ProstPlanner* _planner, PlanningTask* _task);
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);

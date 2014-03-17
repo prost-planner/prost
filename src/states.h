@@ -11,6 +11,7 @@
 
 class ActionFluent;
 class Evaluatable;
+class ConditionalProbabilityFunction;
 
 /*****************************************************************
                                State

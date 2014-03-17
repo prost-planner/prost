@@ -5,91 +5,35 @@
 #include <fdd.h>
 #include <list>
 
-#include "caching_component.h"
-#include "learning_component.h"
 #include "functions.h"
 
 class ProstPlanner;
 class ActionFluent;
 class ActionState;
 
-class PlanningTask : public CachingComponent, public LearningComponent {
+class PlanningTask {
 public:
-    PlanningTask(ProstPlanner* _planner) :
-        CachingComponent(_planner),
-        LearningComponent(_planner),
-        numberOfActions(-1),
-        stateSize(-1),
-        numberOfStateFluentHashKeys(0),
-        deterministic(false),
-        goalTestActionIndex(0),
-        isPruningEquivalentToDet(false),
-        firstProbabilisticVarIndex(-1),
-        numberOfConcurrentActions(-1),
-        horizon(-1),
-        discountFactor(1.0),
-        stateHashingPossible(false),
-        kleeneStateHashingPossible(false),
-        pdStateHashingPossible(false),
-        useRewardLockDetection(true),
-        cachedDeadEnds(bddfalse),
-        cachedGoals(bddfalse),
-        cacheApplicableActions(true),
-        hasUnreasonableActions(true),
-        noopIsOptimalFinalAction(false) {}
+    PlanningTask(std::vector<ActionFluent*>& _actionFluents,
+                 std::vector<ActionState>& _actionStates,
+                 std::vector<ConditionalProbabilityFunction*>& _CPFs,
+                 RewardFunction* _rewardCPF,
+                 std::vector<Evaluatable*>& _dynamicSACs, 
+                 std::vector<Evaluatable*>& _staticSACs,
+                 std::vector<Evaluatable*>& _stateInvariants,   
+                 State& _initialState,
+                 int _numberOfConcurrentActions,
+                 int _horizon,
+                 double _discountFactor,
+                 bool _noopIsOptimalFinalAction,
+                 bool _rewardFormulaAllowsRewardLockDetection,
+                 std::vector<std::vector<long> > const& _stateHashKeys,
+                 std::vector<long> const& _kleeneHashKeyBases,
+                 std::vector<std::vector<std::pair<int,long> > > const& indexToStateFluentHashKeyMap,
+                 std::vector<std::vector<std::pair<int,long> > > const& indexToKleeneStateFluentHashKeyMap,
+                 std::map<std::string,int>& stateVariableIndices,
+                 std::vector<std::vector<std::string> >& stateVariableValues);
 
-    PlanningTask(PlanningTask const& other) :
-        CachingComponent(other),
-        LearningComponent(other),
-        actionFluents(other.actionFluents),
-        actionStates(other.actionStates),
-        CPFs(other.CPFs),
-        rewardCPF(other.rewardCPF),
-        staticSACs(other.staticSACs),
-        dynamicSACs(other.dynamicSACs),
-        stateInvariants(other.stateInvariants),
-        numberOfActions(other.numberOfActions),
-        stateSize(other.stateSize),
-        numberOfStateFluentHashKeys(other.numberOfStateFluentHashKeys),
-        deterministic(other.deterministic),
-        goalTestActionIndex(other.goalTestActionIndex),
-        isPruningEquivalentToDet(other.isPruningEquivalentToDet),
-        initialState(other.initialState),
-        firstProbabilisticVarIndex(other.firstProbabilisticVarIndex),
-        numberOfConcurrentActions(other.numberOfConcurrentActions),
-        horizon(other.horizon),
-        discountFactor(other.discountFactor),
-        stateHashingPossible(other.stateHashingPossible),
-        kleeneStateHashingPossible(other.kleeneStateHashingPossible),
-        pdStateHashingPossible(other.pdStateHashingPossible),
-        useRewardLockDetection(other.useRewardLockDetection),
-        cachedDeadEnds(bddfalse),
-        cachedGoals(bddfalse),
-        cacheApplicableActions(true),
-        hasUnreasonableActions(true),
-        noopIsOptimalFinalAction(other.noopIsOptimalFinalAction),
-        hashKeyBases(other.hashKeyBases),
-        kleeneHashKeyBases(other.kleeneHashKeyBases),
-        indexToStateFluentHashKeyMap(other.indexToStateFluentHashKeyMap),
-        indexToKleeneStateFluentHashKeyMap(other.indexToKleeneStateFluentHashKeyMap) {}
-
-    void initialize(std::vector<ConditionalProbabilityFunction*>& _CPFs,
-                    RewardFunction* _rewardCPF,
-                    State& _initialState,
-                    std::vector<Evaluatable*>& _dynamicSACs, 
-                    std::vector<Evaluatable*>& _staticSACs,
-                    std::vector<Evaluatable*>& _stateInvariants,
-                    std::vector<ActionFluent*>& _actionFluents,
-                    std::vector<ActionState>& _actionStates,
-                    int _numberOfConcurrentActions,
-                    int _horizon,
-                    double _discountFactor,
-                    std::map<std::string,int>& stateVariableIndices,
-                    std::vector<std::vector<std::string> >& stateVariableValues);
-
-    PlanningTask* determinizeMostLikely();
-
-    bool learn(std::vector<State> const& trainingSet);
+    void learn(std::vector<State> const& trainingSet);
 
     // TODO: Make State constructor private and only allow the construction via this class.
     State getState(std::vector<double> const& stateVec, int const& remainingSteps) const {
@@ -117,17 +61,16 @@ public:
     }
 
     // As we are currently assuming that the reward is independent of the
-    // successor state the last reward can be optimized by simply applying all
-    // applicable actions and returning the highest reward
-    void calcOptimalFinalReward(State const& current, double& reward);
+    // successor state the (optimal) last reward can be calculated by applying
+    // all applicable actions and returning the highest reward
+    void calcOptimalFinalReward(State const& current, double& reward, bool const& useDeterminization);
 
     // Return the index of the optimal last action
-    int getOptimalFinalActionIndex(State const& current);
+    int getOptimalFinalActionIndex(State const& current, bool const& useDeterminization);
 
     // Apply action 'actionIndex' in the determinization to 'current', get state
     // 'next' and yield reward 'reward'
     void calcStateTransitionInDeterminization(State const& current, int const& actionIndex, State& next, double& reward) const {
-        assert(isDeterministic());
         calcSuccessorStateInDeterminization(current, actionIndex, next);
         calcReward(current, actionIndex, reward);
     }
@@ -135,7 +78,6 @@ public:
     // Apply action 'actionIndex' in the determinization to 'current', resulting
     // in 'next'.
     void calcSuccessorStateInDeterminization(State const& current, int const& actionIndex, State& next) const {
-        assert(isDeterministic());
         for(int index = 0; index < stateSize; ++index) {
             CPFs[index]->evaluate(next[index], current, actionStates[actionIndex]);
         }
@@ -205,7 +147,7 @@ public:
         if(stateHashingPossible) {
             state.hashKey = 0;
             for(unsigned int index = 0; index < stateSize; ++index) {
-                state.hashKey += (((int)state[index]) * hashKeyBases[index]);
+                state.hashKey += stateHashKeys[index][(int)state[index]];
             }
         } else {
             assert(state.hashKey == -1);
@@ -274,6 +216,35 @@ public:
     // }
 
 /*****************************************************************
+             Calculation of applicable actions
+*****************************************************************/
+
+    // Returns a vector ("res") that encodes applicable and reasonable actions.
+    // If res[i] = i, the action with index i is applicable, and if res[i] = -1
+    // it is not. Otherwise, the action with index i is unreasonable as the
+    // action with index res[i] leads to the same distribution over successor
+    // states (this is only checked if pruneUnreasonableActions is true).
+    std::vector<int> getApplicableActions(State const& state, bool const& useDeterminization) {
+        if(useDeterminization && hasUnreasonableActionsInDeterminization) {
+            return setApplicableReasonableActionsInDeterminization(state);
+        } else if(!useDeterminization && hasUnreasonableActions) {
+            return setApplicableReasonableActions(state);
+        }
+        return setApplicableActions(state);
+    }
+
+    std::vector<int> getIndicesOfApplicableActions(State const& state, bool const& useDeterminization) {
+        std::vector<int> applicableActions = getApplicableActions(state, useDeterminization);
+        std::vector<int> result;
+        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+            if(applicableActions[actionIndex] == actionIndex) {
+                result.push_back(actionIndex);
+            }
+        }
+        return result;
+    }
+
+/*****************************************************************
            Getter functions for properties of the task
 *****************************************************************/
 
@@ -322,9 +293,9 @@ public:
         return stateSize;
     }
 
-    bool const& isPruningEquivalentToDeterminization() const {
-        return isPruningEquivalentToDet;
-    }
+    // bool const& isPruningEquivalentToDeterminization() const {
+    //     return isPruningEquivalentToDet;
+    // }
 
     bool const& isDeterministic() const {
         return deterministic;
@@ -333,34 +304,6 @@ public:
     int getDomainSizeOfCPF(unsigned int const& index) const {
         return CPFs[index]->getDomainSize();
     }
-
-    // Returns a vector ("res") that encodes applicable and reasonable actions.
-    // If res[i] = i, the action with index i is applicable, and if res[i] = -1
-    // it is not. Otherwise, the action with index i is unreasonable as the
-    // action with index res[i] leads to the same distribution over successor
-    // states (this is only checked if pruneUnreasonableActions is true).
-    std::vector<int> getApplicableActions(State const& state);
-    std::vector<int> getIndicesOfApplicableActions(State const& state) {
-        std::vector<int> applicableActions = getApplicableActions(state);
-        std::vector<int> result;
-        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-            if(applicableActions[actionIndex] == actionIndex) {
-                result.push_back(actionIndex);
-            }
-        }
-        return result;
-    }
-    // std::vector<int> getApplicableActionsInDeterminization(State const& state);
-    // std::vector<int> getIndicesOfApplicableActionsInDeterminization(State const& state) {
-    //     std::vector<int> applicableActions = getApplicableActions(state);
-    //     std::vector<int> result;
-    //     for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-    //         if(applicableActions[actionIndex] == actionIndex) {
-    //             result.push_back(actionIndex);
-    //         }
-    //     }
-    //     return result;
-    // }
 
     // Checks if current is a reward lock (actually, currently this checks only
     // if it is a dead end or a goal, i.e., a reward lock with minimal or
@@ -397,19 +340,16 @@ public:
 
     // Contains state values for solved states.
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;
+    std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCacheInDeterminization;
 
 private:
-    void initializeStateFluentHashKeys();
-    void initializeStateHashKeys();
-    void initializeKleeneStateHashKeys();
-    void initializeHashKeysOfStatesAsProbabilityDistributions();
-
-    void determinePruningEquivalence();
+    //void determinePruningEquivalence();
     void initializeRewardDependentVariables();
 
     // functions for action applicability and pruning
-    void setApplicableReasonableActions(State const& state, std::vector<int>& res) const;
-    void setApplicableActions(State const& state, std::vector<int>& res) const;
+    std::vector<int> setApplicableReasonableActions(State const& state);
+    std::vector<int> setApplicableReasonableActionsInDeterminization(State const& state);
+    std::vector<int> setApplicableActions(State const& state);
     bool actionIsApplicable(ActionState const& action, State const& current) const;
 
     // functions for reward lock detection
@@ -435,9 +375,23 @@ private:
     RewardFunction* rewardCPF;
 
     // The SACs
-    std::vector<Evaluatable*> staticSACs;
     std::vector<Evaluatable*> dynamicSACs;
+    std::vector<Evaluatable*> staticSACs;
     std::vector<Evaluatable*> stateInvariants;
+
+    // The initial state (the one given in the problem description,
+    // this is not updated)
+    State initialState;
+
+    // The maximal number of concurrent actions
+    int numberOfConcurrentActions;
+
+    // The problem horizon
+    int horizon;
+
+    // The discount factor. TODO: This is not used anywhere at the
+    // moment
+    double discountFactor;
 
     // The number of actions (this is equal to actionStates.size())
     int numberOfActions;
@@ -456,25 +410,11 @@ private:
 
     // Is true if this task's determinization is equivalent w.r.t. to
     // reasonable action pruning
-    bool isPruningEquivalentToDet;
-
-    // The initial state (the one given in the problem description,
-    // this is not updated)
-    State initialState;
+    //bool isPruningEquivalentToDet;
 
     // The index of the first probabilistic variable (variables are
     // ordered s.t. all deterministic ones come first)
     int firstProbabilisticVarIndex;
-
-    // The maximal number of concurrent actions
-    int numberOfConcurrentActions;
-
-    // The problem horizon
-    int horizon;
-
-    // The discount factor. TODO: This is not used anywhere at the
-    // moment
-    double discountFactor;
 
     // Is true if hashing of States (not state fluent hashing) is possible
     bool stateHashingPossible;
@@ -483,7 +423,12 @@ private:
     bool kleeneStateHashingPossible;
 
     // Is true if hashing of PDStates is possible
-    bool pdStateHashingPossible;
+    //bool pdStateHashingPossible;
+
+    // Is true if noop is always optimal as last action. Therefore, it
+    // must not be forbidden by static SACs, there must not be dynamic
+    // SACs and the reward CPF may not contain positive action fluents.
+    bool noopIsOptimalFinalAction;
 
     // Is true if reward lock detection is used
     bool useRewardLockDetection;
@@ -497,14 +442,10 @@ private:
 
     // Is true if unreasonable actions where detected during learning
     bool hasUnreasonableActions;
-
-    // Is true if noop is always optimal as last action. Therefore, it
-    // must not be forbidden by static SACs, there must not be dynamic
-    // SACs and the reward CPF may not contain positive action fluents.
-    bool noopIsOptimalFinalAction;
+    bool hasUnreasonableActionsInDeterminization;
 
     // These are used to calculate hash keys of States and KleeneStates
-    std::vector<long> hashKeyBases;
+    std::vector<std::vector<long> > stateHashKeys;
     std::vector<long> kleeneHashKeyBases;
 
     // The Evaluatable with index indexToStateFluentHashKeyMap[i][j].first
@@ -513,11 +454,12 @@ private:
     std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
     std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
 
-    // These caches are used to save the results of
-    // getApplicableActions(). One isn't sufficient as reasonable
-    // action pruning is sometimes desired and sometimes it isn't.
+    // These caches are used to save the results of getApplicableActions(). One
+    // isn't sufficient as reasonable action pruning is sometimes desired and
+    // sometimes it isn't.
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableActionsCache;
     std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableReasonableActionsCache;
+    std::map<State, std::vector<int>, State::CompareIgnoringRemainingSteps> applicableReasonableActionsCacheInDeterminization;
 };
 
 #endif

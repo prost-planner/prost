@@ -14,8 +14,8 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner) :
-    SearchEngine("DFS", _planner, false),
+DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner, PlanningTask* _task) :
+    SearchEngine("DFS", _planner, _task, true),
     rewardHelperVar(0.0) {}
 
 /******************************************************************
@@ -40,14 +40,14 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
     task->calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
 
     // Check if the next state is already cached
-    if(task->stateValueCache.find(nxt) != task->stateValueCache.end()) {
-        reward += task->stateValueCache[nxt];
+    if(task->stateValueCacheInDeterminization.find(nxt) != task->stateValueCacheInDeterminization.end()) {
+        reward += task->stateValueCacheInDeterminization[nxt];
         return;
     }
 
     // Check if we have reached a leaf
     if(nxt.remainingSteps() == 1) {
-        task->calcOptimalFinalReward(nxt, rewardHelperVar);
+        calcOptimalFinalReward(nxt, rewardHelperVar);
         reward += rewardHelperVar;
         return;
     }
@@ -60,11 +60,11 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
 
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
-    assert(task->stateValueCache.find(state) == task->stateValueCache.end());
+    assert(task->stateValueCacheInDeterminization.find(state) == task->stateValueCacheInDeterminization.end());
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions
-    vector<int> actionsToExpand = task->getApplicableActions(state);
+    vector<int> actionsToExpand = getApplicableActions(state);
 
     // Apply applicable actions and determine best one
     for(unsigned int index = 0; index < actionsToExpand.size(); ++index) {
@@ -80,6 +80,6 @@ void DepthFirstSearch::expandState(State const& state, double& result) {
 
     // Cache state value if caching is enabled
     if(cachingEnabled) {
-        task->stateValueCache[state] = result;
+        task->stateValueCacheInDeterminization[state] = result;
     }
 }

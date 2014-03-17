@@ -178,18 +178,18 @@ void UnprocessedPlanningTask::addStateActionConstraint(LogicalExpression* sac) {
     SACs.push_back(sac);
 }
 
-void UnprocessedPlanningTask::addCPF(std::pair<StateFluent*, LogicalExpression*> const& cpf) {
+void UnprocessedPlanningTask::addCPF(ConditionalProbabilityFunction* const& cpf) {
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(cpf.first->fullName == CPFs[i].first->fullName) {
-            SystemUtils::abort("Error: CPF with same name exists already: " + cpf.first->fullName);
+        if(cpf->head->fullName == CPFs[i]->head->fullName) {
+            SystemUtils::abort("Error: CPF with same name exists already: " + cpf->head->fullName);
         }
     }
     CPFs.push_back(cpf);
 }
 
-void UnprocessedPlanningTask::setRewardCPF(LogicalExpression* const& _rewardCPF) {
+void UnprocessedPlanningTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     if(rewardCPF) {
         SystemUtils::abort("Error: RewardCPF exists already.");
     }
-    rewardCPF = _rewardCPF;
+    rewardCPF = new RewardFunction(rewardFormula);
 }

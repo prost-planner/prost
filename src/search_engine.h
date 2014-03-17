@@ -7,12 +7,12 @@
 
 #include "caching_component.h"
 #include "learning_component.h"
+#include "planning_task.h"
 
 #include <sstream>
 #include <vector>
 
 class ProstPlanner;
-class PlanningTask;
 class State;
 
 class SearchEngine : public CachingComponent, public LearningComponent {
@@ -67,7 +67,15 @@ public:
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
 
 protected:
-    SearchEngine(std::string _name, ProstPlanner* _planner, bool useProbabilisticTask);
+    SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task, bool _useDeterminization) :
+        CachingComponent(_planner),
+        LearningComponent(_planner),
+        name(_name),
+        planner(_planner),
+        task(_task),
+        useDeterminization(_useDeterminization),
+        cachingEnabled(true),
+        maxSearchDepth(task->getHorizon()) {}
 
     // Used for debug output only
     std::string name;
@@ -78,12 +86,32 @@ protected:
     // The planning task
     PlanningTask* task;
 
+    // Gives whether the determinization or the original probabilistic task is
+    // used
+    bool useDeterminization;
+
     // Parameter
     bool cachingEnabled;
     int maxSearchDepth;
 
     // Stream for nicer (and better timed) printing
     std::stringstream outStream;
+
+    std::vector<int> getApplicableActions(State const& state) {
+        return task->getApplicableActions(state, useDeterminization);
+    }
+
+    std::vector<int> getIndicesOfApplicableActions(State const& state) {
+        return task->getIndicesOfApplicableActions(state, useDeterminization);
+    }
+
+    void calcOptimalFinalReward(State const& current, double& reward) {
+        task->calcOptimalFinalReward(current, reward, useDeterminization);
+    }
+
+    int getOptimalFinalActionIndex(State const& current) {
+        return task->getOptimalFinalActionIndex(current, useDeterminization);
+    }
 };
 
 #endif

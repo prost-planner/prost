@@ -88,8 +88,8 @@ private:
 
 class DPUCTSearch : public UCTBase<DPUCTNode> {
 public:
-    DPUCTSearch(ProstPlanner* _planner) :
-        UCTBase<DPUCTNode>("DP-UCT", _planner),
+    DPUCTSearch(ProstPlanner* _planner, PlanningTask* _task) :
+        UCTBase<DPUCTNode>("DP-UCT", _planner, _task),
         heuristicWeight(0.5) {}
 
     // Set parameters from command line

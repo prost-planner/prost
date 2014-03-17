@@ -28,9 +28,9 @@ public:
     virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     virtual void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    virtual void evaluate(double& res, State const& current, ActionState const& actions);
-    virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    virtual void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
+    virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    virtual void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     virtual void print(std::ostream& out) = 0;
 };
@@ -149,9 +149,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 };
 
 class ActionFluent : public ParametrizedVariable {
@@ -166,9 +166,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 };
 
 class NonFluent : public ParametrizedVariable {
@@ -197,9 +197,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -303,9 +303,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -326,9 +326,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -349,9 +349,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -372,9 +372,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -395,9 +395,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -418,9 +418,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -441,9 +441,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -464,9 +464,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -487,9 +487,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -510,9 +510,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -533,9 +533,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -562,9 +562,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -605,9 +605,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 
@@ -633,9 +633,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -664,9 +664,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -690,9 +690,9 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
     void calculatePDDomain(std::vector<std::set<DiscretePD> > const& domains, ActionState const& actions, std::set<DiscretePD>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions);
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions);
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions);
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };

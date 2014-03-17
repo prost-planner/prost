@@ -1,4 +1,4 @@
-void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
     assert(false);
 }
 
@@ -6,15 +6,15 @@ void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, Acti
                            Atomics
 *****************************************************************/
 
-void StateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) {
+void StateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) const {
     res = current[index];
 }
 
-void ActionFluent::evaluate(double& res, State const& /*current*/, ActionState const& actions) {
+void ActionFluent::evaluate(double& res, State const& /*current*/, ActionState const& actions) const {
     res = actions[index];
 }
 
-void NumericConstant::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) {
+void NumericConstant::evaluate(double& res, State const& /*current*/, ActionState const& /*actions*/) const {
     res = value;
 }
 
@@ -22,7 +22,7 @@ void NumericConstant::evaluate(double& res, State const& /*current*/, ActionStat
                            Connectives
 *****************************************************************/
 
-void Conjunction::evaluate(double& res, State const& current, ActionState const& actions) {
+void Conjunction::evaluate(double& res, State const& current, ActionState const& actions) const {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->evaluate(res, current, actions);
 
@@ -35,7 +35,7 @@ void Conjunction::evaluate(double& res, State const& current, ActionState const&
     res = 1.0; // The empty conjunction is true
 }
 
-void Disjunction::evaluate(double& res, State const& current, ActionState const& actions) {
+void Disjunction::evaluate(double& res, State const& current, ActionState const& actions) const {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
          exprs[i]->evaluate(res, current, actions);
 
@@ -48,7 +48,7 @@ void Disjunction::evaluate(double& res, State const& current, ActionState const&
     res = 0.0; // The empty disjunction is false
 }
 
-void EqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void EqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     double lhs = 0.0;
@@ -60,7 +60,7 @@ void EqualsExpression::evaluate(double& res, State const& current, ActionState c
     res = MathUtils::doubleIsEqual(lhs, rhs);
 }
 
-void GreaterExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void GreaterExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     double lhs = 0.0;
@@ -72,7 +72,7 @@ void GreaterExpression::evaluate(double& res, State const& current, ActionState 
     res = MathUtils::doubleIsGreater(lhs, rhs);
 }
 
-void LowerExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void LowerExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     double lhs = 0.0;
@@ -84,7 +84,7 @@ void LowerExpression::evaluate(double& res, State const& current, ActionState co
     res = MathUtils::doubleIsSmaller(lhs, rhs);
 }
 
-void GreaterEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void GreaterEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     double lhs = 0.0;
@@ -96,7 +96,7 @@ void GreaterEqualsExpression::evaluate(double& res, State const& current, Action
     res = MathUtils::doubleIsGreaterOrEqual(lhs, rhs);
 }
 
-void LowerEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void LowerEqualsExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     double lhs = 0.0;
@@ -108,7 +108,7 @@ void LowerEqualsExpression::evaluate(double& res, State const& current, ActionSt
     res = MathUtils::doubleIsSmallerOrEqual(lhs, rhs);
 }
 
-void Addition::evaluate(double& res, State const& current, ActionState const& actions) {
+void Addition::evaluate(double& res, State const& current, ActionState const& actions) const {
     res = 0.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         double exprRes = 0.0;
@@ -117,7 +117,7 @@ void Addition::evaluate(double& res, State const& current, ActionState const& ac
     }
 }
 
-void Subtraction::evaluate(double& res, State const& current, ActionState const& actions) {
+void Subtraction::evaluate(double& res, State const& current, ActionState const& actions) const {
     exprs[0]->evaluate(res, current, actions);
 
     for(unsigned int i = 1; i < exprs.size(); ++i) {
@@ -127,7 +127,7 @@ void Subtraction::evaluate(double& res, State const& current, ActionState const&
     }
 }
 
-void Multiplication::evaluate(double& res, State const& current, ActionState const& actions) {
+void Multiplication::evaluate(double& res, State const& current, ActionState const& actions) const {
     res = 1.0;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         double exprRes = 0.0;
@@ -140,7 +140,7 @@ void Multiplication::evaluate(double& res, State const& current, ActionState con
     }
 }
 
-void Division::evaluate(double& res, State const& current, ActionState const& actions) {
+void Division::evaluate(double& res, State const& current, ActionState const& actions) const {
     exprs[0]->evaluate(res, current, actions);
 
     for(unsigned int i = 1; i < exprs.size(); ++i) {
@@ -159,7 +159,7 @@ void Division::evaluate(double& res, State const& current, ActionState const& ac
                           Unaries
 *****************************************************************/
 
-void Negation::evaluate(double& res, State const& current, ActionState const& actions) {
+void Negation::evaluate(double& res, State const& current, ActionState const& actions) const {
     expr->evaluate(res, current, actions);
 
     res = MathUtils::doubleIsEqual(res, 0.0);
@@ -169,11 +169,11 @@ void Negation::evaluate(double& res, State const& current, ActionState const& ac
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+void BernoulliDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
     SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
-void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) {
+void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
     SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
 }
 
@@ -181,7 +181,7 @@ void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, A
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::evaluate(double& res, State const& current, ActionState const& actions) {
+void IfThenElseExpression::evaluate(double& res, State const& current, ActionState const& actions) const {
     condition->evaluate(res, current, actions);
 
     if(MathUtils::doubleIsEqual(res, 0.0)) {
@@ -191,7 +191,7 @@ void IfThenElseExpression::evaluate(double& res, State const& current, ActionSta
     }
 }
 
-void MultiConditionChecker::evaluate(double& res, State const& current, ActionState const& actions) {
+void MultiConditionChecker::evaluate(double& res, State const& current, ActionState const& actions) const {
     for(unsigned int index = 0; index < conditions.size(); ++index) {
         conditions[index]->evaluate(res, current, actions);
 

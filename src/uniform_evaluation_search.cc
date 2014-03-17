@@ -11,8 +11,8 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner) :
-    SearchEngine("UniformEvaluation", _planner, false),
+UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner, PlanningTask* _task) :
+    SearchEngine("UniformEvaluation", _planner, _task, true),
     initialValue(0.0) {}
 
 bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
@@ -33,7 +33,7 @@ bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
 ******************************************************************/
 
 bool UniformEvaluationSearch::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
-    bestActions = task->getIndicesOfApplicableActions(_rootState);
+    bestActions = getIndicesOfApplicableActions(_rootState);
     return true;
 }
 
