@@ -1,6 +1,6 @@
 #include "rddl_parser.h"
 
-#include "functions.h"
+#include "logical_expressions.h"
 
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -14,15 +14,58 @@ using namespace std;
                         Toplevel parsing
 *****************************************************************/
 
-void RDDLParser::parse() {
+void RDDLParser::parse(string& domainFile, string& problemFile) {
+    readFiles(domainFile, problemFile);
+
     parseDomain();
     parseNonFluents();
     parseInstance();
 }
 
+void RDDLParser::readFiles(string& domainFile, string& problemFile) {
+    cout << "opening files " << domainFile << " / " << problemFile << endl;
+
+    if(!SystemUtils::readFile(domainFile, domainDesc, "//")) {
+        SystemUtils::abort( "Error: cannot find file " + domainFile +".");
+    }
+
+    string problemDesc;
+    if(!SystemUtils::readFile(problemFile, problemDesc, "//")) {
+        SystemUtils::abort( "Error: cannot find file " + problemFile +".");
+    }
+
+    StringUtils::standardizeParens(domainDesc);
+    StringUtils::standardizeSemicolons(domainDesc);
+    StringUtils::standardizeColons(domainDesc);
+    StringUtils::standardizeEqualSign(domainDesc);
+    StringUtils::removeConsecutiveWhiteSpaces(domainDesc);
+
+    StringUtils::standardizeParens(problemDesc);
+    StringUtils::standardizeSemicolons(problemDesc);
+    StringUtils::standardizeColons(problemDesc);
+    StringUtils::standardizeEqualSign(problemDesc);
+    StringUtils::removeConsecutiveWhiteSpaces(problemDesc);
+
+    std::vector<string> nonFluentsAndInstance;
+    StringUtils::tokenize(problemDesc, nonFluentsAndInstance);
+    if(nonFluentsAndInstance.size() == 1) {
+        // There is no non-fluents block
+        if(nonFluentsAndInstance[0].find("instance ") != 0) {
+            SystemUtils::abort("Error: No instance description found.");
+        }
+
+        instanceDesc = nonFluentsAndInstance[0];
+    } else {
+        assert(nonFluentsAndInstance.size() == 2);
+        assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
+
+        nonFluentsDesc = nonFluentsAndInstance[0];
+        instanceDesc = nonFluentsAndInstance[1];
+    }
+}
+
 void RDDLParser::parseDomain() {
-    string domainDesc = task->domainDesc;
-    getTokenName(domainDesc, task->domainName, 7);
+    getTokenName(domainDesc, domainName, 7);
 
     vector<string> tokens;
     splitToken(domainDesc,tokens);
@@ -96,20 +139,18 @@ void RDDLParser::parseDomain() {
 }
 
 void RDDLParser::parseNonFluents() {
-    if(!task->nonFluentsDesc.empty()) {
-        string nonFluentsDesc = task->nonFluentsDesc;
-
-        getTokenName(nonFluentsDesc, task->nonFluentsName, 12);
+    if(!nonFluentsDesc.empty()) {
+        getTokenName(nonFluentsDesc, nonFluentsName, 12);
 
         vector<string> tokens;
         splitToken(nonFluentsDesc,tokens);
 
         for(unsigned int i = 0; i < tokens.size(); ++i) {
             if(tokens[i].find("domain =") == 0) {
-                string domainName = tokens[i].substr(9,tokens[i].length()-10);
-                StringUtils::trim(domainName);
-                StringUtils::removeTRN(domainName);
-                assert(task->domainName == domainName);
+                string domName = tokens[i].substr(9,tokens[i].length()-10);
+                StringUtils::trim(domName);
+                StringUtils::removeTRN(domName);
+                assert(domainName == domName);
             } else if(tokens[i].find("objects ") == 0) {
                 tokens[i] = tokens[i].substr(9,tokens[i].length()-11);
                 StringUtils::trim(tokens[i]);
@@ -136,24 +177,23 @@ void RDDLParser::parseNonFluents() {
 }
 
 void RDDLParser::parseInstance() {
-    string instanceDesc = task->instanceDesc;
-
-    getTokenName(instanceDesc,task->instanceName,9);
+    getTokenName(instanceDesc, instanceName, 9);
+    task->name = instanceName;
 
     vector<string> tokens;
     splitToken(instanceDesc,tokens);
 
      for(unsigned int i = 0; i < tokens.size(); ++i) {
         if(tokens[i].find("domain =") == 0) {
-            string domainName = tokens[i].substr(9,tokens[i].length()-10);
-            StringUtils::trim(domainName);
-            StringUtils::removeTRN(domainName);
-            assert(task->domainName == domainName);
+            string domName = tokens[i].substr(9,tokens[i].length()-10);
+            StringUtils::trim(domName);
+            StringUtils::removeTRN(domName);
+            assert(domainName == domName);
         } else if(tokens[i].find("non-fluents =") == 0) {
-            string nonFluentsName = tokens[i].substr(14,tokens[i].length()-15);
-            StringUtils::trim(nonFluentsName);
-            StringUtils::removeTRN(nonFluentsName);
-            assert(task->nonFluentsName == nonFluentsName);
+            string nflName = tokens[i].substr(14,tokens[i].length()-15);
+            StringUtils::trim(nflName);
+            StringUtils::removeTRN(nflName);
+            assert(nonFluentsName == nflName);
         } else if(tokens[i].find("init-state ") == 0) {
             tokens[i] = tokens[i].substr(13,tokens[i].length()-15);
             StringUtils::trim(tokens[i]);

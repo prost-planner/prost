@@ -1,9 +1,10 @@
 #ifndef RDDL_PARSER_H
 #define RDDL_PARSER_H
 
-#include "unprocessed_planning_task.h"
+#include <vector>
+#include <string>
 
-class ProstPlanner;
+class UnprocessedPlanningTask;
 class LogicalExpression;
 class ParameterList;
 class Parameter;
@@ -13,10 +14,12 @@ public:
     RDDLParser(UnprocessedPlanningTask* _task) :
         task(_task) {}
 
-    void parse();
+    void parse(std::string& domainFile, std::string& problemFile);
 
 private:
     UnprocessedPlanningTask* task;
+
+    void readFiles(std::string& domainFile, std::string& problemFile);
 
     void parseDomain();
     void parseNonFluents();
@@ -36,6 +39,16 @@ private:
 
     std::vector<std::string> tokenizeFormula(std::string& text);
     bool isNumericConstant(std::string& token);
+
+    // Task description as string
+    std::string domainDesc;
+    std::string nonFluentsDesc;
+    std::string instanceDesc;
+
+    // Names
+    std::string domainName;
+    std::string nonFluentsName;
+    std::string instanceName;
 };
 
 #endif

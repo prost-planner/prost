@@ -1,8 +1,5 @@
 #include "prost_planner.h"
 
-#include "rddl_parser.h"
-#include "instantiator.h"
-#include "preprocessor.h"
 #include "search_engine.h"
 #include "state_set_generator.h"
 #include "planning_task.h"
@@ -16,48 +13,42 @@
 
 using namespace std;
 
-ProstPlanner::ProstPlanner(string domain, string problem, int _numberOfRounds) :
-    unprocessedTask(NULL),
-    task(NULL),
+ProstPlanner::ProstPlanner(string& plannerDesc, PlanningTask* _task) :
+    task(_task),
     searchEngine(NULL),
-    currentState(),
+    currentState(task->getInitialState()),
     currentRound(-1), 
-    remainingSteps(-1),
-    numberOfRounds(_numberOfRounds),
+    remainingSteps(task->getHorizon()),
+    numberOfRounds(-1),
     cachingEnabled(true),
     ramLimit(2621440),
     bitSize(sizeof(long)*8) {
 
     setSeed((int)time(NULL));
-    unprocessedTask = new UnprocessedPlanningTask(domain, problem);
-}
+    
+    StringUtils::trim(plannerDesc);
+    assert(plannerDesc[0] == '[' && plannerDesc[plannerDesc.size()-1] == ']');
+    StringUtils::removeFirstAndLastCharacter(plannerDesc);
+    StringUtils::trim(plannerDesc);
 
-ProstPlanner* ProstPlanner::fromString(string& desc, string& domain, string& problem, int& numberOfRounds) {
-    StringUtils::trim(desc);
-    assert(desc[0] == '[' && desc[desc.size()-1] == ']');
-    StringUtils::removeFirstAndLastCharacter(desc);
-    StringUtils::trim(desc);
-
-    assert(desc.find("PROST") == 0);
-    desc = desc.substr(5,desc.size());
+    assert(plannerDesc.find("PROST") == 0);
+    plannerDesc = plannerDesc.substr(5, plannerDesc.size());
 
     bool searchEngineDefined = false;
 
-    ProstPlanner* result = new ProstPlanner(domain, problem, numberOfRounds);
-
-    while(!desc.empty()) {
+    while(!plannerDesc.empty()) {
         string param;
         string value;
-        StringUtils::nextParamValuePair(desc,param,value);
+        StringUtils::nextParamValuePair(plannerDesc,param,value);
 
         if(param == "-s") {
-            result->setSeed(atoi(value.c_str()));
+            setSeed(atoi(value.c_str()));
         } else if(param == "-ram") {
-            result->setRAMLimit(atoi(value.c_str()));
+            setRAMLimit(atoi(value.c_str()));
         } else if(param == "-bit") {
-            result->setBitSize(atoi(value.c_str()));
+            setBitSize(atoi(value.c_str()));
         } else if(param == "-se") {
-            result->searchEngineDesc = value;
+            searchEngineDesc = value;
             searchEngineDefined = true;
         } else {
             SystemUtils::abort("Unused parameter value pair: " + param + " / " + value);
@@ -67,37 +58,13 @@ ProstPlanner* ProstPlanner::fromString(string& desc, string& domain, string& pro
     if(!searchEngineDefined) {
         SystemUtils::abort("A Search Engine must be specified");
     }
-
-    return result;
 }
 
-void ProstPlanner::init(map<string,int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
-    Timer t;
-    cout << "parsing..." << endl;
-    RDDLParser parser(unprocessedTask);
-    parser.parse();
-    cout << "...finished (" << t << ")." << endl;
-
-    t.reset();
-    cout << "instantiating..." << endl;
-    Instantiator instantiator(unprocessedTask);
-    instantiator.instantiate();
-    cout << "...finished (" << t << ")." << endl;
-
-    t.reset();
-    cout << "preprocessing..." << endl;
-    Preprocessor preprocessor(unprocessedTask);
-    task = preprocessor.preprocess(stateVariableIndices, stateVariableValues);
-
-    remainingSteps = task->getHorizon();
-    currentState = State(task->getInitialState());
-
+void ProstPlanner::init() {
     setSearchEngine(SearchEngine::fromString(searchEngineDesc, this));
 
-    cout << "...finished (" << t << ")." << endl;
-
-    t.reset();
-    cout << endl << endl << "generating training set..." << endl;
+    Timer t;
+    cout << "generating training set..." << endl;
     StateSetGenerator* gen = new StateSetGenerator(task);
     std::vector<State> trainingSet = gen->generateStateSet(currentState);
     delete gen;
@@ -134,7 +101,7 @@ void ProstPlanner::init(map<string,int>& stateVariableIndices, vector<vector<str
     assert(learningComponents.empty());
     cout << "...finished (" << t << ")." << endl << endl;
 
-    cout << "generated planning task:" << endl;
+    cout << "Final task: " << endl;
     task->print(cout);
 }
 
@@ -156,27 +123,6 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     for(unsigned int i = 0; i < task->actionState(chosenActionIndex).scheduledActionFluents.size(); ++i) {
         result.push_back(task->actionState(chosenActionIndex).scheduledActionFluents[i]->fullName);
     }
-
-    // for(unsigned int i = 0; i < task->getStateSize(); ++i) {
-    //     cout << task->CPFs[i]->head->fullName << ": ";
-    //     int num = 0;
-    //     for(unsigned int j = 0; j < task->CPFs[i]->evaluationCacheVector.size(); ++j) {
-    //         if(!MathUtils::doubleIsMinusInfinity(task->CPFs[i]->evaluationCacheVector[j])) {
-    //             ++num;
-    //             if(i == 0) {
-    //                 cout << j << ": " << task->CPFs[i]->evaluationCacheVector[j] << endl;
-    //             }
-    //         }
-    //     }
-    //     cout << num << " (" << task->CPFs[i]->evaluationCacheVector.size() << ") / ";
-    //     num = 0;
-    //     for(unsigned int j = 0; j < task->CPFs[i]->pdEvaluationCacheVector.size(); ++j) {
-    //         if(!task->CPFs[i]->pdEvaluationCacheVector[j].isUndefined()) {
-    //             ++num;
-    //         }
-    //     }
-    //     cout << num << " (" << task->CPFs[i]->pdEvaluationCacheVector.size() << ")" << endl;
-    // }
 
     // assert(false);
     // SystemUtils::abort("");

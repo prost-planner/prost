@@ -16,47 +16,31 @@
 
 using namespace std;
 
-bool IPPCClient::init() {
+void IPPCClient::init() {
     assert(socket == -1);
     try {
         socket = connectToServer();
         if(socket <= 0) {
-            return false;
+            SystemUtils::abort("Error: couldn't connect to server.");
         }
     } catch(const exception& e) {
-        cerr << endl << "IPPCClient: " << e.what() << endl;
-        return false;
+        SystemUtils::abort("Error: couldn't connect to server.");
     } catch(...) {
-        cerr << "IPPCClient: fatal error" << endl;
-        return false;
+        SystemUtils::abort("Error: couldn't connect to server.");
     }
-    return true;
 }
 
-bool IPPCClient::run(string& dir, string& problemName, string& plannerDesc) {
-    //read domain and problem files
-    string domain;
-    string problem;
-    if(!readFiles(dir,problemName,domain,problem)) {
-        return false;
-    }
-
+void IPPCClient::run(string const& problemName) {
     //request round
     int remainingTime = -1;
-    if(!initSession(problemName,remainingTime)) {
-        return false;
-    }
+    initSession(problemName, remainingTime);
 
-    //init planner
-    ProstPlanner* planner = ProstPlanner::fromString(plannerDesc, domain, problem, numberOfRounds);
-    planner->init(stateVariableIndices, stateVariableValues);
+    planner->setNumberOfRounds(numberOfRounds);
     vector<double> nextState(stateVariableIndices.size());
 
     //main loop
     for(int i = 0; i < numberOfRounds; ++i) {
-        if(!initRound(nextState)) {
-            return false;
-        }
+        initRound(nextState);
         planner->initNextRound();
 
         while(true) {
@@ -66,29 +50,9 @@ bool IPPCClient::run(string& dir, string& problemName, string& plannerDesc) {
             }
         }
     }
-
-    return true;
 }
 
-bool IPPCClient::readFiles(string& dir, string& problemName, string& domain, string& problem) {
-    int index = (int)problemName.find(("_inst"));
-    string domainFileName = dir + problemName.substr(0,index) + "_mdp.rddl_prefix";
-    string problemFileName = dir + problemName + ".rddl_prefix";
-
-    cout << "opening files " << domainFileName << " / " << problemFileName << endl;
-
-    if(!SystemUtils::readFile(domainFileName, domain, "//")) {
-        cout << "cannot find file " << domainFileName << endl;
-        return false;
-    }
-    if(!SystemUtils::readFile(problemFileName, problem, "//")) {
-        cout << "cannot find file " << problemFileName << endl;
-        return false;
-    }
-    return true;
-}
-
-bool IPPCClient::stop() {
+void IPPCClient::stop() {
     cout << "***********************************************" << endl;
     cout << ">>>            END OF SESSION                  " << endl;
     cout << ">>>           TOTAL REWARD: " << accumulatedReward << endl;
@@ -96,10 +60,9 @@ bool IPPCClient::stop() {
     cout << "***********************************************\n" << endl;
 
     if(socket == -1) {
-        return false;
+        SystemUtils::abort("Error: couldn't disconnect from server.");
     }
     close(socket);
-    return true;
 }
 
 /******************************************************************************
@@ -129,54 +92,49 @@ int IPPCClient::connectToServer() {
     return res;
 }
 
-bool IPPCClient::initSession(string& rddlProblem, int& remainingTime) {
+void IPPCClient::initSession(string const& rddlProblem, int& remainingTime) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "<session-request>"
             << "<problem-name>" << rddlProblem << "</problem-name>"
             << "<client-name>" << "prost" << "</client-name>"
             << "<no-header/>" << "</session-request>" << '\0';
     if(write(socket, os.str().c_str(), os.str().length()) == -1) {
-        return false;
+        SystemUtils::abort("Error: writing to socket failed.");
     }
 
     const XMLNode* serverResponse = XMLNode::readNode(socket);
     if(!serverResponse) {
-        return false;
+        SystemUtils::abort("Error: initializing session failed.");
     }
 
     string s;
     if(!serverResponse->dissect("num-rounds", s)) {
-        delete serverResponse;
-        return false;
+        SystemUtils::abort("Error: server response insufficient.");
     }
     numberOfRounds = atoi(s.c_str());
 
     if(!serverResponse->dissect("time-allowed", s)) {
-        delete serverResponse;
-        return false;
+        SystemUtils::abort("Error: server response insufficient.");
     }
     remainingTime = atoi(s.c_str());
 
     delete serverResponse;
-    return true;
 }
 
-bool IPPCClient::initRound(vector<double>& initialState) {
+void IPPCClient::initRound(vector<double>& initialState) {
     stringstream os;
     os.str("");
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             << "<round-request/>" << '\0';
 
     if(write(socket, os.str().c_str(), os.str().length()) == -1) {
-        return false;
+        SystemUtils::abort("Error: writing to socket failed.");
     }
 
     const XMLNode* serverResponse = XMLNode::readNode(socket);
 
     if(!serverResponse || serverResponse->getName() != "round-init") {
-        cerr << "Error in server's round-request response" << endl;
-        delete serverResponse;
-        return false;
+        SystemUtils::abort("Error: round-request response insufficient.");
     }
     delete serverResponse;
 
@@ -184,7 +142,6 @@ bool IPPCClient::initRound(vector<double>& initialState) {
     readState(serverResponse, initialState);
 
     delete serverResponse;
-    return true;
 }
 
 bool IPPCClient::submitAction(vector<string>& actions, vector<double>& nextState) {

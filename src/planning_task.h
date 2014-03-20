@@ -5,7 +5,7 @@
 #include <fdd.h>
 #include <list>
 
-#include "functions.h"
+#include "evaluatables.h"
 
 class ProstPlanner;
 class ActionFluent;
@@ -13,7 +13,8 @@ class ActionState;
 
 class PlanningTask {
 public:
-    PlanningTask(std::vector<ActionFluent*>& _actionFluents,
+    PlanningTask(std::string _name,
+                 std::vector<ActionFluent*>& _actionFluents,
                  std::vector<ActionState>& _actionStates,
                  std::vector<ConditionalProbabilityFunction*>& _CPFs,
                  RewardFunction* _rewardCPF,
@@ -28,10 +29,8 @@ public:
                  bool _rewardFormulaAllowsRewardLockDetection,
                  std::vector<std::vector<long> > const& _stateHashKeys,
                  std::vector<long> const& _kleeneHashKeyBases,
-                 std::vector<std::vector<std::pair<int,long> > > const& indexToStateFluentHashKeyMap,
-                 std::vector<std::vector<std::pair<int,long> > > const& indexToKleeneStateFluentHashKeyMap,
-                 std::map<std::string,int>& stateVariableIndices,
-                 std::vector<std::vector<std::string> >& stateVariableValues);
+                 std::vector<std::vector<std::pair<int,long> > > const& _indexToStateFluentHashKeyMap,
+                 std::vector<std::vector<std::pair<int,long> > > const& _indexToKleeneStateFluentHashKeyMap);
 
     void learn(std::vector<State> const& trainingSet);
 
@@ -337,6 +336,9 @@ public:
     void printGoalBDD() const {
         bdd_printdot(cachedGoals);
     }
+
+    // The name of this task (this is equivalent to the instance name)
+    std::string name;
 
     // Contains state values for solved states.
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;

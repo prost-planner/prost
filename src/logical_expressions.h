@@ -169,6 +169,14 @@ public:
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+
+    // This is used to sort ActionFluents by their name to ensure deterministic
+    // behaviour
+    struct ActionFluentSort {
+        bool operator() (ActionFluent* const& lhs, ActionFluent* const& rhs) const {
+            return lhs->fullName < rhs->fullName;
+        }
+    };
 };
 
 class NonFluent : public ParametrizedVariable {

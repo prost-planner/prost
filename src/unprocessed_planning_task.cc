@@ -1,6 +1,6 @@
 #include "unprocessed_planning_task.h"
 
-#include "functions.h"
+#include "evaluatables.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"
@@ -10,14 +10,11 @@
 
 using namespace std;
 
-UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _problemDesc) :
-    domainDesc(_domainDesc),
+UnprocessedPlanningTask::UnprocessedPlanningTask() :
     numberOfConcurrentActions(numeric_limits<int>::max()),
     horizon(1),
     discountFactor(1.0), 
     rewardCPF(NULL) {
-
-    preprocessInput(_problemDesc);
 
     // Add bool type
     addType("bool");
@@ -30,37 +27,6 @@ UnprocessedPlanningTask::UnprocessedPlanningTask(string _domainDesc, string _pro
 
     // Add object super type
     addType("object");
-}
-
-void UnprocessedPlanningTask::preprocessInput(string& problemDesc) {
-    StringUtils::standardizeParens(domainDesc);
-    StringUtils::standardizeSemicolons(domainDesc);
-    StringUtils::standardizeColons(domainDesc);
-    StringUtils::standardizeEqualSign(domainDesc);
-    StringUtils::removeConsecutiveWhiteSpaces(domainDesc);
-
-    StringUtils::standardizeParens(problemDesc);
-    StringUtils::standardizeSemicolons(problemDesc);
-    StringUtils::standardizeColons(problemDesc);
-    StringUtils::standardizeEqualSign(problemDesc);
-    StringUtils::removeConsecutiveWhiteSpaces(problemDesc);
-
-    std::vector<string> nonFluentsAndInstance;
-    StringUtils::tokenize(problemDesc, nonFluentsAndInstance);
-    if(nonFluentsAndInstance.size() == 1) {
-        // There is no non-fluents block
-        if(nonFluentsAndInstance[0].find("instance ") != 0) {
-            SystemUtils::abort("Error: No instance description found.");
-        }
-
-        instanceDesc = nonFluentsAndInstance[0];
-    } else {
-        assert(nonFluentsAndInstance.size() == 2);
-        assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 && nonFluentsAndInstance[1].find("instance ") == 0);
-
-        nonFluentsDesc = nonFluentsAndInstance[0];
-        instanceDesc = nonFluentsAndInstance[1];
-    }
 }
 
 void UnprocessedPlanningTask::addType(string const& name, string const& superType) {
@@ -112,7 +78,7 @@ void UnprocessedPlanningTask::addParametrizedVariable(ParametrizedVariable* pare
 
 void UnprocessedPlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<Parameter*> const& params, double initialValue) {
     if(variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
-        SystemUtils::abort("Error: maldefined parametrized variable.");
+        SystemUtils::abort("Error: Parametrized variable " + parent->variableName + " not defined.");
     }
 
     // We declare these here as we need parentheses in the switch otherwise
@@ -123,50 +89,69 @@ void UnprocessedPlanningTask::addParametrizedVariable(ParametrizedVariable* pare
     switch(parent->variableType) {
     case ParametrizedVariable::STATE_FLUENT:
         sf = new StateFluent(*parent, params, initialValue);
-        if(stateFluents.find(sf->fullName) == stateFluents.end()) {
-            stateFluents[sf->fullName] = sf;
-            if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-                variablesBySchema[parent] = vector<StateFluent*>();
+        for(unsigned int i = 0; i < stateFluents.size(); ++i) {
+            // This could already be defined if it occurs in the initial state
+            if(sf->fullName == stateFluents[i]->fullName) {
+                return;
             }
-            variablesBySchema[parent].push_back(sf);
         }
+        stateFluents.push_back(sf);
+
+        if(variablesBySchema.find(parent) == variablesBySchema.end()) {
+            variablesBySchema[parent] = vector<StateFluent*>();
+        }
+        variablesBySchema[parent].push_back(sf);
         break;
     case ParametrizedVariable::ACTION_FLUENT:
         af = new ActionFluent(*parent, params);
-        assert(actionFluents.find(af->fullName) == actionFluents.end());
-        actionFluents[af->fullName] = af;
+        for(unsigned int i = 0; i < actionFluents.size(); ++i) {
+            assert(af->fullName != actionFluents[i]->fullName);
+        }
+        actionFluents.push_back(af);
         break;
     case ParametrizedVariable::NON_FLUENT:
         nf = new NonFluent(*parent, params, initialValue);
-        if(nonFluents.find(nf->fullName) == nonFluents.end()) {
-            nonFluents[nf->fullName] = nf;
+        for(unsigned int i = 0; i < nonFluents.size(); ++i) {
+            // This mightbe defined if it occurs in the non fluents entry
+            if(nf->fullName == nonFluents[i]->fullName) {
+                return;
+            }
         }
-        break;
+        nonFluents.push_back(nf);
         // case ParametrizedVariable::INTERM_FLUENT:
         // assert(false);
         // break;
     }    
 }
 
-StateFluent* UnprocessedPlanningTask::getStateFluent(std::string const& name) {
-    if(stateFluents.find(name) == stateFluents.end()) {
-        SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
+StateFluent* UnprocessedPlanningTask::getStateFluent(string const& name) {
+    for(unsigned int i = 0; i < stateFluents.size(); ++i) {
+        if(name == stateFluents[i]->fullName) {
+            return stateFluents[i];
+        }
     }
-    return stateFluents[name];
+    SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
+    return NULL;
 }
 
-ActionFluent* UnprocessedPlanningTask::getActionFluent(std::string const& name) {
-    if(actionFluents.find(name) == actionFluents.end()) {
-        SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+ActionFluent* UnprocessedPlanningTask::getActionFluent(string const& name) {
+    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
+        if(name == actionFluents[i]->fullName) {
+            return actionFluents[i];
+        }
     }
-    return actionFluents[name];
+    SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+    return NULL;
 }
 
-NonFluent* UnprocessedPlanningTask::getNonFluent(std::string const& name) {
-    if(nonFluents.find(name) == nonFluents.end()) {
-        SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+NonFluent* UnprocessedPlanningTask::getNonFluent(string const& name) {
+    for(unsigned int i = 0; i < nonFluents.size(); ++i) {
+        if(name == nonFluents[i]->fullName) {
+            return nonFluents[i];
+        }
     }
-    return nonFluents[name];
+    SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+    return NULL;
 }
 
 vector<StateFluent*> UnprocessedPlanningTask::getVariablesOfSchema(ParametrizedVariable* schema) {
