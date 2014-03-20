@@ -11,7 +11,8 @@ using namespace std;
                          Initialization
 *****************************************************************/
 
-PlanningTask::PlanningTask(vector<ActionFluent*>& _actionFluents,
+PlanningTask::PlanningTask(string _name,
+                           vector<ActionFluent*>& _actionFluents,
                            vector<ActionState>& _actionStates,
                            vector<ConditionalProbabilityFunction*>& _CPFs, 
                            RewardFunction* _rewardCPF,
@@ -27,9 +28,8 @@ PlanningTask::PlanningTask(vector<ActionFluent*>& _actionFluents,
                            vector<vector<long> > const& _stateHashKeys,
                            vector<long> const& _kleeneHashKeyBases,
                            vector<vector<pair<int,long> > > const& _indexToStateFluentHashKeyMap,
-                           vector<vector<pair<int,long> > > const& _indexToKleeneStateFluentHashKeyMap,
-                           map<string, int>& stateVariableIndices,
-                           vector<vector<string> >& stateVariableValues) :
+                           vector<vector<pair<int,long> > > const& _indexToKleeneStateFluentHashKeyMap) :
+    name(_name),
     actionFluents(_actionFluents),
     actionStates(_actionStates),
     CPFs(_CPFs),
@@ -76,7 +76,7 @@ PlanningTask::PlanningTask(vector<ActionFluent*>& _actionFluents,
 
         int* domains = new int[stateSize];
         for(unsigned int index = 0; index < CPFs.size(); ++index) {
-            domains[index] = CPFs[index]->getDomainSize();
+           domains[index] = CPFs[index]->getDomainSize();
         }
         fdd_extdomain(domains, stateSize);
     } else {
@@ -89,19 +89,6 @@ PlanningTask::PlanningTask(vector<ActionFluent*>& _actionFluents,
     // Calculate hash keys of initial state
     calcStateFluentHashKeys(initialState);
     calcStateHashKey(initialState);
-
-    // Set mapping of variables to variable names and of values as strings to
-    // internal values for communication with environment
-    for(unsigned int i = 0; i < stateSize; ++i) {
-        assert(stateVariableIndices.find(CPFs[i]->name) == stateVariableIndices.end());
-        stateVariableIndices[CPFs[i]->name] = i;
-        
-        vector<string> values;
-        for(unsigned int j = 0; j < CPFs[i]->head->valueType->objects.size(); ++j) {
-            values.push_back(CPFs[i]->head->valueType->objects[j]->name);
-        }
-        stateVariableValues.push_back(values);
-    }
 }
 
 //void PlanningTask::determinePruningEquivalence() {

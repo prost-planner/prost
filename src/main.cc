@@ -1,6 +1,9 @@
-#include "ippc_client.h"
+#include "rddl_parser.h"
+#include "instantiator.h"
+#include "preprocessor.h"
 #include "prost_planner.h"
-#include "search_engine.h"
+
+#include "ippc_client.h"
 
 #include "utils/timer.h"
 #include "utils/string_utils.h"
@@ -278,29 +281,29 @@ void printUsage() {
 }
 
 int main(int argc, char** argv) {
-    Timer timer;
+    Timer totalTime;
     if(argc < 4) {
         printUsage();
         return 1;
     }
 
-    //read non-optionals
-    string dir = string(argv[1]);
-    string problemName = string(argv[2]);
+    // Read non-optionals
+    string domainFile = string(argv[1]);
+    string problemFile = string(argv[2]);
 
-    //init optionals to default values
+    // Init optionals to default values
     string hostName = "localhost";
     unsigned short port = 2323;
 
     bool allParamsRead = false;
-    string inputAsString;
+    string plannerDesc;
     for(unsigned int i = 3; i < argc; ++i) {
         if(!allParamsRead && string(argv[i])[0] == '[') {
             allParamsRead = true;
         }
         if(allParamsRead) {
-            inputAsString += string(argv[i]) ;
-            inputAsString += " ";
+            plannerDesc += string(argv[i]) ;
+            plannerDesc += " ";
         } else {
             string nextOption = string(argv[i]);
             if(nextOption == "-h" || nextOption == "--hostname") {
@@ -314,24 +317,41 @@ int main(int argc, char** argv) {
             }
         }
     }
-    cout << inputAsString << endl;
 
-    IPPCClient* client = new IPPCClient(hostName, port);
-    if(!client->init()) {
-        cout << "Error connecting to server " << hostName << " at port " << port << "!" << endl;
-        return 1;
-    }
+    // Parse, instantiate and preprocess domain and problem
+    Timer t;
+    cout << "parsing..." << endl;
+    UnprocessedPlanningTask* unprocessedTask = new UnprocessedPlanningTask;
+    RDDLParser* parser = new RDDLParser(unprocessedTask);
+    parser->parse(domainFile, problemFile);
+    cout << "...finished (" << t << ")." << endl;
 
-    if(!client->run(dir, problemName, inputAsString)) {
-        cout << "Error while running!" << endl;
-        return 1;
-    }
+    t.reset();
+    cout << "instantiating..." << endl;
+    Instantiator* instantiator = new Instantiator(unprocessedTask);
+    instantiator->instantiate();
+    cout << "...finished (" << t << ")." << endl;
 
-    if(!client->stop()) {
-        cout << "Error when closing connection to server!" << endl;
-        return 1;
-    }
+    t.reset();
+    cout << "preprocessing..." << endl;
+    map<string,int> stateVariableIndices;
+    vector<vector<string> > stateVariableValues;
+    Preprocessor preprocessor(unprocessedTask);
+    PlanningTask* processedTask = preprocessor.preprocess(stateVariableIndices, stateVariableValues);
+    cout << "...finished (" << t << ")." << endl;
 
-    cout << "PROST complete running time: " << timer << endl;
+    processedTask->print(cout);
+
+    // Create and init planner
+    ProstPlanner* planner = new ProstPlanner(plannerDesc, processedTask);
+    planner->init();
+
+    // Create connection to rddlsim and run
+    IPPCClient* client = new IPPCClient(planner, hostName, port, stateVariableIndices, stateVariableValues);
+    client->init();
+    client->run(processedTask->name);
+    client->stop();
+
+    cout << "PROST complete running time: " << totalTime << endl;
     return 0;
 }

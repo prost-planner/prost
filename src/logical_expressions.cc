@@ -2,7 +2,6 @@
 
 #include "rddl_parser.h"
 #include "instantiator.h"
-#include "search_engine.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"

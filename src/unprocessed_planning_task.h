@@ -20,7 +20,7 @@ class ConditionalProbabilityFunction;
 class RewardFunction;
 
 struct UnprocessedPlanningTask {
-    UnprocessedPlanningTask(std::string _domainDesc, std::string _problemDesc);
+    UnprocessedPlanningTask();
 
     void preprocessInput(std::string& problemDesc);
 
@@ -42,15 +42,8 @@ struct UnprocessedPlanningTask {
     void addCPF(ConditionalProbabilityFunction* const& cpf);
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
-    // Task description as string
-    std::string domainDesc;
-    std::string nonFluentsDesc;
-    std::string instanceDesc;
-
-    // Names
-    std::string domainName;
-    std::string nonFluentsName;
-    std::string instanceName;
+    // This instance's name
+    std::string name;
 
     // (Trivial) properties
     int numberOfConcurrentActions;
@@ -66,9 +59,9 @@ struct UnprocessedPlanningTask {
     std::map<ParametrizedVariable*, LogicalExpression*> CPFDefinitions;
 
     // Instantiated variables
-    std::map<std::string, StateFluent*> stateFluents;
-    std::map<std::string, ActionFluent*> actionFluents;
-    std::map<std::string, NonFluent*> nonFluents;
+    std::vector<StateFluent*> stateFluents;
+    std::vector<ActionFluent*> actionFluents;
+    std::vector<NonFluent*> nonFluents;
     std::map<ParametrizedVariable*, std::vector<StateFluent*> > variablesBySchema;
 
     // State action constraints

@@ -7,18 +7,15 @@
 #include <map>
 #include <cassert>
 
-class UnprocessedPlanningTask;
 class PlanningTask;
 class CachingComponent;
 class LearningComponent;
 
 class ProstPlanner {
 public:
-    static ProstPlanner* fromString(std::string& desc, std::string& domain, std::string& problem, int& numberOfRounds);
+    ProstPlanner(std::string& desc, PlanningTask* _task);
 
-    ProstPlanner(std::string domain, std::string problem, int _numberOfRounds);
-
-    void init(std::map<std::string,int>& stateVariableIndices, std::vector<std::vector<std::string> >& stateVariableValues);
+    void init();
     void initNextRound();
     std::vector<std::string> plan(std::vector<double> const& nextStateVec);
 
@@ -80,7 +77,6 @@ private:
 
     void printStep(int result, bool printSearchEngineLogs = true);
 
-    UnprocessedPlanningTask* unprocessedTask;
     PlanningTask* task;
 
     std::string searchEngineDesc;

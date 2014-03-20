@@ -13,8 +13,7 @@ PlanningTask* Preprocessor::preprocess(map<string, int>& stateVariableIndices, v
     prepareEvaluatables();
 
     // Create action fluents and calculate legal action states
-    vector<ActionFluent*> actionFluents;
-    prepareActions(actionFluents);
+    prepareActions();
 
     // Approximate reachable values (domains) of CPFs and rewardCPF
     calculateDomains();
@@ -39,8 +38,22 @@ PlanningTask* Preprocessor::preprocess(map<string, int>& stateVariableIndices, v
     for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
         initialState[i] = task->CPFs[i]->getInitialValue();
     }
+    
+    // Set mapping of variables to variable names and of values as strings to
+    // internal values for communication with environment
+    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        assert(stateVariableIndices.find(task->CPFs[i]->name) == stateVariableIndices.end());
+        stateVariableIndices[task->CPFs[i]->name] = i;
+        
+        vector<string> values;
+        for(unsigned int j = 0; j < task->CPFs[i]->head->valueType->objects.size(); ++j) {
+            values.push_back(task->CPFs[i]->head->valueType->objects[j]->name);
+        }
+        stateVariableValues.push_back(values);
+    }
 
-    return new PlanningTask(actionFluents,
+    return new PlanningTask(task->name,
+                            task->actionFluents,
                             task->actionStates,
                             task->CPFs,
                             task->rewardCPF,
@@ -56,9 +69,7 @@ PlanningTask* Preprocessor::preprocess(map<string, int>& stateVariableIndices, v
                             task->stateHashKeys,
                             task->kleeneStateHashKeyBases,
                             task->indexToStateFluentHashKeyMap,
-                            task->indexToKleeneStateFluentHashKeyMap,
-                            stateVariableIndices,
-                            stateVariableValues);
+                            task->indexToKleeneStateFluentHashKeyMap);
 }
 
 /*****************************************************************
@@ -152,19 +163,17 @@ void Preprocessor::prepareEvaluatables() {
     }
 }
 
-void Preprocessor::prepareActions(vector<ActionFluent*>& actionFluents) {
-     // Initialize action fluents
-     unsigned int index = 0;
-     for(map<string, ActionFluent*>::iterator it = task->actionFluents.begin(); it != task->actionFluents.end(); ++it) {
-         it->second->index = index;
-         ++index;
-         actionFluents.push_back(it->second);
-     }
+void Preprocessor::prepareActions() {
+    // Sort action fluents for deterministic behaviour and assign indices
+    sort(task->actionFluents.begin(), task->actionFluents.end(), ActionFluent::ActionFluentSort());
+    for(unsigned int index = 0; index < task->actionFluents.size(); ++index) {
+        task->actionFluents[index]->index = index;
+    }
 
     // Calculate all possible action combinations with up to
     // numberOfConcurrentActions concurrent actions
     list<vector<int> > actionCombinations;    
-    calcPossiblyLegalActionStates(actionFluents, task->numberOfConcurrentActions, actionCombinations);
+    calcPossiblyLegalActionStates(task->numberOfConcurrentActions, actionCombinations);
 
     State current(task->CPFs.size(), 0, 0);
     for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
@@ -176,7 +185,7 @@ void Preprocessor::prepareActions(vector<ActionFluent*>& actionFluents) {
     for(list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
         vector<int>& tmp = *it;
 
-        ActionState actionState((int)actionFluents.size());
+        ActionState actionState((int)task->actionFluents.size());
         for(unsigned int i = 0; i < tmp.size(); ++i) {
             actionState[tmp[i]] = 1;
         }
@@ -206,7 +215,7 @@ void Preprocessor::prepareActions(vector<ActionFluent*>& actionFluents) {
 
         for(unsigned int i = 0; i < actionState.state.size(); ++i) {
             if(actionState.state[i]) {
-                actionState.scheduledActionFluents.push_back(actionFluents[i]);
+                actionState.scheduledActionFluents.push_back(task->actionFluents[i]);
             }
         }
 
@@ -232,7 +241,7 @@ void Preprocessor::prepareActions(vector<ActionFluent*>& actionFluents) {
     }
 }
 
-void Preprocessor::calcPossiblyLegalActionStates(vector<ActionFluent*> const& actionFluents, int actionsToSchedule, list<vector<int> >& result, vector<int> addTo) const {
+void Preprocessor::calcPossiblyLegalActionStates(int actionsToSchedule, list<vector<int> >& result, vector<int> addTo) const {
     int nextVal = 0;
     result.push_back(addTo);
 
@@ -240,11 +249,11 @@ void Preprocessor::calcPossiblyLegalActionStates(vector<ActionFluent*> const& ac
         nextVal = addTo[addTo.size()-1]+1;
     }
 
-    for(unsigned int i = nextVal; i < actionFluents.size(); ++i) {
+    for(unsigned int i = nextVal; i < task->actionFluents.size(); ++i) {
         vector<int> copy = addTo;
         copy.push_back(i);
         if(actionsToSchedule > 0) {
-            calcPossiblyLegalActionStates(actionFluents, actionsToSchedule -1, result, copy);
+            calcPossiblyLegalActionStates(actionsToSchedule -1, result, copy);
         }
     }
 }

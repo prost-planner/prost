@@ -27,9 +27,8 @@ private:
     UnprocessedPlanningTask* task;
 
     void prepareEvaluatables();
-    void prepareActions(std::vector<ActionFluent*>& actionFluents);
-    void calcPossiblyLegalActionStates(std::vector<ActionFluent*> const& actionFluents,
-                                       int actionsToSchedule,
+    void prepareActions();
+    void calcPossiblyLegalActionStates(int actionsToSchedule,
                                        std::list<std::vector<int> >& result,
                                        std::vector<int> addTo = std::vector<int>()) const;
     bool sacContainsNegativeActionFluent(Evaluatable* const& sac, ActionState const& actionState) const;

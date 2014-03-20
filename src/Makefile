@@ -16,7 +16,7 @@ HEADERS = prost_planner.h \
 	  states.h \
 	  planning_task.h \
 	  unprocessed_planning_task.h \
-	  functions.h \
+	  evaluatables.h \
 	  logical_expressions.h \
 	  probability_distribution.h \
 	  caching_component.h \
