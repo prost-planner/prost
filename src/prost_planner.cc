@@ -238,7 +238,7 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
     }
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
-    cout << "Sumitting Action: ";
+    cout << "Submitting Action: ";
     probabilisticTask->printAction(cout, result);
     cout << endl << "------------------------------------------------------------------" << endl << endl;
     

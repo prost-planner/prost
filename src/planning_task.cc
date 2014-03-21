@@ -57,7 +57,7 @@ void PlanningTask::initialize(vector<ConditionalProbabilityFunction*>& _CPFs,
     initializeStateHashKeys();
     initializeKleeneStateHashKeys();
     initializeHashKeysOfStatesAsProbabilityDistributions();
-
+    print(cout);
     // Calculate hash keys of initial state
     calcStateFluentHashKeys(initialState);
     calcStateHashKey(initialState);
@@ -234,19 +234,6 @@ void PlanningTask::initializeRewardDependentVariables() {
             // other actions in the final state transition.
             noopIsOptimalFinalAction = true;
         }
-
-
-        // TODO: These numbers are rather random and chosen s.t. the bdd
-        // operations do not output anything even on bigger problems.
-        // Nevertheless, I know only little on what they actually mean, one
-        // could readjust these if it were different.
-        bdd_init(5000000,20000);
-
-        int* domains = new int[stateSize];
-        for(unsigned int index = 0; index < CPFs.size(); ++index) {
-            domains[index] = CPFs[index]->getDomainSize();
-        }
-        fdd_extdomain(domains, stateSize);
     }
 }
 
@@ -350,6 +337,20 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
     // detection
     hasUnreasonableActions = unreasonableActionFound;
     useRewardLockDetection = rewardLockFound;
+
+    if(useRewardLockDetection && useBDDCaching) {
+        // TODO: These numbers are rather random and chosen s.t. the bdd
+        // operations do not output anything even on bigger problems.
+        // Nevertheless, I know only little on what they actually mean, one
+        // could readjust these if it were different.
+        bdd_init(5000000,20000);
+
+        int* domains = new int[stateSize];
+        for(unsigned int index = 0; index < CPFs.size(); ++index) {
+            domains[index] = CPFs[index]->getDomainSize();
+        }
+        fdd_extdomain(domains, stateSize);
+    }
 
     if(deterministic) {
         cout << " DET: ...finished" << endl;
@@ -495,7 +496,7 @@ bool PlanningTask::isARewardLock(State const& current) {
 
     if(isMinReward(reward)) {
         // Check if current is known to be a dead end
-        if(BDDIncludes(cachedDeadEnds, current)) {
+        if(useBDDCaching && BDDIncludes(cachedDeadEnds, current)) {
             return true;
         }
 
@@ -508,7 +509,7 @@ bool PlanningTask::isARewardLock(State const& current) {
         return checkDeadEnd(currentInKleene);
     } else if(isMaxReward(reward)) {
         // Check if current is known to be a goal
-        if(BDDIncludes(cachedGoals, current)) {
+        if(useBDDCaching && BDDIncludes(cachedGoals, current)) {
             return true;
         }
 
@@ -567,7 +568,9 @@ bool PlanningTask::checkDeadEnd(KleeneState const& state) {
 
     // Check if nothing changed, otherwise continue dead end check
     if((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
-        cachedDeadEnds |= stateToBDD(state);
+        if(useBDDCaching) {
+            cachedDeadEnds |= stateToBDD(state);
+        }
         return true;
     }
     return false;
@@ -582,7 +585,7 @@ bool PlanningTask::checkGoal(KleeneState const& state) {
     calcKleeneSuccessor(state, goalTestActionIndex, succ);
     calcKleeneReward(state, goalTestActionIndex, reward);
 
-    // If reward is not maximal with cetainty this is not a goal
+    // If reward is not maximal with certainty this is not a goal
     if((reward.size() > 1) || !isMaxReward(*reward.begin())) {
         return false;
     }
@@ -597,7 +600,9 @@ bool PlanningTask::checkGoal(KleeneState const& state) {
 
     // Check if nothing changed, otherwise continue goal check
     if((succ == state) || checkGoal(succ)) {
-        cachedGoals |= stateToBDD(state);
+        if(useBDDCaching) {
+            cachedGoals |= stateToBDD(state);
+        }
         return true;
     }
     return false;
