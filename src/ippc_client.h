@@ -20,7 +20,7 @@ private:
     bool readFiles(std::string& dir, std::string& problemName, std::string& domain, std::string& problem);
 
     int connectToServer();
-    bool initSession(std::string& rddlProblem, int& remainingTime);
+    bool initSession(std::string& rddlProblem);
     bool initRound(std::vector<double>& initialState);
 
     bool submitAction(std::vector<std::string>& action, std::vector<double>& nextState);
@@ -35,6 +35,7 @@ private:
     std::vector<std::vector<std::string> > stateVariableValues;
     double accumulatedReward;
     int numberOfRounds;
+    long remainingTime;
 };
 
 #endif

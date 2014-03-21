@@ -42,8 +42,8 @@ bool IPPCClient::run(string& dir, string& problemName, string& plannerDesc) {
     }
 
     //request round
-    int remainingTime = -1;
-    if(!initSession(problemName,remainingTime)) {
+    remainingTime = -1;
+    if(!initSession(problemName)) {
         return false;
     }
 
@@ -129,7 +129,7 @@ int IPPCClient::connectToServer() {
     return res;
 }
 
-bool IPPCClient::initSession(string& rddlProblem, int& remainingTime) {
+bool IPPCClient::initSession(string& rddlProblem) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "<session-request>"
             << "<problem-name>" << rddlProblem << "</problem-name>"
@@ -172,12 +172,22 @@ bool IPPCClient::initRound(vector<double>& initialState) {
     }
 
     const XMLNode* serverResponse = XMLNode::readNode(socket);
-
     if(!serverResponse || serverResponse->getName() != "round-init") {
         cerr << "Error in server's round-request response" << endl;
         delete serverResponse;
         return false;
     }
+
+    string s;
+    if(!serverResponse->dissect("time-left", s)) {
+        delete serverResponse;
+        return false;
+    }
+    remainingTime = atoi(s.c_str());
+    cout << "***********************************************" << endl;
+    cout << ">>> STARTING ROUND -- REMAINING TIME " << (remainingTime/1000) << "s" << endl;
+    cout << "***********************************************\n" << endl;
+
     delete serverResponse;
 
     serverResponse = XMLNode::readNode(socket);
@@ -193,17 +203,20 @@ bool IPPCClient::submitAction(vector<string>& actions, vector<double>& nextState
 
     for(unsigned int i = 0; i < actions.size(); ++i) {
         size_t cutPos = actions[i].find("(");
-        assert(cutPos != string::npos);
-        string actionName = actions[i].substr(0,cutPos);
-        os << "<action><action-name>" << actionName << "</action-name>";
-        string allParams = actions[i].substr(cutPos+1);
-        assert(allParams[allParams.length()-1] == ')');
-        allParams = allParams.substr(0,allParams.length()-1);
-        vector<string> params;
-        StringUtils::split(allParams, params, ",");
-        for(unsigned int j = 0; j < params.size(); ++j) {
-            StringUtils::trim(params[j]);
-            os << "<action-arg>" << params[j] << "</action-arg>";
+        if(cutPos == string::npos) {
+            os << "<action><action-name>" << actions[i] << "</action-name>";
+        } else {
+            string actionName = actions[i].substr(0,cutPos);
+            os << "<action><action-name>" << actionName << "</action-name>";
+            string allParams = actions[i].substr(cutPos+1);
+            assert(allParams[allParams.length()-1] == ')');
+            allParams = allParams.substr(0,allParams.length()-1);
+            vector<string> params;
+            StringUtils::split(allParams, params, ",");
+            for(unsigned int j = 0; j < params.size(); ++j) {
+                StringUtils::trim(params[j]);
+                os << "<action-arg>" << params[j] << "</action-arg>";
+            }
         }
         os << "<action-value>true</action-value></action>";
     }
@@ -216,13 +229,15 @@ bool IPPCClient::submitAction(vector<string>& actions, vector<double>& nextState
 
     if(serverResponse->getName() == "round-end" || serverResponse->getName() == "end-session") {
         string s;
-        if(serverResponse->dissect("round-reward", s)) {
-            double reward = atof(s.c_str());
-            cout << "***********************************************" << endl;
-            cout << ">>> END OF ROUND -- REWARD RECEIVED: " << reward << endl;
-            cout << "***********************************************\n" << endl;
-            accumulatedReward += reward;
+        if(!serverResponse->dissect("round-reward", s)) {
+            SystemUtils::abort("Error: server communication failed.");
         }
+        double reward = atof(s.c_str());
+        accumulatedReward += reward;
+
+        cout << "***********************************************" << endl;
+        cout << ">>> END OF ROUND -- REWARD RECEIVED: " << reward << endl;
+        cout << "***********************************************\n" << endl;
         delete serverResponse;
         return false;
     }

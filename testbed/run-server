@@ -1,4 +1,4 @@
-Home=server
+Home=rddlsim
 libDir=${Home}/lib
 CP=${Home}/bin
 CYGWIN_SEP=";"

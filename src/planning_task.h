@@ -32,6 +32,7 @@ public:
         kleeneStateHashingPossible(false),
         pdStateHashingPossible(false),
         useRewardLockDetection(true),
+        useBDDCaching(true),
         cachedDeadEnds(bddfalse),
         cachedGoals(bddfalse),
         cacheApplicableActions(true),
@@ -63,6 +64,7 @@ public:
         kleeneStateHashingPossible(other.kleeneStateHashingPossible),
         pdStateHashingPossible(other.pdStateHashingPossible),
         useRewardLockDetection(other.useRewardLockDetection),
+        useBDDCaching(other.useBDDCaching),
         cachedDeadEnds(bddfalse),
         cachedGoals(bddfalse),
         cacheApplicableActions(true),
@@ -487,6 +489,7 @@ private:
 
     // Is true if reward lock detection is used
     bool useRewardLockDetection;
+    bool useBDDCaching;
 
     // The BDDs where dead ends and goals are cached
     bdd cachedDeadEnds;
