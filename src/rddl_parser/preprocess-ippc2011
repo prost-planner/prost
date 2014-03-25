@@ -1,0 +1,8 @@
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/crossing_traffic_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/crossing_traffic_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/elevators_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/elevators_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/game_of_life_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/game_of_life_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/navigation_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/navigation_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/recon_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/recon_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/skill_teaching_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/skill_teaching_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/sysadmin_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/sysadmin_inst_mdp__$i.rddl_prefix ../domains; done
+for i in 1 2 3 4 5 6 7 8 9 10; do ./rddl-parser ../../../rddl-domains/ippc2011/rddl_prefix/traffic_mdp.rddl_prefix ../../../rddl-domains/ippc2011/rddl_prefix/traffic_inst_mdp__$i.rddl_prefix ../domains; done
