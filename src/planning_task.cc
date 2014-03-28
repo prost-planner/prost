@@ -338,7 +338,7 @@ bool PlanningTask::learn(vector<State> const& trainingSet) {
     hasUnreasonableActions = unreasonableActionFound;
     useRewardLockDetection = rewardLockFound;
 
-    if(useRewardLockDetection && useBDDCaching) {
+    if(!deterministic && useRewardLockDetection && useBDDCaching) {
         // TODO: These numbers are rather random and chosen s.t. the bdd
         // operations do not output anything even on bigger problems.
         // Nevertheless, I know only little on what they actually mean, one
