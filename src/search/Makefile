@@ -9,15 +9,12 @@ HEADERS = parser.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
 	  uniform_evaluation_search.h \
-	  state_set_generator.h \
 	  ippc_client.h \
 	  states.h \
 	  planning_task.h \
 	  evaluatables.h \
 	  logical_expressions.h \
 	  probability_distribution.h \
-	  caching_component.h \
-	  learning_component.h \
 	  utils/strxml.h \
 	  utils/timer.h \
 	  utils/string_utils.h \

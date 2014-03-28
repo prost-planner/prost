@@ -74,13 +74,16 @@ void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
 }
 
 /******************************************************************
-                            Learning
+                 Search Engine Administration
 ******************************************************************/
 
-bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
-    if(!dfs->learningFinished()) {
-        return false;
-    }
+void IterativeDeepeningSearch::disableCaching() {
+    dfs->disableCaching();
+    SearchEngine::disableCaching();
+}
+
+void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
+    dfs->learn(trainingSet);
     cout << name << ": learning..." << endl;
 
     isLearning = true;
@@ -90,7 +93,6 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     //perform ids for all states in traningSet and record the time it took
     for(unsigned int i = 0; i < trainingSet.size(); ++i) {
         State copy(trainingSet[i]);
-        copy.remainingSteps() = task->getHorizon();
         vector<double> res(task->getNumberOfActions());
 
         vector<int> actionsToExpand = getApplicableActions(copy);
@@ -102,7 +104,7 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
             isLearning = false;
             cachingEnabled = cachingEnabledBeforeLearning;
             resetStats();
-            return LearningComponent::learn(trainingSet);
+            return;
         }
     }
 
@@ -136,7 +138,6 @@ bool IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     cout << name << ": Setting max search depth to " << maxSearchDepth << "!" << endl;
     resetStats();
     cout << name << ": ...finished" << endl;
-    return LearningComponent::learn(trainingSet);
 }
 
 /******************************************************************

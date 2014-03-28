@@ -169,12 +169,15 @@ void Negation::evaluate(double& res, State const& current, ActionState const& ac
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
-    SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
+void BernoulliDistribution::evaluate(double& res, State const& current, ActionState const& actions) const {
+    expr->evaluate(res, current, actions);
+    double randNum = MathUtils::generateRandomNumber();
+
+    res = MathUtils::doubleIsSmaller(randNum, res);
 }
 
 void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
-    SystemUtils::abort("Error: (deterministic) evaluate applied to a probabilistic formula!");
+    SystemUtils::abort("Error: NOT IMPLEMENTED YET! (in evaluate.cc)");
 }
 
 /*****************************************************************

@@ -68,8 +68,12 @@ public:
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    // Learn parameter values from a training set
-    virtual bool learn(std::vector<State> const& trainingSet);
+    // This is called when caching is disabled because memory becomes sparse.
+    void disableCaching();
+
+    // This is called initially to learn parameter values from a random training
+    // set.
+    virtual void learn(std::vector<State> const& trainingSet);
 
     // Start the search engine as main search engine
     bool estimateBestActions(State const& _rootState, std::vector<int>& bestActions);
@@ -296,13 +300,21 @@ bool THTS<SearchNode>::setValueFromString(std::string& param, std::string& value
 }
 
 /******************************************************************
-                            Learning
+                 Search Engine Administration
 ******************************************************************/
 
 template <class SearchNode>
-bool THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
-    if(!initializer->learningFinished()) {
-        return false;
+void THTS<SearchNode>::disableCaching() {
+    if(initializer) {
+        initializer->disableCaching();
+    }
+    SearchEngine::disableCaching();
+}
+
+template <class SearchNode>
+void THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
+    if(initializer) {
+        initializer->learn(trainingSet);
     }
     std::cout << name << ": learning..." << std::endl;
 
@@ -312,7 +324,6 @@ bool THTS<SearchNode>::learn(std::vector<State> const& trainingSet) {
         std::cout << "Aborted initialization as search depth is too low!" << std::endl;
     }
     std::cout << name << ": ...finished" << std::endl;
-    return LearningComponent::learn(trainingSet);
 }
 
 /******************************************************************

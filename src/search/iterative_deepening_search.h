@@ -22,8 +22,12 @@ public:
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
-    // Learn parameter values from a training set
-    bool learn(std::vector<State> const& trainingSet);
+    // This is called when caching is disabled because memory becomes sparse.
+    void disableCaching();
+
+    // This is called initially to learn parameter values from a random training
+    // set.
+    void learn(std::vector<State> const& trainingSet);
 
     // Start the search engine for Q-value estimation
     bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);

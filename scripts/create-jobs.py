@@ -26,7 +26,7 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev45"
+revision = "rev56"
 
 configs = [
     "[MC-UCT -i [IDS]]",
@@ -52,7 +52,7 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "./run-server benchmarks/ippc2011/rddl/ %(port)d 100 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 30 &&" \
-" ./prost %(baseDir)s/rddl_prefix/ %(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./prost domains/%(instance)s -p %(port)s [PROST -s 1 -se %(config)s] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
 def isInstanceName(fileName):
     return fileName.count("inst") > 0

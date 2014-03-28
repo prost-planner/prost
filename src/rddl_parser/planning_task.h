@@ -85,6 +85,9 @@ struct PlanningTask {
 
     std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
     std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
+
+    // Random training set of reachable states
+    std::set<State, State::StateSort> trainingSet;
 };
 
 #endif

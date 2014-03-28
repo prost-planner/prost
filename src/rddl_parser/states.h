@@ -17,6 +17,10 @@ class ConditionalProbabilityFunction;
 
 struct State {
     State(std::vector<ConditionalProbabilityFunction*> const& cpfs);
+    State(State const& other) :
+        state(other.state) {}
+    State(int stateSize) :
+        state(stateSize, 0.0) {}
 
     double& operator[](int const& index) {
         assert(index < state.size());
@@ -27,6 +31,19 @@ struct State {
         assert(index < state.size());
         return state[index];
     }
+
+    struct StateSort {
+        bool operator() (State const& lhs, State const& rhs) const {
+            for(int i = lhs.state.size(); i >= 0; --i) {
+                if(MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
+                    return true;
+                } else if(MathUtils::doubleIsSmaller(rhs.state[i], lhs.state[i])) {
+                    return false;
+                }
+            }
+            return false;
+        }
+    };
 
     std::vector<double> state;
 };

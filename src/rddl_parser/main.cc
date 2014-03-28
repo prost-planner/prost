@@ -6,6 +6,7 @@
 #include "rddl_parser.h"
 #include "instantiator.h"
 #include "preprocessor.h"
+#include "state_set_generator.h"
 #include "planning_task.h"
 
 #include "utils/timer.h"
@@ -18,7 +19,7 @@ void printUsage() {
 
 int main(int argc, char** argv) {
     Timer totalTime;
-    if(argc != 4) {
+    if(argc < 4) {
         printUsage();
         return 1;
     }
@@ -28,23 +29,43 @@ int main(int argc, char** argv) {
     string problemFile = string(argv[2]);
     string targetDir = string(argv[3]);
 
+    double seed = time(NULL);
+
+    // Read optinals
+    for(unsigned int i = 4; i < argc; ++i) {
+        string nextOption = string(argv[i]);
+        if(nextOption == "-s") {
+            seed = atoi(string(argv[++i]).c_str());
+        } else {
+            assert(false);
+        }
+    }
+
+    srand(seed);
+
     // Parse, instantiate and preprocess domain and problem
     Timer t;
     cout << "parsing..." << endl;
-    RDDLParser* parser = new RDDLParser();
-    PlanningTask* task = parser->parse(domainFile, problemFile);
+    RDDLParser parser;
+    PlanningTask* task = parser.parse(domainFile, problemFile);
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
     cout << "instantiating..." << endl;
-    Instantiator* instantiator = new Instantiator(task);
-    instantiator->instantiate();
+    Instantiator instantiator(task);
+    instantiator.instantiate();
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
     cout << "preprocessing..." << endl;
     Preprocessor preprocessor(task);
     preprocessor.preprocess();
+    cout << "...finished (" << t << ")." << endl;
+
+    t.reset();
+    cout << "generating training set..." << endl;
+    StateSetGenerator gen(task);
+    gen.generateStateSet();
     cout << "...finished (" << t << ")." << endl;
 
     cout << "total time: " << totalTime << endl;
