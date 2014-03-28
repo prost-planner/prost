@@ -67,7 +67,7 @@ public:
     }
 
     // Evaluates the probabilistic (original) formula. If this is deterministic,
-    // evaluate is called and the result is transformed in a pd.
+    // evaluate is called and the result is transformed to a pd.
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) {
         assert(res.isUndefined());
 

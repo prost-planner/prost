@@ -81,6 +81,13 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
     }
     State initialState(initialVals, horizon, numberOfStateFluentHashKeys);
 
+    // Determine if the task is deterministic
+    getline(desc, line, '\n');
+    assert(StringUtils::startsWith(line, "deterministic : "));
+    line = line.substr(16);
+    // we currently do not use this information
+    //bool deterministic = atoi(line.c_str());
+
     // Determine if state hashing is possible
     getline(desc, line, '\n');
     assert(StringUtils::startsWith(line, "state hashing possible : "));
@@ -337,7 +344,7 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
                 rewardCPF->kleeneCachingType = Evaluatable::MAP;
             }
         } else {
-            assert(line == "-----FUNCTIONS-----");
+            assert(line == "-----EVALUATABLES-----");
             break;
         }
     }
@@ -522,9 +529,11 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
             assert((index >= 0) && (index < CPFs.size()));
 
             eval = actionPreconditions[index];
-        } else {
-            assert(line == "reward");
+        } else if(line == "reward") {
             eval = rewardCPF;
+        } else {
+            assert(line == "TRAINING SET");
+            break;
         }
 
         getline(desc, line, '\n');
@@ -545,6 +554,19 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
         assert(line == "-----");
     }
 
+    std::vector<State> trainingSet;
+    while(getline(desc, line, '\n')) {
+        vector<string> valuesAsString;
+        StringUtils::split(line, valuesAsString);
+        assert(valuesAsString.size() == stateSize);
+
+        vector<double> values;
+        for(unsigned int i = 0; i < valuesAsString.size(); ++i) {
+            values.push_back(atof(valuesAsString[i].c_str()));
+        }
+        trainingSet.push_back(State(values, horizon, numberOfStateFluentHashKeys));
+    }
+
     // Set mapping of variables to variable names and of values as strings to
     // internal values for communication between planner and environment
 
@@ -555,6 +577,7 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
     }
 
     return new PlanningTask(problemName,
+                            trainingSet,
                             actionFluents,
                             actionStates, 
                             stateFluents,

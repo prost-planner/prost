@@ -319,21 +319,17 @@ int main(int argc, char** argv) {
     map<string,int> stateVariableIndices; 
     vector<vector<string> > stateVariableValues;
 
-    Parser* parser = new Parser(problemFileName);
-    PlanningTask* task = parser->parseTask(stateVariableIndices, stateVariableValues);
-    delete parser;
+    Parser parser(problemFileName);
+    PlanningTask* task = parser.parseTask(stateVariableIndices, stateVariableValues);
 
     // Create Prost Planner
     ProstPlanner* planner = new ProstPlanner(plannerDesc, task);
     planner->init();
 
-    task->print(cout);
-
-    // Create connection to rddlsim and run
+    // Create connector to rddlsim and run
     IPPCClient* client = new IPPCClient(planner, hostName, port, stateVariableIndices, stateVariableValues);
     client->init();
     client->run(task->name);
-    client->stop();
 
     cout << "PROST complete running time: " << totalTime << endl;
     return 0;

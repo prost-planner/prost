@@ -520,8 +520,23 @@ LogicalExpression* MultiConditionChecker::simplify(map<StateFluent*,double>& rep
     vector<LogicalExpression*> newEffects;
 
     for(unsigned int i = 0; i < conditions.size(); ++i) {
-        newConditions.push_back(conditions[i]->simplify(replacements));
-        newEffects.push_back(effects[i]->simplify(replacements));
+        LogicalExpression* newCond = conditions[i]->simplify(replacements);
+        LogicalExpression* newEff = effects[i]->simplify(replacements);
+
+        // Check if the condition is a constant
+        NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCond);
+        if(ncCond) {
+            if(MathUtils::doubleIsEqual(ncCond->value, 0.0)) {
+                continue;
+            } else {
+                newConditions.push_back(new NumericConstant(1.0));
+                newEffects.push_back(newEff);
+                break;
+            }
+        }
+
+        newConditions.push_back(newCond);
+        newEffects.push_back(newEff);
     }
 
     return new MultiConditionChecker(newConditions, newEffects);

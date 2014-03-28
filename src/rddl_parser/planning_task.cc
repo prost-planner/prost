@@ -180,9 +180,11 @@ void PlanningTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
 
 void PlanningTask::print(ostream& out) {
     int firstProbabilisticVarIndex = (int)CPFs.size();
+    bool deterministic = true;
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
         if(CPFs[i]->isProbabilistic()) {
             firstProbabilisticVarIndex = i;
+            deterministic = false;
             break;
         }
     }
@@ -202,6 +204,7 @@ void PlanningTask::print(ostream& out) {
         out << CPFs[i]->getInitialValue() << " ";
     }
     out << endl;
+    out << "deterministic : " << deterministic << endl;
     out << "state hashing possible : " << !stateHashKeys.empty() << endl;
     out << "kleene state hashing possible : " << !kleeneStateHashKeyBases.empty() << endl;
     out << "noop is optimal final action : " << noopIsOptimalFinalAction << endl;
@@ -282,7 +285,7 @@ void PlanningTask::print(ostream& out) {
     //     }
     // }
 
-    out << endl << "-----FUNCTIONS-----" << endl;
+    out << endl << "-----EVALUATABLES-----" << endl;
     for(unsigned int index = 0; index < CPFs.size(); ++index) {
         assert(CPFs[index]->head->index == index);
         out << "state-fluent " << index << endl;
@@ -403,4 +406,12 @@ void PlanningTask::print(ostream& out) {
     }
     out << endl;
     out << "-----" << endl;
+
+    out << endl << "TRAINING SET" << endl;
+    for(set<State>::iterator it = trainingSet.begin(); it != trainingSet.end(); ++it) {
+        for(unsigned int i = 0; i < it->state.size(); ++i) {
+            out << it->state[i] << " ";
+        }
+        out << endl;
+    }
 }

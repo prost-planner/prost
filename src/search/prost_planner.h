@@ -8,8 +8,6 @@
 #include <cassert>
 
 class PlanningTask;
-class CachingComponent;
-class LearningComponent;
 
 class ProstPlanner {
 public:
@@ -19,19 +17,7 @@ public:
     void initNextRound();
     std::vector<std::string> plan(std::vector<double> const& nextStateVec);
 
-    //all components that use caches register here so that caching can be switched off if memory becomes sparse
-    void registerCachingComponent(CachingComponent* component) {
-        cachingComponents.push_back(component);
-    }
-    void unregisterCachingComponent(CachingComponent* component);
-
-    //all components that learn initially register here
-    void registerLearningComponent(LearningComponent* component) {
-        learningComponents.push_back(component);
-    }
-    void unregisterLearningComponent(LearningComponent* component);
-
-    //parameter setters
+    // Parameter setters
     void setSearchEngine(SearchEngine* _searchEngine) {
         searchEngine = _searchEngine;
     }
@@ -50,7 +36,7 @@ public:
         bitSize = _bitSize;
     }
 
-    //getters for global variables and parameters
+    // Getters for global variables and parameters
     PlanningTask* getTask() const {
         return task;
     }
@@ -93,9 +79,6 @@ private:
     int seed;
 
     std::vector<int> bestActions;
-
-    std::vector<CachingComponent*> cachingComponents;
-    std::vector<LearningComponent*> learningComponents;
 };
 
 #endif

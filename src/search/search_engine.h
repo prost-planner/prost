@@ -5,8 +5,6 @@
 // only implements a basic method to estimate best actions by calling
 // estimateQValues, and defines a couple of member variables.
 
-#include "caching_component.h"
-#include "learning_component.h"
 #include "planning_task.h"
 
 #include <sstream>
@@ -15,16 +13,25 @@
 class ProstPlanner;
 class State;
 
-class SearchEngine : public CachingComponent, public LearningComponent {
+class SearchEngine {
 public:
+    virtual ~SearchEngine() {}
     // Create a SearchEngine
     static SearchEngine* fromString(std::string& desc, ProstPlanner* planner);
 
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    // Learn parameter values from a training set
-    bool learn(std::vector<State> const& trainingSet);
+    // This is called when caching is disabled because memory becomes sparse.
+    // Overwrite this if your search engine uses another component that caches
+    // stuff and make sure caching is disabled everywhere.
+    virtual void disableCaching() {
+        cachingEnabled = false;
+    }
+
+    // This is called initially to learn parameter values from a random training
+    // set.
+    virtual void learn(std::vector<State> const& /*trainingSet*/) {}
 
     // Start the search engine to calculate best actions
     virtual bool estimateBestActions(State const& _rootState, std::vector<int>& bestActions);
@@ -35,13 +42,11 @@ public:
     // Start the search engine for Q-value estimation
     virtual bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues) = 0;
 
-    // This is inherited from CachingComponent and called when caching
-    // is disabled because memory becomes sparse.
-    void disableCaching() {
-        cachingEnabled = false;
-    }
-
     // Parameter setter
+
+    // Don't confuse setCachingEnabled with the disabling of caching during a
+    // run: this method is only called if the planner parameter enables or
+    // disables caching
     virtual void setCachingEnabled(bool _cachingEnabled) {
         cachingEnabled = _cachingEnabled;
     }
@@ -68,8 +73,6 @@ public:
 
 protected:
     SearchEngine(std::string _name, ProstPlanner* _planner, PlanningTask* _task, bool _useDeterminization) :
-        CachingComponent(_planner),
-        LearningComponent(_planner),
         name(_name),
         planner(_planner),
         task(_task),

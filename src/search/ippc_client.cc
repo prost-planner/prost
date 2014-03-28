@@ -50,6 +50,8 @@ void IPPCClient::run(string const& problemName) {
             }
         }
     }
+
+    stop();
 }
 
 void IPPCClient::stop() {

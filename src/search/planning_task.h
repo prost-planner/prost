@@ -13,7 +13,14 @@ class ActionState;
 
 class PlanningTask {
 public:
+    enum FinalRewardCalculationMethod {
+        NOOP,
+        FIRST_APPLICABLE,
+        BEST_OF_CANDIDATE_SET
+    };
+
     PlanningTask(std::string _name,
+                 std::vector<State> _trainingSet,
                  std::vector<ActionFluent*>& _actionFluents,
                  std::vector<ActionState>& _actionStates,
                  std::vector<StateFluent*>& stateFluents,
@@ -75,7 +82,7 @@ public:
     // Apply action 'actionIndex' in the determinization to 'current', resulting
     // in 'next'.
     void calcSuccessorStateInDeterminization(State const& current, int const& actionIndex, State& next) const {
-        for(int index = 0; index < stateSize; ++index) {
+        for(unsigned int index = 0; index < stateSize; ++index) {
             CPFs[index]->evaluate(next[index], current, actionStates[actionIndex]);
         }
         calcStateFluentHashKeys(next);
@@ -337,6 +344,9 @@ public:
     // The name of this task (this is equivalent to the instance name)
     std::string name;
 
+    // Random set of reachable states (these are used for learning)
+    std::vector<State> trainingSet;
+
     // Contains state values for solved states.
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCache;
     std::map<State, double, State::CompareConsideringRemainingSteps> stateValueCacheInDeterminization;
@@ -344,20 +354,24 @@ public:
 private:
     //void determinePruningEquivalence();
 
-    // functions for action applicability and pruning
+    // Methods for action applicability and pruning
     std::vector<int> setApplicableReasonableActions(State const& state);
     std::vector<int> setApplicableReasonableActionsInDeterminization(State const& state);
     std::vector<int> setApplicableActions(State const& state);
     bool actionIsApplicable(ActionState const& action, State const& current) const;
 
-    // functions for reward lock detection
+    // Methods for reward lock detection
     bool checkDeadEnd(KleeneState const& state);
     bool checkGoal(KleeneState const& state);
 
-    //BDD related functions
+    // BDD related methods
     bdd stateToBDD(KleeneState const& state) const;
     bdd stateToBDD(State const& state) const;
     bool BDDIncludes(bdd BDD, KleeneState const& state) const;
+
+    // Methods to calculate the final reward
+    void calcOptimalFinalRewardWithFirstApplicableAction(State const& current, double& reward, bool const& useDeterminization);
+    void calcOptimalFinalRewardAsBestOfCandidateSet(State const& current, double& reward, bool const& useDeterminization);
 
     // Printer functions
     void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval) const;
@@ -420,10 +434,12 @@ private:
     // Is true if hashing of PDStates is possible
     //bool pdStateHashingPossible;
 
-    // Is true if noop is always optimal as last action. Therefore, it
-    // must not be forbidden by static SACs, there must not be dynamic
-    // SACs and the reward CPF may not contain positive action fluents.
-    bool noopIsOptimalFinalAction;
+    // Since the reward is independent from the successor state, we can
+    // calculate the final reward as the maximum of applying all actions in the
+    // current state. Since the set of actions that could maximize the final
+    // reward can be a subset of all actions, we distinguish between several
+    // different methods to speed up this calculation.
+    FinalRewardCalculationMethod finalRewardCalculationMethod;
 
     // Is true if reward lock detection is used
     bool useRewardLockDetection;

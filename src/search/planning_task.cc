@@ -12,6 +12,7 @@ using namespace std;
 *****************************************************************/
 
 PlanningTask::PlanningTask(string _name,
+                           vector<State> _trainingSet,
                            vector<ActionFluent*>& _actionFluents,
                            vector<ActionState>& _actionStates,
                            vector<StateFluent*>& _stateFluents,
@@ -28,6 +29,7 @@ PlanningTask::PlanningTask(string _name,
                            vector<vector<pair<int,long> > > const& _indexToStateFluentHashKeyMap,
                            vector<vector<pair<int,long> > > const& _indexToKleeneStateFluentHashKeyMap) :
     name(_name),
+    trainingSet(_trainingSet),
     actionFluents(_actionFluents),
     actionStates(_actionStates),
     stateFluents(_stateFluents),
@@ -37,7 +39,7 @@ PlanningTask::PlanningTask(string _name,
     initialState(_initialState),
     horizon(_horizon),
     discountFactor(_discountFactor),
-    noopIsOptimalFinalAction(_noopIsOptimalFinalAction),
+    finalRewardCalculationMethod(BEST_OF_CANDIDATE_SET),
     useRewardLockDetection(_rewardFormulaAllowsRewardLockDetection),
     useBDDCaching(true), // TODO: Make this a parameter!
     cachedDeadEnds(bddfalse),
@@ -63,6 +65,12 @@ PlanningTask::PlanningTask(string _name,
     }
     numberOfActions = (int)actionStates.size();
 
+    if(_noopIsOptimalFinalAction) {
+        finalRewardCalculationMethod = NOOP;
+    } else if(rewardCPF->isActionIndependent()) {
+        finalRewardCalculationMethod = FIRST_APPLICABLE;
+    }
+
     // Initialize stuff that is needed for reward lock detection
     // (goalTestActionIndex is not really implemented yet, and the FDDs are
     // initialized with values that are not necessarily good.
@@ -78,6 +86,12 @@ PlanningTask::PlanningTask(string _name,
     // Calculate hash keys of initial state
     calcStateFluentHashKeys(initialState);
     calcStateHashKey(initialState);
+
+    // Calculate hash keys of states in training set
+    for(unsigned int i = 0; i < trainingSet.size(); ++i) {
+        calcStateFluentHashKeys(trainingSet[i]);
+        calcStateHashKey(trainingSet[i]);
+    }
 }
 
 //void PlanningTask::determinePruningEquivalence() {
@@ -488,25 +502,36 @@ void PlanningTask::disableCaching() {
 ******************************************************************/
 
 void PlanningTask::calcOptimalFinalReward(State const& current, double& reward, bool const& useDeterminization) {
-    if(noopIsOptimalFinalAction) {
-        return calcReward(current, 0, reward);
+    switch(finalRewardCalculationMethod) {
+    case NOOP:
+        calcReward(current, 0, reward);
+        break;
+    case FIRST_APPLICABLE:
+        calcOptimalFinalRewardWithFirstApplicableAction(current, reward, useDeterminization);
+        break;
+    case BEST_OF_CANDIDATE_SET:
+        calcOptimalFinalRewardAsBestOfCandidateSet(current, reward, useDeterminization);
+        break;
     }
+}
 
+inline void PlanningTask::calcOptimalFinalRewardWithFirstApplicableAction(State const& current, double& reward, bool const& useDeterminization) {
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current, useDeterminization);
 
-    if(rewardCPF->isActionIndependent()) {
-        // If no action fluent occurs in the reward ,all rewards are
-        // the same and we only need to find an applicable action
-        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-            if(applicableActions[actionIndex] == actionIndex) {
-                return calcReward(current, actionIndex, reward);
-            }
+    // If no action fluent occurs in the reward, the reward is the same for all
+    // applicable actions, so we only need to find an applicable action
+    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+        if(applicableActions[actionIndex] == actionIndex) {
+            return calcReward(current, actionIndex, reward);
         }
-        assert(false);
     }
+    assert(false);
+}
 
-    // Otherwise we compute which action yields the highest reward
+inline void PlanningTask::calcOptimalFinalRewardAsBestOfCandidateSet(State const& current, double& reward, bool const& useDeterminization) {
+    // Get applicable actions
+    vector<int> applicableActions = getApplicableActions(current, useDeterminization);
 
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
@@ -523,7 +548,7 @@ void PlanningTask::calcOptimalFinalReward(State const& current, double& reward, 
 }
 
 int PlanningTask::getOptimalFinalActionIndex(State const& current, bool const& useDeterminization) {
-    if(noopIsOptimalFinalAction) {
+    if(finalRewardCalculationMethod == NOOP) {
         return 0;
     }
 
@@ -657,10 +682,17 @@ void PlanningTask::print(ostream& out) const {
         out << "This task does not contain unreasonable actions in the original or the determinization." << endl;
     }
 
-    if(noopIsOptimalFinalAction) {
-        out << "NOOP is always optimal as final action." << endl;
-    } else {
-        out << "There is no optimal final action." << endl;
+    out << "The final is reward is determined ";
+    switch(finalRewardCalculationMethod) {
+    case NOOP:
+        out << "by applying NOOP." << endl;
+        break;
+    case FIRST_APPLICABLE:
+        out << "by applying the first applicable action." << endl;
+        break;
+    case BEST_OF_CANDIDATE_SET:
+        out << "as the maximum over all applicable actions." << endl;
+        break;
     }
     out << endl;
 }

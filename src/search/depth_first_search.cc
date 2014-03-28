@@ -39,6 +39,9 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
     State nxt(task->getStateSize(), state.remainingSteps()-1, task->getNumberOfStateFluentHashKeys());
     task->calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
 
+    //task->printState(cout, nxt);
+    //cout << reward << endl;
+
     // Check if the next state is already cached
     if(task->stateValueCacheInDeterminization.find(nxt) != task->stateValueCacheInDeterminization.end()) {
         reward += task->stateValueCacheInDeterminization[nxt];
@@ -60,7 +63,7 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
 
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
-    assert(task->stateValueCacheInDeterminization.find(state) == task->stateValueCacheInDeterminization.end());
+    assert(!cachingEnabled || (task->stateValueCacheInDeterminization.find(state) == task->stateValueCacheInDeterminization.end()));
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions

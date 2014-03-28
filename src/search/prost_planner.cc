@@ -1,7 +1,6 @@
 #include "prost_planner.h"
 
 #include "search_engine.h"
-#include "state_set_generator.h"
 #include "planning_task.h"
 
 #include "utils/timer.h"
@@ -62,41 +61,11 @@ ProstPlanner::ProstPlanner(string& plannerDesc, PlanningTask* _task) :
 
 void ProstPlanner::init() {
     Timer t;
-    cout << "generating training set..." << endl;
-    StateSetGenerator* gen = new StateSetGenerator(task);
-    std::vector<State> trainingSet = gen->generateStateSet(currentState);
-    delete gen;
+    cout << "learning..." << endl;
 
-    // We set the seed again if the training set is smaller than 200 because we
-    // terminated because of the state set generator timeout in that case, making
-    // everything following this nondeterministic! TODO: Make the 200 a parameter
-    if(trainingSet.size() != 200) {
-        setSeed(seed);
-    }
-    cout << "...finished (" << t << ")." << endl;
+    task->learn(task->trainingSet);
+    searchEngine->learn(task->trainingSet);
 
-    t.reset();
-    cout << "learning on training set..." << endl;
-
-    int lastSize = learningComponents.size();
-    task->learn(trainingSet);
-    while(!learningComponents.empty()) {
-        for(unsigned int i = 0; i < learningComponents.size(); ++i) {
-            if(learningComponents[i]->learn(trainingSet)) {
-                swap(learningComponents[i], learningComponents[learningComponents.size()-1]);
-                learningComponents.pop_back();
-                --i;
-            }
-        }
-        if(!learningComponents.empty()) {
-            if(learningComponents.size() == lastSize) {
-                SystemUtils::abort("Some component(s) registered as LearningComponent but cannot learn!");
-            }
-            lastSize = learningComponents.size();
-        }
-    }
-
-    assert(learningComponents.empty());
     cout << "...finished (" << t << ")." << endl << endl;
 
     cout << "Final task: " << endl;
@@ -134,10 +103,9 @@ void ProstPlanner::manageTimeouts() {
 void ProstPlanner::monitorRAMUsage() {
     if(cachingEnabled && (SystemUtils::getRAMUsedByThis() > ramLimit)) {
         cachingEnabled = false;
-        for(unsigned int i = 0; i < cachingComponents.size(); ++i) {
-            cachingComponents[i]->disableCaching();
-        }
-        cout << endl << "caching aborted in " << cachingComponents.size() << " components." << endl << endl;
+        task->disableCaching();
+        searchEngine->disableCaching();
+        cout << endl << "CACHING ABORTED IN STEP " << (task->getHorizon() - remainingSteps + 1) << " OF ROUND " << (currentRound+1) << endl << endl;
     }
 }
 
@@ -153,29 +121,6 @@ void ProstPlanner::initNextRound() {
 
 int ProstPlanner::combineResults() {
     return bestActions[rand() % bestActions.size()];
-}
-
-
-void ProstPlanner::unregisterCachingComponent(CachingComponent* component) {
-    cout << "unregistering caching component" << endl;
-    for(unsigned int i = 0; i < cachingComponents.size(); ++i) {
-        if(cachingComponents[i] == component) {
-            std::swap(cachingComponents[i],cachingComponents[cachingComponents.size()-1]);
-            cachingComponents.pop_back();
-            --i;
-        }
-    }
-}
-
-void ProstPlanner::unregisterLearningComponent(LearningComponent* component) {
-    cout << "unregistering learning component" << endl;
-    for(unsigned int i = 0; i < learningComponents.size(); ++i) {
-        if(learningComponents[i] == component) {
-            std::swap(learningComponents[i], learningComponents[learningComponents.size()-1]);
-            learningComponents.pop_back();
-            --i;
-        }
-    }
 }
 
 void ProstPlanner::setSeed(int _seed) {

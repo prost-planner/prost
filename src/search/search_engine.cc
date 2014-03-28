@@ -90,17 +90,6 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 }
 
 /******************************************************************
-                            Learning
-******************************************************************/
-
-bool SearchEngine::learn(std::vector<State> const& trainingSet) {
-    cout << name << ": learning..." << endl;
-    bool res = LearningComponent::learn(trainingSet);
-    cout << name << ": ...finished" << endl;
-    return res;
-}
-
-/******************************************************************
                        Main Search Functions
 ******************************************************************/
 
