@@ -1,10 +1,7 @@
 #ifndef PLANNING_TASK_H
 #define PLANNING_TASK_H
 
-#include <string>
-#include <vector>
 #include <map>
-#include <cassert>
 
 #include "states.h"
 
@@ -76,8 +73,9 @@ struct PlanningTask {
     std::vector<ActionState> actionStates;
 
     // (Non-trivial) properties
-    bool noopIsOptimalFinalAction;
     bool rewardFormulaAllowsRewardLockDetection;
+    std::string finalRewardCalculationMethod;
+    std::vector<int> candidatesForOptimalFinalAction;
 
     // Hash Keys
     std::vector<std::vector<long> > stateHashKeys;

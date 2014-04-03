@@ -26,8 +26,9 @@ public:
     virtual void collectInitialInfo(bool& isProbabilistic,
                                     bool& containsArithmeticFunction,
                                     std::set<StateFluent*>& dependentStateFluents,
-                                    std::set<ActionFluent*>& positiveDependentActionFluents,
-                                    std::set<ActionFluent*>& negativeDependentActionFluents);
+                                    std::set<ActionFluent*>& dependentActionFluents);
+    virtual void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
+                                       std::set<ActionFluent*>& negativeDependentActionFluents);
     virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -143,8 +144,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -162,8 +164,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -201,8 +204,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -280,6 +284,8 @@ public:
     Connective(std::vector<LogicalExpression*>& _exprs) :
         exprs(_exprs) {}
 
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void print(std::ostream& out);
 };
 
@@ -295,8 +301,7 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -316,8 +321,7 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -337,8 +341,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -358,8 +363,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -379,8 +385,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -400,8 +407,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -421,8 +429,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -442,8 +451,7 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -463,8 +471,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -484,8 +493,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -505,8 +515,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -532,8 +543,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -571,8 +583,7 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -597,8 +608,7 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -626,8 +636,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
@@ -650,8 +661,9 @@ public:
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& positiveDependentActionFluents, 
-                            std::set<ActionFluent*>& negativeDependentActionFluents);
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
+                               std::set<ActionFluent*>& negativeDependentActionFluents);
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;

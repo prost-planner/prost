@@ -207,7 +207,14 @@ void PlanningTask::print(ostream& out) {
     out << "deterministic : " << deterministic << endl;
     out << "state hashing possible : " << !stateHashKeys.empty() << endl;
     out << "kleene state hashing possible : " << !kleeneStateHashKeyBases.empty() << endl;
-    out << "noop is optimal final action : " << noopIsOptimalFinalAction << endl;
+    out << "final reward calculation method : " << finalRewardCalculationMethod << endl;
+    if(finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
+        out << "candidate set : ";
+        for(unsigned int i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
+            out << candidatesForOptimalFinalAction[i] << " ";
+        }
+        out << endl;
+    }
     out << "reward formula allows reward lock detection : " << rewardFormulaAllowsRewardLockDetection << endl;
     out << endl << endl;
 
@@ -215,7 +222,7 @@ void PlanningTask::print(ostream& out) {
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {
         out << "action-fluent " << actionFluents[i]->index << endl;
         out << "name : " << actionFluents[i]->fullName << endl;
-        out << "values : 0 : false, 1 : true" << endl; // TODO: issue-14
+        out << "values : 0 : false, 1 : true" << endl;
         out << "-----" << endl;
     }
 
@@ -264,7 +271,6 @@ void PlanningTask::print(ostream& out) {
     out << "reward" << endl;
     out << "min : " << *rewardCPF->domain.begin() << endl;
     out << "max : " << *rewardCPF->domain.rbegin() << endl;
-    out << "action independent : " << rewardCPF->isActionIndependent() << endl;
     out << "hash index : " << rewardCPF->hashIndex << endl;
     out << "caching type : " << rewardCPF->cachingType << endl;
     if(rewardCPF->cachingType == "VECTOR") {
