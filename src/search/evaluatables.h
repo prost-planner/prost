@@ -213,11 +213,10 @@ public:
 
 class RewardFunction : public Evaluatable {
 public:
-    RewardFunction(int _hashIndex, double _minVal, double _maxVal, bool _actionIndependent) :
+    RewardFunction(int _hashIndex, double _minVal, double _maxVal) :
         Evaluatable("Reward", _hashIndex),
         minVal(_minVal),
-        maxVal(_maxVal),
-        actionIndependent(_actionIndependent) {}
+        maxVal(_maxVal) {}
 
     double const& getMinVal() const {
         return minVal;
@@ -227,13 +226,8 @@ public:
         return maxVal;
     }
 
-    bool const& isActionIndependent() const {
-        return actionIndependent;
-    }
-
     double minVal;
     double maxVal;
-    bool actionIndependent;
 };
 
 class ConditionalProbabilityFunction : public Evaluatable {

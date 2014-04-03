@@ -22,15 +22,21 @@ private:
 
     void prepareEvaluatables();
     void prepareActions();
+
     void calcPossiblyLegalActionStates(int actionsToSchedule,
                                        std::list<std::vector<int> >& result,
                                        std::vector<int> addTo = std::vector<int>()) const;
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
     bool sacContainsAdditionalPositiveActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
+
     void calculateDomains();
     void finalizeEvaluatables();
     void determinize();
+
     void determineTaskProperties();
+    bool actionStateIsDominated(int stateIndex) const;
+    bool actionStateDominates(ActionState const& lhs, ActionState const& rhs) const;
+    void addDominantState(int stateIndex) const;
 
     void prepareStateHashKeys();
     void prepareKleeneStateHashKeys();

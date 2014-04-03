@@ -80,6 +80,7 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
 #include "logical_expressions_includes/simplify.cc"
 #include "logical_expressions_includes/determinization.cc"
 #include "logical_expressions_includes/collect_initial_info.cc"
+#include "logical_expressions_includes/classify_action_fluents.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/print.cc"

@@ -16,14 +16,10 @@ struct Evaluatable {
         hasArithmeticFunction(false) {}
 
     // Initialization
-    void initialize();
+    virtual void initialize();
 
-    std::set<ActionFluent*> const& getPositiveDependentActionFluents() {
-        return positiveActionDependencies;
-    }
-
-    std::set<ActionFluent*>const& getNegativeDependentActionFluents() {
-        return negativeActionDependencies;
+    bool isActionIndependent() const {
+        return dependentActionFluents.empty();
     }
 
     // A unique string that describes this (only used for print)
@@ -48,8 +44,7 @@ struct Evaluatable {
 
     // Properties of this Evaluatable
     std::set<StateFluent*> dependentStateFluents;
-    std::set<ActionFluent*> positiveActionDependencies;
-    std::set<ActionFluent*> negativeActionDependencies;
+    std::set<ActionFluent*> dependentActionFluents;
     bool isProb;
     bool hasArithmeticFunction;
 
@@ -73,15 +68,13 @@ struct Evaluatable {
     void initializeKleeneStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
                                              std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap,
                                              long const& firstStateFluentHashKeyBase);
-    bool dependsOnActionFluent(ActionFluent* fluent) {
-        return (positiveActionDependencies.find(fluent) != positiveActionDependencies.end() ||
-                negativeActionDependencies.find(fluent) != negativeActionDependencies.end());
-    }
 };
 
 struct ActionPrecondition : public Evaluatable {
     ActionPrecondition(std::string _name, LogicalExpression* _formula) :
         Evaluatable(_name , _formula) {}
+
+    void initialize();
 
     bool containsArithmeticFunction() const {
         return hasArithmeticFunction;
@@ -91,20 +84,17 @@ struct ActionPrecondition : public Evaluatable {
         return !dependentStateFluents.empty();
     }
 
-    bool containsActionFluent() const {
-        return !(positiveActionDependencies.empty() && negativeActionDependencies.empty());
-    }
-
     int index;
+
+    std::set<ActionFluent*> positiveActionDependencies;
+    std::set<ActionFluent*> negativeActionDependencies;
 };
 
 struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula) :
         Evaluatable("Reward" , _formula) {}
 
-    bool isActionIndependent() const {
-        return (positiveActionDependencies.empty() && negativeActionDependencies.empty());
-    }
+    void initialize();
 
     double const& getMinVal() const {
         assert(!domain.empty());
@@ -115,6 +105,9 @@ struct RewardFunction : public Evaluatable {
         assert(!domain.empty());
         return *domain.rbegin();
     }
+
+    std::set<ActionFluent*> positiveActionDependencies;
+    std::set<ActionFluent*> negativeActionDependencies;
 
     std::set<double> domain;
 };

@@ -4,6 +4,8 @@
 
 #include "utils/system_utils.h"
 
+#include <iostream>
+
 using namespace std;
 
 /*****************************************************************
@@ -11,7 +13,39 @@ using namespace std;
 *****************************************************************/
 
 void Evaluatable::initialize() {
-    formula->collectInitialInfo(isProb, hasArithmeticFunction, dependentStateFluents, positiveActionDependencies, negativeActionDependencies);
+    dependentStateFluents.clear();
+    dependentActionFluents.clear();
+    formula->collectInitialInfo(isProb, hasArithmeticFunction, dependentStateFluents, dependentActionFluents);
+}
+
+void ActionPrecondition::initialize() {
+    Evaluatable::initialize();
+
+    formula->classifyActionFluents(positiveActionDependencies, negativeActionDependencies);
+}
+
+void RewardFunction::initialize() {
+    Evaluatable::initialize();
+
+    formula->classifyActionFluents(positiveActionDependencies, negativeActionDependencies);
+
+    // cout << "Action fluents: " << endl;
+    // for(set<ActionFluent*>::iterator it = dependentActionFluents.begin(); it != dependentActionFluents.end(); ++it) {
+    //     cout << "  " << (*it)->fullName << endl;
+    // }
+    // cout << endl;
+
+    // cout << "Positive action fluents: " << endl;
+    // for(set<ActionFluent*>::iterator it = positiveActionDependencies.begin(); it != positiveActionDependencies.end(); ++it) {
+    //     cout << "  " << (*it)->fullName << endl;
+    // }
+    // cout << endl;
+
+    // cout << "Negative action fluents: " << endl;
+    // for(set<ActionFluent*>::iterator it = negativeActionDependencies.begin(); it != negativeActionDependencies.end(); ++it) {
+    //     cout << "  " << (*it)->fullName << endl;
+    // }
+    // cout << endl;
 }
 
 void Evaluatable::initializeHashKeys(PlanningTask* task) {
@@ -35,7 +69,7 @@ long Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStat
 void Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates, ActionState const& action, long& nextKey) {
     vector<ActionFluent*> depActs;
     for(unsigned int i = 0; i < action.scheduledActionFluents.size(); ++i) {
-        if(dependsOnActionFluent(action.scheduledActionFluents[i])) {
+        if(dependentActionFluents.find(action.scheduledActionFluents[i]) != dependentActionFluents.end()) {
             depActs.push_back(action.scheduledActionFluents[i]);
         }
     }

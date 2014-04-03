@@ -30,7 +30,8 @@ public:
                  State& _initialState,
                  int _horizon,
                  double _discountFactor,
-                 bool _noopIsOptimalFinalAction,
+                 FinalRewardCalculationMethod _finalRewardCalculationMethod,
+                 std::vector<int> _candidatesForOptimalFinalAction,
                  bool _rewardFormulaAllowsRewardLockDetection,
                  std::vector<std::vector<long> > const& _stateHashKeys,
                  std::vector<long> const& _kleeneHashKeyBases,
@@ -440,6 +441,7 @@ private:
     // reward can be a subset of all actions, we distinguish between several
     // different methods to speed up this calculation.
     FinalRewardCalculationMethod finalRewardCalculationMethod;
+    std::vector<int> candidatesForOptimalFinalAction;
 
     // Is true if reward lock detection is used
     bool useRewardLockDetection;

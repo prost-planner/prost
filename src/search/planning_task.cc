@@ -22,7 +22,8 @@ PlanningTask::PlanningTask(string _name,
                            State& _initialState,
                            int _horizon,
                            double _discountFactor,
-                           bool _noopIsOptimalFinalAction,
+                           FinalRewardCalculationMethod _finalRewardCalculationMethod,
+                           vector<int> _candidatesForOptimalFinalAction,
                            bool _rewardFormulaAllowsRewardLockDetection,
                            vector<vector<long> > const& _stateHashKeys,
                            vector<long> const& _kleeneHashKeyBases,
@@ -39,7 +40,8 @@ PlanningTask::PlanningTask(string _name,
     initialState(_initialState),
     horizon(_horizon),
     discountFactor(_discountFactor),
-    finalRewardCalculationMethod(BEST_OF_CANDIDATE_SET),
+    finalRewardCalculationMethod(_finalRewardCalculationMethod),
+    candidatesForOptimalFinalAction(_candidatesForOptimalFinalAction),
     useRewardLockDetection(_rewardFormulaAllowsRewardLockDetection),
     useBDDCaching(true), // TODO: Make this a parameter!
     cachedDeadEnds(bddfalse),
@@ -64,12 +66,6 @@ PlanningTask::PlanningTask(string _name,
         }
     }
     numberOfActions = (int)actionStates.size();
-
-    if(_noopIsOptimalFinalAction) {
-        finalRewardCalculationMethod = NOOP;
-    } else if(rewardCPF->isActionIndependent()) {
-        finalRewardCalculationMethod = FIRST_APPLICABLE;
-    }
 
     // Initialize stuff that is needed for reward lock detection
     // (goalTestActionIndex is not really implemented yet, and the FDDs are
@@ -536,7 +532,8 @@ inline void PlanningTask::calcOptimalFinalRewardAsBestOfCandidateSet(State const
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
 
-    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+    for(unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if(applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
 
@@ -555,9 +552,9 @@ int PlanningTask::getOptimalFinalActionIndex(State const& current, bool const& u
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current, useDeterminization);
 
-    if(rewardCPF->isActionIndependent()) {
-        // If no action fluent occurs in the reward ,all rewards are
-        // the same and we only need to find an applicable action
+    if(finalRewardCalculationMethod == FIRST_APPLICABLE) {
+        // If no action fluent occurs in the reward, all rewards are the
+        // same and we only need to find an applicable action
         for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
             if(applicableActions[actionIndex] == actionIndex) {
                 return actionIndex;
@@ -567,12 +564,15 @@ int PlanningTask::getOptimalFinalActionIndex(State const& current, bool const& u
         return -1;
     }
 
-    // Otherwise we compute which action yields the highest reward
+    // Otherwise we compute which action in the candidate set yields the highest
+    // reward
+    assert(finalRewardCalculationMethod == BEST_OF_CANDIDATE_SET);
     double reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
     int optimalFinalActionIndex = -1;
 
-    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
+    for(unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if(applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
 
@@ -691,7 +691,12 @@ void PlanningTask::print(ostream& out) const {
         out << "by applying the first applicable action." << endl;
         break;
     case BEST_OF_CANDIDATE_SET:
-        out << "as the maximum over all applicable actions." << endl;
+        out << "as the maximum over the candidate set: " << endl;
+        for(unsigned int i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
+            out << "  ";
+            printAction(out, candidatesForOptimalFinalAction[i]);
+            out << endl;
+        }
         break;
     }
     out << endl;
@@ -790,7 +795,6 @@ void PlanningTask::printRewardCPFInDetail(ostream& out) const {
 
     out << "Min Reward: " << rewardCPF->getMinVal() << endl;
     out << "Max Reward: " << rewardCPF->getMaxVal() << endl;
-    out << "Action Independent?: " << rewardCPF->isActionIndependent() << endl;
 }
 
 void PlanningTask::printActionPreconditionInDetail(ostream& out, int const& index) const {

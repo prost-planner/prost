@@ -111,19 +111,19 @@ void Preprocessor::prepareEvaluatables() {
         // action preconditions, static SACs and state invariants
         sac->initialize();
         if(sac->containsStateFluent()) {
-             if(sac->containsActionFluent()) {
-                 // An SAC that contain both state and action fluents
-                 // must be evaluated like a precondition for actions.
+             if(sac->isActionIndependent()) {
+                 // An SAC that only contains state fluents represents a state
+                 // invariant that must be true in every state.
+                 task->stateInvariants.push_back(sac);
+             } else {
+                 // An SAC that contain both state and action fluents must be
+                 // evaluated like a precondition for actions.
                  sac->index = task->dynamicSACs.size();
                  task->dynamicSACs.push_back(sac);
-            } else {
-                // An SAC that only contains state fluents represents
-                // a state invariant that must be true in every state.
-                task->stateInvariants.push_back(sac);
             }
     	} else {
-            // An SAC that only contains action fluents is used to
-            // statically forbid action combinations.
+            // An SAC that only contains action fluents is used to statically
+            // forbid action combinations.
             task->staticSACs.push_back(sac);
     	}
     }
@@ -222,7 +222,7 @@ void Preprocessor::calcPossiblyLegalActionStates(int actionsToSchedule, list<vec
 }
 
 bool Preprocessor::sacContainsNegativeActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const {
-    set<ActionFluent*> const& actionFluents = sac->getNegativeDependentActionFluents();
+    set<ActionFluent*> const& actionFluents = sac->negativeActionDependencies;
 
     for(unsigned int index = 0; index < actionState.scheduledActionFluents.size(); ++index) {
         if(actionFluents.find(actionState.scheduledActionFluents[index]) != actionFluents.end()) {
@@ -233,7 +233,7 @@ bool Preprocessor::sacContainsNegativeActionFluent(ActionPrecondition* const& sa
 }
 
 bool Preprocessor::sacContainsAdditionalPositiveActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const {
-    set<ActionFluent*> const& actionFluents = sac->getPositiveDependentActionFluents();
+    set<ActionFluent*> const& actionFluents = sac->positiveActionDependencies;
 
     for(set<ActionFluent*>::iterator it = actionFluents.begin(); it != actionFluents.end(); ++it) {
         bool isScheduledActionFluent = false;
@@ -332,16 +332,18 @@ void Preprocessor::finalizeEvaluatables() {
     }
 
     // Reset all indices and simplify cpfs by replacing all previously removed
-    // CPFS with their constant initial value
+    // CPFS with their constant initial value. Then initialize again (for
+    // correct dependent state fluents).
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->setIndex(index);
         task->CPFs[index]->formula = task->CPFs[index]->formula->simplify(replacements);
         assert(!dynamic_cast<NumericConstant*>(task->CPFs[index]->formula));
+        task->CPFs[index]->initialize();
     }
 
     // Simplify rewardCPF
     task->rewardCPF->formula = task->rewardCPF->formula->simplify(replacements);
-    //task->rewardCPF->determinizedFormula = task->rewardCPF->formula;
+    task->rewardCPF->initialize();
 
     // Simplify dynamicSACs and check if they have become a state invariant
     for(unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
@@ -355,13 +357,12 @@ void Preprocessor::finalizeEvaluatables() {
             swap(task->dynamicSACs[i], task->dynamicSACs[task->dynamicSACs.size()-1]);
             task->dynamicSACs.pop_back();
             --i;
-        } //else {
-            //task->dynamicSACs[i]->determinizedFormula = task->dynamicSACs[i]->formula;
-        //}
+        }
     }
 
     for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
         task->dynamicSACs[index]->index = index;
+        task->dynamicSACs[index]->initialize();
     }
 }
 
@@ -389,35 +390,112 @@ void Preprocessor::determinize() {
 *****************************************************************/
 
 void Preprocessor::determineTaskProperties() {
-    // TODO: goalTestActionIndex should actually be a vector that contains all
-    // actions indices that could potentially be the action that is necessary to
-    // stay in a goal. Currently, we just set it to noop or to -1, as there is
-    // no domain with a "stayInGoal" action that is different from noop.
-    // Moreover, it could also be that there are several such actions, e.g.
-    // stayInGoal_1 and stayInGoal_2 which are used for different goal states.
-    // What we do currently is sound but makes the rewardLockDetection even more
-    // incomplete.
-    if(!task->rewardCPF->getPositiveDependentActionFluents().empty()) {
-        // If the reward can be influenced positively by action fluents, we omit
-        // reward lock detection. TODO: In a first step, we could check if all
-        // positive action fluents are only positive and if the action state
-        // that consist of all positive action fluents is always applicable.
-        // Then we can use that action state.
-        task->noopIsOptimalFinalAction = false;
-        task->rewardFormulaAllowsRewardLockDetection = false;
-    } else {
+    // Determine if there is a single action that could be goal maintaining,
+    // i.e., that could always yield the maximal reward. TODO: We could use an
+    // action that contains as many positive and no negative occuring fluents as
+    // possible, but we should first figure out if reward lock detection still
+    // pays off after switching to FDDs from BDDs.
+    if(task->rewardCPF->positiveActionDependencies.empty() && task->actionStates[0].scheduledActionFluents.empty()) {
         task->rewardFormulaAllowsRewardLockDetection = true;
+    } else {
+        task->rewardFormulaAllowsRewardLockDetection = false;
+    }
 
-        if(task->actionStates[0].scheduledActionFluents.empty() && task->actionStates[0].relevantSACs.empty()) {
-            // If no action fluent occurs positively in the reward, if noop is
-            // not forbidden due to static SACs, and if noop has no SACs that
-            // might make it inapplicable, noop is always at least as good as
-            // other actions in the final state transition.
-            task->noopIsOptimalFinalAction = true;
-        } else {
-            task->noopIsOptimalFinalAction = false;
+    if(task->rewardCPF->positiveActionDependencies.empty() &&
+       task->actionStates[0].scheduledActionFluents.empty() &&
+       task->actionStates[0].relevantSACs.empty()) {
+        // The first action is noop, noop is always applicable and action
+        // fluents occur in the reward only as costs -> noop is always optimal
+        // as final action
+        task->finalRewardCalculationMethod = "NOOP";
+    } else if(task->rewardCPF->isActionIndependent()) {
+        // The reward formula does not contain any action fluents -> all actions
+        // yield the same reward, so any action that is applicable is optimal
+        task->finalRewardCalculationMethod = "FIRST_APPLICABLE";
+    } else {
+        task->finalRewardCalculationMethod = "BEST_OF_CANDIDATE_SET";
+        // Determine the actions that suffice to be applied in the final step. 
+        for(unsigned int i = 0; i < task->actionStates.size(); ++i) {
+            if(!actionStateIsDominated(i)) {
+                addDominantState(i);
+            }
         }
     }
+}
+
+void Preprocessor::addDominantState(int stateIndex) const {
+    //cout << "Adding action state " << task->actionStates[stateIndex].getName() << endl;
+    for(vector<int>::iterator it = task->candidatesForOptimalFinalAction.begin(); it != task->candidatesForOptimalFinalAction.end(); ++it) {
+        if(actionStateDominates(task->actionStates[stateIndex], task->actionStates[*it])) {
+            //cout << "It dominates " << task->actionStates[*it].getName() << endl;
+            task->candidatesForOptimalFinalAction.erase(it);
+            --it;
+        }
+    }
+    task->candidatesForOptimalFinalAction.push_back(stateIndex);
+}
+
+bool Preprocessor::actionStateIsDominated(int stateIndex) const {
+    for(unsigned int i = 0; i < task->candidatesForOptimalFinalAction.size(); ++i) {
+        if(actionStateDominates(task->actionStates[task->candidatesForOptimalFinalAction[i]], task->actionStates[stateIndex])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Preprocessor::actionStateDominates(ActionState const& lhs, ActionState const& rhs) const {
+    // An action state with preconditions cannot dominate another action state
+    if(!lhs.relevantSACs.empty()) {
+        return false;
+    }
+
+    // Determine all fluents of both action states that influence the reward
+    // positively or negatively
+    set<ActionFluent*> lhsPos;
+    for(unsigned int i = 0; i < lhs.scheduledActionFluents.size(); ++i) {
+        if(task->rewardCPF->positiveActionDependencies.find(lhs.scheduledActionFluents[i]) != task->rewardCPF->positiveActionDependencies.end()) {
+            lhsPos.insert(lhs.scheduledActionFluents[i]);
+        }
+    }
+
+    set<ActionFluent*> rhsPos;
+    for(unsigned int i = 0; i < rhs.scheduledActionFluents.size(); ++i) {
+        if(task->rewardCPF->positiveActionDependencies.find(rhs.scheduledActionFluents[i]) != task->rewardCPF->positiveActionDependencies.end()) {
+            rhsPos.insert(rhs.scheduledActionFluents[i]);
+        }
+    }
+
+    set<ActionFluent*> lhsNeg;
+    for(unsigned int i = 0; i < lhs.scheduledActionFluents.size(); ++i) {
+        if(task->rewardCPF->negativeActionDependencies.find(lhs.scheduledActionFluents[i]) != task->rewardCPF->negativeActionDependencies.end()) {
+            lhsNeg.insert(lhs.scheduledActionFluents[i]);
+        }
+    }
+
+    set<ActionFluent*> rhsNeg;
+    for(unsigned int i = 0; i < rhs.scheduledActionFluents.size(); ++i) {
+        if(task->rewardCPF->negativeActionDependencies.find(rhs.scheduledActionFluents[i]) != task->rewardCPF->negativeActionDependencies.end()) {
+            rhsNeg.insert(rhs.scheduledActionFluents[i]);
+        }
+    }
+
+    // Action state lhs dominates rhs if lhs contains all action fluents that
+    // influence the reward positively of rhs, and if rhs contains all action
+    // fluents that influence the reward negatively of lhs
+    for(set<ActionFluent*>::iterator it = rhsPos.begin(); it !=  rhsPos.end(); ++it) {
+        if(lhsPos.find(*it) == lhsPos.end()) {
+            return false;
+        }
+    }
+
+    for(set<ActionFluent*>::iterator it = lhsNeg.begin(); it !=  lhsNeg.end(); ++it) {
+        if(rhsNeg.find(*it) == rhsNeg.end()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /*****************************************************************

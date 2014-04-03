@@ -1,6 +1,7 @@
 #ifndef STATES_H
 #define STATES_H
 
+#include <string>
 #include <vector>
 #include <set>
 #include <cassert>
@@ -85,6 +86,8 @@ public:
     const int& operator[](int const& index) const {
         return state[index];
     }
+
+    std::string getName() const;
 
     std::vector<int> state;
     std::vector<ActionFluent*> scheduledActionFluents;

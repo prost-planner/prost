@@ -108,11 +108,29 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
         kleeneHashKeyBases.resize(stateSize);
     }
 
-    // Determine if noop is always optimal as final action
+    // Determine the final reward calculation method
     getline(desc, line, '\n');
-    assert(StringUtils::startsWith(line, "noop is optimal final action : "));
-    line = line.substr(31);
-    bool noopIsOptimalFinalAction = atoi(line.c_str());
+    assert(StringUtils::startsWith(line, "final reward calculation method : "));
+    line = line.substr(34);
+    PlanningTask::FinalRewardCalculationMethod finalRewardCalculationMethod;
+    vector<int> candidatesForOptimalFinalAction;
+    if(line == "NOOP") {
+        finalRewardCalculationMethod = PlanningTask::NOOP;
+    } else if(line == "FIRST_APPLICABLE") {
+        finalRewardCalculationMethod = PlanningTask::FIRST_APPLICABLE;
+    } else {
+        assert(line == "BEST_OF_CANDIDATE_SET");
+        finalRewardCalculationMethod = PlanningTask::BEST_OF_CANDIDATE_SET;
+
+        getline(desc, line, '\n');
+        assert(StringUtils::startsWith(line, "candidate set : "));
+        line = line.substr(16);
+        vector<string> candidatesForOptimalFinalActionAsString;
+        StringUtils::split(line, candidatesForOptimalFinalActionAsString);
+        for(unsigned int i = 0; i < candidatesForOptimalFinalActionAsString.size(); ++i) {
+            candidatesForOptimalFinalAction.push_back(atoi(candidatesForOptimalFinalActionAsString[i].c_str()));
+        }
+    }
 
     // Determine if the reward formula allows reward lock detection
     getline(desc, line, '\n');
@@ -299,18 +317,13 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
             assert(StringUtils::startsWith(line, "max : "));
             double maxVal = atof(line.substr(6).c_str());
 
-            // Get action independency
-            getline(desc, line, '\n');
-            assert(StringUtils::startsWith(line, "action independent : "));
-            bool actionIndependent = atoi(line.substr(21).c_str());
-
             // Get hash index
             getline(desc, line, '\n');
             assert(StringUtils::startsWith(line, "hash index : "));
             line = line.substr(13);
             int hashIndex = atoi(line.c_str());
 
-            rewardCPF = new RewardFunction(hashIndex, minVal, maxVal, actionIndependent);
+            rewardCPF = new RewardFunction(hashIndex, minVal, maxVal);
 
             // Get caching type
             getline(desc, line, '\n');
@@ -587,7 +600,8 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
                             initialState,
                             horizon,
                             discountFactor,
-                            noopIsOptimalFinalAction,
+                            finalRewardCalculationMethod,
+                            candidatesForOptimalFinalAction,
                             rewardFormulaAllowsRewardLockDetection,
                             hashKeyBases,
                             kleeneHashKeyBases,
