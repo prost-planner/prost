@@ -169,6 +169,9 @@ void Negation::evaluate(double& res, State const& current, ActionState const& ac
                    Probability Distributions
 *****************************************************************/
 
+// Since evaluate is used only for (deterministic) SACs (which cannot contain a
+// probability distribution) and to generate the training set (where we want to
+// sample successors), these functions sample an outcome.
 void BernoulliDistribution::evaluate(double& res, State const& current, ActionState const& actions) const {
     expr->evaluate(res, current, actions);
     double randNum = MathUtils::generateRandomNumber();
@@ -176,8 +179,20 @@ void BernoulliDistribution::evaluate(double& res, State const& current, ActionSt
     res = MathUtils::doubleIsSmaller(randNum, res);
 }
 
-void DiscreteDistribution::evaluate(double& /*res*/, State const& /*current*/, ActionState const& /*actions*/) const {
-    SystemUtils::abort("Error: NOT IMPLEMENTED YET! (in evaluate.cc)");
+void DiscreteDistribution::evaluate(double& res, State const& current, ActionState const& actions) const {
+    double randNum = MathUtils::generateRandomNumber();
+    double probSum = 0.0;
+    for(unsigned int i = 0; i < probabilities.size(); ++i) {
+        res = 0.0;
+        probabilities[i]->evaluate(res, current, actions);
+        probSum += res;
+        if(MathUtils::doubleIsSmaller(randNum, probSum)) {
+            res = 0.0;
+            values[i]->evaluate(res, current, actions);
+            return;
+        }
+    }
+    assert(false);
 }
 
 /*****************************************************************

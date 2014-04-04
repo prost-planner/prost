@@ -189,97 +189,186 @@ void PlanningTask::print(ostream& out) {
         }
     }
 
-    out << "-----TASK-----" << endl;
-    out << "instance name : " << name << endl;
-    out << "horizon : " << horizon << endl;
-    out << "discount factor : " << discountFactor << endl;
-    out << "number of action fluents : " << actionFluents.size() << endl;
-    out << "number of state fluents : " << CPFs.size() << endl;
-    out << "number of preconds : " << dynamicSACs.size() << endl;
-    out << "number of actions : " << actionStates.size() << endl;
-    out << "number of deterministic state fluents : " << firstProbabilisticVarIndex << endl;
-    out << "number of hashing functions : " << (dynamicSACs.size() + CPFs.size() + 1) << endl;
-    out << "initial state : ";
+    out << "#####TASK#####" << endl;
+    out << "## name" << endl;
+    out << name << endl;
+    out << "## horizon" << endl;
+    out << horizon << endl;
+    out << "## discount factor" << endl;
+    out << discountFactor << endl;
+    out << "## number of action fluents" << endl;
+    out << actionFluents.size() << endl;
+    out << "## number of det state fluents" << endl;
+    out << firstProbabilisticVarIndex << endl;
+    out << "## number of prob state fluents" << endl;
+    out << (CPFs.size() - firstProbabilisticVarIndex) << endl;
+    out << "## number of preconds" << endl;
+    out << dynamicSACs.size() << endl;
+    out << "## number of actions" << endl;
+    out << actionStates.size() << endl;
+    out << "## number of hashing functions" << endl;
+    out << (dynamicSACs.size() + CPFs.size() + 1) << endl;
+    out << "## initial state" << endl;
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
         out << CPFs[i]->getInitialValue() << " ";
     }
     out << endl;
-    out << "deterministic : " << deterministic << endl;
-    out << "state hashing possible : " << !stateHashKeys.empty() << endl;
-    out << "kleene state hashing possible : " << !kleeneStateHashKeyBases.empty() << endl;
-    out << "final reward calculation method : " << finalRewardCalculationMethod << endl;
+    out << "## 1 if task is deterministic" << endl;
+    out << deterministic << endl;
+    out << "## 1 if state hashing possible"  << endl;
+    out << !stateHashKeys.empty() << endl;
+    out << "## 1 if kleene state hashing possible" << endl;
+    out << !kleeneStateHashKeyBases.empty() << endl;
+    out << "## method to calculate the final reward" << endl;
+    out << finalRewardCalculationMethod << endl;
     if(finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
-        out << "candidate set : ";
+        out << "## set of candidates to calculate final reward (first line is the number)" << endl;
+        out << candidatesForOptimalFinalAction.size() << endl;
         for(unsigned int i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
             out << candidatesForOptimalFinalAction[i] << " ";
         }
         out << endl;
     }
-    out << "reward formula allows reward lock detection : " << rewardFormulaAllowsRewardLockDetection << endl;
-    out << endl << endl;
+    out << "## 1 if reward formula allows reward lock detection" << endl;
+    out << rewardFormulaAllowsRewardLockDetection << endl;
 
-    out << "-----FLUENTS-----" << endl;
+    out << endl << endl << "#####ACTION FLUENTS#####" << endl;
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        out << "action-fluent " << actionFluents[i]->index << endl;
-        out << "name : " << actionFluents[i]->fullName << endl;
-        out << "values : 0 : false, 1 : true" << endl;
-        out << "-----" << endl;
+        out << "## index" << endl;
+        out << actionFluents[i]->index << endl;
+        out << "## name" << endl;
+        out << actionFluents[i]->fullName << endl;
+        out << "## number of values" << endl;
+        out << "2" << endl;
+        out << "## values" << endl;
+        out << "0 false" << endl << "1 true" << endl;
+        out << endl;
     }
 
-    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+    out << endl << endl << "#####DET STATE FLUENTS AND CPFS#####" << endl;
+    for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
-        out << "state-fluent " << index << endl;
-        out << "name : " << CPFs[index]->head->fullName << endl;
-        out << "values : ";
-        for(set<double>::iterator it = CPFs[index]->domain.begin(); it != CPFs[index]->domain.end();) {
-            out << *it << " : " << CPFs[index]->head->valueType->objects[*it]->name;
-            ++it;
-            
-            if(it != CPFs[index]->domain.end()) {
-                out << ", ";
-            } else {
-                out << endl;
+        assert(!CPFs[index]->isProbabilistic());
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## name" << endl;
+        out << CPFs[index]->head->fullName << endl;
+        out << "## number of values" << endl;
+        out << CPFs[index]->domain.size() << endl;
+        out << "## values" << endl;
+        for(set<double>::iterator it = CPFs[index]->domain.begin(); it != CPFs[index]->domain.end(); ++it) {
+            out << *it << " " << CPFs[index]->head->valueType->objects[*it]->name << endl;
+        }
+
+        out << "## formula" << endl;
+        CPFs[index]->formula->print(out);
+        out << endl;
+
+        out << "## hash index" << endl;
+        out << CPFs[index]->hashIndex << endl;
+        out << "## caching type " << endl;
+        out << CPFs[index]->cachingType << endl;
+        if(CPFs[index]->cachingType == "VECTOR") {
+            out << "## precomputed results" << endl;
+            out << CPFs[index]->precomputedResults.size() << endl;
+            for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
+                out << res << " " << CPFs[index]->precomputedResults[res] << endl;
             }
         }
-        out << "hash index : " << CPFs[index]->hashIndex << endl;
-        out << "caching type : " << CPFs[index]->cachingType << endl;
-        if(CPFs[index]->cachingType == "VECTOR") {
-            out << "caching vec size : " << CPFs[index]->cachingVectorSize << endl;
-        }
-        out << "kleene caching type : " << CPFs[index]->kleeneCachingType << endl;
+        out << "## kleene caching type" << endl;
+        out << CPFs[index]->kleeneCachingType << endl;
         if(CPFs[index]->kleeneCachingType == "VECTOR") {
-            out << "kleene caching vec size : " << CPFs[index]->kleeneCachingVectorSize << endl;
+            out << "## kleene caching vec size" << endl;
+            out << CPFs[index]->kleeneCachingVectorSize << endl;
         }
-        out << "-----" << endl;
+
+        out << "## action hash keys" << endl;
+        for(unsigned int actionIndex = 0; actionIndex < CPFs[index]->actionHashKeyMap.size(); ++actionIndex) {
+            out << actionIndex << " " << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
+        }
+        out << endl;
     }
 
-    for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
-        assert(dynamicSACs[index]->index == index);
-        out << "precond " << index << endl;
-        out << "hash index : " << dynamicSACs[index]->hashIndex << endl;
-        out << "caching type : " << dynamicSACs[index]->cachingType << endl;
-        if(dynamicSACs[index]->cachingType == "VECTOR") {
-            out << "caching vec size : " << dynamicSACs[index]->cachingVectorSize << endl;
+    out << endl << endl << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
+    for(unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
+        assert(CPFs[index]->head->index == index);
+        assert(CPFs[index]->isProbabilistic());
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## name" << endl;
+        out << CPFs[index]->head->fullName << endl;
+        out << "## number of values" << endl;
+        out << CPFs[index]->domain.size() << endl;
+        out << "## values" << endl;
+        for(set<double>::iterator it = CPFs[index]->domain.begin(); it != CPFs[index]->domain.end(); ++it) {
+            out << *it << " " << CPFs[index]->head->valueType->objects[*it]->name << endl;
         }
-        out << "kleene caching type : " << dynamicSACs[index]->kleeneCachingType << endl;
-        if(dynamicSACs[index]->kleeneCachingType == "VECTOR") {
-            out << "kleene caching vec size : " << dynamicSACs[index]->kleeneCachingVectorSize << endl;
+
+        out << "## formula" << endl;
+        CPFs[index]->formula->print(out);
+        out << endl;
+
+        out << "## determinized formula" << endl;
+        CPFs[index]->determinization->print(out);
+        out << endl;
+
+        out << "## hash index" << endl;
+        out << CPFs[index]->hashIndex << endl;
+        out << "## caching type " << endl;
+        out << CPFs[index]->cachingType << endl;
+        if(CPFs[index]->cachingType == "VECTOR") {
+            out << "## precomputed results (of determinization)" << endl;
+            out << CPFs[index]->precomputedResults.size() << endl;
+            for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
+                out << res << " " << CPFs[index]->precomputedResults[res] << endl;
+            }
         }
-        out << "-----" << endl;
+        out << "## kleene caching type" << endl;
+        out << CPFs[index]->kleeneCachingType << endl;
+        if(CPFs[index]->kleeneCachingType == "VECTOR") {
+            out << "## kleene caching vec size" << endl;
+            out << CPFs[index]->kleeneCachingVectorSize << endl;
+        }
+
+        out << "## action hash keys" << endl;
+        for(unsigned int actionIndex = 0; actionIndex < CPFs[index]->actionHashKeyMap.size(); ++actionIndex) {
+            out << actionIndex << " " << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
+        }
+
+        out << endl;
     }
 
-    out << "reward" << endl;
-    out << "min : " << *rewardCPF->domain.begin() << endl;
-    out << "max : " << *rewardCPF->domain.rbegin() << endl;
-    out << "hash index : " << rewardCPF->hashIndex << endl;
-    out << "caching type : " << rewardCPF->cachingType << endl;
+    out << endl << endl << "#####REWARD#####" << endl;
+    out << "## formula" << endl;
+    rewardCPF->formula->print(out);
+    out << endl;
+    out << "## min" << endl;
+    out << *rewardCPF->domain.begin() << endl;
+    out << "## max" << endl;
+    out << *rewardCPF->domain.rbegin() << endl;
+    out << "## hash index" << endl;
+    out << rewardCPF->hashIndex << endl;
+    out << "## caching type" << endl; 
+    out << rewardCPF->cachingType << endl;
     if(rewardCPF->cachingType == "VECTOR") {
-        out << "caching vec size : " << rewardCPF->cachingVectorSize << endl;
+        out << "## precomputed results" << endl;
+        out << rewardCPF->precomputedResults.size() << endl;
+        for(unsigned int res = 0; res < rewardCPF->precomputedResults.size(); ++res) {
+            out << res << " " << rewardCPF->precomputedResults[res] << endl;
+        }
     }
-    out << "kleene caching type : " << rewardCPF->kleeneCachingType << endl;
+    out << "## kleene caching type" << endl;
+    out << rewardCPF->kleeneCachingType << endl;
     if(rewardCPF->kleeneCachingType == "VECTOR") {
-        out << "kleene caching vec size : " << rewardCPF->kleeneCachingVectorSize << endl;
+        out << "## kleene caching vec size" << endl;
+        out << rewardCPF->kleeneCachingVectorSize << endl;
     }
+
+    out << "## action hash keys" << endl;
+    for(unsigned int actionIndex = 0; actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
+        out << actionIndex << " " << rewardCPF->actionHashKeyMap[actionIndex] << endl;
+    }
+
     // for(set<double>::iterator it = rewardCPF->domain.begin(); it != rewardCPF->domain.end();) {
     //     out << *it;
     //     ++it;
@@ -291,129 +380,98 @@ void PlanningTask::print(ostream& out) {
     //     }
     // }
 
-    out << endl << "-----EVALUATABLES-----" << endl;
-    for(unsigned int index = 0; index < CPFs.size(); ++index) {
-        assert(CPFs[index]->head->index == index);
-        out << "state-fluent " << index << endl;
-        out << "orig : ";
-        CPFs[index]->formula->print(out);
-        out << endl;
-        if(CPFs[index]->isProbabilistic()) {
-            out << "det : ";
-            CPFs[index]->determinization->print(out);
-            out << endl;
-        }
-        out << "-----" << endl;
-    }
-
-    out << "reward" << endl;
-    rewardCPF->formula->print(out);
-    out << endl;
-    out << "-----" << endl;
+    out << endl << endl << "#####PRECONDITIONS#####" << endl;
 
     for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
         assert(dynamicSACs[index]->index == index);
-        out << "precond " << index << endl;
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## formula" << endl;
         dynamicSACs[index]->formula->print(out);
         out << endl;
-        out << "-----" << endl;
+        out << "## hash index" << endl;
+        out << dynamicSACs[index]->hashIndex << endl;
+        out << "## caching type" << endl;
+        out << dynamicSACs[index]->cachingType << endl;
+        if(dynamicSACs[index]->cachingType == "VECTOR") {
+            out << "## precomputed results" << endl;
+            out << dynamicSACs[index]->precomputedResults.size() << endl;
+            for(unsigned int res = 0; res < dynamicSACs[index]->precomputedResults.size(); ++res) {
+                out << res << " " << dynamicSACs[index]->precomputedResults[res] << endl;
+            }
+        }
+        out << "## kleene caching type" << endl;
+        out << dynamicSACs[index]->kleeneCachingType << endl;
+        if(dynamicSACs[index]->kleeneCachingType == "VECTOR") {
+            out << "## kleene caching vec size" << endl;
+            out << dynamicSACs[index]->kleeneCachingVectorSize << endl;
+        }
+
+        out << "## action hash keys" << endl;
+        for(unsigned int actionIndex = 0; actionIndex < dynamicSACs[index]->actionHashKeyMap.size(); ++actionIndex) {
+            out << actionIndex << " " << dynamicSACs[index]->actionHashKeyMap[actionIndex] << endl;
+        }
+
+        out << endl;
     }
 
-    out << endl;
-
-    out << "-----ACTION STATES-----" << endl;
+    out << endl << endl << "#####ACTION STATES#####" << endl;
     for(unsigned int index = 0; index < actionStates.size(); ++index) {
-        out << "action-state " << index << endl;
-        out << "fluent values : ";
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## state" << endl;
         for(unsigned int varIndex = 0; varIndex < actionStates[index].state.size(); ++varIndex) {
             out << actionStates[index][varIndex] << " ";
         }
         out << endl;
-        out << "preconds : ";
+        out << "## relevant preconditions" << endl;
+        out << actionStates[index].relevantSACs.size() << endl;
         for(unsigned int sacIndex = 0; sacIndex < actionStates[index].relevantSACs.size(); ++sacIndex) {
             out << actionStates[index].relevantSACs[sacIndex]->index << " ";
         }
         out << endl;
-        out << "-----" << endl;
+        out << endl;
     }
-    out << endl;
 
-    out << "-----HASH KEYS-----" << endl;
+    out << endl << "#####HASH KEYS#####" << endl;
     for(unsigned int index = 0; index < CPFs.size(); ++index) {
         assert(CPFs[index]->head->index == index);
-        out << "state-fluent " << index << endl;
+        out << "## index" << endl;
+        out << index << endl;
         if(!stateHashKeys.empty()) {
-            out << "state hash key : ";
+            out << "## state hash key (for each value in the domain)" << endl;
             for(unsigned int valIndex = 0; valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
                 if(valIndex != stateHashKeys[index].size() - 1) {
-                    out << ", ";
+                    out << " ";
                 }
             }
         }
+        out << endl;
+
         if(!kleeneStateHashKeyBases.empty()) {
-            out << endl << "kleene state hash key base : " << kleeneStateHashKeyBases[index] << endl;
-        } else {
-            out << endl;
+            out << "## kleene state hash key base" << endl;
+            out << kleeneStateHashKeyBases[index] << endl;
         }
-        out << "state fluent hash keys : " << indexToStateFluentHashKeyMap[index].size() << endl;
+
+        out << "## state fluent hash keys (first line is the number of keys)" << endl;
+        out << indexToStateFluentHashKeyMap[index].size() << endl;
         for(unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size(); ++i) {
-            out << indexToStateFluentHashKeyMap[index][i].first << " : ";
+            out << indexToStateFluentHashKeyMap[index][i].first << " ";
             out << indexToStateFluentHashKeyMap[index][i].second << endl;
-            // for(unsigned int j = 0; j < CPFs[index]->domain.size(); ++j) {
-            //     out << (j * indexToStateFluentHashKeyMap[index][i].second);
-            //     if(j != CPFs[index]->domain.size() - 1) {
-            //         out << ", ";
-            //     }
-            // }
-            // out << endl;
         }
-        out << "kleene state fluent hash keys : " << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
+
+        out << "## kleene state fluent hash keys (first line is the number of keys)" << endl;
+        out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
         for(unsigned int i = 0; i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
-            out << indexToKleeneStateFluentHashKeyMap[index][i].first << " : " << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
-        }
-
-        out << "-----" << endl;
-    }
-
-    out << endl << "ACTION HASH KEYS" << endl;
-    for(unsigned int index = 0; index < CPFs.size(); ++index) {
-        assert(CPFs[index]->head->index == index);
-        out << "state-fluent " << index << endl;
-        for(unsigned int actionIndex = 0; actionIndex < CPFs[index]->actionHashKeyMap.size(); ++actionIndex) {
-            out << actionIndex << " : " << CPFs[index]->actionHashKeyMap[actionIndex];
-            if(actionIndex != CPFs[index]->actionHashKeyMap.size() - 1) {
-                out << ", ";
-            }
+            out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
         }
         out << endl;
-        out << "-----" << endl;
     }
 
-    for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
-        assert(dynamicSACs[index]->index == index);
-        out << "precond " << index << endl;
-        for(unsigned int actionIndex = 0; actionIndex < dynamicSACs[index]->actionHashKeyMap.size(); ++actionIndex) {
-            out << actionIndex << " : " << dynamicSACs[index]->actionHashKeyMap[actionIndex];
-            if(actionIndex != dynamicSACs[index]->actionHashKeyMap.size() - 1) {
-                out << ", ";
-            }
-        }
-        out << endl;
-        out << "-----" << endl;
-    }
-
-    out << "reward" << endl;
-    for(unsigned int actionIndex = 0; actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
-        out << actionIndex << " : " << rewardCPF->actionHashKeyMap[actionIndex];
-        if(actionIndex != rewardCPF->actionHashKeyMap.size() - 1) {
-            out << ", ";
-        }
-    }
-    out << endl;
-    out << "-----" << endl;
-
-    out << endl << "TRAINING SET" << endl;
+    out << endl << endl << "#####TRAINING SET#####" << endl;
+    out << trainingSet.size() << endl;
     for(set<State>::iterator it = trainingSet.begin(); it != trainingSet.end(); ++it) {
         for(unsigned int i = 0; i < it->state.size(); ++i) {
             out << it->state[i] << " ";

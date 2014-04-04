@@ -11,15 +11,22 @@ struct Evaluatable {
     Evaluatable(std::string _name, LogicalExpression* _formula) :
         name(_name),
         formula(_formula),
-        cachingVectorSize(0),
+        determinization(NULL),
         isProb(false),
         hasArithmeticFunction(false) {}
 
     // Initialization
     virtual void initialize();
 
+    // Simplification
+    virtual void simplify(std::map<StateFluent*, double>& replacements);
+
     bool isActionIndependent() const {
         return dependentActionFluents.empty();
+    }
+
+    bool const& isProbabilistic() const {
+        return isProb;
     }
 
     // A unique string that describes this (only used for print)
@@ -28,14 +35,20 @@ struct Evaluatable {
     // The formula that is evaluatable
     LogicalExpression* formula;
 
+    // The determinized version of formula (this is NULL for all evaluatables
+    // except probabilistic CPFs)
+    LogicalExpression* determinization;
+
     // All evaluatables have a hash index that is used to quckly update the
     // state fluent hash key of this evaluatable
     int hashIndex;
 
-    // The caching type that will be used (initially) for this evaluatable and
-    // the size of the vector if cachingType is VECTOR
+    // The caching type that will be used (initially) for this evaluatable
     std::string cachingType;
-    int cachingVectorSize;
+
+    // If the caching type is VECTOR, this contains all possible results of
+    // evaluating this
+    std::vector<double> precomputedResults;
 
     // The kleene caching type that will be used (initially) for this
     // evaluatable and the size of the vector if kleeneCachingType is VECTOR
@@ -48,10 +61,16 @@ struct Evaluatable {
     bool isProb;
     bool hasArithmeticFunction;
 
-    // ActionHashKeyMap contains the hash keys of the actions that influence
+    // The actionHashKeyMap contains the hash keys of the actions that influence
     // this Evaluatable (these are added to the state fluent hash keys of a
     // state)
     std::vector<long> actionHashKeyMap;
+
+
+
+    // The stateFluentHashKeyMap contains the state fluent hash key (base) of
+    // each of the dependent state fluents
+    std::vector<std::pair<int, long> > stateFluentHashKeyBases;
 
     // These function are used to calculate the two parts of state fluent hash
     // keys: the action part (that is stored in the actionHashKeyMap of
@@ -124,12 +143,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
         Evaluatable(_head->fullName, _formula),
         head(_head),
-        determinization(NULL),
         kleeneDomainSize(0) {}
-
-    bool const& isProbabilistic() const {
-        return isProb;
-    }
 
     int getDomainSize() const {
         return domain.size();
@@ -148,9 +162,6 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     }
 
     StateFluent* head;
-
-    // The determinized version of formula
-    LogicalExpression* determinization;
 
     // The values this CPF can take
     std::set<double> domain;

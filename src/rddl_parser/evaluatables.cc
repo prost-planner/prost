@@ -48,6 +48,18 @@ void RewardFunction::initialize() {
     // cout << endl;
 }
 
+void Evaluatable::simplify(map<StateFluent*, double>& replacements) {
+    formula = formula->simplify(replacements);
+
+    for(set<StateFluent*>::iterator it = dependentStateFluents.begin(); it != dependentStateFluents.end(); ++it) {
+        if(replacements.find(*it) != replacements.end()) {
+            set<StateFluent*>::iterator toDelete = it;
+            --it;
+            dependentStateFluents.erase(toDelete);
+        }
+    }
+}
+
 void Evaluatable::initializeHashKeys(PlanningTask* task) {
     assert(hashIndex >= 0);
 
@@ -126,6 +138,7 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
 
     for(unsigned int index = 0; index < tmpStateFluentDependencies.size(); ++index) {
         indexToStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
+        stateFluentHashKeyBases.push_back(tmpStateFluentDependencies[index]);
     }
 
     // TODO: Make sure this number makes sense
@@ -133,7 +146,7 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
         cachingType = "MAP";
     } else {
         cachingType = "VECTOR";
-        cachingVectorSize = nextHashKeyBase;
+        precomputedResults.resize(nextHashKeyBase, -numeric_limits<double>::max());
     }
 }
 

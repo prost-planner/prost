@@ -7,8 +7,11 @@
 #include <vector>
 
 class PlanningTask;
+class Evaluatable;
 class ActionPrecondition;
 class ActionState;
+class State;
+class StateFluent;
 
 class Preprocessor {
 public:
@@ -41,6 +44,11 @@ private:
     void prepareStateHashKeys();
     void prepareKleeneStateHashKeys();
     void prepareStateFluentHashKeys();
+
+    void precomputeEvaluatables();
+    void precomputeEvaluatable(Evaluatable* eval);
+    void createRelevantStates(std::vector<StateFluent*>& dependentStateFluents, std::vector<State>& result);
+    long calculateStateFluentHashKey(Evaluatable* eval, State const& state) const;
 };
 
 #endif
