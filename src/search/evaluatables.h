@@ -17,10 +17,16 @@ public:
         formula(NULL),
         determinizedFormula(NULL),
         hashIndex(_hashIndex),
-        cachingType(NONE),//_cachingType),
-        kleeneCachingType(NONE) {}//_kleeneCachingType) {}
+        cachingType(NONE),
+        kleeneCachingType(NONE) {}
 
-    void setFormula(std::vector<StateFluent*> const& stateFluents, std::vector<ActionFluent*> const& actionFluents, std::string& desc, bool const& isDeterminization = false);
+    Evaluatable(std::string _name, int _hashIndex, LogicalExpression* _formula, LogicalExpression* _determinizedFormula) :
+        name(_name),
+        formula(_formula),
+        determinizedFormula(_determinizedFormula),
+        hashIndex(_hashIndex),
+        cachingType(NONE),
+        kleeneCachingType(NONE) {}
 
     // Evaluates determinizedFormula (which is equivalent to formula if this
     // evaluatable is deterministic)
@@ -53,15 +59,12 @@ public:
             break;
         case VECTOR:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
             assert(stateHashKey < evaluationCacheVector.size());
+            assert(!MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey]));
 
-            if(MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey])) {
-                determinizedFormula->evaluate(res, current, actions);
-                evaluationCacheVector[stateHashKey] = res;
-            } else {
-                res = evaluationCacheVector[stateHashKey];
-            }
+            res = evaluationCacheVector[stateHashKey];
             break;
         }
     }
@@ -213,8 +216,8 @@ public:
 
 class RewardFunction : public Evaluatable {
 public:
-    RewardFunction(int _hashIndex, double _minVal, double _maxVal) :
-        Evaluatable("Reward", _hashIndex),
+    RewardFunction(int _hashIndex, double _minVal, double _maxVal, LogicalExpression* _formula) :
+        Evaluatable("Reward", _hashIndex, _formula, _formula),
         minVal(_minVal),
         maxVal(_maxVal) {}
 

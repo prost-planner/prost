@@ -169,7 +169,8 @@ protected:
 
 class ActionState {
 public:
-    ActionState(int _index, std::string desc, std::vector<ActionFluent*> const& actionFluents, std::string precondDesc, std::vector<Evaluatable*> const& _actionPreconditions);
+    ActionState(int _index, std::vector<int> _state, std::vector<ActionFluent*> _scheduledActionFluents, std::vector<Evaluatable*> _actionPreconditions) :
+        index(_index), state(_state), scheduledActionFluents(_scheduledActionFluents), actionPreconditions(_actionPreconditions) {}
 
     int& operator[](int const& index) {
         return state[index];

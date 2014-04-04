@@ -35,6 +35,9 @@ void Preprocessor::preprocess() {
     prepareStateHashKeys();
     prepareKleeneStateHashKeys();
     prepareStateFluentHashKeys();
+
+    // Precompute results of evaluate for (some) evaluatables
+    precomputeEvaluatables();
 }
 
 /*****************************************************************
@@ -49,7 +52,7 @@ void Preprocessor::prepareEvaluatables() {
     while(simplifyAgain) {
         simplifyAgain = false;
         for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-            task->CPFs[i]->formula = task->CPFs[i]->formula->simplify(replacements);
+            task->CPFs[i]->simplify(replacements);
             NumericConstant* nc = dynamic_cast<NumericConstant*>(task->CPFs[i]->formula);
             if(nc && MathUtils::doubleIsEqual(task->CPFs[i]->head->initialValue, nc->value)) {
                 simplifyAgain = true;
@@ -64,7 +67,7 @@ void Preprocessor::prepareEvaluatables() {
 
     // Remove state fluents that simplify to their initial value from the reward
     // and collect properties of reward
-    task->rewardCPF->formula = task->rewardCPF->formula->simplify(replacements);
+    task->rewardCPF->simplify(replacements);
     task->rewardCPF->initialize();
 
     // Collect properties of CPFs
@@ -332,22 +335,19 @@ void Preprocessor::finalizeEvaluatables() {
     }
 
     // Reset all indices and simplify cpfs by replacing all previously removed
-    // CPFS with their constant initial value. Then initialize again (for
-    // correct dependent state fluents).
+    // CPFS with their constant initial value.
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->setIndex(index);
-        task->CPFs[index]->formula = task->CPFs[index]->formula->simplify(replacements);
+        task->CPFs[index]->simplify(replacements);
         assert(!dynamic_cast<NumericConstant*>(task->CPFs[index]->formula));
-        task->CPFs[index]->initialize();
     }
 
     // Simplify rewardCPF
-    task->rewardCPF->formula = task->rewardCPF->formula->simplify(replacements);
-    task->rewardCPF->initialize();
+    task->rewardCPF->simplify(replacements);
 
     // Simplify dynamicSACs and check if they have become a state invariant
     for(unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
-        task->dynamicSACs[i]->formula = task->dynamicSACs[i]->formula->simplify(replacements);
+        task->dynamicSACs[i]->simplify(replacements);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(task->dynamicSACs[i]->formula);
         if(nc) {
             assert(!MathUtils::doubleIsEqual(nc->value, 0.0));
@@ -362,7 +362,6 @@ void Preprocessor::finalizeEvaluatables() {
 
     for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
         task->dynamicSACs[index]->index = index;
-        task->dynamicSACs[index]->initialize();
     }
 }
 
@@ -610,4 +609,97 @@ void Preprocessor::prepareStateFluentHashKeys() {
         task->dynamicSACs[i]->hashIndex = hashIndex;
         task->dynamicSACs[i]->initializeHashKeys(task);
     }
+}
+
+/*****************************************************************
+                    Precalculate evaluatables
+*****************************************************************/
+
+void Preprocessor::precomputeEvaluatables() {
+    for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        assert(task->CPFs[index]->domain.size() == 2);
+
+        if(task->CPFs[index]->cachingType == "VECTOR") {
+            precomputeEvaluatable(task->CPFs[index]);
+        }
+    }
+
+    if(task->rewardCPF->cachingType == "VECTOR") {
+        precomputeEvaluatable(task->rewardCPF);
+    }
+
+    for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
+        if(task->dynamicSACs[index]->cachingType == "VECTOR") {
+            precomputeEvaluatable(task->dynamicSACs[index]);
+        }
+    }
+}
+
+void Preprocessor::precomputeEvaluatable(Evaluatable* eval) {
+    vector<StateFluent*> dependentStateFluents;
+    for(set<StateFluent*>::iterator it = eval->dependentStateFluents.begin(); it != eval->dependentStateFluents.end(); ++it) {
+        dependentStateFluents.push_back(*it);
+    }
+
+    vector<State> relevantStates;
+    if(!dependentStateFluents.empty()) {
+        createRelevantStates(dependentStateFluents, relevantStates);
+    } else {
+        State s(task->CPFs.size());
+        relevantStates.push_back(s);
+    }
+
+    for(unsigned int i = 0; i < relevantStates.size(); ++i) {
+        long hashKey = calculateStateFluentHashKey(eval, relevantStates[i]);
+        set<long> usedActionHashKeys;
+        for(unsigned int j = 0; j < task->actionStates.size(); ++j) {
+            long& actionHashKey = eval->actionHashKeyMap[j];
+            if(usedActionHashKeys.find(actionHashKey) == usedActionHashKeys.end()) {
+                usedActionHashKeys.insert(actionHashKey);
+
+                double res;
+                if(eval->isProbabilistic()) {
+                    eval->determinization->evaluate(res, relevantStates[i], task->actionStates[j]);
+                } else {
+                    eval->formula->evaluate(res, relevantStates[i], task->actionStates[j]);
+                }
+                assert(MathUtils::doubleIsMinusInfinity(eval->precomputedResults[hashKey+actionHashKey]));
+                eval->precomputedResults[hashKey+actionHashKey] = res;
+            }
+        }
+    }
+}
+
+void Preprocessor::createRelevantStates(vector<StateFluent*>& dependentStateFluents, vector<State>& result) {
+    StateFluent* fluent = dependentStateFluents[dependentStateFluents.size()-1];
+    dependentStateFluents.pop_back();
+
+    if(result.empty()) {
+        State neg(task->CPFs.size());
+        result.push_back(neg);
+
+        State pos(task->CPFs.size());
+        pos[fluent->index] = 1;
+        result.push_back(pos);
+    } else {
+        int size = result.size();
+        for(unsigned int i = 0; i < size; ++i) {
+            State copy(result[i]);
+            assert(copy[fluent->index] == 0);
+            copy[fluent->index] = 1;
+            result.push_back(copy);
+        }
+    }
+
+    if(!dependentStateFluents.empty()) {
+        createRelevantStates(dependentStateFluents, result);
+    }
+}
+
+long Preprocessor::calculateStateFluentHashKey(Evaluatable* eval, State const& state) const {
+    long res = 0;
+    for(unsigned int i = 0; i < eval->stateFluentHashKeyBases.size(); ++i) {
+        res += state[eval->stateFluentHashKeyBases[i].first] * eval->stateFluentHashKeyBases[i].second;
+    }
+    return res;
 }
