@@ -511,13 +511,14 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 
     if(node != currentRootNode) {
         task->calcReward(states[currentStateIndex], actions[currentActionIndex], reward);
-        //std::cout << "Reward is " << reward << std::endl;
+        // std::cout << "Reward is " << reward << std::endl;
 
         if(nextStateIndex == 1) {
             // This node is a leaf (the last action is optimally calculated in
             // the planning task)
 
             calcOptimalFinalReward(states[1], futureReward);
+            // std::cout << "Final reward is " << futureReward << std::endl;
             backupDecisionNodeLeaf(node, reward, futureReward);
             return (reward + futureReward);
         } else if(task->stateValueCache.find(states[nextStateIndex]) != task->stateValueCache.end()) {
@@ -525,6 +526,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 
             node->children.clear();
             futureReward = task->stateValueCache[states[nextStateIndex]];
+            // std::cout << "Cached reward is " << futureReward << std::endl;
             backupDecisionNodeLeaf(node, reward, futureReward);
             ++cacheHits;
             return (reward + futureReward);

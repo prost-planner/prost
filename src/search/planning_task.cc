@@ -149,8 +149,6 @@ void PlanningTask::learn(vector<State> const& trainingSet) {
     bool unreasonableActionFoundInDeterminization = false;
 
     for(unsigned int stateIndex = 0; stateIndex < trainingSet.size(); ++stateIndex) {
-        assert(trainingSet[stateIndex].remSteps >= 0);
-
         // Check if this training state has unreasonable actions
         vector<int> applicableActions = getApplicableActions(trainingSet[stateIndex], false);
 
@@ -591,6 +589,9 @@ int PlanningTask::getOptimalFinalActionIndex(State const& current, bool const& u
 ******************************************************************/
 
 void PlanningTask::print(ostream& out) const {
+    out.unsetf(ios::floatfield);
+    out.precision(numeric_limits<double>::digits10);
+
     out << "----------------Actions---------------" << endl << endl;
     out << "Action fluents: " << endl;
     for(unsigned int index = 0; index < actionFluents.size(); ++index) {
@@ -620,7 +621,7 @@ void PlanningTask::print(ostream& out) const {
         out << "a change of variable " << varIndex << " influences variables ";
         for(unsigned int influencedVarIndex = 0; influencedVarIndex < indexToStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
             out << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].first << " (";
-            out << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second << " )";
+            out << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second << ") ";
             //for(unsigned int val = 0; val < indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second.size(); ++val) {
             //    out << indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second[val];
             //    if(val == indexToStateFluentHashKeyMap[varIndex][influencedVarIndex].second.size()-1) {
@@ -638,7 +639,7 @@ void PlanningTask::print(ostream& out) const {
         out << "a change of variable " << varIndex << " influences variables in Kleene states ";
         for(unsigned int influencedVarIndex = 0; influencedVarIndex < indexToKleeneStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
             out << indexToKleeneStateFluentHashKeyMap[varIndex][influencedVarIndex].first << " ("
-                << indexToKleeneStateFluentHashKeyMap[varIndex][influencedVarIndex].second << ")  ";
+                << indexToKleeneStateFluentHashKeyMap[varIndex][influencedVarIndex].second << ") ";
         }
         out << endl;
     }

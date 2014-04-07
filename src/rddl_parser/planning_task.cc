@@ -179,6 +179,10 @@ void PlanningTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
 }
 
 void PlanningTask::print(ostream& out) {
+    // Set precision of doubles
+    out.unsetf(ios::floatfield);
+    out.precision(numeric_limits<double>::digits10);
+
     int firstProbabilisticVarIndex = (int)CPFs.size();
     bool deterministic = true;
     for(unsigned int i = 0; i < CPFs.size(); ++i) {
