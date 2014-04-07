@@ -90,7 +90,7 @@ void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     bool cachingEnabledBeforeLearning = cachingIsEnabled();
     cachingEnabled = false;
 
-    //perform ids for all states in traningSet and record the time it took
+    // Perform IDS for all states in trainingSet and record the time it takes
     for(unsigned int i = 0; i < trainingSet.size(); ++i) {
         State copy(trainingSet[i]);
         vector<double> res(task->getNumberOfActions());
@@ -112,7 +112,8 @@ void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     cachingEnabled = cachingEnabledBeforeLearning;
     assert(IterativeDeepeningSearch::rewardCache.empty());
 
-    //determine max search depth based on average time needed in different search depths
+    // Determine the maximal search depth based on the average time the search
+    // needed on the training set
     maxSearchDepth = 0;
     unsigned int index = 2;
 
@@ -206,8 +207,8 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
     // 1. Check if we have a significant result
     if(terminateWithReasonableAction) {
         if(actionsToExpand[0] == 0) {
-            // Noop is applicable -> we check if another action is
-            // better than noop
+            // Noop is applicable -> we check if another action is better than
+            // noop
             for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
                 if((actionsToExpand[actionIndex] == actionIndex) && 
                    MathUtils::doubleIsGreater(qValues[actionIndex], qValues[0])) {
@@ -215,8 +216,8 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
                 }
             }
         } else {
-            // Noop is not applicable -> we determine the first
-            // applicable action
+            // Noop is not applicable -> we determine the first applicable
+            // action
             unsigned int firstApplicableActionIndex = 1;
             while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
     		++firstApplicableActionIndex;
@@ -225,8 +226,7 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
             // There must be at least one applicable action
             assert(firstApplicableActionIndex < qValues.size());
 
-            // Check if any two applicable actions yield different
-            // results
+            // Check if any two applicable actions yield different results
             for(unsigned int actionIndex = firstApplicableActionIndex; actionIndex < qValues.size(); ++actionIndex) {
                 if((actionsToExpand[actionIndex] == actionIndex) && 
                    !MathUtils::doubleIsEqual(qValues[actionIndex], qValues[firstApplicableActionIndex])) {
@@ -238,16 +238,6 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
 
     // 2. Check if we have reached the max search depth for this step
     return currentState.remainingSteps() < maxSearchDepthForThisStep;
-
-    // We don't check this anymore as it leads to nondeterministic
-    // behaviour, but if learning is very bad for some reason it is
-    // possible that the planner gets stuck here
-
-    // 3. Check if the timeout is reached
-    // if(MathUtils::doubleIsGreater(time, terminationTimeout)) {
-    // return false; }
-
-    // return true;
 }
 
 /******************************************************************

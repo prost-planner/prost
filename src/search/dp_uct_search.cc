@@ -149,6 +149,3 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/)
     // node->print(cout);
     // cout << endl;
 }
-
-
-

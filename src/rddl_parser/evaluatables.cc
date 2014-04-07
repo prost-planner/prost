@@ -13,8 +13,6 @@ using namespace std;
 *****************************************************************/
 
 void Evaluatable::initialize() {
-    dependentStateFluents.clear();
-    dependentActionFluents.clear();
     formula->collectInitialInfo(isProb, hasArithmeticFunction, dependentStateFluents, dependentActionFluents);
 }
 

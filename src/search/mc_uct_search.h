@@ -67,6 +67,7 @@ public:
 private:
     double immediateReward;
     double futureReward;
+
     int numberOfVisits;
 
     bool rewardLock;
