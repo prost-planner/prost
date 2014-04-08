@@ -14,6 +14,7 @@ class NumericConstant;
 class Object;
 class State;
 class ActionState;
+class DiscretePD;
 
 class LogicalExpression {
 public:
@@ -32,6 +33,7 @@ public:
     virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
+    virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     virtual void print(std::ostream& out);
 };
@@ -150,6 +152,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -170,6 +173,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 
@@ -210,6 +214,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -305,6 +310,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -325,6 +331,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -347,6 +354,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -369,6 +377,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -391,6 +400,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -413,6 +423,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -435,6 +446,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -455,6 +467,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -477,6 +490,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -499,6 +513,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -521,6 +536,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -549,6 +565,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -587,6 +604,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 
@@ -612,6 +630,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -642,6 +661,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };
@@ -667,6 +687,7 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
 
     void print(std::ostream& out);
 };

@@ -324,19 +324,39 @@ void Parser::parseCachingType(stringstream& desc, Evaluatable* eval, bool const&
 
         int cachingVecSize;
         desc >> cachingVecSize;
-        eval->evaluationCacheVector.resize(cachingVecSize, -numeric_limits<double>::max());
-        for(unsigned int i = 0; i < cachingVecSize; ++i) {
-            int key;
-            desc >> key;
-            assert(key == i);
-            desc >> eval->evaluationCacheVector[i];
-        }
 
         if(isProbabilistic) {
+            eval->evaluationCacheVector.resize(cachingVecSize, -numeric_limits<double>::max());
             eval->pdEvaluationCacheVector.resize(cachingVecSize);
+
+            for(unsigned int i = 0; i < cachingVecSize; ++i) {
+                int key;
+                desc >> key;
+                assert(key == i);
+                desc >> eval->evaluationCacheVector[i];
+
+                int sizeOfPD;
+                desc >> sizeOfPD;
+
+                eval->pdEvaluationCacheVector[i].values.resize(sizeOfPD);
+                eval->pdEvaluationCacheVector[i].probabilities.resize(sizeOfPD);
+                for(unsigned int j = 0; j < sizeOfPD; ++j) {
+                    desc >> eval->pdEvaluationCacheVector[i].values[j];
+                    desc >> eval->pdEvaluationCacheVector[i].probabilities[j];
+                }
+                assert(eval->pdEvaluationCacheVector[i].isWellDefined());
+            }
+        } else {
+            eval->evaluationCacheVector.resize(cachingVecSize, -numeric_limits<double>::max());
+            for(unsigned int i = 0; i < cachingVecSize; ++i) {
+                int key;
+                desc >> key;
+                assert(key == i);
+                desc >> eval->evaluationCacheVector[i];
+            }
         }
     } else if(cachingType == "MAP") {
-        eval->kleeneCachingType = Evaluatable::MAP;
+        eval->cachingType = Evaluatable::MAP;
     }
 
     desc >> cachingType;
@@ -421,7 +441,7 @@ void Parser::parseHashKeys(stringstream& desc,
         desc >> numberOfKeys;
         for(unsigned int j = 0; j < numberOfKeys; ++j) {
             int var;
-            int key;
+            long key;
             desc >> var >> key;
             indexToStateFluentHashKeyMap[index].push_back(make_pair(var, key));
         }
@@ -429,7 +449,7 @@ void Parser::parseHashKeys(stringstream& desc,
         desc >> numberOfKeys;
         for(unsigned int j = 0; j < numberOfKeys; ++j) {
             int var;
-            int key;
+            long key;
             desc >> var >> key;
             indexToKleeneStateFluentHashKeyMap[index].push_back(make_pair(var, key));
         }

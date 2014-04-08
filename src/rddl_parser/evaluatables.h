@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "logical_expressions.h"
+#include "probability_distribution.h"
 
 class ConditionalProbabilityFunction;
 
@@ -47,8 +48,10 @@ struct Evaluatable {
     std::string cachingType;
 
     // If the caching type is VECTOR, this contains all possible results of
-    // evaluating this
+    // evaluating this (the first of the determinization, and if this is
+    // probabilistic the second of formula)
     std::vector<double> precomputedResults;
+    std::vector<DiscretePD> precomputedPDResults;
 
     // The kleene caching type that will be used (initially) for this
     // evaluatable and the size of the vector if kleeneCachingType is VECTOR
@@ -65,8 +68,6 @@ struct Evaluatable {
     // this Evaluatable (these are added to the state fluent hash keys of a
     // state)
     std::vector<long> actionHashKeyMap;
-
-
 
     // The stateFluentHashKeyMap contains the state fluent hash key (base) of
     // each of the dependent state fluents

@@ -657,14 +657,22 @@ void Preprocessor::precomputeEvaluatable(Evaluatable* eval) {
             if(usedActionHashKeys.find(actionHashKey) == usedActionHashKeys.end()) {
                 usedActionHashKeys.insert(actionHashKey);
 
-                double res;
                 if(eval->isProbabilistic()) {
+                    double res;
                     eval->determinization->evaluate(res, relevantStates[i], task->actionStates[j]);
+                    assert(MathUtils::doubleIsMinusInfinity(eval->precomputedResults[hashKey+actionHashKey]));
+                    eval->precomputedResults[hashKey+actionHashKey] = res;
+
+                    DiscretePD pdRes;
+                    eval->formula->evaluateToPD(pdRes, relevantStates[i], task->actionStates[j]);
+                    assert(eval->precomputedPDResults[hashKey+actionHashKey].isUndefined());
+                    eval->precomputedPDResults[hashKey+actionHashKey] = pdRes;
                 } else {
+                    double res;
                     eval->formula->evaluate(res, relevantStates[i], task->actionStates[j]);
+                    assert(MathUtils::doubleIsMinusInfinity(eval->precomputedResults[hashKey+actionHashKey]));
+                    eval->precomputedResults[hashKey+actionHashKey] = res;
                 }
-                assert(MathUtils::doubleIsMinusInfinity(eval->precomputedResults[hashKey+actionHashKey]));
-                eval->precomputedResults[hashKey+actionHashKey] = res;
             }
         }
     }

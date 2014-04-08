@@ -145,6 +145,9 @@ void Evaluatable::initializeStateFluentHashKeys(vector<ConditionalProbabilityFun
     } else {
         cachingType = "VECTOR";
         precomputedResults.resize(nextHashKeyBase, -numeric_limits<double>::max());
+        if(isProbabilistic()) {
+            precomputedPDResults.resize(nextHashKeyBase);
+        }
     }
 }
 
