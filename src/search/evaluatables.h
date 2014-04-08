@@ -102,15 +102,12 @@ public:
                 break;
             case VECTOR:
                 stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+
                 assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
                 assert(stateHashKey < pdEvaluationCacheVector.size());
+                assert(!pdEvaluationCacheVector[stateHashKey].isUndefined());
 
-                if(pdEvaluationCacheVector[stateHashKey].isUndefined()) {
-                    formula->evaluateToPD(res, current, actions);
-                    pdEvaluationCacheVector[stateHashKey] = res;
-                } else {
-                    res = pdEvaluationCacheVector[stateHashKey];
-                }
+                res = pdEvaluationCacheVector[stateHashKey];
                 break;
             }
         } else {

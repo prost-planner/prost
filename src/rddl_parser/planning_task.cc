@@ -324,7 +324,11 @@ void PlanningTask::print(ostream& out) {
             out << "## precomputed results (of determinization)" << endl;
             out << CPFs[index]->precomputedResults.size() << endl;
             for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << CPFs[index]->precomputedResults[res] << endl;
+                out << res << " " << CPFs[index]->precomputedResults[res] << " " << CPFs[index]->precomputedPDResults[res].values.size();
+                for(unsigned int valProbPair = 0; valProbPair < CPFs[index]->precomputedPDResults[res].values.size(); ++valProbPair) {
+                    out << " " << CPFs[index]->precomputedPDResults[res].values[valProbPair] << " " << CPFs[index]->precomputedPDResults[res].probabilities[valProbPair];
+                }
+                out << endl;
             }
         }
         out << "## kleene caching type" << endl;

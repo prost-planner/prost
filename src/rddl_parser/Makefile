@@ -6,6 +6,7 @@ HEADERS = rddl_parser.h \
 	  evaluatables.h \
 	  logical_expressions.h \
 	  states.h \
+	  probability_distribution.h \
 	  utils/timer.h \
 	  utils/string_utils.h \
 	  utils/system_utils.h \
