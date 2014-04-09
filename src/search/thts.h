@@ -116,6 +116,14 @@ public:
         numberOfNewDecisionNodesPerTrial = _numberOfNewDecisionNodesPerTrial;
     }
 
+    virtual void setMaxNumberOfNodes(int _maxNumberOfNodes) {
+        maxNumberOfNodes = _maxNumberOfNodes;
+        // Resize the node pool and give it a "safety net" of 20000 nodes (this
+        // is because the termination criterion is checked only at the root and
+        // not in the middle of a trial)
+        nodePool.resize(maxNumberOfNodes + 20000, NULL);
+    }
+
     // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
@@ -145,7 +153,7 @@ protected:
         firstSolvedFound(false),
         accumulatedNumberOfTrialsInRootState(0),
         accumulatedNumberOfSearchNodesInRootState(0) {
-        nodePool.resize(18000000,NULL);
+        setMaxNumberOfNodes(18000000);
     }
 
     // Main search functions
@@ -253,6 +261,7 @@ private:
     double timeout;
     int maxNumberOfTrials;
     int numberOfNewDecisionNodesPerTrial;
+    int maxNumberOfNodes;
 
     // Statistics
     int numberOfRuns;
@@ -293,6 +302,9 @@ bool THTS<SearchNode>::setValueFromString(std::string& param, std::string& value
         return true;
     } else if(param == "-ndn") {
         setNumberOfNewDecisionNodesPerTrial(atoi(value.c_str()));
+        return true;
+    } else if(param == "-mnn") {
+        setMaxNumberOfNodes(atoi(value.c_str()));
         return true;
     }
 
@@ -478,7 +490,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
 template <class SearchNode>
 bool THTS<SearchNode>::moreTrials() {
     // Check memory constraints and solvedness
-    if(currentRootNode->isSolved() || (lastUsedNodePoolIndex >= 15000000)) {
+    if(currentRootNode->isSolved() || (lastUsedNodePoolIndex >= maxNumberOfNodes)) {
         return false;
     }
 
