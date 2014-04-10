@@ -14,8 +14,8 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner, PlanningTask* _task) :
-    SearchEngine("DFS", _planner, _task, true),
+DepthFirstSearch::DepthFirstSearch() :
+    DeterministicSearchEngine("DFS"),
     rewardHelperVar(0.0) {}
 
 /******************************************************************
@@ -25,7 +25,7 @@ DepthFirstSearch::DepthFirstSearch(ProstPlanner* _planner, PlanningTask* _task) 
 bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> const& actionsToExpand, vector<double>& qValues) {
     assert(_rootState.remainingSteps() > 0);
     assert(_rootState.remainingSteps() <= maxSearchDepth);
-    assert(qValues.size() == task->getNumberOfActions());
+    assert(qValues.size() == PlanningTask::numberOfActions);
 
     for(unsigned int index = 0; index < qValues.size(); ++index) {
         if(actionsToExpand[index] == index) {
@@ -36,15 +36,15 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> cons
 }
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
-    State nxt(task->getStateSize(), state.remainingSteps()-1, task->getNumberOfStateFluentHashKeys());
-    task->calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
+    State nxt(state.remainingSteps()-1);
+    calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
 
-    //task->printState(cout, nxt);
-    //cout << reward << endl;
+    // PlanningTask::printState(cout, nxt);
+    // cout << reward << endl;
 
     // Check if the next state is already cached
-    if(task->stateValueCacheInDeterminization.find(nxt) != task->stateValueCacheInDeterminization.end()) {
-        reward += task->stateValueCacheInDeterminization[nxt];
+    if(DeterministicSearchEngine::stateValueCache.find(nxt) != DeterministicSearchEngine::stateValueCache.end()) {
+        reward += DeterministicSearchEngine::stateValueCache[nxt];
         return;
     }
 
@@ -63,7 +63,7 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, d
 
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
-    assert(!cachingEnabled || (task->stateValueCacheInDeterminization.find(state) == task->stateValueCacheInDeterminization.end()));
+    assert(!cachingEnabled || (DeterministicSearchEngine::stateValueCache.find(state) == DeterministicSearchEngine::stateValueCache.end()));
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions
@@ -83,6 +83,6 @@ void DepthFirstSearch::expandState(State const& state, double& result) {
 
     // Cache state value if caching is enabled
     if(cachingEnabled) {
-        task->stateValueCacheInDeterminization[state] = result;
+        DeterministicSearchEngine::stateValueCache[state] = result;
     }
 }

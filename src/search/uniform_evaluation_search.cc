@@ -11,14 +11,14 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-UniformEvaluationSearch::UniformEvaluationSearch(ProstPlanner* _planner, PlanningTask* _task) :
-    SearchEngine("UniformEvaluation", _planner, _task, true),
+UniformEvaluationSearch::UniformEvaluationSearch() :
+    DeterministicSearchEngine("UniformEvaluation"),
     initialValue(0.0) {}
 
 bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     if(param == "-val") {
         if(value == "INFTY") {
-            setInitialValue(task->getMaxReward());
+            setInitialValue(PlanningTask::rewardCPF->getMaxVal());
         } else {
             setInitialValue(atof(value.c_str()));
         }

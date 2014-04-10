@@ -11,7 +11,7 @@ class PlanningTask;
 
 class ProstPlanner {
 public:
-    ProstPlanner(std::string& plannerDesc, PlanningTask* _task);
+    ProstPlanner(std::string& plannerDesc);
 
     void init();
     void initNextRound();
@@ -37,10 +37,6 @@ public:
     }
 
     // Getters for global variables and parameters
-    PlanningTask* getTask() const {
-        return task;
-    }
-
     int const& getNumberOfRounds() const {
         return numberOfRounds;
     }
@@ -63,7 +59,6 @@ private:
 
     void printStep(int result, bool printSearchEngineLogs = true);
 
-    PlanningTask* task;
     SearchEngine* searchEngine;
 
     State currentState;

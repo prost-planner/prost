@@ -1,13 +1,14 @@
 #include "parser.h"
 
 #include "planning_task.h"
+#include "search_engine.h"
 
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
 using namespace std;
 
-PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
+void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<string> >& stateVariableValues) {
     // Read the parser output file
     string problemDesc;
     if(!SystemUtils::readFile(problemFileName, problemDesc, "#")) {
@@ -16,20 +17,17 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
     stringstream desc(problemDesc);
 
     // Parse general task properties
-    string problemName;
-    desc >> problemName;
+    desc >> PlanningTask::name;
+    desc >> PlanningTask::horizon;
+    desc >> PlanningTask::discountFactor;
 
-    int horizon;
-    desc >> horizon;
-
-    double discountFactor;
-    desc >> discountFactor;
-
+    // Parse relevant numbers
     int numberOfActionFluents;
     desc >> numberOfActionFluents;
 
     int numberOfDetStateFluents;
     desc >> numberOfDetStateFluents;
+    PlanningTask::firstProbabilisticVarIndex = numberOfDetStateFluents;
 
     int numberOfProbStateFluents;
     desc >> numberOfProbStateFluents;
@@ -37,164 +35,131 @@ PlanningTask* Parser::parseTask(map<string,int>& stateVariableIndices, vector<ve
     int numberOfPreconds;
     desc >> numberOfPreconds;
 
-    int numberOfActionStates;
-    desc >> numberOfActionStates;
+    desc >> PlanningTask::numberOfActions;
+    desc >> State::numberOfStateFluentHashKeys;
+    KleeneState::numberOfStateFluentHashKeys = State::numberOfStateFluentHashKeys;
 
-    int numberOfStateFluentHashKeys;
-    desc >> numberOfStateFluentHashKeys;
+    State::stateSize = numberOfDetStateFluents + numberOfProbStateFluents;
+    KleeneState::stateSize = State::stateSize;
 
-    int stateSize = numberOfDetStateFluents + numberOfProbStateFluents;
-
-    vector<double> initialVals(stateSize, 0.0);
-    for(unsigned int i = 0; i < stateSize; ++i) {
+    // Parse initial state
+    vector<double> initialVals(State::stateSize, 0.0);
+    for(unsigned int i = 0; i < State::stateSize; ++i) {
         desc >> initialVals[i];
     }
-    State initialState(initialVals, horizon, numberOfStateFluentHashKeys);
+    PlanningTask::initialState = State(initialVals, PlanningTask::horizon);
 
-    bool isDeterministic;
-    desc >> isDeterministic;
+    // Parse task properties
+    desc >> PlanningTask::isDeterministic;
+    desc >> State::stateHashingPossible;
+    desc >> KleeneState::stateHashingPossible;
 
-    bool stateHashingPossible;
-    desc >> stateHashingPossible;
-
-    bool kleeneStateHashingPossible;
-    desc >> kleeneStateHashingPossible;
-
-    PlanningTask::FinalRewardCalculationMethod finalRewardCalculationMethod;
-    vector<int> candidatesForOptimalFinalAction;
     string finalReward;
     desc >> finalReward;
     if(finalReward == "NOOP") {
-        finalRewardCalculationMethod = PlanningTask::NOOP;
+        PlanningTask::finalRewardCalculationMethod = PlanningTask::NOOP;
     } else if(finalReward == "FIRST_APPLICABLE") {
-        finalRewardCalculationMethod = PlanningTask::FIRST_APPLICABLE;
+        PlanningTask::finalRewardCalculationMethod = PlanningTask::FIRST_APPLICABLE;
     } else {
         assert(finalReward == "BEST_OF_CANDIDATE_SET");
-        finalRewardCalculationMethod = PlanningTask::BEST_OF_CANDIDATE_SET;
+        PlanningTask::finalRewardCalculationMethod = PlanningTask::BEST_OF_CANDIDATE_SET;
 
         int sizeOfCandidateSet;
         desc >> sizeOfCandidateSet;
-        candidatesForOptimalFinalAction.resize(sizeOfCandidateSet);
+        PlanningTask::candidatesForOptimalFinalAction.resize(sizeOfCandidateSet);
         for(unsigned int i = 0; i < sizeOfCandidateSet; ++i) {
-            desc >> candidatesForOptimalFinalAction[i];
+            desc >> PlanningTask::candidatesForOptimalFinalAction[i];
         }
     }
-
-    bool rewardFormulaAllowsRewardLockDetection;
-    desc >> rewardFormulaAllowsRewardLockDetection;
-
-    // Parse action fluents
-    vector<ActionFluent*> actionFluents;
-    for(unsigned int i = 0; i < numberOfActionFluents; ++i) {
-        parseActionFluent(desc, actionFluents);
+    desc >> SearchEngine::useRewardLockDetection;
+    if(SearchEngine::useRewardLockDetection) {
+        SearchEngine::goalTestActionIndex = 0;
+    } else {
+        SearchEngine::goalTestActionIndex = -1;
     }
 
-    // Parse state fluents and CPFs (Since we cannot create the CPFs before all
-    // fluents have been parsed, so we collect them as strings and create them
-    // later)
-    vector<StateFluent*> stateFluents;
-    vector<ConditionalProbabilityFunction*> CPFs;
+    // Parse action fluents
+    for(unsigned int i = 0; i < numberOfActionFluents; ++i) {
+        parseActionFluent(desc);
+    }
+
+    // Parse state fluents and CPFs (Since we cannot create the CPF formulas
+    // before all fluents have been parsed, we collect them as strings and
+    // create them later)
     vector<string> formulas;
     vector<string> detFormulas;
-
     for(unsigned int i = 0; i < numberOfDetStateFluents; ++i) {
-        ConditionalProbabilityFunction* cpf = parseCPF(desc, stateFluents, CPFs, formulas, detFormulas, false);
+        ConditionalProbabilityFunction* cpf = parseCPF(desc, formulas, detFormulas, false);
         parseCachingType(desc, cpf, false);
-        parseActionHashKeyMap(desc, cpf, numberOfActionStates);
+        parseActionHashKeyMap(desc, cpf);
     }
 
     for(unsigned int i = 0; i < numberOfProbStateFluents; ++i) {
-        ConditionalProbabilityFunction* cpf = parseCPF(desc, stateFluents, CPFs, formulas, detFormulas, true);
+        ConditionalProbabilityFunction* cpf = parseCPF(desc, formulas, detFormulas, true);
         parseCachingType(desc, cpf, true);
-        parseActionHashKeyMap(desc, cpf, numberOfActionStates);
+        parseActionHashKeyMap(desc, cpf);
     }
 
-    // All fluents have been created -> parse the CPFs and the determinized
-    // formulas
-
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        CPFs[i]->formula = LogicalExpression::createFromString(stateFluents, actionFluents, formulas[i]);
+    // All fluents have been created -> create the CPF formulas
+    for(unsigned int i = 0; i < PlanningTask::CPFs.size(); ++i) {
+        PlanningTask::CPFs[i]->formula = LogicalExpression::createFromString(PlanningTask::stateFluents, PlanningTask::actionFluents, formulas[i]);
         if(i < numberOfDetStateFluents) {
             assert(detFormulas[i].empty());
-            CPFs[i]->determinizedFormula = CPFs[i]->formula;
+            PlanningTask::CPFs[i]->determinizedFormula = PlanningTask::CPFs[i]->formula;
         } else {
-            CPFs[i]->determinizedFormula = LogicalExpression::createFromString(stateFluents, actionFluents, detFormulas[i]);
+            PlanningTask::CPFs[i]->determinizedFormula = LogicalExpression::createFromString(PlanningTask::stateFluents, PlanningTask::actionFluents, detFormulas[i]);
         }
     }
 
     // Parse reward function
-    RewardFunction* rewardCPF = parseRewardFunction(desc, stateFluents, actionFluents);
-    parseCachingType(desc, rewardCPF, false);
-    parseActionHashKeyMap(desc, rewardCPF, numberOfActionStates);
+    PlanningTask::rewardCPF = parseRewardFunction(desc);
+    parseCachingType(desc, PlanningTask::rewardCPF, false);
+    parseActionHashKeyMap(desc, PlanningTask::rewardCPF);
 
     // Parse action preconditions
     vector<Evaluatable*> actionPreconditions;
 
     for(unsigned int i = 0; i < numberOfPreconds; ++i) {
-        Evaluatable* precond = parseActionPrecondition(desc, actionPreconditions, stateFluents, actionFluents);
+        Evaluatable* precond = parseActionPrecondition(desc);
         parseCachingType(desc, precond, false);
-        parseActionHashKeyMap(desc, precond, numberOfActionStates);
+        parseActionHashKeyMap(desc, precond);
     }
 
     // Parse action states
-    vector<ActionState> actionStates;
-
-    for(unsigned int i = 0; i < numberOfActionStates; ++i) {
-        parseActionState(desc, actionStates, actionFluents, actionPreconditions);
+    for(unsigned int i = 0; i < PlanningTask::numberOfActions; ++i) {
+        parseActionState(desc);
     }
 
     // Parse hash keys
-    vector<vector<long> > hashKeyBases;
-    if(stateHashingPossible) {
-        hashKeyBases.resize(stateSize);
+    if(State::stateHashingPossible) {
+        State::stateHashKeys.resize(State::stateSize);
     }
+    State::indexToStateFluentHashKeyMap.resize(State::stateSize);
 
-    vector<long> kleeneHashKeyBases;
-    if(kleeneStateHashingPossible) {
-        kleeneHashKeyBases.resize(stateSize);
+    if(KleeneState::stateHashingPossible) {
+        KleeneState::hashKeyBases.resize(KleeneState::stateSize);
     }
+    KleeneState::indexToStateFluentHashKeyMap.resize(KleeneState::stateSize);
 
-    vector<vector<pair<int, long> > > indexToStateFluentHashKeyMap(stateSize);
-    vector<vector<pair<int, long> > > indexToKleeneStateFluentHashKeyMap(stateSize);
+    parseHashKeys(desc);
 
-    parseHashKeys(desc, hashKeyBases, kleeneHashKeyBases,
-                  indexToStateFluentHashKeyMap, indexToKleeneStateFluentHashKeyMap,
-                  CPFs, stateHashingPossible, kleeneStateHashingPossible);
+    // Calculate hash keys of initial state
+    State::calcStateFluentHashKeys(PlanningTask::initialState);
+    State::calcStateHashKey(PlanningTask::initialState);
 
     // Parse training set
-    vector<State> trainingSet;
-    parseTrainingSet(desc, stateSize, horizon, numberOfStateFluentHashKeys, trainingSet);
+    parseTrainingSet(desc);
 
     // Set mapping of variables to variable names and of values as strings to
     // internal values for communication between planner and environment
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        assert(stateVariableIndices.find(CPFs[i]->name) == stateVariableIndices.end());
-        stateVariableIndices[CPFs[i]->name] = i;
-        stateVariableValues.push_back(CPFs[i]->head->values);
+    for(unsigned int i = 0; i < PlanningTask::CPFs.size(); ++i) {
+        assert(stateVariableIndices.find(PlanningTask::CPFs[i]->name) == stateVariableIndices.end());
+        stateVariableIndices[PlanningTask::CPFs[i]->name] = i;
+        stateVariableValues.push_back(PlanningTask::CPFs[i]->head->values);
     }
-
-    // Create the task
-    return new PlanningTask(problemName,
-                            trainingSet,
-                            actionFluents,
-                            actionStates, 
-                            stateFluents,
-                            CPFs,
-                            rewardCPF,
-                            actionPreconditions, 
-                            initialState,
-                            horizon,
-                            discountFactor,
-                            finalRewardCalculationMethod,
-                            candidatesForOptimalFinalAction,
-                            rewardFormulaAllowsRewardLockDetection,
-                            hashKeyBases,
-                            kleeneHashKeyBases,
-                            indexToStateFluentHashKeyMap,
-                            indexToKleeneStateFluentHashKeyMap);
 }
 
-void Parser::parseActionFluent(stringstream& desc, vector<ActionFluent*>& actionFluents) const {
+void Parser::parseActionFluent(stringstream& desc) const {
     int index;
     desc >> index;
 
@@ -216,12 +181,10 @@ void Parser::parseActionFluent(stringstream& desc, vector<ActionFluent*>& action
         values.push_back(value);
     }
 
-    actionFluents.push_back(new ActionFluent(index, name, values));
+    PlanningTask::actionFluents.push_back(new ActionFluent(index, name, values));
 }
 
 ConditionalProbabilityFunction* Parser::parseCPF(stringstream& desc,
-                                                 vector<StateFluent*>& stateFluents,
-                                                 vector<ConditionalProbabilityFunction*>& CPFs,
                                                  vector<string>& formulas,
                                                  vector<string>& detFormulas,
                                                  bool const& isProbabilistic) const {
@@ -261,19 +224,19 @@ ConditionalProbabilityFunction* Parser::parseCPF(stringstream& desc,
     desc >> hashIndex;
 
     StateFluent* sf = new StateFluent(index, name, values);
-    stateFluents.push_back(sf);
+    PlanningTask::stateFluents.push_back(sf);
 
     ConditionalProbabilityFunction* cpf = new ConditionalProbabilityFunction(hashIndex, sf);
-    CPFs.push_back(cpf);
+    PlanningTask::CPFs.push_back(cpf);
 
     return cpf;
 }
 
-RewardFunction* Parser::parseRewardFunction(stringstream& desc, vector<StateFluent*> const& stateFluents, vector<ActionFluent*> const& actionFluents) const {
+RewardFunction* Parser::parseRewardFunction(stringstream& desc) const {
     string formulaAsString;
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
-    LogicalExpression* rewardFormula = LogicalExpression::createFromString(stateFluents, actionFluents, formulaAsString);
+    LogicalExpression* rewardFormula = LogicalExpression::createFromString(PlanningTask::stateFluents, PlanningTask::actionFluents, formulaAsString);
 
     double minVal;
     desc >> minVal;
@@ -287,10 +250,7 @@ RewardFunction* Parser::parseRewardFunction(stringstream& desc, vector<StateFlue
     return new RewardFunction(hashIndex, minVal, maxVal, rewardFormula);
 }
 
-Evaluatable* Parser::parseActionPrecondition(stringstream& desc,
-                                             vector<Evaluatable*>& actionPreconditions,
-                                             vector<StateFluent*> const& stateFluents,
-                                             vector<ActionFluent*> const& actionFluents) const {
+Evaluatable* Parser::parseActionPrecondition(stringstream& desc) const {
     int index;
     desc >> index;
 
@@ -301,15 +261,15 @@ Evaluatable* Parser::parseActionPrecondition(stringstream& desc,
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
 
-    LogicalExpression* formula = LogicalExpression::createFromString(stateFluents, actionFluents, formulaAsString);
+    LogicalExpression* formula = LogicalExpression::createFromString(PlanningTask::stateFluents, PlanningTask::actionFluents, formulaAsString);
 
     int hashIndex;
     desc >> hashIndex;
 
     Evaluatable* precond = new Evaluatable(name.str(), hashIndex, formula, formula);
 
-    assert(actionPreconditions.size() == index);
-    actionPreconditions.push_back(precond);
+    assert(PlanningTask::actionPreconditions.size() == index);
+    PlanningTask::actionPreconditions.push_back(precond);
     return precond;
 }
 
@@ -373,9 +333,9 @@ void Parser::parseCachingType(stringstream& desc, Evaluatable* eval, bool const&
     }
 }
 
-void Parser::parseActionHashKeyMap(stringstream& desc, Evaluatable* eval, int const& numberOfActionStates) const {
-    eval->actionHashKeyMap.resize(numberOfActionStates);
-    for(unsigned int i = 0; i < numberOfActionStates; ++i) {
+void Parser::parseActionHashKeyMap(stringstream& desc, Evaluatable* eval) const {
+    eval->actionHashKeyMap.resize(PlanningTask::numberOfActions);
+    for(unsigned int i = 0; i < PlanningTask::numberOfActions; ++i) {
         int actionIndex;
         desc >> actionIndex;
         assert(actionIndex == i);
@@ -383,20 +343,17 @@ void Parser::parseActionHashKeyMap(stringstream& desc, Evaluatable* eval, int co
     }
 }
 
-void Parser::parseActionState(stringstream& desc,
-                              vector<ActionState>& actionStates,
-                              vector<ActionFluent*> const& actionFluents,
-                              vector<Evaluatable*> const& actionPreconditions) const {
+void Parser::parseActionState(stringstream& desc) const {
     int index;
     desc >> index;
 
-    vector<int> values(actionFluents.size());
+    vector<int> values(PlanningTask::actionFluents.size());
     vector<ActionFluent*> scheduledActionFluents;
 
-    for(unsigned int j = 0; j < actionFluents.size(); ++j) {
+    for(unsigned int j = 0; j < PlanningTask::actionFluents.size(); ++j) {
         desc >> values[j];
         if(values[j] == 1) {
-            scheduledActionFluents.push_back(actionFluents[j]);
+            scheduledActionFluents.push_back(PlanningTask::actionFluents[j]);
         }
     }
 
@@ -407,34 +364,27 @@ void Parser::parseActionState(stringstream& desc,
     for(unsigned int j = 0; j < numberOfRelevantPreconditions; ++j) {
         int precondIndex;
         desc >> precondIndex;
-        relevantPreconditions[j] = actionPreconditions[precondIndex];
+        relevantPreconditions[j] = PlanningTask::actionPreconditions[precondIndex];
     }
 
-    actionStates.push_back(ActionState(index, values, scheduledActionFluents, relevantPreconditions));
+    PlanningTask::actionStates.push_back(ActionState(index, values, scheduledActionFluents, relevantPreconditions));
 }
 
-void Parser::parseHashKeys(stringstream& desc,
-                           vector<vector<long> >& hashKeyBases,
-                           vector<long>& kleeneHashKeyBases,
-                           vector<vector<pair<int, long> > >& indexToStateFluentHashKeyMap,
-                           vector<vector<pair<int, long> > >& indexToKleeneStateFluentHashKeyMap,
-                           vector<ConditionalProbabilityFunction*> const& CPFs,
-                           bool const& stateHashingPossible,
-                           bool const& kleeneStateHashingPossible) const {
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+void Parser::parseHashKeys(stringstream& desc) const {
+    for(unsigned int i = 0; i < PlanningTask::CPFs.size(); ++i) {
         int index;
         desc >> index;
         assert(index == i);
 
-        if(stateHashingPossible) {
-            hashKeyBases[index].resize(CPFs[index]->head->values.size());
-            for(unsigned int j = 0; j < CPFs[index]->head->values.size(); ++j) {
-                desc >> hashKeyBases[index][j];
+        if(State::stateHashingPossible) {
+            State::stateHashKeys[index].resize(PlanningTask::CPFs[index]->head->values.size());
+            for(unsigned int j = 0; j < PlanningTask::CPFs[index]->head->values.size(); ++j) {
+                desc >> State::stateHashKeys[index][j];
             }
         }
 
-        if(kleeneStateHashingPossible) {
-            desc >> kleeneHashKeyBases[index];
+        if(KleeneState::stateHashingPossible) {
+            desc >> KleeneState::hashKeyBases[index];
         }
 
         int numberOfKeys;
@@ -443,7 +393,7 @@ void Parser::parseHashKeys(stringstream& desc,
             int var;
             long key;
             desc >> var >> key;
-            indexToStateFluentHashKeyMap[index].push_back(make_pair(var, key));
+            State::indexToStateFluentHashKeyMap[index].push_back(make_pair(var, key));
         }
 
         desc >> numberOfKeys;
@@ -451,23 +401,22 @@ void Parser::parseHashKeys(stringstream& desc,
             int var;
             long key;
             desc >> var >> key;
-            indexToKleeneStateFluentHashKeyMap[index].push_back(make_pair(var, key));
+            KleeneState::indexToStateFluentHashKeyMap[index].push_back(make_pair(var, key));
         }
     }
 }
 
-void Parser::parseTrainingSet(stringstream& desc,
-                              int const& stateSize,
-                              int const& horizon,
-                              int const& numberOfStateFluentHashKeys,
-                              vector<State>& trainingSet) const {
+void Parser::parseTrainingSet(stringstream& desc) const {
     int numberOfTrainingStates;
     desc >> numberOfTrainingStates;
     for(unsigned int i = 0; i < numberOfTrainingStates; ++i) {
-        vector<double> values(stateSize);
-        for(unsigned int j = 0; j < stateSize; ++j) {
+        vector<double> values(State::stateSize);
+        for(unsigned int j = 0; j < State::stateSize; ++j) {
             desc >> values[j];
         }
-        trainingSet.push_back(State(values, horizon, numberOfStateFluentHashKeys));
+        State trainingState(values, PlanningTask::horizon);
+        State::calcStateFluentHashKeys(trainingState);
+        State::calcStateHashKey(trainingState);
+        PlanningTask::trainingSet.push_back(trainingState);
     }
 }

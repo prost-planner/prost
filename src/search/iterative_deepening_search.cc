@@ -18,9 +18,9 @@ using namespace std;
 
 map<State, vector<double>, State::CompareIgnoringRemainingSteps> IterativeDeepeningSearch::rewardCache;
 
-IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner, PlanningTask* _task) :
-    SearchEngine("IDS", _planner, _task, true),
-    currentState(_task->getStateSize(), -1, _task->getNumberOfStateFluentHashKeys()),
+IterativeDeepeningSearch::IterativeDeepeningSearch() :
+    DeterministicSearchEngine("IDS"),
+    currentState(State()),
     isLearning(false),
     timer(),
     time(0.0),
@@ -36,7 +36,7 @@ IterativeDeepeningSearch::IterativeDeepeningSearch(ProstPlanner* _planner, Plann
 
     elapsedTime.resize(maxSearchDepth+1);
 
-    dfs = new DepthFirstSearch(planner, task);
+    dfs = new DepthFirstSearch();
     dfs->setMaxSearchDepth(maxSearchDepth);
 }
 
@@ -82,8 +82,8 @@ void IterativeDeepeningSearch::disableCaching() {
     SearchEngine::disableCaching();
 }
 
-void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
-    dfs->learn(trainingSet);
+void IterativeDeepeningSearch::learn() {
+    dfs->learn();
     cout << name << ": learning..." << endl;
 
     isLearning = true;
@@ -91,9 +91,9 @@ void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     cachingEnabled = false;
 
     // Perform IDS for all states in trainingSet and record the time it takes
-    for(unsigned int i = 0; i < trainingSet.size(); ++i) {
-        State copy(trainingSet[i]);
-        vector<double> res(task->getNumberOfActions());
+    for(unsigned int i = 0; i < PlanningTask::trainingSet.size(); ++i) {
+        State copy(PlanningTask::trainingSet[i]);
+        vector<double> res(PlanningTask::numberOfActions);
 
         vector<int> actionsToExpand = getApplicableActions(copy);
 
@@ -118,7 +118,7 @@ void IterativeDeepeningSearch::learn(std::vector<State> const& trainingSet) {
     unsigned int index = 2;
 
     for(;index < elapsedTime.size(); ++index) {
-        if(elapsedTime[index].size() > (trainingSet.size()/2)) {
+        if(elapsedTime[index].size() > (PlanningTask::trainingSet.size()/2)) {
             double timeSum = 0.0;
             for(unsigned int j = 0; j < elapsedTime[index].size(); ++j) {
                 timeSum += elapsedTime[index][j];
