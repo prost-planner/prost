@@ -15,9 +15,9 @@
 class ProstPlanner;
 class DepthFirstSearch;
 
-class IterativeDeepeningSearch : public SearchEngine {
+class IterativeDeepeningSearch : public DeterministicSearchEngine {
 public:
-    IterativeDeepeningSearch(ProstPlanner* _planner, PlanningTask* _task);
+    IterativeDeepeningSearch();
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
@@ -27,7 +27,7 @@ public:
 
     // This is called initially to learn parameter values from a random training
     // set.
-    void learn(std::vector<State> const& trainingSet);
+    void learn();
 
     // Start the search engine for Q-value estimation
     bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);

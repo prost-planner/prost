@@ -75,8 +75,8 @@ private:
 
 class MaxMCUCTSearch : public UCTBase<MaxMCUCTNode> {
 public:
-    MaxMCUCTSearch(ProstPlanner* _planner, PlanningTask* _task) :
-        UCTBase<MaxMCUCTNode>("MaxMC-UCT", _planner, _task),
+    MaxMCUCTSearch() :
+        UCTBase<MaxMCUCTNode>("MaxMC-UCT"),
         heuristicWeight(0.5) {}
 
     // Set parameters from command line

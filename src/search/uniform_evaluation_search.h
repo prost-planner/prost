@@ -7,9 +7,9 @@
 // engine (standalone) or as a uniform initialization for algorithms
 // in the THTS framework
 
-class UniformEvaluationSearch : public SearchEngine {
+class UniformEvaluationSearch : public DeterministicSearchEngine {
 public:
-    UniformEvaluationSearch(ProstPlanner* _planner, PlanningTask* _task);
+    UniformEvaluationSearch();
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
