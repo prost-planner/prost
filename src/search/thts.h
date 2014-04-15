@@ -1,7 +1,6 @@
 #ifndef THTS_H
 #define THTS_H
 
-#include "planning_task.h"
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
 
@@ -133,20 +132,20 @@ protected:
     ProbabilisticSearchEngine(_name),
         currentRootNode(NULL),
         chosenOutcome(NULL),
-        states(PlanningTask::horizon + 1, State()),
-        pdStates(PlanningTask::horizon, PDState(State::stateSize, -1)),
-        currentStateIndex(PlanningTask::horizon),
-        nextStateIndex(PlanningTask::horizon - 1),
-        actions(PlanningTask::horizon, -1),
+        states(SearchEngine::horizon + 1, State()),
+        pdStates(SearchEngine::horizon, PDState(State::stateSize, -1)),
+        currentStateIndex(SearchEngine::horizon),
+        nextStateIndex(SearchEngine::horizon - 1),
+        actions(SearchEngine::horizon, -1),
         currentActionIndex(nextStateIndex),
         currentTrial(0),
         initializer(NULL),
-        initialQValues(PlanningTask::numberOfActions, 0.0),
+        initialQValues(SearchEngine::numberOfActions, 0.0),
         initializedDecisionNodes(0),
         terminationMethod(THTS<SearchNode>::TIME), 
         timeout(1.0),
         maxNumberOfTrials(0),
-        numberOfNewDecisionNodesPerTrial(PlanningTask::horizon + 1),
+        numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
         numberOfRuns(0),
         cacheHits(0),
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
@@ -406,7 +405,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
     assert(bestActions.empty());
 
     // Init round (if this is the first call in a round)
-    if(_rootState.remainingSteps() == PlanningTask::horizon) {
+    if(_rootState.remainingSteps() == SearchEngine::horizon) {
         initRound();
     }
 
@@ -421,7 +420,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
     int uniquePolicyOpIndex = getUniquePolicy();
     if(uniquePolicyOpIndex != -1) {
         outStream << "Returning unique policy: ";
-        PlanningTask::actionStates[uniquePolicyOpIndex].printCompact(outStream);
+        SearchEngine::actionStates[uniquePolicyOpIndex].printCompact(outStream);
         outStream << std::endl << std::endl;
         bestActions.push_back(uniquePolicyOpIndex);
         currentRootNode = NULL;
@@ -475,7 +474,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState += _rootState.remainingSteps();
     }
 
-    if(_rootState.remainingSteps() == PlanningTask::horizon) {
+    if(_rootState.remainingSteps() == SearchEngine::horizon) {
         accumulatedNumberOfTrialsInRootState += currentTrial;
         accumulatedNumberOfSearchNodesInRootState += lastUsedNodePoolIndex;
     }
@@ -580,7 +579,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         // task->printAction(std::cout, actions[currentActionIndex]);
         // std::cout << std::endl;
 
-        if(PlanningTask::isDeterministic) {
+        if(SearchEngine::taskIsDeterministic) {
             // This task is deterministic -> there are no chance nodes and the
             // successor state can be computed directly
             sampleSuccessorState(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
@@ -598,7 +597,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
             pdStates[nextStateIndex].transferDeterministicPart(states[nextStateIndex]);
 
             // Start outcome selection with the first probabilistic variable
-            chanceNodeVarIndex = PlanningTask::firstProbabilisticVarIndex;            
+            chanceNodeVarIndex = SearchEngine::firstProbabilisticVarIndex;            
 
             // Continue trial with chance nodes
             futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
@@ -663,7 +662,7 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
         return;
     }
 
-    node->children.resize(PlanningTask::numberOfActions, NULL);
+    node->children.resize(SearchEngine::numberOfActions, NULL);
 
     // std::cout << "initializing state: " << std::endl;
     // task->printState(std::cout, states[currentStateIndex]);
@@ -795,7 +794,7 @@ void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats
         for(unsigned int i = 0; i < currentRootNode->children.size(); ++i) {
             if(currentRootNode->children[i]) {
                 out << indent;
-                PlanningTask::actionStates[i].printCompact(out);
+                SearchEngine::actionStates[i].printCompact(out);
                 out << ": ";
                 currentRootNode->children[i]->print(out);
             }

@@ -11,7 +11,6 @@ HEADERS = parser.h \
 	  uniform_evaluation_search.h \
 	  ippc_client.h \
 	  states.h \
-	  planning_task.h \
 	  evaluatables.h \
 	  logical_expressions.h \
 	  probability_distribution.h \

@@ -26,17 +26,18 @@ private:
     std::string problemFileName;
 
     inline void parseActionFluent(std::stringstream& desc) const;
-    inline ConditionalProbabilityFunction* parseCPF(std::stringstream& desc,
-                                                    std::vector<std::string>& formulas,
-                                                    std::vector<std::string>& detFormulas,
-                                                    bool const& isProbabilistic) const;
-    inline RewardFunction* parseRewardFunction(std::stringstream& desc) const;
-    inline Evaluatable* parseActionPrecondition(std::stringstream& desc) const;
+    inline void parseCPF(std::stringstream& desc,
+                         std::vector<std::string>& formulas,
+                         std::vector<std::string>& detFormulas,
+                         bool const& isProbabilistic) const;
+    inline void parseRewardFunction(std::stringstream& desc) const;
+    inline void parseActionPrecondition(std::stringstream& desc) const;
     inline void parseCachingType(std::stringstream& desc,
-                                 Evaluatable* eval,
-                                 bool const& isProbabilistic) const;
+                                 Evaluatable* probEval,
+                                 Evaluatable* detEval) const;
     inline void parseActionHashKeyMap(std::stringstream& desc,
-                                      Evaluatable* eval) const;
+                                      Evaluatable* probEval,
+                                      Evaluatable* detEval) const;
     inline void parseActionState(std::stringstream& desc) const;
     inline void parseHashKeys(std::stringstream& desc) const;
     inline void parseTrainingSet(std::stringstream& desc) const;

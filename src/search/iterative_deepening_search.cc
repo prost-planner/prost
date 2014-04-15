@@ -1,7 +1,6 @@
 #include "iterative_deepening_search.h"
 
 #include "prost_planner.h"
-#include "planning_task.h"
 #include "depth_first_search.h"
 
 #include "utils/math_utils.h"
@@ -91,9 +90,9 @@ void IterativeDeepeningSearch::learn() {
     cachingEnabled = false;
 
     // Perform IDS for all states in trainingSet and record the time it takes
-    for(unsigned int i = 0; i < PlanningTask::trainingSet.size(); ++i) {
-        State copy(PlanningTask::trainingSet[i]);
-        vector<double> res(PlanningTask::numberOfActions);
+    for(unsigned int i = 0; i < SearchEngine::trainingSet.size(); ++i) {
+        State copy(SearchEngine::trainingSet[i]);
+        vector<double> res(SearchEngine::numberOfActions);
 
         vector<int> actionsToExpand = getApplicableActions(copy);
 
@@ -118,7 +117,7 @@ void IterativeDeepeningSearch::learn() {
     unsigned int index = 2;
 
     for(;index < elapsedTime.size(); ++index) {
-        if(elapsedTime[index].size() > (PlanningTask::trainingSet.size()/2)) {
+        if(elapsedTime[index].size() > (SearchEngine::trainingSet.size()/2)) {
             double timeSum = 0.0;
             for(unsigned int j = 0; j < elapsedTime[index].size(); ++j) {
                 timeSum += elapsedTime[index][j];

@@ -1,7 +1,6 @@
 #include "prost_planner.h"
 
 #include "search_engine.h"
-#include "planning_task.h"
 
 #include "utils/timer.h"
 #include "utils/math_utils.h"
@@ -14,9 +13,9 @@ using namespace std;
 
 ProstPlanner::ProstPlanner(string& plannerDesc) :
     searchEngine(NULL),
-    currentState(PlanningTask::initialState),
+    currentState(SearchEngine::initialState),
     currentRound(-1), 
-    remainingSteps(PlanningTask::horizon),
+    remainingSteps(SearchEngine::horizon),
     numberOfRounds(-1),
     cachingEnabled(true),
     ramLimit(2621440),
@@ -73,7 +72,7 @@ void ProstPlanner::init() {
     cout << "...finished (" << t << ")." << endl << endl;
 
     cout << "Final task: " << endl;
-    PlanningTask::print(cout);
+    SearchEngine::printTask(cout);
 }
 
 vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
@@ -91,8 +90,8 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     // PROST's communication with the environment works with strings, so we
     // collect the names of all true action fluents of the chosen action
     vector<string> result;
-    for(unsigned int i = 0; i < PlanningTask::actionStates[chosenActionIndex].scheduledActionFluents.size(); ++i) {
-        result.push_back(PlanningTask::actionStates[chosenActionIndex].scheduledActionFluents[i]->name);
+    for(unsigned int i = 0; i < SearchEngine::actionStates[chosenActionIndex].scheduledActionFluents.size(); ++i) {
+        result.push_back(SearchEngine::actionStates[chosenActionIndex].scheduledActionFluents[i]->name);
     }
 
     // assert(false);
@@ -109,16 +108,19 @@ void ProstPlanner::monitorRAMUsage() {
         cachingEnabled = false;
 
         SearchEngine::cacheApplicableActions = false;
-        for(unsigned int i = 0; i < PlanningTask::CPFs.size(); ++i) {
-            PlanningTask::CPFs[i]->disableCaching();
+        for(unsigned int i = 0; i < SearchEngine::probCPFs.size(); ++i) {
+            SearchEngine::probCPFs[i]->disableCaching();
         }
-        PlanningTask::rewardCPF->disableCaching();
-        for(unsigned int i = 0; i < PlanningTask::actionPreconditions.size(); ++i) {
-            PlanningTask::actionPreconditions[i]->disableCaching();
+        for(unsigned int i = SearchEngine::firstProbabilisticVarIndex; i < SearchEngine::detCPFs.size(); ++i) {
+            SearchEngine::detCPFs[i]->disableCaching();
+        }
+        SearchEngine::rewardCPF->disableCaching();
+        for(unsigned int i = 0; i < SearchEngine::actionPreconditions.size(); ++i) {
+            SearchEngine::actionPreconditions[i]->disableCaching();
         }
         
         searchEngine->disableCaching();
-        cout << endl << "CACHING ABORTED IN STEP " << (PlanningTask::horizon - remainingSteps + 1) << " OF ROUND " << (currentRound+1) << endl << endl;
+        cout << endl << "CACHING ABORTED IN STEP " << (SearchEngine::horizon - remainingSteps + 1) << " OF ROUND " << (currentRound+1) << endl << endl;
     }
 }
 
@@ -132,7 +134,7 @@ void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
 
 void ProstPlanner::initNextRound() {
     ++currentRound;
-    remainingSteps = PlanningTask::horizon;
+    remainingSteps = SearchEngine::horizon;
 }
 
 int ProstPlanner::combineResults() {
@@ -146,8 +148,8 @@ void ProstPlanner::setSeed(int _seed) {
 
 void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
     cout << "------------------------------------------------------------------------------------------" << endl;
-    cout << "Planning step " << (PlanningTask::horizon - remainingSteps + 1)
-         << "/" << PlanningTask::horizon << " in round " << (currentRound+1)
+    cout << "Planning step " << (SearchEngine::horizon - remainingSteps + 1)
+         << "/" << SearchEngine::horizon << " in round " << (currentRound+1)
          << "/" << numberOfRounds << " with state:" << endl;
     currentState.printCompact(cout);
     cout << endl;
@@ -159,14 +161,14 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
     cout << "Sumitting Action: ";
-    PlanningTask::actionStates[result].printCompact(cout);
+    SearchEngine::actionStates[result].printCompact(cout);
     cout << endl << "------------------------------------------------------------------" << endl << endl;
     
     // cout << "deadend bdd:" << endl;
-    // PlanningTask::printDeadEndBDD();
+    // SearchEngine::printDeadEndBDD();
 
     // cout << "goal bdd:" << endl;
-    // PlanningTask::printGoalBDD();
+    // SearchEngine::printGoalBDD();
 }
 
 

@@ -1,7 +1,6 @@
 #include "depth_first_search.h"
 
 #include "prost_planner.h"
-#include "planning_task.h"
 
 #include "utils/math_utils.h"
 
@@ -25,7 +24,7 @@ DepthFirstSearch::DepthFirstSearch() :
 bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> const& actionsToExpand, vector<double>& qValues) {
     assert(_rootState.remainingSteps() > 0);
     assert(_rootState.remainingSteps() <= maxSearchDepth);
-    assert(qValues.size() == PlanningTask::numberOfActions);
+    assert(qValues.size() == SearchEngine::numberOfActions);
 
     for(unsigned int index = 0; index < qValues.size(); ++index) {
         if(actionsToExpand[index] == index) {
@@ -37,7 +36,7 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState, vector<int> cons
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex, double& reward) {
     State nxt(state.remainingSteps()-1);
-    calcStateTransitionInDeterminization(state, actionIndex, nxt, reward);
+    calcStateTransition(state, actionIndex, nxt, reward);
 
     // PlanningTask::printState(cout, nxt);
     // cout << reward << endl;

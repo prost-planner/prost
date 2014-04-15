@@ -15,7 +15,7 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initializing child ";
-    // PlanningTask::printAction(cout,index);
+    // SearchEngine::printAction(cout,index);
     // cout << " with " << initialQValue << " leading to init of " << node->children[index]->accumulatedReward << endl;
 }
 
@@ -26,7 +26,7 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
 MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(PlanningTask::CPFs[varIndex]->getDomainSize(), NULL);
+        node->children.resize(SearchEngine::probCPFs[varIndex]->getDomainSize(), NULL);
     }
 
     int childIndex = (int)sampleVariable(nextPDState[varIndex]);
