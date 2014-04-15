@@ -1,7 +1,5 @@
 #include "evaluatables.h"
 
-#include "planning_task.h"
-
 #include "utils/system_utils.h"
 
 using namespace std;

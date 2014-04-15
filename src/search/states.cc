@@ -1,6 +1,6 @@
 #include "states.h"
 
-#include "planning_task.h"
+#include "search_engine.h"
 #include "evaluatables.h"
 
 #include "utils/string_utils.h"
@@ -18,7 +18,7 @@ void State::printCompact(ostream& out) const {
 
 void State::print(ostream& out) const {
     for(unsigned int index = 0; index < State::stateSize; ++index) {
-        out << PlanningTask::CPFs[index]->name << ": ";
+        out << SearchEngine::probCPFs[index]->name << ": ";
         //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
         //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
         //} else {
@@ -31,7 +31,7 @@ void State::print(ostream& out) const {
 
 void PDState::print(ostream& out) const {
     for(unsigned int index = 0; index < State::stateSize; ++index) {
-        out << PlanningTask::CPFs[index]->name << ": ";
+        out << SearchEngine::probCPFs[index]->name << ": ";
         state[index].print(out);
     }
     out << "Remaining Steps: " << remSteps << endl;
@@ -39,7 +39,7 @@ void PDState::print(ostream& out) const {
 
 void KleeneState::print(ostream& out) const {
     for(unsigned int index = 0; index < KleeneState::stateSize; ++index) {
-        out << PlanningTask::CPFs[index]->name << ": { ";
+        out << SearchEngine::probCPFs[index]->name << ": { ";
         for(set<double>::iterator it = state[index].begin(); it != state[index].end(); ++it) {
             cout << *it << " ";
         }

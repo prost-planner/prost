@@ -1,8 +1,5 @@
 #include "uniform_evaluation_search.h"
 
-#include "prost_planner.h"
-#include "planning_task.h"
-
 #include <limits>
 
 using namespace std;
@@ -18,7 +15,7 @@ UniformEvaluationSearch::UniformEvaluationSearch() :
 bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     if(param == "-val") {
         if(value == "INFTY") {
-            setInitialValue(PlanningTask::rewardCPF->getMaxVal());
+            setInitialValue(SearchEngine::rewardCPF->getMaxVal());
         } else {
             setInitialValue(atof(value.c_str()));
         }

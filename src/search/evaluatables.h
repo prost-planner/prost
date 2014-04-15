@@ -12,18 +12,18 @@ public:
         VECTOR // only few variables influence formula, so we use a vector for caching
     };
 
-    Evaluatable(std::string _name, int _hashIndex) :
+    Evaluatable(std::string _name, bool _isProb, int _hashIndex) :
         name(_name),
         formula(NULL),
-        determinizedFormula(NULL),
+        isProb(_isProb),
         hashIndex(_hashIndex),
         cachingType(NONE),
         kleeneCachingType(NONE) {}
 
-    Evaluatable(std::string _name, int _hashIndex, LogicalExpression* _formula, LogicalExpression* _determinizedFormula) :
+    Evaluatable(std::string _name, LogicalExpression* _formula, bool _isProb, int _hashIndex) :
         name(_name),
         formula(_formula),
-        determinizedFormula(_determinizedFormula),
+        isProb(_isProb),
         hashIndex(_hashIndex),
         cachingType(NONE),
         kleeneCachingType(NONE) {}
@@ -31,9 +31,11 @@ public:
     // Evaluates determinizedFormula (which is equivalent to formula if this
     // evaluatable is deterministic)
     void evaluate(double& res, State const& current, ActionState const& actions) {
+        assert(!isProbabilistic());
+
         switch(cachingType) {
         case NONE:
-            determinizedFormula->evaluate(res, current, actions);
+            formula->evaluate(res, current, actions);
             break;
         case MAP:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
@@ -42,7 +44,7 @@ public:
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
-                determinizedFormula->evaluate(res, current, actions);
+                formula->evaluate(res, current, actions);
                 evaluationCacheMap[stateHashKey] = res;
             }
             break;
@@ -53,7 +55,7 @@ public:
             if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
-                determinizedFormula->evaluate(res, current, actions);
+                formula->evaluate(res, current, actions);
             }
 
             break;
@@ -165,7 +167,7 @@ public:
 
     // Properties
     bool isProbabilistic() const {
-        return (formula != determinizedFormula);
+        return isProb;
     }
 
     // Disable caching
@@ -177,8 +179,8 @@ public:
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // If formula is probabilistic, this is a determinized version of it
-    LogicalExpression* determinizedFormula;
+    // Is true if formula is probabilistic
+    bool isProb;
 
     // All evaluatables have a hash index that is used to quckly update the
     // state fluent hash key of this evaluatable
@@ -213,8 +215,8 @@ public:
 
 class RewardFunction : public Evaluatable {
 public:
-    RewardFunction(int _hashIndex, double _minVal, double _maxVal, LogicalExpression* _formula) :
-        Evaluatable("Reward", _hashIndex, _formula, _formula),
+    RewardFunction(LogicalExpression* _formula, int _hashIndex, double _minVal, double _maxVal) :
+        Evaluatable("Reward", _formula, false, _hashIndex),
         minVal(_minVal),
         maxVal(_maxVal) {}
 
@@ -232,8 +234,8 @@ public:
 
 class ConditionalProbabilityFunction : public Evaluatable {
 public:
-    ConditionalProbabilityFunction(int _hashIndex, StateFluent* _head) :
-        Evaluatable(_head->name, _hashIndex),
+    ConditionalProbabilityFunction(bool _isProb, int _hashIndex, StateFluent* _head) :
+        Evaluatable(_head->name, _isProb, _hashIndex),
         head(_head) {}
 
     int getDomainSize() const {
