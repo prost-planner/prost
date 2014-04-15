@@ -18,8 +18,8 @@ void Preprocessor::preprocess() {
     // Create action fluents and calculate legal action states
     prepareActions();
 
-    // Approximate reachable values (domains) of CPFs and rewardCPF
-    calculateDomains();
+    // Approximate reachable values (domains) of CPFs
+    calculateCPFDomains();
 
     // Remove CPFs with only one reachable value (i.e. a domain size of 1) and
     // simplify remaining CPFs, rewardCPF, and SACs
@@ -38,6 +38,9 @@ void Preprocessor::preprocess() {
 
     // Precompute results of evaluate for (some) evaluatables
     precomputeEvaluatables();
+
+    // Approximate or calculate the min and max reward
+    calculateMinAndMaxReward();
 }
 
 /*****************************************************************
@@ -258,7 +261,7 @@ bool Preprocessor::sacContainsAdditionalPositiveActionFluent(ActionPrecondition*
              Domain Calculation / Reachability Analysis
 *****************************************************************/
 
-void Preprocessor::calculateDomains() {
+void Preprocessor::calculateCPFDomains() {
     // Insert initial values to set of reachable values
     vector<set<double> > domains(task->CPFs.size());
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
@@ -302,21 +305,10 @@ void Preprocessor::calculateDomains() {
         ++currentHorizon;
     }
 
-    // We also need the domain of the rewardCPF for deadend / goal detection (in
-    // fact, we only need upper and lower bounds, but we use the same function
-    // here)
-    set<double> rewardDomain;
-    for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
-        set<double> actionDependentValues;
-        task->rewardCPF->formula->calculateDomain(domains, task->actionStates[actionIndex], actionDependentValues);
-        rewardDomain.insert(actionDependentValues.begin(), actionDependentValues.end());
-    }
-
-    // Set domains of CPFs and rewardCPF
+    // Set domains
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->domain = domains[index];
     }
-    task->rewardCPF->domain = rewardDomain;
 }
 
 void Preprocessor::finalizeEvaluatables() {
@@ -710,4 +702,42 @@ long Preprocessor::calculateStateFluentHashKey(Evaluatable* eval, State const& s
         res += state[eval->stateFluentHashKeyBases[i].first] * eval->stateFluentHashKeyBases[i].second;
     }
     return res;
+}
+
+void Preprocessor::calculateMinAndMaxReward() const {
+    // Compute the domain of the rewardCPF for deadend / goal detection (we only
+    // need upper and lower bounds, but we use the same function here). If the
+    // cachingType is vector, we can use the non-approximated values from the
+    // precomputation further below.
+    if(task->rewardCPF->cachingType != "VECTOR") {
+        // If the reward cannot be cached in vectors, we have not precomputed it
+        // and must approximate the domain with the same function that is used
+        // for the CPFs. Otherwise, we use the non-approximated values from the
+        // precomputation further above.
+
+        vector<set<double> > domains(task->CPFs.size());
+        for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+            domains[index] = task->CPFs[index]->domain;
+        }
+
+        for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
+            set<double> actionDependentValues;
+            task->rewardCPF->formula->calculateDomain(domains, task->actionStates[actionIndex], actionDependentValues);
+            task->rewardCPF->domain.insert(actionDependentValues.begin(), actionDependentValues.end());
+        }
+    } else {
+        double minVal = numeric_limits<double>::max();
+        double maxVal = -numeric_limits<double>::max();
+        for(unsigned int i = 0; i < task->rewardCPF->precomputedResults.size(); ++i) {
+            if(MathUtils::doubleIsSmaller(task->rewardCPF->precomputedResults[i], minVal)) {
+                minVal = task->rewardCPF->precomputedResults[i];
+            }
+
+            if(MathUtils::doubleIsGreater(task->rewardCPF->precomputedResults[i], maxVal)) {
+                maxVal = task->rewardCPF->precomputedResults[i];
+            }
+        }
+        task->rewardCPF->domain.insert(minVal);
+        task->rewardCPF->domain.insert(maxVal);
+    }
 }

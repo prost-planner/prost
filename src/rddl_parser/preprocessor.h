@@ -32,7 +32,7 @@ private:
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
     bool sacContainsAdditionalPositiveActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
 
-    void calculateDomains();
+    void calculateCPFDomains();
     void finalizeEvaluatables();
     void determinize();
 
@@ -49,6 +49,8 @@ private:
     void precomputeEvaluatable(Evaluatable* eval);
     void createRelevantStates(std::vector<StateFluent*>& dependentStateFluents, std::vector<State>& result);
     long calculateStateFluentHashKey(Evaluatable* eval, State const& state) const;
+
+    void calculateMinAndMaxReward() const;
 };
 
 #endif
