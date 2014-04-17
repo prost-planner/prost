@@ -60,15 +60,19 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
 void ProstPlanner::init() {
     Timer t;
     cout << "learning..." << endl;
-
-    ProbabilisticSearchEngine pTest("PSE");
-    pTest.learn();
-
-    DeterministicSearchEngine dTest("DSE");
-    dTest.learn();
-
     searchEngine->learn();
 
+    if(ProbabilisticSearchEngine::useRewardLockDetection && ProbabilisticSearchEngine::useBDDCaching) {
+        // TODO: These numbers are rather random. Since I know only little on
+        // what they actually mean, it'd be nice to re-adjust these.
+        bdd_init(5000000,20000);
+
+        int* domains = new int[State::stateSize];
+        for(unsigned int index = 0; index < SearchEngine::probCPFs.size(); ++index) {
+            domains[index] = SearchEngine::probCPFs[index]->getDomainSize();
+        }
+        fdd_extdomain(domains, State::stateSize);
+    }
     cout << "...finished (" << t << ")." << endl << endl;
 
     cout << "Final task: " << endl;

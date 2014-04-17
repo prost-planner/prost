@@ -125,7 +125,7 @@ public:
 
     // Printer
     virtual void print(std::ostream& out);
-    virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
+    virtual void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "") const;
 
 protected:
     THTS<SearchNode>(std::string _name) :
@@ -774,7 +774,7 @@ void THTS<SearchNode>::print(std::ostream& out) {
 }
 
 template <class SearchNode>
-void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats, std::string indent) {
+void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats, std::string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
 
     if(currentTrial > 0) {

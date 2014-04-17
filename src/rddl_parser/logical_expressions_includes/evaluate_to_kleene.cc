@@ -329,6 +329,24 @@ void DiscreteDistribution::evaluateToKleene(set<double>& res, KleeneState const&
                          Conditionals
 *****************************************************************/
 
+void IfThenElseExpression::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& actions) const {
+    assert(res.empty());
+
+    set<double> tmp;
+    condition->evaluateToKleene(tmp, current, actions);
+
+    if(tmp.find(0.0) != tmp.end()) {
+        valueIfFalse->evaluateToKleene(res, current, actions);
+        if(tmp.size() > 1) {
+            tmp.clear();
+            valueIfTrue->evaluateToKleene(tmp, current, actions);
+            res.insert(tmp.begin(), tmp.end());
+        }
+    } else {
+        valueIfTrue->evaluateToKleene(res, current, actions);
+    }
+}
+
 void MultiConditionChecker::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& actions) const {
     //if we meet a condition that evaluates to unknown we must keep on
     //checking conditions until we find one that is always true, and

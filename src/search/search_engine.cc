@@ -63,9 +63,6 @@ bdd SearchEngine::cachedGoals = bddfalse;
 bool ProbabilisticSearchEngine::hasUnreasonableActions = true;
 bool DeterministicSearchEngine::hasUnreasonableActions = true;
 
-bool ProbabilisticSearchEngine::taskAnalyzed = false;
-bool DeterministicSearchEngine::taskAnalyzed = false;
-
 map<State, vector<int>, State::CompareIgnoringRemainingSteps> ProbabilisticSearchEngine::applicableActionsCache;
 map<State, vector<int>, State::CompareIgnoringRemainingSteps> DeterministicSearchEngine::applicableActionsCache;
 
@@ -143,86 +140,6 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     }
 
     return false;
-}
-
-/******************************************************************
-                       Main Search Functions
-******************************************************************/
-
-void ProbabilisticSearchEngine::learn() {
-    if(ProbabilisticSearchEngine::taskAnalyzed) {
-        return;
-    }
-
-    cout << "Prob-Task: learning..." << endl;
-    // Try if reasonable action pruning and reward lock detection are useful
-
-    // These are set if one of the methods is successful
-    bool rewardLockFound = false;
-    bool unreasonableActionFound = false;
-
-    for(unsigned int stateIndex = 0; stateIndex < SearchEngine::trainingSet.size(); ++stateIndex) {
-        // Check if this training state has unreasonable actions
-        vector<int> applicableActions = getApplicableActions(SearchEngine::trainingSet[stateIndex]);
-
-        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-            if((applicableActions[actionIndex] != actionIndex) && (applicableActions[actionIndex] != -1)) {
-                unreasonableActionFound = true;
-            }
-        }
-
-        // Check if this training state is a reward lock
-        if(isARewardLock(SearchEngine::trainingSet[stateIndex])) {
-            rewardLockFound = true;
-        }
-    }
-
-    // Set the variables that control action pruning and reward lock detection
-    ProbabilisticSearchEngine::hasUnreasonableActions = unreasonableActionFound;
-    ProbabilisticSearchEngine::useRewardLockDetection = rewardLockFound;
-
-    if(ProbabilisticSearchEngine::useRewardLockDetection && ProbabilisticSearchEngine::useBDDCaching) {
-        // TODO: These numbers are rather random. Since I know only little on
-        // what they actually mean, it'd be nice to re-adjust these sometime.
-        bdd_init(5000000,20000);
-
-        int* domains = new int[State::stateSize];
-        for(unsigned int index = 0; index < SearchEngine::probCPFs.size(); ++index) {
-            domains[index] = SearchEngine::probCPFs[index]->getDomainSize();
-        }
-        fdd_extdomain(domains, State::stateSize);
-    }
-
-    ProbabilisticSearchEngine::taskAnalyzed = true;
-    cout << "Prob-Task: ...finished" << endl;
-}
-
-void DeterministicSearchEngine::learn() {
-    if(DeterministicSearchEngine::taskAnalyzed) {
-        return;
-    }
-
-    cout << "Det-Task: learning..." << endl;
-    // Try if reasonable action pruning is useful
-    bool unreasonableActionFound = false;
-
-    for(unsigned int stateIndex = 0; stateIndex < SearchEngine::trainingSet.size(); ++stateIndex) {
-        // Check if this training state has unreasonable actions
-        vector<int> applicableActions = getApplicableActions(SearchEngine::trainingSet[stateIndex]);
-
-        for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-            if((applicableActions[actionIndex] != actionIndex) && (applicableActions[actionIndex] != -1)) {
-                unreasonableActionFound = true;
-            }
-        }
-    }
-
-    // Set the variables that control action pruning
-    DeterministicSearchEngine::hasUnreasonableActions = unreasonableActionFound;
-
-    DeterministicSearchEngine::taskAnalyzed = true;
-
-    cout << "Det-Task: ...finished" << endl;
 }
 
 /******************************************************************
@@ -354,7 +271,6 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
         // Merge with previously computed successors
         mergedSuccs |= succ;
-        //mergeKleeneStates(succ, mergedSuccs);
     }
 
     // Calculate hash keys
@@ -387,7 +303,6 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
 
     // Add parent to successor
     succ |= state;
-    //mergeKleeneStates(state, succ);
 
     // Calculate hash keys
     KleeneState::calcStateHashKey(succ);

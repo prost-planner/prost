@@ -74,8 +74,13 @@ struct PlanningTask {
 
     // (Non-trivial) properties
     bool rewardFormulaAllowsRewardLockDetection;
+    bool rewardLockDetected;
     std::string finalRewardCalculationMethod;
     std::vector<int> candidatesForOptimalFinalAction;
+    bool unreasonableActionDetected;
+    bool unreasonableActionInDeterminizationDetected;
+    int nonTerminalStatesWithUniqueAction;
+    int numberOfEncounteredStates;
 
     // Hash Keys
     std::vector<std::vector<long> > stateHashKeys;

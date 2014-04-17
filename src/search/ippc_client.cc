@@ -31,21 +31,21 @@ void IPPCClient::init() {
 }
 
 void IPPCClient::run(string const& problemName) {
-    //request round
+    // Request round
     int remainingTime = -1;
     initSession(problemName, remainingTime);
 
     planner->setNumberOfRounds(numberOfRounds);
     vector<double> nextState(stateVariableIndices.size());
 
-    //main loop
+    // Main loop
     for(int i = 0; i < numberOfRounds; ++i) {
         initRound(nextState);
         planner->initNextRound();
 
         while(true) {
             vector<string> nextActions = planner->plan(nextState);
-            if(!submitAction(nextActions,nextState)) {            
+            if(!submitAction(nextActions, nextState)) {
                 break;
             }
         }
