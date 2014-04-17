@@ -1,4 +1,4 @@
-void LogicalExpression::print(ostream& /*out*/) {
+void LogicalExpression::print(ostream& /*out*/) const {
     assert(false);
 }
 
@@ -6,11 +6,11 @@ void LogicalExpression::print(ostream& /*out*/) {
                          Schematics
 *****************************************************************/
 
-void Parameter::print(ostream& out) {
+void Parameter::print(ostream& out) const {
     out << name << " ";
 }
 
-void ParameterList::print(ostream& out) {
+void ParameterList::print(ostream& out) const {
     out << "(";
     for(unsigned int i = 0; i < params.size(); ++i) {
         out << params[i]->name << " : " << types[i]->name;
@@ -21,23 +21,27 @@ void ParameterList::print(ostream& out) {
     out << ") ";
 }
 
-void ActionFluent::print(ostream& out) {
+void ActionFluent::print(ostream& out) const {
     out << "$a(" << index << ")";
 }
 
-void StateFluent::print(ostream& out) {
+void StateFluent::print(ostream& out) const {
     out << "$s(" << index << ")";
+}
+
+void ParametrizedVariable::print(ostream& out) const {
+    out << fullName;
 }
 
 /*****************************************************************
                            Atomics
 *****************************************************************/
 
-void NumericConstant::print(ostream& out) {
+void NumericConstant::print(ostream& out) const {
     out << "$c(" << value << ")";
 }
 
-void Object::print(ostream& out) {
+void Object::print(ostream& out) const {
     if(types.size() != 1) {
         SystemUtils::abort("Implement object fluents in print.cc");
     }
@@ -47,10 +51,46 @@ void Object::print(ostream& out) {
 }
 
 /*****************************************************************
+                          Quantifier
+*****************************************************************/
+
+void Sumation::print(ostream& out) const {
+    out << "sum_{";
+    paramList->print(out);
+    out << "} [";
+    expr->print(out);
+    out << "]";
+}
+
+void Product::print(ostream& out) const {
+    out << "prod_{";
+    paramList->print(out);
+    out << "} [";
+    expr->print(out);
+    out << "]";
+}
+
+void UniversalQuantification::print(ostream& out) const {
+    out << "forall_{";
+    paramList->print(out);
+    out << "} [";
+    expr->print(out);
+    out << "]";
+}
+
+void ExistentialQuantification::print(ostream& out) const {
+    out << "exists_{";
+    paramList->print(out);
+    out << "} [";
+    expr->print(out);
+    out << "]";
+}
+
+/*****************************************************************
                            Connectives
 *****************************************************************/
 
-void Connective::print(ostream& out) {
+void Connective::print(ostream& out) const {
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->print(out);
         if(i != exprs.size()-1) {
@@ -59,71 +99,71 @@ void Connective::print(ostream& out) {
     }
 }
 
-void Conjunction::print(ostream& out) {
+void Conjunction::print(ostream& out) const {
     out << "and(";
     Connective::print(out);
     out << ")";
 }
 
-void Disjunction::print(ostream& out) {
+void Disjunction::print(ostream& out) const {
     out << "or(";
     Connective::print(out);
     out << ")";
 }
 
-void EqualsExpression::print(ostream& out) {
+void EqualsExpression::print(ostream& out) const {
     out << "==(";
     Connective::print(out);
     out << ")";
 }
 
-void GreaterExpression::print(ostream& out) {
+void GreaterExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << ">(";
     Connective::print(out);
     out << ")";
 }
 
-void LowerExpression::print(ostream& out) {
+void LowerExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "<(";
     Connective::print(out);
     out << ")";
 }
 
-void GreaterEqualsExpression::print(ostream& out) {
+void GreaterEqualsExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << ">=(";
     Connective::print(out);
     out << ")";
 }
 
-void LowerEqualsExpression::print(ostream& out) {
+void LowerEqualsExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "<=(";
     Connective::print(out);
     out << ")";
 }
 
-void Addition::print(ostream& out) {
+void Addition::print(ostream& out) const {
     out << "+(";
     Connective::print(out);
     out << ")";
 }
 
-void Subtraction::print(ostream& out) {
+void Subtraction::print(ostream& out) const {
     out << "-(";
     Connective::print(out);
     out << ")";
 }
 
-void Multiplication::print(ostream& out) {
+void Multiplication::print(ostream& out) const {
     out << "*(";
     Connective::print(out);
     out << ")";
 }
 
-void Division::print(ostream& out) {
+void Division::print(ostream& out) const {
     out << "/(";
     Connective::print(out);
     out << ")";
@@ -133,7 +173,7 @@ void Division::print(ostream& out) {
                           Unaries
 *****************************************************************/
 
-void Negation::print(ostream& out) {
+void Negation::print(ostream& out) const {
     out << "~(";
     expr->print(out);
     out << ")";
@@ -143,13 +183,17 @@ void Negation::print(ostream& out) {
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::print(ostream& out) {
+void KronDeltaDistribution::print(ostream& out) const {
+    expr->print(out);
+}
+
+void BernoulliDistribution::print(ostream& out) const {
     out << "Bernoulli(";
     expr->print(out);
     out << ")";
 }
 
-void DiscreteDistribution::print(ostream& out) {
+void DiscreteDistribution::print(ostream& out) const {
     out << "Discrete(";
     for(unsigned int i = 0; i < values.size(); ++i) {
         out << "(";
@@ -165,7 +209,7 @@ void DiscreteDistribution::print(ostream& out) {
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::print(ostream& out) {
+void IfThenElseExpression::print(ostream& out) const {
     out << "if(";
     condition->print(out);
     out << ") then(";
@@ -175,7 +219,7 @@ void IfThenElseExpression::print(ostream& out) {
     out << ")";
 }
 
-void MultiConditionChecker::print(ostream& out) {
+void MultiConditionChecker::print(ostream& out) const {
     for(unsigned int i = 0; i < conditions.size(); ++i) {
         if(i == 0) {
             out << "if(";

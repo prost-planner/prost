@@ -6,7 +6,7 @@
 #include "rddl_parser.h"
 #include "instantiator.h"
 #include "preprocessor.h"
-#include "state_set_generator.h"
+#include "task_analyzer.h"
 #include "planning_task.h"
 
 #include "utils/timer.h"
@@ -63,9 +63,9 @@ int main(int argc, char** argv) {
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
-    cout << "generating training set..." << endl;
-    StateSetGenerator gen(task);
-    gen.generateStateSet();
+    cout << "analyzing task..." << endl;
+    TaskAnalyzer analyzer(task);
+    analyzer.analyzeTask();
     cout << "...finished (" << t << ")." << endl;
 
     cout << "total time: " << totalTime << endl;

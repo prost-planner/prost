@@ -14,7 +14,11 @@ PlanningTask::PlanningTask() :
     numberOfConcurrentActions(numeric_limits<int>::max()),
     horizon(1),
     discountFactor(1.0), 
-    rewardCPF(NULL) {
+    rewardCPF(NULL),
+    rewardLockDetected(false),
+    unreasonableActionDetected(false),
+    unreasonableActionInDeterminizationDetected(false),
+    nonTerminalStatesWithUniqueAction(0) {
     // Add bool type
     addType("bool");
     addObject("bool", "false");
@@ -233,8 +237,15 @@ void PlanningTask::print(ostream& out) {
         }
         out << endl;
     }
-    out << "## 1 if reward formula allows reward lock detection" << endl;
-    out << rewardFormulaAllowsRewardLockDetection << endl;
+    out << "## 1 if reward formula allows reward lock detection and a reward lock was found during task analysis" << endl;
+    out << rewardLockDetected << endl;
+    out << "## 1 if an unreasonable action was detected" << endl;
+    out << unreasonableActionDetected << endl;
+    out << "## 1 if an unreasonable action was detected in the determinization" << endl;
+    out << unreasonableActionInDeterminizationDetected << endl;
+    out << "## number of states with only one applicable reasonable action" << endl;
+    out << "## that was detected during task analysis, and the number of encountered states" << endl;
+    out << nonTerminalStatesWithUniqueAction << " " << numberOfEncounteredStates << endl;
 
     out << endl << endl << "#####ACTION FLUENTS#####" << endl;
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {

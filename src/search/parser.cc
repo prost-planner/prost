@@ -77,6 +77,15 @@ void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<stri
         SearchEngine::goalTestActionIndex = -1;
     }
 
+    desc >> ProbabilisticSearchEngine::hasUnreasonableActions;
+    desc >> DeterministicSearchEngine::hasUnreasonableActions;
+
+    int encounteredStatesWithUniqueAction;
+    int encounteredStates;
+    desc >> encounteredStatesWithUniqueAction >> encounteredStates;
+    // TODO: these are currently ignored, but could use the ratio for prediction
+    // of how many decision we have to make
+
     // Parse action fluents
     for(unsigned int i = 0; i < numberOfActionFluents; ++i) {
         parseActionFluent(desc);
@@ -216,8 +225,8 @@ void Parser::parseCPF(stringstream& desc,
     SearchEngine::stateFluents.push_back(sf);
 
     if(isProbabilistic) {
-        ConditionalProbabilityFunction* probCPF = new ConditionalProbabilityFunction(isProbabilistic, hashIndex, sf);
-        ConditionalProbabilityFunction* detCPF = new ConditionalProbabilityFunction(isProbabilistic, hashIndex, sf);
+        ConditionalProbabilityFunction* probCPF = new ConditionalProbabilityFunction(true, hashIndex, sf);
+        ConditionalProbabilityFunction* detCPF = new ConditionalProbabilityFunction(false, hashIndex, sf);
         parseCachingType(desc, probCPF, detCPF);
         parseActionHashKeyMap(desc, probCPF, detCPF);
 
@@ -225,7 +234,7 @@ void Parser::parseCPF(stringstream& desc,
         SearchEngine::detCPFs.push_back(detCPF);
         
     } else {
-        ConditionalProbabilityFunction* cpf = new ConditionalProbabilityFunction(isProbabilistic, hashIndex, sf);
+        ConditionalProbabilityFunction* cpf = new ConditionalProbabilityFunction(false, hashIndex, sf);
         parseCachingType(desc, cpf, NULL);
         parseActionHashKeyMap(desc, cpf, NULL);
 

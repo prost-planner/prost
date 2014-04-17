@@ -13,15 +13,11 @@ class ActionFluent;
 class Evaluatable;
 
 /*****************************************************************
-                               STATE
+                             State
 *****************************************************************/
 
 class State {
 public:
-/*****************************************************************
-                State creation and adoption
-*****************************************************************/
-
     State(int const& _remSteps = -1) :
         state(State::stateSize, 0.0), remSteps(_remSteps), stateFluentHashKeys(State::numberOfStateFluentHashKeys, 0), hashKey(-1) {}
 
@@ -66,10 +62,6 @@ public:
         stateFluentHashKeys.swap(other.stateFluentHashKeys);
     }
 
-/*****************************************************************
-        Calculation of state and state fluent hash keys
-*****************************************************************/
-
     // Calculate the hash key of a State
     static void calcStateHashKey(State& state) {
         if(State::stateHashingPossible) {
@@ -95,20 +87,6 @@ public:
             }
         }
     }
-
-    // Calculate the hash key of a PDState
-    // void calcPDStateHashKey(State& /*state*/) const {
-    //     REPAIR AND MOVE TO PDSTATE
-    // }
-
-    // Calculate the hash key for each state fluent in a PDState
-    // void calcPDStateFluentHashKeys(PDState& state) const {
-    //     REPAIR AND MOVE TO PDSTATE
-    // }
-
-/*****************************************************************
-               Get and modify member variables
-*****************************************************************/
 
     double& operator[](int const& index) {
         assert(index < state.size());
@@ -141,10 +119,6 @@ public:
     long const& getHashKey() const {
         return hashKey;
     }
-
-/*****************************************************************
-                       State comparison
-*****************************************************************/
 
     bool isEqualIgnoringRemainingStepsTo(State const& other) const {
         assert(state.size() == other.state.size());
@@ -202,16 +176,8 @@ public:
         }
     };
 
-/*****************************************************************
-                              Printer
-*****************************************************************/
-
     void printCompact(std::ostream& out) const;
     void print(std::ostream& out) const;
-
-/*****************************************************************
-                    Static member variables
-*****************************************************************/
 
     // The number of state fluents (this is equal to CPFs.size())
     static int stateSize;
@@ -234,10 +200,6 @@ public:
     friend class PDState;
 
 private:
-/*****************************************************************
-                     Member variables
-*****************************************************************/
-
     std::vector<double> state;
     int remSteps;
     std::vector<long> stateFluentHashKeys;
@@ -245,16 +207,12 @@ private:
 };
 
 /*****************************************************************
-                           ACTION STATE
+                             ActionState
 *****************************************************************/
 
 struct ActionState {
     ActionState(int _index, std::vector<int> _state, std::vector<ActionFluent*> _scheduledActionFluents, std::vector<Evaluatable*> _actionPreconditions) :
         index(_index), state(_state), scheduledActionFluents(_scheduledActionFluents), actionPreconditions(_actionPreconditions) {}
-
-/*****************************************************************
-               Get and modify member variables
-*****************************************************************/
 
     int& operator[](int const& index) {
         return state[index];
@@ -264,16 +222,9 @@ struct ActionState {
         return state[index];
     }
 
-/*****************************************************************
-                              Printer
-*****************************************************************/
-
     void printCompact(std::ostream& out) const;
     void print(std::ostream& out) const;
 
-/*****************************************************************
-                     Member variables
-*****************************************************************/
     int index;
     std::vector<int> state;
     std::vector<ActionFluent*> scheduledActionFluents;
@@ -281,7 +232,7 @@ struct ActionState {
 };
 
 /*****************************************************************
-                             PD STATE
+                               PDState
 *****************************************************************/
 
 class PDState {
@@ -344,6 +295,16 @@ public:
         }
     };
 
+    // Calculate the hash key of a PDState
+    // void calcPDStateHashKey(State& /*state*/) const {
+    //     REPAIR AND MOVE TO PDSTATE
+    // }
+
+    // Calculate the hash key for each state fluent in a PDState
+    // void calcPDStateFluentHashKeys(PDState& state) const {
+    //     REPAIR AND MOVE TO PDSTATE
+    // }
+
     void print(std::ostream& out) const;
 
 protected:
@@ -352,15 +313,11 @@ protected:
 };
 
 /*****************************************************************
-                           KLEENE STATE
+                          KleeneState
 *****************************************************************/
 
 class KleeneState {
 public:
-/*****************************************************************
-                State creation and adoption
-*****************************************************************/
-
     KleeneState() :
         state(KleeneState::stateSize), stateFluentHashKeys(KleeneState::numberOfStateFluentHashKeys, 0), hashKey(-1) {}
 
@@ -371,10 +328,6 @@ public:
             state[index].insert(origin[index]);
         }
     }
-
-/*****************************************************************
-      Calculation of state and state fluent hash keys
-*****************************************************************/
 
     // Calculate the hash key of a KleeneState
     static void calcStateHashKey(KleeneState& state) {

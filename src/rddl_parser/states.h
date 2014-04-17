@@ -6,6 +6,7 @@
 #include <set>
 #include <cassert>
 
+#include "probability_distribution.h"
 #include "utils/math_utils.h"
 
 class ActionFluent;
@@ -46,8 +47,120 @@ struct State {
         }
     };
 
+    // struct StateCompare {
+    //     bool operator() (State const& lhs, State const& rhs) const {
+    //         for(unsigned int i = 0; i < lhs.state.size(); ++i) {
+    //             if(MathUtils::doubleIsSmaller(rhs.state[i], lhs.state[i])) {
+    //                 return false;
+    //             } else if(MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
+    //                 return true;
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // };
+
     std::vector<double> state;
 };
+
+/*****************************************************************
+                            PDState
+*****************************************************************/
+
+struct PDState {
+    PDState(int stateSize) :
+        state(stateSize, DiscretePD()) {}
+
+    DiscretePD& operator[](int const& index) {
+        assert(index < state.size());
+        return state[index];
+    }
+
+    DiscretePD const& operator[](int const& index) const {
+        assert(index < state.size());
+        return state[index];
+    }
+
+    struct PDStateSort {
+        bool operator() (PDState const& lhs, PDState const& rhs) const {
+            for(unsigned int i = 0; i < lhs.state.size(); ++i) {
+                if(rhs.state[i] < lhs.state[i]) {
+                    return false;
+                } else if(lhs.state[i] < rhs.state[i]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+
+    std::vector<DiscretePD> state;
+};
+
+/*****************************************************************
+                          KleeneState
+*****************************************************************/
+
+class KleeneState {
+public:
+
+    KleeneState(int stateSize) :
+        state(stateSize) {}
+
+    KleeneState(State const& origin) :
+        state(origin.state.size()){
+
+        for(unsigned int index = 0; index < state.size(); ++index) {
+            state[index].insert(origin[index]);
+        }
+    }
+
+    std::set<double>& operator[](int const& index) {
+        assert(index < state.size());
+        return state[index];
+    }
+
+    std::set<double> const& operator[](int const& index) const {
+        assert(index < state.size());
+        return state[index];
+    }
+
+    bool operator==(KleeneState const& other) const {
+        assert(state.size() == other.state.size());
+        
+        for(unsigned int index = 0; index < state.size(); ++index) {
+            if(!std::equal(state[index].begin(), state[index].end(), other.state[index].begin())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // This is used to merge two KleeneStates
+    KleeneState operator|=(KleeneState const& other) {
+        assert(state.size() == other.state.size());
+
+        for(unsigned int i = 0; i < state.size(); ++i) {
+            state[i].insert(other.state[i].begin(), other.state[i].end());
+        }
+        return *this;
+    }
+
+    KleeneState const operator||(KleeneState const& other) {
+        assert(state.size() == other.state.size());
+        return KleeneState(*this) |= other;
+    }
+
+    void print(std::ostream& out) const;
+
+protected:
+    std::vector<std::set<double> > state;
+
+private:
+    KleeneState(KleeneState const& other) :
+        state(other.state) {}
+};
+
 
 /*****************************************************************
                             ActionState

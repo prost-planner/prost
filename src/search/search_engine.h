@@ -59,10 +59,7 @@ public:
 
     // Start the search engine for Q-value estimation (this is not pure virtual
     // to allow the creation of search engines for stuff like learning)
-    virtual bool estimateQValues(State const& /*_rootState*/, std::vector<int> const& /*actionsToExpand*/, std::vector<double>& /*qValues*/) {
-        assert(false);
-        return false;
-    }
+    virtual bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues) = 0;
 
 
 /*****************************************************************
@@ -265,16 +262,8 @@ public:
     ProbabilisticSearchEngine(std::string _name) :
         SearchEngine(_name) {}
 
-    // This is called initially to learn parameter values from a training set
-    void learn();
-
     // Is true if unreasonable actions where detected during learning
     static bool hasUnreasonableActions;
-
-    // Is used to make sure that the "static" part of learning (which cannot be
-    // declared static since non-static methods are called) is performed only
-    // once.
-    static bool taskAnalyzed;
 
 protected:
     // Contains state values for solved states.
@@ -445,16 +434,8 @@ public:
     DeterministicSearchEngine(std::string _name) :
         SearchEngine(_name) {}
 
-    // This is called initially to learn parameter values from a training set
-    void learn();
-
     // Is true if unreasonable actions where detected during learning
     static bool hasUnreasonableActions;
-
-    // Is used to make sure that the "static" part of learning (which cannot be
-    // declared static since non-static methods are called) is performed only
-    // once.
-    static bool taskAnalyzed;
 
 protected:
     // Contains state values for solved states.

@@ -13,6 +13,7 @@ class ActionFluent;
 class NumericConstant;
 class Object;
 class State;
+class KleeneState;
 class ActionState;
 class DiscretePD;
 
@@ -34,8 +35,9 @@ public:
 
     virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
     virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    virtual void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    virtual void print(std::ostream& out);
+    virtual void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -75,7 +77,8 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    void print(std::ostream& out);
+
+    void print(std::ostream& out) const;
 };
 
 class Object : public Parameter {
@@ -93,7 +96,8 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    void print(std::ostream& out);
+
+    void print(std::ostream& out) const;
 };
 
 class ParametrizedVariable : public LogicalExpression {
@@ -127,6 +131,8 @@ public:
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -153,8 +159,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class ActionFluent : public ParametrizedVariable {
@@ -174,8 +181,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 
     // This is used to sort ActionFluents by their name to ensure deterministic
     // behaviour
@@ -215,8 +223,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -232,7 +241,7 @@ public:
     std::vector<Parameter*> params;
     std::vector<Type*> types;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Quantifier : public LogicalExpression {
@@ -252,6 +261,8 @@ public:
         Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+
+    void print(std::ostream& out) const;
 };
 
 class Product : public Quantifier {
@@ -260,6 +271,8 @@ public:
         Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+
+    void print(std::ostream& out) const;
 };
 
 class UniversalQuantification : public Quantifier {
@@ -268,6 +281,8 @@ public:
         Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+
+    void print(std::ostream& out) const;
 };
 
 class ExistentialQuantification : public Quantifier {
@@ -276,6 +291,8 @@ public:
         Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -291,7 +308,7 @@ public:
 
     void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
                                std::set<ActionFluent*>& negativeDependentActionFluents);
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Conjunction : public Connective {
@@ -311,8 +328,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Disjunction : public Connective {
@@ -332,8 +350,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class EqualsExpression : public Connective {
@@ -355,8 +374,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class GreaterExpression : public Connective {
@@ -378,8 +398,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class LowerExpression : public Connective {
@@ -401,8 +422,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class GreaterEqualsExpression : public Connective {
@@ -424,8 +446,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class LowerEqualsExpression : public Connective {
@@ -447,8 +470,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Addition : public Connective {
@@ -468,8 +492,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Subtraction : public Connective {
@@ -491,8 +516,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Multiplication : public Connective {
@@ -514,8 +540,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class Division : public Connective {
@@ -537,8 +564,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -566,8 +594,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -585,6 +614,8 @@ public:
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* expr;
+
+    void print(std::ostream& out) const;
 };
 
 class BernoulliDistribution : public LogicalExpression {
@@ -605,8 +636,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 
     LogicalExpression* expr;
 };
@@ -631,8 +663,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 /*****************************************************************
@@ -662,8 +695,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 class MultiConditionChecker : public LogicalExpression {
@@ -688,8 +722,9 @@ public:
 
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 
-    void print(std::ostream& out);
+    void print(std::ostream& out) const;
 };
 
 #endif

@@ -57,7 +57,7 @@ public:
     void resetStats();
 
     // Printer
-    void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "");
+    void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "") const;
 
 protected:
     // Decides whether more iterations are possible and reasonable
