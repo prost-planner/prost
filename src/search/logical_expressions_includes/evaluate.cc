@@ -6,8 +6,12 @@ void LogicalExpression::evaluate(double& /*res*/, State const& /*current*/, Acti
                            Atomics
 *****************************************************************/
 
-void StateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) const {
-    res = current[index];
+void DeterministicStateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) const {
+    res = current.deterministicStateFluent(index);
+}
+
+void ProbabilisticStateFluent::evaluate(double& res, State const& current, ActionState const& /*actions*/) const {
+    res = current.probabilisticStateFluent(index);
 }
 
 void ActionFluent::evaluate(double& res, State const& /*current*/, ActionState const& actions) const {

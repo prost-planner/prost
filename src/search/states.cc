@@ -10,36 +10,55 @@
 using namespace std;
 
 void State::printCompact(ostream& out) const {
-    for(unsigned int index = 0; index < State::stateSize; ++index) {
-        out << state[index] << " ";
+    for(unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+        out << deterministicStateFluents[index] << " ";
+    }
+    out << "   ";
+    for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+        out << probabilisticStateFluents[index] << " ";
     }
     out << endl;
 }
 
 void State::print(ostream& out) const {
-    for(unsigned int index = 0; index < State::stateSize; ++index) {
-        out << SearchEngine::probCPFs[index]->name << ": ";
+    for(unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+        out << SearchEngine::deterministicCPFs[index]->name << ": ";
         //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
         //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
         //} else {
-        out << state[index] << endl;
+        out << deterministicStateFluents[index] << endl;
         //}
     }
+    out << endl;
+
+    for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+        out << SearchEngine::probabilisticCPFs[index]->name << ": ";
+        //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
+        //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
+        //} else {
+        out << probabilisticStateFluents[index] << endl;
+        //}
+    }
+
     out << "Remaining Steps: " << remSteps << endl;
     out << "StateHashKey: " << hashKey << endl;
 }
 
-void PDState::print(ostream& out) const {
-    for(unsigned int index = 0; index < State::stateSize; ++index) {
-        out << SearchEngine::probCPFs[index]->name << ": ";
-        state[index].print(out);
+void PDState::printPDState(ostream& out) const {
+    for(unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+        out << SearchEngine::deterministicCPFs[index]->name << ": " << deterministicStateFluents[index] << endl;
+    }
+
+    for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+        out << SearchEngine::probabilisticCPFs[index]->name << ": ";
+        probabilisticStateFluents[index].print(out);
     }
     out << "Remaining Steps: " << remSteps << endl;
 }
 
 void KleeneState::print(ostream& out) const {
     for(unsigned int index = 0; index < KleeneState::stateSize; ++index) {
-        out << SearchEngine::probCPFs[index]->name << ": { ";
+        out << SearchEngine::allCPFs[index]->name << ": { ";
         for(set<double>::iterator it = state[index].begin(); it != state[index].end(); ++it) {
             cout << *it << " ";
         }

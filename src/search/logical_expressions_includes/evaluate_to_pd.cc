@@ -6,8 +6,12 @@ void LogicalExpression::evaluateToPD(DiscretePD& /*res*/, State const& /*current
                            Atomics
 *****************************************************************/
 
-void StateFluent::evaluateToPD(DiscretePD& res, State const& current, ActionState const& /*actions*/) const {
-    res.assignDiracDelta(current[index]);
+void DeterministicStateFluent::evaluateToPD(DiscretePD& res, State const& current, ActionState const& /*actions*/) const {
+    res.assignDiracDelta(current.deterministicStateFluent(index));
+}
+
+void ProbabilisticStateFluent::evaluateToPD(DiscretePD& res, State const& current, ActionState const& /*actions*/) const {
+    res.assignDiracDelta(current.probabilisticStateFluent(index));
 }
 
 void ActionFluent::evaluateToPD(DiscretePD& res, State const& /*current*/, ActionState const& actions) const {

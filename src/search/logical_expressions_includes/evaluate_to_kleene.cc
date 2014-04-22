@@ -6,9 +6,14 @@ void LogicalExpression::evaluateToKleene(set<double>& /*res*/, KleeneState const
                            Atomics
 *****************************************************************/
 
-void StateFluent::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& /*actions*/) const {
+void DeterministicStateFluent::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& /*actions*/) const {
     assert(res.empty());
     res.insert(current[index].begin(), current[index].end());
+}
+
+void ProbabilisticStateFluent::evaluateToKleene(set<double>& res, KleeneState const& current, ActionState const& /*actions*/) const {
+    assert(res.empty());
+    res.insert(current[State::numberOfDeterministicStateFluents+index].begin(), current[State::numberOfDeterministicStateFluents+index].end());
 }
 
 void ActionFluent::evaluateToKleene(set<double>& res, KleeneState const& /*current*/, ActionState const& actions) const {

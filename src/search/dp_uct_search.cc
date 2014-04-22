@@ -27,14 +27,14 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
 
 DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
     // TODO: Prevent the case where nextPDState[varIndex] is deterministic
-    DiscretePD& pd = nextPDState[varIndex];
+    DiscretePD& pd = nextPDState.probabilisticStateFluent(varIndex);
     assert(pd.isWellDefined());
 
     double probSum = 1.0;
     int childIndex = 0;
  
     if(node->children.empty()) {
-        node->children.resize(SearchEngine::probCPFs[varIndex]->getDomainSize(), NULL);
+        node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), NULL);
     } else {
         // Determine the sum of the probabilities of unsolved outcomes
         for(unsigned int i = 0; i < pd.size(); ++i) {
@@ -74,7 +74,7 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, Sta
 
     assert(!node->children[childIndex]->isSolved());
 
-    nextState[varIndex] = childIndex;
+    nextState.probabilisticStateFluent(varIndex) = childIndex;
     return node->children[childIndex];
 }
 

@@ -61,7 +61,6 @@ public:
     // to allow the creation of search engines for stuff like learning)
     virtual bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues) = 0;
 
-
 /*****************************************************************
                     Calculation of reward
 *****************************************************************/
@@ -159,15 +158,20 @@ public:
     // State fluents
     static std::vector<StateFluent*> stateFluents;
 
-    // The CPFs
-    static std::vector<ConditionalProbabilityFunction*> probCPFs;
-    static std::vector<ConditionalProbabilityFunction*> detCPFs;
+    // Transition functions of state fluents
+    static std::vector<Evaluatable*> allCPFs;
+    static std::vector<DeterministicCPF*> deterministicCPFs;
+    static std::vector<ProbabilisticCPF*> probabilisticCPFs;
+
+    // Determinized transition functions of probabilistic state fluents
+    static std::vector<DeterministicCPF*> allDeterminizedCPFs;
+    static std::vector<DeterministicCPF*> determinizedCPFs;
 
     // The reward formula
     static RewardFunction* rewardCPF;
 
     // The action preconditions
-    static std::vector<Evaluatable*> actionPreconditions;
+    static std::vector<DeterministicEvaluatable*> actionPreconditions;
 
     // Is true if this planning task is deterministic
     static bool taskIsDeterministic;
@@ -184,10 +188,6 @@ public:
 
     // The number of actions (this is equal to actionStates.size())
     static int numberOfActions;
-
-    // The index of the first probabilistic variable (variables are
-    // ordered s.t. all deterministic ones come first)
-    static int firstProbabilisticVarIndex;
 
     // Since the reward is independent from the successor state, we can
     // calculate the final reward as the maximum of applying all actions in the
@@ -248,7 +248,8 @@ public:
     // Printer task
     static void printTask(std::ostream& out);
     static void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval);
-    static void printCPFInDetail(std::ostream& out, int const& index);
+    static void printDeterministicCPFInDetail(std::ostream& out, int const& index);
+    static void printProbabilisticCPFInDetail(std::ostream& out, int const& index);
     static void printRewardCPFInDetail(std::ostream& out);
     static void printActionPreconditionInDetail(std::ostream& out, int const& index);
 };
@@ -275,8 +276,12 @@ protected:
 
     // Apply action 'actionIndex' to 'current', resulting in 'next'
     void calcSuccessorState(State const& current, int const& actionIndex, PDState& next) const {
-        for(int index = 0; index < State::stateSize; ++index) {
-            SearchEngine::probCPFs[index]->evaluateToPD(next[index], current, SearchEngine::actionStates[actionIndex]);
+        for(int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+            SearchEngine::deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index), current, SearchEngine::actionStates[actionIndex]);
+        }
+
+        for(int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+            SearchEngine::probabilisticCPFs[index]->evaluate(next.probabilisticStateFluent(index), current, SearchEngine::actionStates[actionIndex]);
         }
     }
 
@@ -293,11 +298,17 @@ protected:
 
     // Apply action 'actionIndex' to 'current' and sample one outcome in 'next'
     void sampleSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        PDState pdNext(State::stateSize, next.remainingSteps());
+        PDState pdNext(next.remainingSteps());
         calcSuccessorState(current, actionIndex, pdNext);
-        for(unsigned int varIndex = 0; varIndex < State::stateSize; ++varIndex) {
-            next[varIndex] = sampleVariable(pdNext[varIndex]);
+
+        for(unsigned int varIndex = 0; varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
+            next.deterministicStateFluent(varIndex) = pdNext.deterministicStateFluent(varIndex);
         }
+
+        for(unsigned int varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
+            next.probabilisticStateFluent(varIndex) = sampleVariable(pdNext.probabilisticStateFluent(varIndex));
+        }
+
         State::calcStateFluentHashKeys(next);
         State::calcStateHashKey(next);
     }
@@ -337,12 +348,12 @@ protected:
             }
         } else {
             if(ProbabilisticSearchEngine::hasUnreasonableActions) {
-                std::map<PDState, int, PDState::CompareIgnoringRemainingSteps> childStates;
+                std::map<PDState, int, PDState::PDStateCompare> childStates;
     
                 for(unsigned int actionIndex = 0; actionIndex < SearchEngine::numberOfActions; ++actionIndex) {
                     if(actionIsApplicable(SearchEngine::actionStates[actionIndex], state)) {
                         // This action is applicable
-                        PDState nxt(State::stateSize, state.remainingSteps()-1);
+                        PDState nxt(state.remainingSteps()-1);
                         calcSuccessorState(state, actionIndex, nxt);
 
                         if(childStates.find(nxt) == childStates.end()) {
@@ -396,7 +407,7 @@ protected:
     // Calculate successor in Kleene logic
     void calcKleeneSuccessor(KleeneState const& current, int const& actionIndex, KleeneState& next) const {
         for(unsigned int i = 0; i < KleeneState::stateSize; ++i) {
-            SearchEngine::probCPFs[i]->evaluateToKleene(next[i], current, SearchEngine::actionStates[actionIndex]);
+            SearchEngine::allCPFs[i]->evaluateToKleene(next[i], current, SearchEngine::actionStates[actionIndex]);
         }
     }
 
@@ -455,9 +466,14 @@ protected:
     // Apply action 'actionIndex' in the determinization to 'current', resulting
     // in 'next'.
     void calcSuccessorState(State const& current, int const& actionIndex, State& next) const {
-        for(unsigned int index = 0; index < State::stateSize; ++index) {
-            SearchEngine::detCPFs[index]->evaluate(next[index], current, SearchEngine::actionStates[actionIndex]);
+        for(unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+            SearchEngine::deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index), current, SearchEngine::actionStates[actionIndex]);
         }
+
+        for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+            SearchEngine::determinizedCPFs[index]->evaluate(next.probabilisticStateFluent(index), current, SearchEngine::actionStates[actionIndex]);
+        }
+
         State::calcStateFluentHashKeys(next);
         State::calcStateHashKey(next);
     }
