@@ -243,8 +243,8 @@ void PlanningTask::print(ostream& out) {
     out << unreasonableActionDetected << endl;
     out << "## 1 if an unreasonable action was detected in the determinization" << endl;
     out << unreasonableActionInDeterminizationDetected << endl;
-    out << "## number of states with only one applicable reasonable action" << endl;
-    out << "## that was detected during task analysis, and the number of encountered states" << endl;
+    out << "## number of states with only one applicable reasonable action that were" << endl;
+    out << "## detected during task analysis, and the total number of encountered states" << endl;
     out << nonTerminalStatesWithUniqueAction << " " << numberOfEncounteredStates << endl;
 
     out << endl << endl << "#####ACTION FLUENTS#####" << endl;
@@ -309,7 +309,7 @@ void PlanningTask::print(ostream& out) {
         assert(CPFs[index]->head->index == index);
         assert(CPFs[index]->isProbabilistic());
         out << "## index" << endl;
-        out << index << endl;
+        out << (index - firstProbabilisticVarIndex) << endl;
         out << "## name" << endl;
         out << CPFs[index]->head->fullName << endl;
         out << "## number of values" << endl;
@@ -452,11 +452,48 @@ void PlanningTask::print(ostream& out) {
         out << endl;
     }
 
-    out << endl << "#####HASH KEYS#####" << endl;
-    for(unsigned int index = 0; index < CPFs.size(); ++index) {
+    out << endl << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << endl;
+    for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << endl;
         out << index << endl;
+        if(!stateHashKeys.empty()) {
+            out << "## state hash key (for each value in the domain)" << endl;
+            for(unsigned int valIndex = 0; valIndex < stateHashKeys[index].size(); ++valIndex) {
+                out << stateHashKeys[index][valIndex];
+                if(valIndex != stateHashKeys[index].size() - 1) {
+                    out << " ";
+                }
+            }
+        }
+        out << endl;
+
+        if(!kleeneStateHashKeyBases.empty()) {
+            out << "## kleene state hash key base" << endl;
+            out << kleeneStateHashKeyBases[index] << endl;
+        }
+
+        out << "## state fluent hash keys (first line is the number of keys)" << endl;
+        out << indexToStateFluentHashKeyMap[index].size() << endl;
+        for(unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size(); ++i) {
+            out << indexToStateFluentHashKeyMap[index][i].first << " ";
+            out << indexToStateFluentHashKeyMap[index][i].second << endl;
+        }
+
+        out << "## kleene state fluent hash keys (first line is the number of keys)" << endl;
+        out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
+        for(unsigned int i = 0; i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
+            out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
+        }
+        out << endl;
+    }
+
+    out << endl << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << endl;
+    for(unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
+        assert(CPFs[index]->head->index == index);
+        out << "## index" << endl;
+        out << (index-firstProbabilisticVarIndex) << endl;
         if(!stateHashKeys.empty()) {
             out << "## state hash key (for each value in the domain)" << endl;
             for(unsigned int valIndex = 0; valIndex < stateHashKeys[index].size(); ++valIndex) {

@@ -133,7 +133,7 @@ protected:
         currentRootNode(NULL),
         chosenOutcome(NULL),
         states(SearchEngine::horizon + 1, State()),
-        pdStates(SearchEngine::horizon, PDState(State::stateSize, -1)),
+        pdStates(SearchEngine::horizon, PDState(-1)),
         currentStateIndex(SearchEngine::horizon),
         nextStateIndex(SearchEngine::horizon - 1),
         actions(SearchEngine::horizon, -1),
@@ -597,7 +597,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
             pdStates[nextStateIndex].transferDeterministicPart(states[nextStateIndex]);
 
             // Start outcome selection with the first probabilistic variable
-            chanceNodeVarIndex = SearchEngine::firstProbabilisticVarIndex;            
+            chanceNodeVarIndex = 0;            
 
             // Continue trial with chance nodes
             futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
@@ -629,7 +629,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 template <class SearchNode>
 double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
     double futureReward;
-    assert(chanceNodeVarIndex < State::stateSize);
+    assert(chanceNodeVarIndex < State::numberOfProbabilisticStateFluents);
 
     // Select outcome (and set the variable in next state accordingly)
     chosenOutcome = selectOutcome(node, pdStates[nextStateIndex], states[nextStateIndex], chanceNodeVarIndex);
@@ -637,7 +637,7 @@ double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
     // std::cout << "Chosen Outcome of variable " << chanceNodeVarIndex << " is " << states[nextStateIndex][chanceNodeVarIndex] << std::endl;
 
     ++chanceNodeVarIndex;
-    if(chanceNodeVarIndex == State::stateSize) {
+    if(chanceNodeVarIndex == State::numberOfProbabilisticStateFluents) {
         State::calcStateFluentHashKeys(states[nextStateIndex]);
         State::calcStateHashKey(states[nextStateIndex]);
 

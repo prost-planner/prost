@@ -67,11 +67,11 @@ void ProstPlanner::init() {
         // what they actually mean, it'd be nice to re-adjust these.
         bdd_init(5000000,20000);
 
-        int* domains = new int[State::stateSize];
-        for(unsigned int index = 0; index < SearchEngine::probCPFs.size(); ++index) {
-            domains[index] = SearchEngine::probCPFs[index]->getDomainSize();
+        int* domains = new int[KleeneState::stateSize];
+        for(unsigned int index = 0; index < SearchEngine::allCPFs.size(); ++index) {
+            domains[index] = SearchEngine::allCPFs[index]->getDomainSize();
         }
-        fdd_extdomain(domains, State::stateSize);
+        fdd_extdomain(domains, KleeneState::stateSize);
     }
     cout << "...finished (" << t << ")." << endl << endl;
 
@@ -112,13 +112,17 @@ void ProstPlanner::monitorRAMUsage() {
         cachingEnabled = false;
 
         SearchEngine::cacheApplicableActions = false;
-        for(unsigned int i = 0; i < SearchEngine::probCPFs.size(); ++i) {
-            SearchEngine::probCPFs[i]->disableCaching();
+        for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
+            SearchEngine::deterministicCPFs[i]->disableCaching();
         }
-        for(unsigned int i = SearchEngine::firstProbabilisticVarIndex; i < SearchEngine::detCPFs.size(); ++i) {
-            SearchEngine::detCPFs[i]->disableCaching();
+
+        for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
+            SearchEngine::probabilisticCPFs[i]->disableCaching();
+            SearchEngine::determinizedCPFs[i]->disableCaching();
         }
+
         SearchEngine::rewardCPF->disableCaching();
+
         for(unsigned int i = 0; i < SearchEngine::actionPreconditions.size(); ++i) {
             SearchEngine::actionPreconditions[i]->disableCaching();
         }
@@ -129,7 +133,15 @@ void ProstPlanner::monitorRAMUsage() {
 }
 
 void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
-    currentState = State(nextStateVec, remainingSteps);
+    vector<double> nextValuesOfDeterministicStateFluents;
+    for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
+        nextValuesOfDeterministicStateFluents.push_back(nextStateVec[i]);
+    }
+    vector<double> nextValuesOfProbabilisticStateFluents;
+    for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
+        nextValuesOfProbabilisticStateFluents.push_back(nextStateVec[i+State::numberOfDeterministicStateFluents]);
+    }
+    currentState = State(nextValuesOfDeterministicStateFluents, nextValuesOfProbabilisticStateFluents, remainingSteps);
     State::calcStateFluentHashKeys(currentState);
     State::calcStateHashKey(currentState);
 

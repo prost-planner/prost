@@ -29,18 +29,35 @@ public:
 
 class StateFluent : public LogicalExpression {
 public:
-    StateFluent(int _index, std::string _name, std::vector<std::string> _values) :
-        index(_index), name(_name), values(_values) {}
-
     int index;
     std::string name;
     std::vector<std::string> values;
 
+    void print(std::ostream& out) const;
+
+protected:
+    StateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+        index(_index), name(_name), values(_values) {}
+};
+
+class DeterministicStateFluent : public StateFluent {
+public:
+    DeterministicStateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+        StateFluent(_index, _name, _values) {}
+
     void evaluate(double& res, State const& current, ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+};
 
-    void print(std::ostream& out) const;
+class ProbabilisticStateFluent : public StateFluent {
+public:
+    ProbabilisticStateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+        StateFluent(_index, _name, _values) {}
+
+    void evaluate(double& res, State const& current, ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
 };
 
 class ActionFluent : public LogicalExpression {

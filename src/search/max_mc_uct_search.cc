@@ -26,11 +26,11 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
 MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(SearchEngine::probCPFs[varIndex]->getDomainSize(), NULL);
+        node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), NULL);
     }
 
-    int childIndex = (int)sampleVariable(nextPDState[varIndex]);
-    nextState[varIndex] = childIndex;
+    int childIndex = (int)sampleVariable(nextPDState.probabilisticStateFluent(varIndex));
+    nextState.probabilisticStateFluent(varIndex) = childIndex;
 
     if(!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();

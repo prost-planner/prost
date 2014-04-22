@@ -8,7 +8,8 @@
 class PlanningTask;
 class ActionFluent;
 class StateFluent;
-class Evaluatable;
+class DeterministicEvaluatable;
+class ProbabilisticEvaluatable;
 class ConditionalProbabilityFunction;
 class RewardFunction;
 class ActionState;
@@ -27,17 +28,18 @@ private:
 
     inline void parseActionFluent(std::stringstream& desc) const;
     inline void parseCPF(std::stringstream& desc,
-                         std::vector<std::string>& formulas,
-                         std::vector<std::string>& detFormulas,
+                         std::vector<std::string>& deterministicFormulas,
+                         std::vector<std::string>& probabilisticFormulas,
+                         std::vector<std::string>& determinizedFormulas,
                          bool const& isProbabilistic) const;
     inline void parseRewardFunction(std::stringstream& desc) const;
     inline void parseActionPrecondition(std::stringstream& desc) const;
     inline void parseCachingType(std::stringstream& desc,
-                                 Evaluatable* probEval,
-                                 Evaluatable* detEval) const;
+                                 ProbabilisticEvaluatable* probEval,
+                                 DeterministicEvaluatable* detEval) const;
     inline void parseActionHashKeyMap(std::stringstream& desc,
-                                      Evaluatable* probEval,
-                                      Evaluatable* detEval) const;
+                                      ProbabilisticEvaluatable* probEval,
+                                      DeterministicEvaluatable* detEval) const;
     inline void parseActionState(std::stringstream& desc) const;
     inline void parseHashKeys(std::stringstream& desc) const;
     inline void parseTrainingSet(std::stringstream& desc) const;
