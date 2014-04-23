@@ -129,13 +129,12 @@ public:
 
 protected:
     THTS<SearchNode>(std::string _name) :
-    ProbabilisticSearchEngine(_name),
+        ProbabilisticSearchEngine(_name),
         currentRootNode(NULL),
         chosenOutcome(NULL),
-        states(SearchEngine::horizon + 1, State()),
-        pdStates(SearchEngine::horizon, PDState(-1)),
+        states(SearchEngine::horizon+1),
         currentStateIndex(SearchEngine::horizon),
-        nextStateIndex(SearchEngine::horizon - 1),
+        nextStateIndex(SearchEngine::horizon-1),
         actions(SearchEngine::horizon, -1),
         currentActionIndex(nextStateIndex),
         currentTrial(0),
@@ -145,7 +144,7 @@ protected:
         terminationMethod(THTS<SearchNode>::TIME), 
         timeout(1.0),
         maxNumberOfTrials(0),
-        numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
+        numberOfNewDecisionNodesPerTrial(SearchEngine::horizon+1),
         numberOfRuns(0),
         cacheHits(0),
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
@@ -169,7 +168,7 @@ protected:
     virtual int selectAction(SearchNode* node) = 0;
 
     // Outcome selection
-    virtual SearchNode* selectOutcome(SearchNode* node, PDState& nextPDState, State& nextState, int& varIndex) = 0;
+    virtual SearchNode* selectOutcome(SearchNode* node, PDState& nextState, int& varIndex) = 0;
 
     // Trial length determination
     virtual bool continueTrial(SearchNode* /*node*/) {
@@ -217,8 +216,7 @@ private:
     SearchNode* chosenOutcome;
 
     // States used in trials
-    std::vector<State> states;
-    std::vector<PDState> pdStates;
+    std::vector<PDState> states;
     int currentStateIndex;
     int nextStateIndex;
 
@@ -348,23 +346,23 @@ void THTS<SearchNode>::initRound() {
 
 template <class SearchNode>
 void THTS<SearchNode>::initStep(State const& _rootState) {
+    PDState rootState(_rootState);
     // Adjust maximal search depth and set root state
-    if(_rootState.remainingSteps() > maxSearchDepth) {
-        ignoredSteps = _rootState.remainingSteps() - maxSearchDepth;
+    if(rootState.remainingSteps() > maxSearchDepth) {
+        ignoredSteps = rootState.remainingSteps() - maxSearchDepth;
         maxSearchDepthForThisStep = maxSearchDepth;
-        states[maxSearchDepthForThisStep].setTo(_rootState);
+        states[maxSearchDepthForThisStep].setTo(rootState);
         states[maxSearchDepthForThisStep].remainingSteps() = maxSearchDepthForThisStep;
     } else {
         ignoredSteps = 0;
-        maxSearchDepthForThisStep = _rootState.remainingSteps();
-        states[maxSearchDepthForThisStep].setTo(_rootState);
+        maxSearchDepthForThisStep = rootState.remainingSteps();
+        states[maxSearchDepthForThisStep].setTo(rootState);
     }
     assert(states[maxSearchDepthForThisStep].remainingSteps() == maxSearchDepthForThisStep);
 
     currentStateIndex = maxSearchDepthForThisStep;
     nextStateIndex = maxSearchDepthForThisStep - 1;
     states[nextStateIndex].reset(nextStateIndex);
-    pdStates[nextStateIndex].reset(nextStateIndex);
 
     // Reset step dependent counter
     currentTrial = 0;
@@ -382,7 +380,6 @@ void THTS<SearchNode>::initTrial() {
     currentStateIndex = maxSearchDepthForThisStep;
     nextStateIndex = maxSearchDepthForThisStep - 1;
     states[nextStateIndex].reset(nextStateIndex);
-    pdStates[nextStateIndex].reset(nextStateIndex);
 
     // Reset trial dependent counter
     initializedDecisionNodes = 0;
@@ -393,7 +390,6 @@ void THTS<SearchNode>::initTrialStep() {
     --currentStateIndex;
     --nextStateIndex;
     states[nextStateIndex].reset(nextStateIndex);
-    pdStates[nextStateIndex].reset(nextStateIndex);
 }
 
 /******************************************************************
@@ -547,9 +543,8 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         initTrialStep();
     }
 
-    // std::cout << "Current state is " << std::endl;
-    // task->printState(std::cout, states[currentStateIndex]);
-    // std::cout << std::endl;
+    // std::cout << "Current state is: ";
+    // states[currentStateIndex].printCompact(std::cout);
 
     // Call initialization if necessary
     if(node->children.empty()) {
@@ -575,9 +570,8 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         assert(node->children[actions[currentActionIndex]]);
         assert(!node->children[actions[currentActionIndex]]->isSolved());
 
-        // std::cout << "Chosen action is ";
-        // task->printAction(std::cout, actions[currentActionIndex]);
-        // std::cout << std::endl;
+        // std::cout << "Chosen action is: ";
+        // SearchEngine::actionStates[actions[currentActionIndex]].printCompact(std::cout);
 
         if(SearchEngine::taskIsDeterministic) {
             // This task is deterministic -> there are no chance nodes and the
@@ -588,13 +582,10 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
             futureReward = visitDecisionNode(node->children[actions[currentActionIndex]]);
         } else {
             // Sample successor state
-            calcSuccessorState(states[currentStateIndex], actions[currentActionIndex], pdStates[nextStateIndex]);
+            calcSuccessorState(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
 
             // std::cout << "Sampled PDState is " << std::endl;
             // task->printPDState(std::cout, pdStates[nextStateIndex]);
-
-            // Transfer deterministic part of pdState to next state
-            pdStates[nextStateIndex].transferDeterministicPart(states[nextStateIndex]);
 
             // Start outcome selection with the first probabilistic variable
             chanceNodeVarIndex = 0;            
@@ -632,7 +623,7 @@ double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
     assert(chanceNodeVarIndex < State::numberOfProbabilisticStateFluents);
 
     // Select outcome (and set the variable in next state accordingly)
-    chosenOutcome = selectOutcome(node, pdStates[nextStateIndex], states[nextStateIndex], chanceNodeVarIndex);
+    chosenOutcome = selectOutcome(node, states[nextStateIndex], chanceNodeVarIndex);
 
     // std::cout << "Chosen Outcome of variable " << chanceNodeVarIndex << " is " << states[nextStateIndex][chanceNodeVarIndex] << std::endl;
 

@@ -112,7 +112,7 @@ protected:
     void initializeDecisionNodeChild(DPUCTNode* node, unsigned int const& actionIndex, double const& initialQValue);
 
     // Outcome selection
-    DPUCTNode* selectOutcome(DPUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex);
+    DPUCTNode* selectOutcome(DPUCTNode* node, PDState& nextState, int& varIndex);
 
     // Backup functions
     void backupDecisionNodeLeaf(DPUCTNode* node, double const& immReward, double const& futReward);

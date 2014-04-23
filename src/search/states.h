@@ -42,7 +42,7 @@ public:
         stateFluentHashKeys(other.stateFluentHashKeys),
         hashKey(other.hashKey) {}
 
-    void setTo(State const& other) {
+    virtual void setTo(State const& other) {
         for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
             deterministicStateFluents[i] = other.deterministicStateFluents[i];
         }
@@ -59,7 +59,7 @@ public:
         hashKey = other.hashKey;
     }
 
-    void reset(int _remSteps) {
+    virtual void reset(int _remSteps) {
         for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
             deterministicStateFluents[i] = 0.0;
         }
@@ -287,73 +287,40 @@ struct ActionState {
                                PDState
 *****************************************************************/
 
-class PDState {
+class PDState : public State {
 public:
-    PDState(std::vector<double> _deterministicStateFluents, std::vector<DiscretePD> _probabilisticStateFluents, int const& _remSteps) :
-        deterministicStateFluents(_deterministicStateFluents),
-        probabilisticStateFluents(_probabilisticStateFluents),
-        remSteps(_remSteps) {}
+    PDState(int const& _remSteps = -1) :
+        State(_remSteps),
+        probabilisticStateFluentsAsPD(State::numberOfProbabilisticStateFluents, DiscretePD()) {}
 
-    PDState(PDState const& other) :
-        deterministicStateFluents(other.deterministicStateFluents),
-        probabilisticStateFluents(other.probabilisticStateFluents),
-        remSteps(other.remSteps) {}
+    PDState(State const& origin) :
+        State(origin),
+        probabilisticStateFluentsAsPD(State::numberOfProbabilisticStateFluents, DiscretePD()) {}
 
-    PDState(int const& _remSteps) :
-        deterministicStateFluents(State::numberOfDeterministicStateFluents, 0.0),
-        probabilisticStateFluents(State::numberOfProbabilisticStateFluents,DiscretePD()),
-        remSteps(_remSteps) {}
-
-    double& deterministicStateFluent(int const& index) {
-        assert(index < deterministicStateFluents.size());
-        return deterministicStateFluents[index];
+    DiscretePD& probabilisticStateFluentAsPD(int const& index) {
+        assert(index < probabilisticStateFluentsAsPD.size());
+        return probabilisticStateFluentsAsPD[index];
     }
 
-    double const& deterministicStateFluent(int const& index) const {
-        assert(index < deterministicStateFluents.size());
-        return deterministicStateFluents[index];
-    }
-
-    DiscretePD& probabilisticStateFluent(int const& index) {
-        assert(index < probabilisticStateFluents.size());
-        return probabilisticStateFluents[index];
-    }
-
-    DiscretePD const& probabilisticStateFluent(int const& index) const {
-        assert(index < probabilisticStateFluents.size());
-        return probabilisticStateFluents[index];
-    }
-
-    int const& remainingSteps() const {
-        return remSteps;
-    }
-
-    int& remainingSteps() {
-        return remSteps;
+    DiscretePD const& probabilisticStateFluentAsPD(int const& index) const {
+        assert(index < probabilisticStateFluentsAsPD.size());
+        return probabilisticStateFluentsAsPD[index];
     }
 
     void reset(int _remSteps) {
-        for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
-            deterministicStateFluents[i] = 0.0;
-        }
+        State::reset(_remSteps);
+
         for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-            probabilisticStateFluents[i].reset();
+            probabilisticStateFluentsAsPD[i].reset();
         }
-        remSteps = _remSteps;
     }
 
-    void transferDeterministicPart(State& detState) {
-        assert(remSteps == detState.remainingSteps());
+    void setTo(PDState const& other) {
+        State::setTo(other);
 
-        for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
-            detState.deterministicStateFluents[i] = deterministicStateFluents[i];
+        for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
+            probabilisticStateFluentsAsPD[i] = other.probabilisticStateFluentsAsPD[i];
         }
-
-        // for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-        //     if(probabilisticStateFluents[i].isDeterministic()) {
-        //         detState.probabilisticStateFluents[i] = probabilisticStateFluents[i].values[0];
-        //     }
-        // }
     }
 
     // Remaining steps are not considered here!
@@ -370,9 +337,9 @@ public:
             }
 
             for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-                if(rhs.probabilisticStateFluents[i] < lhs.probabilisticStateFluents[i]) {
+                if(rhs.probabilisticStateFluentsAsPD[i] < lhs.probabilisticStateFluentsAsPD[i]) {
                     return false;
-                } else if(lhs.probabilisticStateFluents[i] < rhs.probabilisticStateFluents[i]) {
+                } else if(lhs.probabilisticStateFluentsAsPD[i] < rhs.probabilisticStateFluentsAsPD[i]) {
                     return true;
                 }
             }
@@ -393,10 +360,7 @@ public:
     void printPDState(std::ostream& out) const;
 
 protected:
-    std::vector<double> deterministicStateFluents;
-    std::vector<DiscretePD> probabilisticStateFluents;
-
-    int remSteps;
+    std::vector<DiscretePD> probabilisticStateFluentsAsPD;
 };
 
 /*****************************************************************

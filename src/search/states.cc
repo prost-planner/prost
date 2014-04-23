@@ -51,7 +51,7 @@ void PDState::printPDState(ostream& out) const {
 
     for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
         out << SearchEngine::probabilisticCPFs[index]->name << ": ";
-        probabilisticStateFluents[index].print(out);
+        probabilisticStateFluentsAsPD[index].print(out);
     }
     out << "Remaining Steps: " << remSteps << endl;
 }

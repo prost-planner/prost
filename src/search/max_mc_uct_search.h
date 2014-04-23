@@ -99,7 +99,7 @@ protected:
     void initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned int const& index, double const& initialQValue);
 
     // Outcome selection
-    MaxMCUCTNode* selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex);
+    MaxMCUCTNode* selectOutcome(MaxMCUCTNode* node, PDState& nextState, int& varIndex);
 
     // Backup functions
     void backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& immReward, double const& futReward);
