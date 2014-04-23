@@ -281,7 +281,7 @@ protected:
         }
 
         for(int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
-            SearchEngine::probabilisticCPFs[index]->evaluate(next.probabilisticStateFluent(index), current, SearchEngine::actionStates[actionIndex]);
+            SearchEngine::probabilisticCPFs[index]->evaluate(next.probabilisticStateFluentAsPD(index), current, SearchEngine::actionStates[actionIndex]);
         }
     }
 
@@ -306,7 +306,7 @@ protected:
         }
 
         for(unsigned int varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
-            next.probabilisticStateFluent(varIndex) = sampleVariable(pdNext.probabilisticStateFluent(varIndex));
+            next.probabilisticStateFluent(varIndex) = sampleVariable(pdNext.probabilisticStateFluentAsPD(varIndex));
         }
 
         State::calcStateFluentHashKeys(next);

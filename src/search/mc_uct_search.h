@@ -83,7 +83,7 @@ protected:
     void initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& index, double const& initialQValue);
 
     // Outcome selection
-    MCUCTNode* selectOutcome(MCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex);
+    MCUCTNode* selectOutcome(MCUCTNode* node, PDState& nextState, int& varIndex);
 
     // Backup functions
     void backupDecisionNodeLeaf(MCUCTNode* node, double const& immReward, double const& futReward) {

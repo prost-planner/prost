@@ -15,7 +15,7 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
-    // SearchEngine::printAction(cout, actionIndex);
+    // SearchEngine::actionStates[actionIndex].printCompact(cout);
     // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
     // node->children[actionIndex]->print(cout);
     // cout << endl;
@@ -25,9 +25,9 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node, unsigned int cons
                          Outcome selection
 ******************************************************************/
 
-DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextState, int& varIndex) {
     // TODO: Prevent the case where nextPDState[varIndex] is deterministic
-    DiscretePD& pd = nextPDState.probabilisticStateFluent(varIndex);
+    DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
     double probSum = 1.0;

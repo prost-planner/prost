@@ -14,22 +14,24 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned in
     node->numberOfVisits += numberOfInitialVisits;
     node->futureReward = std::max(node->futureReward, node->children[actionIndex]->getExpectedRewardEstimate());
 
-    // cout << "initializing child ";
-    // SearchEngine::printAction(cout,index);
-    // cout << " with " << initialQValue << " leading to init of " << node->children[index]->accumulatedReward << endl;
+    // cout << "initialized child ";
+    // SearchEngine::actionStates[actionIndex].printCompact(cout);
+    // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
+    // node->children[actionIndex]->print(cout);
+    // cout << endl;
 }
 
 /******************************************************************
                          Outcome selection
 ******************************************************************/
 
-MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextPDState, State& nextState, int& varIndex) {
+MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node, PDState& nextState, int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
         node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), NULL);
     }
 
-    int childIndex = (int)sampleVariable(nextPDState.probabilisticStateFluent(varIndex));
+    int childIndex = (int)sampleVariable(nextState.probabilisticStateFluentAsPD(varIndex));
     nextState.probabilisticStateFluent(varIndex) = childIndex;
 
     if(!node->children[childIndex]) {
