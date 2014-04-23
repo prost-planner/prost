@@ -1,0 +1,98 @@
+#ifndef ITERATIVE_DEEPENING_SEARCH_H
+#define ITERATIVE_DEEPENING_SEARCH_H
+
+// Implements an iterative deepending search engine. This was used as
+// initialization for UCT in IPPC 2011 and is described in the paper
+// by Keller and Eyerich (2012).
+
+#include "search_engine.h"
+#include "states.h"
+
+#include "utils/timer.h"
+
+#include <map>
+
+class ProstPlanner;
+class DepthFirstSearch;
+
+class IterativeDeepeningSearch : public DeterministicSearchEngine {
+public:
+    IterativeDeepeningSearch();
+
+    // Set parameters from command line
+    bool setValueFromString(std::string& param, std::string& value);
+
+    // This is called when caching is disabled because memory becomes sparse.
+    void disableCaching();
+
+    // This is called initially to learn parameter values from a random training
+    // set.
+    void learn();
+
+    // Start the search engine for Q-value estimation
+    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+
+    // Parameter setter
+    void setMaxSearchDepth(int _maxSearchDepth);
+
+    virtual void setTerminationTimeout(double _terminationTimeout) {
+        terminationTimeout = _terminationTimeout;
+    }
+
+    virtual void setStrictTerminationTimeout(double _strictTerminationTimeout) {
+        strictTerminationTimeout = _strictTerminationTimeout;
+    }
+
+    virtual void setTerminateWithReasonableAction(bool _terminateWithReasonableAction) {
+        terminateWithReasonableAction = _terminateWithReasonableAction;
+    }
+
+    virtual void setMinSearchDepth(int _minSearchDepth) {
+        minSearchDepth = _minSearchDepth;
+    }
+
+    virtual void setCachingEnabled(bool _cachingEnabled);
+
+    // Reset statistic variables
+    void resetStats();
+
+    // Printer
+    void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "") const;
+
+protected:
+    // Decides whether more iterations are possible and reasonable
+    bool moreIterations(std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+
+    // The state that is given iteratively to the DFS engine
+    State currentState;
+
+    // Learning related variables
+    bool isLearning;
+    std::vector<std::vector<double> > elapsedTime;
+
+    // Timer related variables
+    Timer timer;
+    double time;
+
+    // The depth first search engine
+    DepthFirstSearch* dfs;
+
+    // The number of remaining steps for this step
+    int maxSearchDepthForThisStep;
+
+    // Parameter
+    double terminationTimeout;
+    double strictTerminationTimeout;
+    bool terminateWithReasonableAction;
+    int minSearchDepth;
+
+    // Statistics
+    int accumulatedSearchDepth;
+    int cacheHits;
+    int numberOfRuns;
+
+    // Caching
+    static std::map<State, std::vector<double>, State::CompareIgnoringRemainingSteps> rewardCache;
+};
+
+#endif
