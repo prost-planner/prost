@@ -137,7 +137,11 @@ void TaskAnalyzer::detectUnreasonableActionsInDeterminization(State const& curre
             // This action is applicable
             State nxt(task->CPFs.size());
             for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-                task->CPFs[i]->formula->evaluate(nxt[i], current, task->actionStates[actionIndex]);
+                if(task->CPFs[i]->determinization) {
+                    task->CPFs[i]->determinization->evaluate(nxt[i], current, task->actionStates[actionIndex]);
+                } else {
+                    task->CPFs[i]->formula->evaluate(nxt[i], current, task->actionStates[actionIndex]);
+                }
             }
 
             if(childStates.find(nxt) == childStates.end()) {

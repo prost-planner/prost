@@ -332,7 +332,7 @@ void PlanningTask::print(ostream& out) {
         out << "## caching type " << endl;
         out << CPFs[index]->cachingType << endl;
         if(CPFs[index]->cachingType == "VECTOR") {
-            out << "## precomputed results (of determinization)" << endl;
+            out << "## precomputed results (key - determinization - size of distribution - value-probability pairs)" << endl;
             out << CPFs[index]->precomputedResults.size() << endl;
             for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
                 out << res << " " << CPFs[index]->precomputedResults[res] << " " << CPFs[index]->precomputedPDResults[res].values.size();
