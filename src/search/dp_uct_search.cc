@@ -104,12 +104,11 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
         ++node->numberOfVisits;
     }
 
-    // set best child dependent values to noop child first
-    node->futureReward = node->children[0]->getExpectedRewardEstimate();
-    node->solved = node->children[0]->solved;
 
-    // then check for better child
-    for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
+    // Propagate values from best child
+    node->futureReward = -numeric_limits<double>::max();
+    node->solved = true;
+    for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex]) {
             node->solved &= node->children[childIndex]->solved;
             node->futureReward = std::max(node->futureReward, node->children[childIndex]->getExpectedRewardEstimate());

@@ -23,10 +23,12 @@ void ParameterList::print(ostream& out) const {
 
 void ActionFluent::print(ostream& out) const {
     out << "$a(" << index << ")";
+    //out << fullName;
 }
 
 void StateFluent::print(ostream& out) const {
     out << "$s(" << index << ")";
+    //out << fullName;
 }
 
 void ParametrizedVariable::print(ostream& out) const {
@@ -39,6 +41,7 @@ void ParametrizedVariable::print(ostream& out) const {
 
 void NumericConstant::print(ostream& out) const {
     out << "$c(" << value << ")";
+    //out << value;
 }
 
 void Object::print(ostream& out) const {

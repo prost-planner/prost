@@ -326,8 +326,6 @@ public:
     // Remaining steps are not considered here!
     struct PDStateCompare {
         bool operator() (PDState const& lhs, PDState const& rhs) const {
-            assert(lhs.state.size() == rhs.state.size());
-
             for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
                 if(MathUtils::doubleIsSmaller(rhs.deterministicStateFluents[i], lhs.deterministicStateFluents[i])) {
                     return false;

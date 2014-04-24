@@ -64,10 +64,9 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node, double const& immRew
         ++node->numberOfVisits;
     }
 
-    // set best child dependent values to noop child first
-    node->futureReward = node->children[0]->getExpectedRewardEstimate();
-
-    for(unsigned int childIndex = 1; childIndex < node->children.size(); ++childIndex) {
+    // Propagate values from best child
+    node->futureReward = -numeric_limits<double>::max();
+    for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex]) {
             node->futureReward = std::max(node->futureReward, node->children[childIndex]->getExpectedRewardEstimate());
         }

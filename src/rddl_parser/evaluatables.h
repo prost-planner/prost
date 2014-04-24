@@ -79,7 +79,7 @@ struct Evaluatable {
     // and computed within states).
     void initializeHashKeys(PlanningTask* task);
     long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
-    void calculateActionHashKey(std::vector<ActionState> const& actionStates, ActionState const& action, long& nextKey);
+    bool calculateActionHashKey(std::vector<ActionState> const& actionStates, ActionState const& action, long& nextKey);
     long getActionHashKey(std::vector<ActionState> const& actionStates, std::vector<ActionFluent*>& scheduledActions);
 
     void initializeStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,

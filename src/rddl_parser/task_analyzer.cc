@@ -39,29 +39,6 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeo
     createTrainingSet(numberOfStates);
 }
 
-void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
-    cout << "Creating training set with " << encounteredStates.size() << " candidates." << endl;
-    if(encounteredStates.size() < numberOfStates) {
-        task->trainingSet = encounteredStates;
-    } else {
-        // We want the initial state to be part of the training set
-        State initialState = State(task->CPFs);
-        task->trainingSet.insert(initialState);
-        assert(encounteredStates.find(initialState) != encounteredStates.end());
-        encounteredStates.erase(initialState);
-
-        // Then include states at random until the size of the trainingSet is as
-        // desired
-        while(task->trainingSet.size() != numberOfStates) {
-            int randNum = (std::rand() % encounteredStates.size());
-            set<State, State::StateSort>::const_iterator it = encounteredStates.begin();
-            std::advance(it, randNum);
-            task->trainingSet.insert(*it);
-            encounteredStates.erase(it);
-        }
-    }
-}
-
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next, double& reward) const {
     if(encounteredStates.find(current) != encounteredStates.end()) {
         // We have already seen this state so it won't provide new information
@@ -266,5 +243,25 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
     return false;
 }
 
+void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
+    cout << "Creating training set with " << encounteredStates.size() << " candidates." << endl;
+    if(encounteredStates.size() < numberOfStates) {
+        task->trainingSet = encounteredStates;
+    } else {
+        // We want the initial state to be part of the training set
+        State initialState = State(task->CPFs);
+        task->trainingSet.insert(initialState);
+        assert(encounteredStates.find(initialState) != encounteredStates.end());
+        encounteredStates.erase(initialState);
 
-
+        // Then include states at random until the size of the trainingSet is as
+        // desired
+        while(task->trainingSet.size() != numberOfStates) {
+            int randNum = (std::rand() % encounteredStates.size());
+            set<State, State::StateSort>::const_iterator it = encounteredStates.begin();
+            std::advance(it, randNum);
+            task->trainingSet.insert(*it);
+            encounteredStates.erase(it);
+        }
+    }
+}

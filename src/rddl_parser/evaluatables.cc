@@ -69,14 +69,25 @@ void Evaluatable::initializeHashKeys(PlanningTask* task) {
 long Evaluatable::initializeActionHashKeys(vector<ActionState> const& actionStates) {
     long firstStateFluentHashKeyBase = 1;
     actionHashKeyMap = vector<long>(actionStates.size(), 0);
-
-    for(unsigned int j =  0; j < actionStates.size(); ++j) {
-        calculateActionHashKey(actionStates, actionStates[j], firstStateFluentHashKeyBase);
+    bool dependsOnAllActions = true;
+    for(unsigned int actionIndex =  0; actionIndex < actionStates.size(); ++actionIndex) {
+        dependsOnAllActions &= calculateActionHashKey(actionStates, actionStates[actionIndex], firstStateFluentHashKeyBase);
+    }
+    if(dependsOnAllActions) {
+        // If an action hash key is assigned to all actions, the key '0' is
+        // unused -> decrease all keys by 1 (otherwise, there are 'gaps' in the
+        // list of precomputed results). Note that this is only possible if
+        // 'noop' is not prohibited by an action precondition.
+        for(unsigned int i = 0; i < actionHashKeyMap.size(); ++i) {
+            assert(actionHashKeyMap[i] > 0);
+            --actionHashKeyMap[i];
+        }
+        --firstStateFluentHashKeyBase;
     }
     return firstStateFluentHashKeyBase;
 }
 
-void Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates, ActionState const& action, long& nextKey) {
+bool Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates, ActionState const& action, long& nextKey) {
     vector<ActionFluent*> depActs;
     for(unsigned int i = 0; i < action.scheduledActionFluents.size(); ++i) {
         if(dependentActionFluents.find(action.scheduledActionFluents[i]) != dependentActionFluents.end()) {
@@ -88,16 +99,20 @@ void Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates
         if(depActs.size() == action.scheduledActionFluents.size()) {
             actionHashKeyMap[action.index] = nextKey;
             ++nextKey;
+            return true;
         } else {
             long key = getActionHashKey(actionStates, depActs);
             if(key != -1) {
                 actionHashKeyMap[action.index] = key;
+                return true;
             } else {
                 actionHashKeyMap[action.index] = nextKey;
                 ++nextKey;
+                return true;
             }
         }
     }
+    return false;
 }
     
 long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates, vector<ActionFluent*>& scheduledActions) {

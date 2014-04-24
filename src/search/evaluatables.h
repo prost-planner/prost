@@ -210,7 +210,7 @@ public:
             stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
 
             assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
-            assert(stateHashKey < pdEvaluationCacheVector.size());
+            assert(stateHashKey < evaluationCacheVector.size());
             assert(!evaluationCacheVector[stateHashKey].isUndefined());
 
             res = evaluationCacheVector[stateHashKey];
