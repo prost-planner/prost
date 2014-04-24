@@ -429,7 +429,9 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
     // Start the main loop that starts trials until some termination criterion
     // is fullfilled
     while(moreTrials()) {
-        // std::cout << "Trial " << (currentTrial+1) << std::endl;
+        // std::cout << "---------------------------------------------------------" << std::endl;
+        // std::cout << "TRIAL " << (currentTrial+1) << std::endl;
+        // std::cout << "---------------------------------------------------------" << std::endl;
         initTrial();
         visitDecisionNode(currentRootNode);
         ++currentTrial;
@@ -440,7 +442,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState, std::vector<
         //         currentRootNode->children[i]->print(std::cout, "  ");
         //     }
         // }
-        // assert(currentTrial != 8);
+        // assert(currentTrial != 12);
     }
 
     double stateValue = -std::numeric_limits<double>::max();
@@ -543,8 +545,8 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         initTrialStep();
     }
 
-    // std::cout << "Current state is: ";
-    // states[currentStateIndex].printCompact(std::cout);
+    // std::cout << std::endl << std::endl << "Current state is: " << std::endl;
+    // states[currentStateIndex].print(std::cout);
 
     // Call initialization if necessary
     if(node->children.empty()) {
@@ -572,6 +574,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 
         // std::cout << "Chosen action is: ";
         // SearchEngine::actionStates[actions[currentActionIndex]].printCompact(std::cout);
+        // std::cout << std::endl;
 
         if(SearchEngine::taskIsDeterministic) {
             // This task is deterministic -> there are no chance nodes and the
@@ -664,12 +667,12 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     for(unsigned int i = 0; i < node->children.size(); ++i) {
         if(actionsToExpand[i] == i) {
             // std::cout << "Initialized child ";
-            // task->printAction(std::cout, i);
+            // SearchEngine::actionStates[i].printCompact(std::cout);
             // std::cout << " with " << initialQValues[i] << std::endl;
             initializeDecisionNodeChild(node, i, initialQValues[i]);
         }//  else {
         //     std::cout << "Inapplicable: ";
-        //     task->printAction(std::cout, i);
+        //     SearchEngine::actionStates[i].printCompact(std::cout);
         //     std::cout << std::endl;
         // }
     }
