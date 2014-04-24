@@ -47,19 +47,6 @@ struct State {
         }
     };
 
-    // struct StateCompare {
-    //     bool operator() (State const& lhs, State const& rhs) const {
-    //         for(unsigned int i = 0; i < lhs.state.size(); ++i) {
-    //             if(MathUtils::doubleIsSmaller(rhs.state[i], lhs.state[i])) {
-    //                 return false;
-    //             } else if(MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
-    //                 return true;
-    //             }
-    //         }
-    //         return false;
-    //     }
-    // };
-
     std::vector<double> state;
 };
 

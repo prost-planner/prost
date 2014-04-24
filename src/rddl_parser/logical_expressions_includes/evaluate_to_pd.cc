@@ -320,11 +320,14 @@ void DiscreteDistribution::evaluateToPD(DiscretePD& res, State const& current, A
         assert(val.isDeterministic());
         assert(prob.isDeterministic());
 
-        if(MathUtils::doubleIsGreater(prob.values[0], 0.0)) {
-            if(valProbPairs.find(val.values[0]) == valProbPairs.end()) {
-                valProbPairs[val.values[0]] = 0.0;
+        double& value = val.values[0];
+        double& probability = prob.values[0];
+
+        if(MathUtils::doubleIsGreater(probability, 0.0)) {
+            if(valProbPairs.find(value) == valProbPairs.end()) {
+                valProbPairs[value] = 0.0;
             }
-            valProbPairs[val.values[0]] += prob.values[0];
+            valProbPairs[value] += probability;
         }
     }
 

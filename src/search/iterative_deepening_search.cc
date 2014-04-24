@@ -205,7 +205,7 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
 
     // 1. Check if we have a significant result
     if(terminateWithReasonableAction) {
-        if(actionsToExpand[0] == 0) {
+        if(SearchEngine::actionStates[0].scheduledActionFluents.empty() && (actionsToExpand[0] == 0)) {
             // Noop is applicable -> we check if another action is better than
             // noop
             for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
@@ -214,25 +214,25 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
                     return false;
                 }
             }
-        } else {
-            // Noop is not applicable -> we determine the first applicable
-            // action
-            unsigned int firstApplicableActionIndex = 1;
-            while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
-    		++firstApplicableActionIndex;
-            }
+        }//  else {
+        //     // Noop is not applicable -> we determine the first applicable
+        //     // action
+        //     unsigned int firstApplicableActionIndex = 0;
+        //     while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
+    	// 	++firstApplicableActionIndex;
+        //     }
 
-            // There must be at least one applicable action
-            assert(firstApplicableActionIndex < qValues.size());
+        //     // There must be at least one applicable action
+        //     assert(firstApplicableActionIndex < qValues.size());
 
-            // Check if any two applicable actions yield different results
-            for(unsigned int actionIndex = firstApplicableActionIndex; actionIndex < qValues.size(); ++actionIndex) {
-                if((actionsToExpand[actionIndex] == actionIndex) && 
-                   !MathUtils::doubleIsEqual(qValues[actionIndex], qValues[firstApplicableActionIndex])) {
-                    return false;
-                }
-            }
-        }
+        //     // Check if any two applicable actions yield different results
+        //     for(unsigned int actionIndex = firstApplicableActionIndex; actionIndex < qValues.size(); ++actionIndex) {
+        //         if((actionsToExpand[actionIndex] == actionIndex) && 
+        //            !MathUtils::doubleIsEqual(qValues[actionIndex], qValues[firstApplicableActionIndex])) {
+        //             return false;
+        //         }
+        //     }
+        // }
     }
 
     // 2. Check if we have reached the max search depth for this step

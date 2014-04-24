@@ -609,8 +609,6 @@ void Preprocessor::prepareStateFluentHashKeys() {
 
 void Preprocessor::precomputeEvaluatables() {
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        assert(task->CPFs[index]->domain.size() == 2);
-
         if(task->CPFs[index]->cachingType == "VECTOR") {
             precomputeEvaluatable(task->CPFs[index]);
         }
@@ -674,20 +672,31 @@ void Preprocessor::createRelevantStates(vector<StateFluent*>& dependentStateFlue
     StateFluent* fluent = dependentStateFluents[dependentStateFluents.size()-1];
     dependentStateFluents.pop_back();
 
-    if(result.empty()) {
-        State neg(task->CPFs.size());
-        result.push_back(neg);
+    int domainSize = -1;
+    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        if(task->CPFs[i]->head == fluent) {
+            domainSize = task->CPFs[i]->domain.size();
+            break;
+        }
+    }
 
-        State pos(task->CPFs.size());
-        pos[fluent->index] = 1;
-        result.push_back(pos);
+    if(result.empty()) {
+        for(unsigned int val = 0; val < domainSize; ++val) {
+            State base(task->CPFs.size());
+            base[fluent->index] = val;
+            result.push_back(base);
+        }
     } else {
         int size = result.size();
         for(unsigned int i = 0; i < size; ++i) {
-            State copy(result[i]);
-            assert(copy[fluent->index] == 0);
-            copy[fluent->index] = 1;
-            result.push_back(copy);
+            // The state with value '0' is already in the set, so we add append
+            // all states with other values
+            for(unsigned int val = 1; val < domainSize; ++val) {
+                State copy(result[i]);
+                assert(copy[fluent->index] == 0);
+                copy[fluent->index] = val;
+                result.push_back(copy);
+            }
         }
     }
 
