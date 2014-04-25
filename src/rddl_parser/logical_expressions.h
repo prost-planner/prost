@@ -52,6 +52,17 @@ public:
     std::string name;
     Type* superType;
     std::vector<Object*> objects;
+
+    bool isSubtypeOf(Type* const& other) const {
+        Type const* comp = this;
+        while(comp) {
+            if(other == comp) {
+                return true;
+            }
+            comp = superType;
+        }
+        return false;
+    }
 };
 
 // We need Parameter and Object as LogicalExpressions because of 

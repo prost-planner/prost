@@ -31,7 +31,7 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
         if(!params[i]->type) {
             params[i]->type = source.params[i]->type;
         } else {
-            assert(params[i]->type == source.params[i]->type);
+            assert(params[i]->type->isSubtypeOf(source.params[i]->type));
         }
     }
 
@@ -60,7 +60,7 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
         if(!params[i]->type) {
             params[i]->type = source.params[i]->type;
         } else {
-            assert(params[i]->type == source.params[i]->type);
+            assert(params[i]->type->isSubtypeOf(source.params[i]->type));
         }
     }
 

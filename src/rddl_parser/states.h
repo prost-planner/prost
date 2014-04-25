@@ -36,7 +36,9 @@ struct State {
 
     struct StateSort {
         bool operator() (State const& lhs, State const& rhs) const {
-            for(int i = lhs.state.size(); i >= 0; --i) {
+            assert(lhs.state.size() == rhs.state.size());
+
+            for(int i = lhs.state.size()-1; i >= 0; --i) {
                 if(MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
                     return true;
                 } else if(MathUtils::doubleIsSmaller(rhs.state[i], lhs.state[i])) {
