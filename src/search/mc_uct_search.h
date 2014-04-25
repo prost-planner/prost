@@ -6,6 +6,10 @@
 
 #include "uct_base.h"
 
+#ifndef NDEBUG
+#include <gtest/gtest.h>
+#endif
+
 class MCUCTNode { //Monte Carlo UCTNode
 public:
     MCUCTNode() :
@@ -65,6 +69,17 @@ public:
     std::vector<MCUCTNode*> children;
 
 private:
+		
+#ifndef NDEBUG
+    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLOG);
+    FRIEND_TEST(uct_baseTest, testUCTSelectionWithSQRT);
+    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLIN);
+    FRIEND_TEST(uct_baseTest, testUCTSelectionWithESQRT);
+    FRIEND_TEST(uct_baseTest, testSelectUnselectedAction);
+    FRIEND_TEST(uct_baseTest, testSelectActionOnRoot);
+    FRIEND_TEST(uct_baseTest, testSelectActionRoundRobin);
+#endif
+
     double immediateReward;
     double futureReward;
 
@@ -93,6 +108,11 @@ protected:
     }
     void backupDecisionNode(MCUCTNode* node, double const& immReward, double const& futReward);
     void backupChanceNode(MCUCTNode* node, double const& futReward);
+
+#ifndef NDEBUG
+		FRIEND_TEST(mc_uct_searchTest, testInitializeDecisionNodeChild);
+		FRIEND_TEST(mc_uct_searchTest, testBackupDecisionNode);
+#endif
 };
 
 #endif
