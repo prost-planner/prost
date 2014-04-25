@@ -40,6 +40,9 @@ TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 CC     = g++
 DEPEND = g++ -MM
 
+## Testfile binaries
+TEST_BINARIES = $(basename $(wildcard test/*Test.cc))
+
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
 
@@ -70,6 +73,8 @@ default: debug
 
 all: release debug
 
+flo: debug test_build test
+
 ## Build rules for the release target follow.
 
 release: $(TARGET_RELEASE)
@@ -92,10 +97,29 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
 
+## Build rules for test target follow
+
+test_build: $(TEST_BINARIES)
+
+%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
+
+%Test.o: %Test.cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
+
+## Automatically runs all tests from TEST_BINARIES.
+test: $(TEST_BINARIES)
+				for T in $(TEST_BINARIES); do ./$$T; done
+
+
 clean:
 	rm -rf .obj
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
+	rm -f test/*.o
+	rm -f test/*.obj
+	rm -f test/$(basename $(notdir $(TEST_BINARIES)))
+
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
@@ -123,4 +147,4 @@ ifneq ($(MAKECMDGOALS),distclean)
 endif
 endif
 
-.PHONY: default all release debug clean distclean
+.PHONY: default all release debug flo test_build test clean distclean
