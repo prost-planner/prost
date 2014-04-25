@@ -49,11 +49,9 @@ void RewardFunction::initialize() {
 void Evaluatable::simplify(map<StateFluent*, double>& replacements) {
     formula = formula->simplify(replacements);
 
-    for(set<StateFluent*>::iterator it = dependentStateFluents.begin(); it != dependentStateFluents.end(); ++it) {
-        if(replacements.find(*it) != replacements.end()) {
-            set<StateFluent*>::iterator toDelete = it;
-            --it;
-            dependentStateFluents.erase(toDelete);
+    for(map<StateFluent*, double>::iterator it = replacements.begin(); it != replacements.end(); ++it) {
+        if(dependentStateFluents.find(it->first) != dependentStateFluents.end()) {
+            dependentStateFluents.erase(it->first);
         }
     }
 }
