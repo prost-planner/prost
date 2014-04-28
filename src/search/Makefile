@@ -41,7 +41,7 @@ CC     = g++
 DEPEND = g++ -MM
 
 ## Testfile binaries
-TEST_BINARIES = $(basename $(wildcard test/*Test.cc))
+TEST_BINARIES = $(basename $(wildcard ../test/*Test.cc))
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
@@ -69,11 +69,10 @@ LINKOPT_DEBUG    =
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug
+default: debug test_build test
 
-all: release debug
+all: release debug test_build test
 
-flo: debug test_build test
 
 ## Build rules for the release target follow.
 
@@ -116,13 +115,12 @@ clean:
 	rm -rf .obj
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f test/*.o
-	rm -f test/*.obj
-	rm -f test/$(basename $(notdir $(TEST_BINARIES)))
-
+	rm -f ../test/*.o
+	rm -f ../test/*.obj
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
+	for T in $(TEST_BINARIES); do rm -f ../test/$$T; done
 
 ## Note: If we just call gcc -MM on a source file that lives within a
 ## subdirectory, it will strip the directory part in the output. Hence
@@ -147,4 +145,4 @@ ifneq ($(MAKECMDGOALS),distclean)
 endif
 endif
 
-.PHONY: default all release debug flo test_build test clean distclean
+.PHONY: default all release debug test_build test clean distclean

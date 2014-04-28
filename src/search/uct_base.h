@@ -105,15 +105,15 @@ protected:
 
     // Tests accessing protected context
 #ifndef NDEBUG
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLOG);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithSQRT);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLIN);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithESQRT);
-    FRIEND_TEST(uct_baseTest, testValueFromString);
-    FRIEND_TEST(uct_baseTest, testSelectUnselectedAction);
-    FRIEND_TEST(uct_baseTest, testSelectRandomAction);
-    FRIEND_TEST(uct_baseTest, testSelectActionOnRoot);
-    FRIEND_TEST(uct_baseTest, testSelectActionRoundRobin);
+	//FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
+    FRIEND_TEST(uctBaseTest, testValueFromString);
+    FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
+    FRIEND_TEST(uctBaseTest, testSelectRandomAction);
+    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
+    FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
 #endif
 };
 
@@ -279,7 +279,7 @@ inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
                          parentVisitPart = logPart * logPart;
                          break;
                      }
-        default:
+        case LOG:
                      parentVisitPart = std::log((double)node->getNumberOfVisits());
     }
 

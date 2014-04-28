@@ -532,7 +532,8 @@ void Parser::parseTrainingSet(stringstream& desc) const {
     }
 }
 
-// resets static variables of SearchEngine, State, KleeneState
+// Resets static variables of SearchEngine, State, KleeneState. Necessary for
+// unit tests, because static variables don't reset between test instances.
 void Parser::resetStatics() const {
     SearchEngine::actionFluents.clear();
     SearchEngine::stateFluents.clear();

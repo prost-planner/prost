@@ -71,13 +71,13 @@ public:
 private:
 		
 #ifndef NDEBUG
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLOG);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithSQRT);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithLIN);
-    FRIEND_TEST(uct_baseTest, testUCTSelectionWithESQRT);
-    FRIEND_TEST(uct_baseTest, testSelectUnselectedAction);
-    FRIEND_TEST(uct_baseTest, testSelectActionOnRoot);
-    FRIEND_TEST(uct_baseTest, testSelectActionRoundRobin);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
+    FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
+    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
+    FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
 #endif
 
     double immediateReward;
@@ -110,8 +110,8 @@ protected:
     void backupChanceNode(MCUCTNode* node, double const& futReward);
 
 #ifndef NDEBUG
-		FRIEND_TEST(mc_uct_searchTest, testInitializeDecisionNodeChild);
-		FRIEND_TEST(mc_uct_searchTest, testBackupDecisionNode);
+		FRIEND_TEST(mcUctSearchTest, testInitializeDecisionNodeChild);
+		FRIEND_TEST(mcUctSearchTest, testBackupDecisionNode);
 #endif
 };
 
