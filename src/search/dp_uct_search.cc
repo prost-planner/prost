@@ -99,15 +99,17 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
     assert(!node->children.empty());
 
     node->immediateReward = immReward;
-    double oldFutureReward = node->futureReward;
 
     if(selectedActionIndex() != -1) {
         ++node->numberOfVisits;
     }
 
     if (backupLock ) {
+        skippedBackups++;
         return;
     }
+
+    double oldFutureReward = node->futureReward;
 
     // Propagate values from best child
     node->futureReward = -numeric_limits<double>::max();
@@ -119,7 +121,7 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward, d
         }
     }
 
-    // if the future reward did not change we did not find a better node and
+    // If the future reward did not change we did not find a better node and
     // therefore do not need to update the rewards in preceding parents.
     if (!node->solved &&
         remainingConsideredSteps() > maxLockDepth && 
@@ -136,7 +138,8 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node, double const& /*futReward*/)
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
-    if (backupLock) {
+    if (backupLock) { 
+        skippedBackups++;
         return;
     }
 

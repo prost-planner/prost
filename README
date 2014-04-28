@@ -13,13 +13,29 @@ September 27, 2013.
 
 ===[ Prerequisites ]===
 
-Libraries: Boost (libboost), BuDDy
+Libraries: Boost (libboost), Google Test (libgtest-dev), BuDDy 
 (http://sourceforge.net/projects/buddy/)
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
-give an error on running the PROST solver
+give an error on running the PROST solver. 
 
+After you installed Google Test make sure that the installation worked by
+verifying the existence of either:
+
+/usr/local/include/gtest/gtest.h
+/usr/local/lib/libgtest.a
+/usr/local/lib/libgtest.so
+
+or:
+
+/usr/include/gtest/gtest.h
+/usr/lib/libgtest.a
+/usr/lib/libgtest.so
+
+If you don't find these files, please download gtest manually
+(https://code.google.com/p/googletest/) and refer to the gtest README to build
+it from source.
 
 ===[ Compiling the PROST planner ]===
 
@@ -99,6 +115,17 @@ Have a look at thts.h if you are interested in creating a search
 engine that can be modelled within the THTS framework (see the ICAPS
 2013 paper by Keller and Helmert for more information on THTS).
 
+===[ Test your own search engine ]===
+
+We use the Google Test framework to implement unit tests for our code. All tests
+are contained in /src/test/ and will be run automatically by compiling the debug
+version of the planner (i.e. calling make in src/search/). If you want to
+implement your own unit tests you have to keep the following naming conventions:
+- No underscore (_) in test case names and test names. 
+- Every test should end with *Test.cc
+
+The first convention is necessary by the framework and the second rule allows
+make to automatically compile and run your tests.
 
 ===[ Compare your search engine ]===
 
@@ -112,3 +139,4 @@ and 2.) all algorithms that are in your <resultdir> by running:
 
 which creates a texfile that contains both an instance-by-instance
 comparison and a table with IPPC scores.
+

@@ -135,6 +135,7 @@ protected:
         ProbabilisticSearchEngine(_name),
 		backupLock(false),
         maxLockDepth(0),
+        skippedBackups(0),
         currentRootNode(NULL),
         chosenOutcome(NULL),
         states(SearchEngine::horizon+1),
@@ -224,6 +225,8 @@ protected:
     bool backupLock;
     // Backup lock won't apply at and beyond this depth.
     int maxLockDepth;
+	// Statistic variable to count skipped Backups.
+    size_t skippedBackups;
 
 private:
     // Search nodes used in trials
@@ -285,7 +288,7 @@ private:
     
     // Tests accessing private content
 #ifndef NDEBUG
-    FRIEND_TEST(uct_baseTest, testSelectActionOnRoot);
+    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
 #endif
 
 };
@@ -809,6 +812,7 @@ void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats
         out << "Performed trials: " << currentTrial << std::endl;
         out << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
+        out << "Skipped backups: " << skippedBackups << std::endl;
     }
     if(initializer) {
         out << "Initialization: " << std::endl;
