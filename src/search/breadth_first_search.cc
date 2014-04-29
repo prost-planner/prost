@@ -5,9 +5,9 @@
 ******************************************************************/
 
 void BreadthFirstSearch::initializeDecisionNodeChild(
-        BfsNode* node, unsigned int const& actionIndex,
+        BFSNode* node, unsigned int const& actionIndex,
         double const& initialQValue) {
-    node->children[actionIndex] = getBfsNode(1.0);
+    node->children[actionIndex] = getBFSNode(1.0);
     node->children[actionIndex]->futureReward =
         (double) remainingConsideredSteps() * initialQValue;
     node->futureReward = std::max(node->futureReward,
@@ -18,8 +18,8 @@ void BreadthFirstSearch::initializeDecisionNodeChild(
                          Outcome selection
 ******************************************************************/
 
-BfsNode* BreadthFirstSearch::selectOutcome(
-        BfsNode* node, PDState& nextState, int& varIndex) {
+BFSNode* BreadthFirstSearch::selectOutcome(
+        BFSNode* node, PDState& nextState, int& varIndex) {
     // TODO: Prevent the case where nextPDState[varIndex] is deterministic
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
@@ -64,7 +64,7 @@ BfsNode* BreadthFirstSearch::selectOutcome(
     assert((childIndex >= 0) && childIndex < node->children.size());
 
     if (!node->children[childIndex]) {
-        node->children[childIndex] = getBfsNode(childProb);
+        node->children[childIndex] = getBFSNode(childProb);
     }
 
     assert(!node->children[childIndex]->isSolved());
@@ -78,7 +78,7 @@ BfsNode* BreadthFirstSearch::selectOutcome(
 ******************************************************************/
 
 
-void BreadthFirstSearch::backupDecisionNodeLeaf(BfsNode* node,
+void BreadthFirstSearch::backupDecisionNodeLeaf(BFSNode* node,
         double const& immReward,
         double const& futReward) {
     node->children.clear();
@@ -89,7 +89,7 @@ void BreadthFirstSearch::backupDecisionNodeLeaf(BfsNode* node,
     ++node->numberOfVisits;
 }
 
-void BreadthFirstSearch::backupDecisionNode(BfsNode* node,
+void BreadthFirstSearch::backupDecisionNode(BFSNode* node,
         double const& immReward,
         double const& /*futReward*/) {
     assert(!node->children.empty());
@@ -127,7 +127,7 @@ void BreadthFirstSearch::backupDecisionNode(BfsNode* node,
     }
 }
 
-void BreadthFirstSearch::backupChanceNode(BfsNode* node,
+void BreadthFirstSearch::backupChanceNode(BFSNode* node,
         double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
@@ -159,7 +159,8 @@ void BreadthFirstSearch::backupChanceNode(BfsNode* node,
 }
 
 // Action selection
-int BreadthFirstSearch::selectAction(BfsNode* node) {
+
+int BreadthFirstSearch::selectAction(BFSNode* node) {
     unsigned int i = 0;
     unsigned int j = 0;
     while (j < (node->children.size() - 1)) {
@@ -175,7 +176,7 @@ int BreadthFirstSearch::selectAction(BfsNode* node) {
         }
     }
 
-    // all actions were equally visited, return the first action.
+    // All actions were equally visited, return the first action.
     for (unsigned int k = 0; k < node->children.size(); ++k) {
         if (node->children[k] && !node->children[k]->isSolved()) {
             assert(!node->children[k]->isSolved());

@@ -121,7 +121,7 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward,
     }
 
     if (backupLock) {
-        skippedBackups++;
+        ++skippedBackups;
         return;
     }
 
@@ -159,7 +159,7 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node,
 
     ++node->numberOfVisits;
     if (backupLock) {
-        skippedBackups++;
+        ++skippedBackups;
         return;
     }
 

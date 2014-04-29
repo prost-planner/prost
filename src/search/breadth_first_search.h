@@ -7,9 +7,9 @@
 
 #include "thts.h"
 
-class BfsNode {
+class BFSNode {
 public:
-    BfsNode() :
+    BFSNode() :
         children(),
         immediateReward(0.0),
         futureReward(-std::numeric_limits<double>::max()),
@@ -18,7 +18,7 @@ public:
         solved(false),
         rewardLock(false) {}
 
-    ~BfsNode() {
+    ~BFSNode() {
         for (unsigned int i = 0; i < children.size(); ++i) {
             if (children[i]) {
                 delete children[i];
@@ -72,7 +72,7 @@ public:
         }
     }
 
-    std::vector<BfsNode*> children;
+    std::vector<BFSNode*> children;
 
 private:
     double immediateReward;
@@ -85,35 +85,35 @@ private:
     FRIEND_TEST(bfsSearchTest, testSelectAction);
 };
 
-class BreadthFirstSearch : public THTS<BfsNode> {
+class BreadthFirstSearch : public THTS<BFSNode> {
 public:
     BreadthFirstSearch() :
-        THTS<BfsNode>("Breadth-First-Search") {}
+        THTS<BFSNode>("Breadth-First-Search") {}
 
 protected:
 
     // Initialization
-    void initializeDecisionNodeChild(BfsNode* node,
+    void initializeDecisionNodeChild(BFSNode* node,
             unsigned int const& actionIndex,
             double const& initialQValue);
 
 
     // Outcome selection
-    BfsNode* selectOutcome(BfsNode*, PDState& nextState, int& varIndex);
+    BFSNode* selectOutcome(BFSNode*, PDState& nextState, int& varIndex);
 
     // Backup function
-    void backupDecisionNodeLeaf(BfsNode* node, double const& immReward,
+    void backupDecisionNodeLeaf(BFSNode* node, double const& immReward,
             double const& futureReward);
-    void backupDecisionNode(BfsNode*, double const& immReward,
+    void backupDecisionNode(BFSNode*, double const& immReward,
             double const& futureReward);
-    void backupChanceNode(BfsNode*, double const& futureReward);
+    void backupChanceNode(BFSNode*, double const& futureReward);
 
     // Action selection
-    int selectAction(BfsNode* node);
+    int selectAction(BFSNode* node);
 
     // Memory Management
-    BfsNode* getRootNode() {
-        return getBfsNode(1.0);
+    BFSNode* getRootNode() {
+        return getBFSNode(1.0);
     }
 
     // TODO Do above methods have to be protected or is public ok?
@@ -125,8 +125,8 @@ protected:
 
 private:
     // Memory management
-    BfsNode* getBfsNode(double const& _prob) {
-        BfsNode* res = THTS<BfsNode>::getSearchNode();
+    BFSNode* getBFSNode(double const& _prob) {
+        BFSNode* res = THTS<BFSNode>::getSearchNode();
         res->prob = _prob;
         return res;
     }
