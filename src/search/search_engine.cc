@@ -8,6 +8,7 @@
 
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
+#include "breadth_first_search.h"
 #include "uniform_evaluation_search.h"
 
 #include "utils/math_utils.h"
@@ -116,6 +117,9 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     } else if(desc.find("DFS") == 0) {
         desc = desc.substr(3,desc.size());
         result = new DepthFirstSearch();
+    } else if(desc.find("BFS") == 0) {
+        desc = desc.substr(3,desc.size());
+        result = new BreadthFirstSearch();
     } else if(desc.find("Uniform") == 0) {
         desc = desc.substr(7,desc.size());
         result = new UniformEvaluationSearch();

@@ -63,8 +63,7 @@ protected:
 		explorationRateFunction(LOG),
         numberOfInitialVisits(5),
         magicConstantScaleFactor(1.0), 
-        uniformRoot(false),
-        bfs(false) {}
+        uniformRoot(false) {}
 
 
     // Action selection
@@ -100,12 +99,9 @@ protected:
     // Variable to enable uniform action selection at root node
     bool uniformRoot;
 
-    // Variable to enable breadth first search
-    bool bfs;
-
     // Tests accessing protected context
 #ifndef NDEBUG
-	//FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
+	FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
     FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
     FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
     FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
@@ -135,9 +131,6 @@ bool UCTBase<SearchNode>::setValueFromString(std::string& param, std::string& va
     } else if(param == "-uniformroot") {
         uniformRoot = true;
         return true;
-    } else if(param == "-bfs") {
-        bfs = true;
-        return true;
     }
 
     return THTS<SearchNode>::setValueFromString(param, value);
@@ -151,8 +144,7 @@ template <class SearchNode>
 int UCTBase<SearchNode>::selectAction(SearchNode* node) {
     bestActionIndices.clear();
 
-    if(bfs || 
-       (uniformRoot && (node == THTS<SearchNode>::getCurrentRootNode()))) {
+    if(uniformRoot && (node == THTS<SearchNode>::getCurrentRootNode())) {
         selectActionPerRoundRobin(node);
         assert(bestActionIndices.size() == 1);
         return bestActionIndices[0];
