@@ -24,8 +24,11 @@ struct PlanningTask {
 
     void addVariableDefinition(ParametrizedVariable* varDef);
 
-    void addParametrizedVariable(ParametrizedVariable* parent, std::vector<Parameter*> const& params);
-    void addParametrizedVariable(ParametrizedVariable* parent, std::vector<Parameter*> const& params, double initialValue);
+    void addParametrizedVariable(ParametrizedVariable* parent,
+            std::vector<Parameter*> const& params);
+    void addParametrizedVariable(ParametrizedVariable* parent,
+            std::vector<Parameter*> const& params,
+            double initialValue);
 
     StateFluent* getStateFluent(std::string const& name);
     ActionFluent* getActionFluent(std::string const& name);
@@ -57,7 +60,8 @@ struct PlanningTask {
     std::vector<StateFluent*> stateFluents;
     std::vector<ActionFluent*> actionFluents;
     std::vector<NonFluent*> nonFluents;
-    std::map<ParametrizedVariable*, std::vector<StateFluent*> > variablesBySchema;
+    std::map<ParametrizedVariable*,
+             std::vector<StateFluent*> > variablesBySchema;
 
     // State action constraints
     std::vector<LogicalExpression*> SACs;
@@ -86,12 +90,14 @@ struct PlanningTask {
     std::vector<std::vector<long> > stateHashKeys;
     std::vector<long> kleeneStateHashKeyBases;
 
-    std::vector<std::vector<std::pair<int,long> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int,long> > > indexToKleeneStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,
+                                      long> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int,
+                                      long> > >
+    indexToKleeneStateFluentHashKeyMap;
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;
 };
 
 #endif
-

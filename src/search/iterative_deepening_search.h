@@ -30,7 +30,9 @@ public:
     void learn();
 
     // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+    bool estimateQValues(State const& _rootState,
+            std::vector<int> const& actionsToExpand,
+            std::vector<double>& qValues);
 
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
@@ -39,11 +41,13 @@ public:
         terminationTimeout = _terminationTimeout;
     }
 
-    virtual void setStrictTerminationTimeout(double _strictTerminationTimeout) {
+    virtual void setStrictTerminationTimeout(double _strictTerminationTimeout)
+    {
         strictTerminationTimeout = _strictTerminationTimeout;
     }
 
-    virtual void setTerminateWithReasonableAction(bool _terminateWithReasonableAction) {
+    virtual void setTerminateWithReasonableAction(
+            bool _terminateWithReasonableAction) {
         terminateWithReasonableAction = _terminateWithReasonableAction;
     }
 
@@ -57,11 +61,13 @@ public:
     void resetStats();
 
     // Printer
-    void printStats(std::ostream& out, bool const& printRoundStats, std::string indent = "") const;
+    void printStats(std::ostream& out, bool const& printRoundStats,
+            std::string indent = "") const;
 
 protected:
     // Decides whether more iterations are possible and reasonable
-    bool moreIterations(std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+    bool moreIterations(std::vector<int> const& actionsToExpand,
+            std::vector<double>& qValues);
 
     // The state that is given iteratively to the DFS engine
     State currentState;
@@ -92,7 +98,8 @@ protected:
     int numberOfRuns;
 
     // Caching
-    static std::map<State, std::vector<double>, State::CompareIgnoringRemainingSteps> rewardCache;
+    static std::map<State, std::vector<double>,
+                    State::CompareIgnoringRemainingSteps> rewardCache;
 };
 
 #endif

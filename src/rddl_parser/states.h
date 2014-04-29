@@ -35,13 +35,14 @@ struct State {
     }
 
     struct StateSort {
-        bool operator() (State const& lhs, State const& rhs) const {
+        bool operator()(State const& lhs, State const& rhs) const {
             assert(lhs.state.size() == rhs.state.size());
 
-            for(int i = lhs.state.size()-1; i >= 0; --i) {
-                if(MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
+            for (int i = lhs.state.size() - 1; i >= 0; --i) {
+                if (MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
                     return true;
-                } else if(MathUtils::doubleIsSmaller(rhs.state[i], lhs.state[i])) {
+                } else if (MathUtils::doubleIsSmaller(rhs.state[i],
+                                   lhs.state[i])) {
                     return false;
                 }
             }
@@ -71,11 +72,11 @@ struct PDState {
     }
 
     struct PDStateSort {
-        bool operator() (PDState const& lhs, PDState const& rhs) const {
-            for(unsigned int i = 0; i < lhs.state.size(); ++i) {
-                if(rhs.state[i] < lhs.state[i]) {
+        bool operator()(PDState const& lhs, PDState const& rhs) const {
+            for (unsigned int i = 0; i < lhs.state.size(); ++i) {
+                if (rhs.state[i] < lhs.state[i]) {
                     return false;
-                } else if(lhs.state[i] < rhs.state[i]) {
+                } else if (lhs.state[i] < rhs.state[i]) {
                     return true;
                 }
             }
@@ -97,9 +98,8 @@ public:
         state(stateSize) {}
 
     KleeneState(State const& origin) :
-        state(origin.state.size()){
-
-        for(unsigned int index = 0; index < state.size(); ++index) {
+        state(origin.state.size()) {
+        for (unsigned int index = 0; index < state.size(); ++index) {
             state[index].insert(origin[index]);
         }
     }
@@ -116,9 +116,10 @@ public:
 
     bool operator==(KleeneState const& other) const {
         assert(state.size() == other.state.size());
-        
-        for(unsigned int index = 0; index < state.size(); ++index) {
-            if(!std::equal(state[index].begin(), state[index].end(), other.state[index].begin())) {
+
+        for (unsigned int index = 0; index < state.size(); ++index) {
+            if (!std::equal(state[index].begin(), state[index].end(),
+                        other.state[index].begin())) {
                 return false;
             }
         }
@@ -129,7 +130,7 @@ public:
     KleeneState operator|=(KleeneState const& other) {
         assert(state.size() == other.state.size());
 
-        for(unsigned int i = 0; i < state.size(); ++i) {
+        for (unsigned int i = 0; i < state.size(); ++i) {
             state[i].insert(other.state[i].begin(), other.state[i].end());
         }
         return *this;
@@ -163,21 +164,21 @@ public:
     // This is used to sort action states by the number of true fluents and the
     // position of the true fluents to ensure deterministic behaviour
     struct ActionStateSort {
-        bool operator() (ActionState const& lhs, ActionState const& rhs) const {
+        bool operator()(ActionState const& lhs, ActionState const& rhs) const {
             int lhsNum = 0;
             int rhsNum = 0;
-            for(unsigned int i = 0; i < lhs.state.size(); ++i) {
+            for (unsigned int i = 0; i < lhs.state.size(); ++i) {
                 lhsNum += lhs.state[i];
                 rhsNum += rhs.state[i];
             }
 
-            if(lhsNum < rhsNum) {
+            if (lhsNum < rhsNum) {
                 return true;
-            } else if(rhsNum < lhsNum) {
+            } else if (rhsNum < lhsNum) {
                 return false;
             }
 
-            return (lhs.state < rhs.state);
+            return lhs.state < rhs.state;
         }
     };
 

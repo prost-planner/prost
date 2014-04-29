@@ -21,21 +21,35 @@ class LogicalExpression {
 public:
     virtual ~LogicalExpression() {}
 
-    virtual LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    virtual LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    virtual LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
-    virtual void collectInitialInfo(bool& isProbabilistic,
-                                    bool& containsArithmeticFunction,
-                                    std::set<StateFluent*>& dependentStateFluents,
-                                    std::set<ActionFluent*>& dependentActionFluents);
-    virtual void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
-                                       std::set<ActionFluent*>& negativeDependentActionFluents);
-    virtual void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+    virtual LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                          Object*>&
+            replacements,
+            Instantiator* instantiator);
+    virtual LogicalExpression* instantiate(PlanningTask* task,
+            std::map<std::string,
+                     Object*>& replacements);
+    virtual LogicalExpression* simplify(std::map<StateFluent*,
+                                                 double>& replacements);
+    virtual LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
+    virtual void collectInitialInfo(
+            bool& isProbabilistic, bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    virtual void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    virtual void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
-    virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    virtual void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    virtual void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    virtual void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    virtual void evaluateToKleene(std::set<double>& res,
+            KleeneState const& current,
+            ActionState const& actions) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -55,8 +69,8 @@ public:
 
     bool isSubtypeOf(Type* const& other) const {
         Type const* comp = this;
-        while(comp) {
-            if(other == comp) {
+        while (comp) {
+            if (other == comp) {
                 return true;
             }
             comp = superType;
@@ -65,7 +79,7 @@ public:
     }
 };
 
-// We need Parameter and Object as LogicalExpressions because of 
+// We need Parameter and Object as LogicalExpressions because of
 
 // 1. It simplifies parsing of static parameters, but that does not mean they
 // are necessary.
@@ -80,14 +94,18 @@ public:
 
 class Parameter : public LogicalExpression {
 public:
-    Parameter(std::string _name, Type* _type = NULL):
+    Parameter(std::string _name, Type* _type = NULL) :
         name(_name), type(_type) {}
 
     std::string name;
     Type* type;
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
 
     void print(std::ostream& out) const;
 };
@@ -105,8 +123,12 @@ public:
     std::vector<Type*> types;
     std::vector<double> values;
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
 
     void print(std::ostream& out) const;
 };
@@ -114,13 +136,17 @@ public:
 class ParametrizedVariable : public LogicalExpression {
 public:
     enum VariableType {
-        STATE_FLUENT, 
-        ACTION_FLUENT, 
+        STATE_FLUENT,
+        ACTION_FLUENT,
         //DERIVED_FLUENT,
-        //INTERM_FLUENT, 
-        NON_FLUENT};
+        //INTERM_FLUENT,
+        NON_FLUENT
+    };
 
-    ParametrizedVariable(std::string _variableName, std::vector<Parameter*> _params, VariableType _variableType, Type* _valueType, double _initialValue) :
+    ParametrizedVariable(std::string _variableName,
+            std::vector<Parameter*> _params, VariableType _variableType,
+            Type* _valueType,
+            double _initialValue) :
         LogicalExpression(),
         variableName(_variableName),
         fullName(_variableName),
@@ -128,8 +154,10 @@ public:
         variableType(_variableType),
         valueType(_valueType),
         initialValue(_initialValue) {}
-    ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params);
-    ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue);
+    ParametrizedVariable(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params);
+    ParametrizedVariable(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params, double _initialValue);
 
     std::string variableName;
     std::string fullName;
@@ -138,10 +166,15 @@ public:
     Type* valueType;
     double initialValue;
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
 
     void print(std::ostream& out) const;
 };
@@ -152,54 +185,71 @@ public:
 
 class StateFluent : public ParametrizedVariable {
 public:
-    StateFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+    StateFluent(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params,
+            double _initialValue) :
         ParametrizedVariable(source, _params, _initialValue), index(-1) {}
-    StateFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+    StateFluent(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params) :
         ParametrizedVariable(source, _params), index(-1) {}
 
     int index;
 
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
 
 class ActionFluent : public ParametrizedVariable {
 public:
-    ActionFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+    ActionFluent(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params) :
         ParametrizedVariable(source, _params, 0.0), index(-1) {}
 
     int index;
 
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 
     // This is used to sort ActionFluents by their name to ensure deterministic
     // behaviour
     struct ActionFluentSort {
-        bool operator() (ActionFluent* const& lhs, ActionFluent* const& rhs) const {
+        bool operator()(ActionFluent* const& lhs,
+                ActionFluent* const& rhs) const {
             return lhs->fullName < rhs->fullName;
         }
     };
@@ -207,9 +257,12 @@ public:
 
 class NonFluent : public ParametrizedVariable {
 public:
-    NonFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+    NonFluent(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params,
+            double _initialValue) :
         ParametrizedVariable(source, _params, _initialValue) {}
-    NonFluent(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+    NonFluent(ParametrizedVariable const& source,
+            std::vector<Parameter*> _params) :
         ParametrizedVariable(source, _params) {}
 };
 
@@ -220,21 +273,32 @@ public:
 
     double value;
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents, 
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -263,7 +327,9 @@ public:
     ParameterList* paramList;
     LogicalExpression* expr;
 
-    void getReplacements(std::vector<std::string>& parameterNames, std::vector<std::vector<Parameter*> >& replacements, Instantiator* instantiator);
+    void getReplacements(std::vector<std::string>& parameterNames,
+            std::vector<std::vector<Parameter*> >& replacements,
+            Instantiator* instantiator);
 };
 
 class Sumation : public Quantifier {
@@ -271,7 +337,9 @@ public:
     Sumation(ParameterList* _paramList, LogicalExpression* _expr) :
         Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
 
     void print(std::ostream& out) const;
 };
@@ -281,27 +349,35 @@ public:
     Product(ParameterList* _paramList, LogicalExpression* _expr) :
         Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
 
     void print(std::ostream& out) const;
 };
 
 class UniversalQuantification : public Quantifier {
 public:
-    UniversalQuantification(ParameterList* _paramList, LogicalExpression* _expr) :
+    UniversalQuantification(ParameterList* _paramList,
+            LogicalExpression* _expr) :
         Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
 
     void print(std::ostream& out) const;
 };
 
 class ExistentialQuantification : public Quantifier {
 public:
-    ExistentialQuantification(ParameterList* _paramList, LogicalExpression* _expr) :
+    ExistentialQuantification(ParameterList* _paramList,
+            LogicalExpression* _expr) :
         Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
 
     void print(std::ostream& out) const;
 };
@@ -317,8 +393,9 @@ public:
     Connective(std::vector<LogicalExpression*>& _exprs) :
         exprs(_exprs) {}
 
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
     void print(std::ostream& out) const;
 };
 
@@ -327,19 +404,29 @@ public:
     Conjunction(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -349,19 +436,29 @@ public:
     Disjunction(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -371,21 +468,32 @@ public:
     EqualsExpression(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -395,21 +503,32 @@ public:
     GreaterExpression(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -419,21 +538,32 @@ public:
     LowerExpression(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -443,21 +573,32 @@ public:
     GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -467,21 +608,32 @@ public:
     LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -491,19 +643,29 @@ public:
     Addition(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -513,21 +675,32 @@ public:
     Subtraction(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -537,21 +710,32 @@ public:
     Multiplication(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -561,21 +745,32 @@ public:
     Division(std::vector<LogicalExpression*>& _exprs) :
         Connective(_exprs) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -591,21 +786,32 @@ public:
     Negation(LogicalExpression* _expr) :
         expr(_expr) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -620,8 +826,12 @@ public:
         LogicalExpression(),
         expr(_expr) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
 
     LogicalExpression* expr;
@@ -635,19 +845,29 @@ public:
         LogicalExpression(),
         expr(_expr) {}
 
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 
@@ -658,23 +878,34 @@ class DiscreteDistribution : public LogicalExpression {
 public:
     std::vector<LogicalExpression*> values;
     std::vector<LogicalExpression*> probabilities;
-    
-    DiscreteDistribution(std::vector<LogicalExpression*> _values, std::vector<LogicalExpression*> _probabilities) :
-    	LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    DiscreteDistribution(std::vector<LogicalExpression*> _values,
+            std::vector<LogicalExpression*> _probabilities) :
+        LogicalExpression(), values(_values), probabilities(_probabilities) {}
+
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -689,24 +920,38 @@ public:
     LogicalExpression* valueIfTrue;
     LogicalExpression* valueIfFalse;
 
-    IfThenElseExpression(LogicalExpression* _condition, LogicalExpression* _valueIfTrue, LogicalExpression* _valueIfFalse) :
-        condition(_condition), valueIfTrue(_valueIfTrue), valueIfFalse(_valueIfFalse) {}
+    IfThenElseExpression(LogicalExpression* _condition,
+            LogicalExpression* _valueIfTrue,
+            LogicalExpression* _valueIfFalse) :
+        condition(_condition), valueIfTrue(_valueIfTrue),
+        valueIfFalse(_valueIfFalse) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -716,24 +961,36 @@ public:
     std::vector<LogicalExpression*> conditions;
     std::vector<LogicalExpression*> effects;
 
-    MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
+    MultiConditionChecker(std::vector<LogicalExpression*> _conditions,
+            std::vector<LogicalExpression*> _effects) :
         conditions(_conditions), effects(_effects) {}
 
-    LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
+    LogicalExpression* replaceQuantifier(std::map<std::string,
+                                                  Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task, std::map<std::string,
+                                                                Object*>&
+            replacements);
     LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
-    LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
-                            bool& containsArithmeticFunction,
-                            std::set<StateFluent*>& dependentStateFluents,
-                            std::set<ActionFluent*>& dependentActionFluents);
-    void classifyActionFluents(std::set<ActionFluent*>& positiveDependentActionFluents,
-                               std::set<ActionFluent*>& negativeDependentActionFluents);
-    void calculateDomain(std::vector<std::set<double> > const& domains, ActionState const& actions, std::set<double>& res);
+            bool& containsArithmeticFunction,
+            std::set<StateFluent*>& dependentStateFluents,
+            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            std::set<double>& res);
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+            ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+            ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
