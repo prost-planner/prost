@@ -860,10 +860,10 @@ void THTS<SearchNode>::printStats(std::ostream& out,
     SearchEngine::printStats(out, printRoundStats, indent);
 
     if (currentTrial > 0) {
-        out << "Performed trials: " << currentTrial << std::endl;
-        out << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
+        out << indent << "Performed trials: " << currentTrial << std::endl;
+        out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
-        out << "Skipped backups: " << skippedBackups << std::endl;
+        out << indent << "Skipped backups: " << skippedBackups << std::endl;
     }
     if (initializer) {
         out << "Initialization: " << std::endl;
