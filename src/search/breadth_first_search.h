@@ -19,8 +19,8 @@ public:
         rewardLock(false) {}
 
     ~BfsNode() {
-        for(unsigned int i = 0; i < children.size(); ++i) {
-            if(children[i]) {
+        for (unsigned int i = 0; i < children.size(); ++i) {
+            if (children[i]) {
                 delete children[i];
             }
         }
@@ -39,7 +39,7 @@ public:
     }
 
     double getExpectedRewardEstimate() const {
-        return (immediateReward + futureReward);
+        return immediateReward + futureReward;
     }
 
     double getExpectedFutureRewardEstimate() const {
@@ -63,10 +63,12 @@ public:
     }
 
     void print(std::ostream& out, std::string indent = "") const {
-        if(solved) {
-            out << indent << "SOLVED with: " << getExpectedRewardEstimate() << " (in " << numberOfVisits << " real visits)" << std::endl;
+        if (solved) {
+            out << indent << "SOLVED with: " << getExpectedRewardEstimate() <<
+            " (in " << numberOfVisits << " real visits)" << std::endl;
         } else {
-            out << indent << getExpectedRewardEstimate() << " (in " << numberOfVisits << " real visits)" << std::endl;
+            out << indent << getExpectedRewardEstimate() << " (in " <<
+            numberOfVisits << " real visits)" << std::endl;
         }
     }
 
@@ -77,7 +79,7 @@ private:
     double futureReward;
     int numberOfVisits;
     double prob;
-    bool solved; 
+    bool solved;
     bool rewardLock;
 
     FRIEND_TEST(bfsSearchTest, testSelectAction);
@@ -88,11 +90,12 @@ public:
     BreadthFirstSearch() :
         THTS<BfsNode>("Breadth-First-Search") {}
 
-protected: 
+protected:
 
     // Initialization
-    void initializeDecisionNodeChild(BfsNode* node, 
-            unsigned int const& actionIndex, double const& initialQValue);
+    void initializeDecisionNodeChild(BfsNode* node,
+            unsigned int const& actionIndex,
+            double const& initialQValue);
 
 
     // Outcome selection
@@ -103,7 +106,7 @@ protected:
             double const& futureReward);
     void backupDecisionNode(BfsNode*, double const& immReward,
             double const& futureReward);
-    void backupChanceNode(BfsNode*, double const& futureReward);    
+    void backupChanceNode(BfsNode*, double const& futureReward);
 
     // Action selection
     int selectAction(BfsNode* node);
@@ -129,4 +132,4 @@ private:
     }
 };
 
-#endif 
+#endif

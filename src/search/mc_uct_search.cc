@@ -6,13 +6,18 @@ using namespace std;
                         Initialization
 ******************************************************************/
 
-void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& actionIndex, double const& initialQValue) {
+void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node,
+        unsigned int const& actionIndex,
+        double const& initialQValue) {
     node->children[actionIndex] = getSearchNode();
-    node->children[actionIndex]->futureReward = (double)numberOfInitialVisits * (double)remainingConsideredSteps() * initialQValue;
+    node->children[actionIndex]->futureReward =
+        (double) numberOfInitialVisits * (double) remainingConsideredSteps() *
+        initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
 
     node->numberOfVisits += numberOfInitialVisits;
-    node->futureReward = std::max(node->futureReward, node->children[actionIndex]->futureReward);
+    node->futureReward =
+        std::max(node->futureReward, node->children[actionIndex]->futureReward);
 
     // cout << "initialized child ";
     // SearchEngine::actionStates[actionIndex].printCompact(cout);
@@ -25,20 +30,20 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
                          Outcome selection
 ******************************************************************/
 
-MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextState, 
+MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextState,
         int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
-    if(node->children.empty()) {
+    if (node->children.empty()) {
         node->children.resize(
                 SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
                 NULL);
     }
 
-    int childIndex = (int)sampleVariable(
+    int childIndex = (int) sampleVariable(
             nextState.probabilisticStateFluentAsPD(varIndex));
     nextState.probabilisticStateFluent(varIndex) = childIndex;
 
-    if(!node->children[childIndex]) {
+    if (!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
     }
     return node->children[childIndex];
@@ -48,7 +53,8 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextState,
                           Backup functions
 ******************************************************************/
 
-void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& immReward, double const& futReward) {
+void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& immReward,
+        double const& futReward) {
     node->immediateReward += immReward;
     node->futureReward += futReward;
 
@@ -61,6 +67,3 @@ void MCUCTSearch::backupChanceNode(MCUCTNode* node, double const& futReward) {
     node->futureReward += futReward;
     ++node->numberOfVisits;
 }
-
-
-
