@@ -82,7 +82,9 @@ private:
     bool solved;
     bool rewardLock;
 
+#ifndef NDEBUG
     FRIEND_TEST(bfsSearchTest, testSelectAction);
+#endif
 };
 
 class BreadthFirstSearch : public THTS<BFSNode> {
@@ -116,12 +118,13 @@ protected:
         return getBFSNode(1.0);
     }
 
-    // TODO Do above methods have to be protected or is public ok?
+#ifndef NDEBUG
     FRIEND_TEST(bfsSearchTest, testInitializeDecisionNodeChild);
     FRIEND_TEST(bfsSearchTest, testBackupDecisionNodeLeaf);
     FRIEND_TEST(bfsSearchTest, testBackupDecisionNode);
     FRIEND_TEST(bfsSearchTest, testBackupChanceNode);
     FRIEND_TEST(bfsSearchTest, testSelectAction);
+#endif
 
 private:
     // Memory management
