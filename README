@@ -10,18 +10,19 @@ Contact:  joris [@] almende.org
 Updated by Thomas Keller (tkeller [@] informatik.uni-freiburg.de) on
 September 27, 2013.
 Updated by Florian Geißer (geisserf [@] informatik.uni-freiburg.de) on
-April 29, 2014.
+May 06, 2014.
 
 
 ===[ Prerequisites ]===
 
 Libraries: Boost (libboost),  BuDDy (http://sourceforge.net/projects/buddy/)
-For Development only: Google Test (libgtest-dev),
+For Development only: Google Test (libgtest-dev), uncrustify 
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
 give an error on running the PROST solver. 
 
+Google Test:
 If you have installed Google Test make sure that the installation worked by
 verifying the existence of either:
 
@@ -39,10 +40,23 @@ If you don't find these files, please download gtest manually
 (https://code.google.com/p/googletest/) and refer to the gtest README to build
 it from source.
 
+Uncrustify:
+After installing uncrustify (e.g. via apt-get install uncrustify) add the
+following lines to your .hgrc:
+
+[extensions]
+uncrustify = FULL_PATH_TO_PROST/scripts/uncrustify.py
+
+where FULL_PATH_TO is the absolute path to your prost directory
+
 ===[ Compiling the PROST planner ]===
 
 The planner can be compiled simply by going into the source directory
-and running make (debug version) or make release (release version).
+and running make debug (debug version) or make release (release version).
+
+Running make without additional parameters will compile the debug version, as
+well as any unit tests in src/test, run the tests and additionally run
+uncrustify to show any files which do not conform to our coding conventions.
 
 
 ===[ Running PROST ]===

@@ -3,9 +3,6 @@
 
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
-#ifndef NDEBUG
-#include <gtest/gtest.h>
-#endif
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper (Thomas Keller and Malte
@@ -130,6 +127,11 @@ public:
         nodePool.resize(maxNumberOfNodes + 20000, NULL);
     }
 
+    // Used only for testing
+    void setCurrentRootNode(SearchNode* node) {
+        currentRootNode = node;
+    }
+
     // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out, bool const& printRoundStats,
@@ -233,7 +235,7 @@ protected:
     }
 
     // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
-    // max_mc_uct would always backup the old future reward
+    // dp_uct would always backup the old future reward
     bool backupLock;
     // Backup lock won't apply at and beyond this depth.
     int maxLockDepth;
@@ -297,11 +299,6 @@ private:
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;
-
-    // Tests accessing private content
-#ifndef NDEBUG
-    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
-#endif
 };
 
 /******************************************************************
@@ -746,10 +743,10 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
             // std::cout << " with " << initialQValues[i] << std::endl;
             initializeDecisionNodeChild(node, i, initialQValues[i]);
         } //  else {
-         //     std::cout << "Inapplicable: ";
-         //     SearchEngine::actionStates[i].printCompact(std::cout);
-         //     std::cout << std::endl;
-         // }
+          //     std::cout << "Inapplicable: ";
+          //     SearchEngine::actionStates[i].printCompact(std::cout);
+          //     std::cout << std::endl;
+          // }
     }
 
     if (node != currentRootNode) {
@@ -861,7 +858,8 @@ void THTS<SearchNode>::printStats(std::ostream& out,
 
     if (currentTrial > 0) {
         out << indent << "Performed trials: " << currentTrial << std::endl;
-        out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
+        out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex <<
+        std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
         out << indent << "Skipped backups: " << skippedBackups << std::endl;
     }

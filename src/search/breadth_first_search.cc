@@ -96,9 +96,8 @@ void BreadthFirstSearch::backupDecisionNode(BFSNode* node,
 
     node->immediateReward = immReward;
 
-    if (selectedActionIndex() != -1) {
-        ++node->numberOfVisits;
-    }
+    ++node->numberOfVisits;
+
     if (backupLock) {
         skippedBackups++;
         return;
