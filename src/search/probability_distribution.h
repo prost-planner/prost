@@ -116,7 +116,7 @@ public:
     bool isTruth() const {
         return isDeterministic() &&
                (MathUtils::doubleIsGreaterOrEqual(values[0],
-                1.0) || MathUtils::doubleIsSmaller(values[0], 0.0));
+                        1.0) || MathUtils::doubleIsSmaller(values[0], 0.0));
     }
 
     bool isDeterministic() const {

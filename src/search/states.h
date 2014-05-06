@@ -105,7 +105,10 @@ public:
                     State::stateHashKeysOfDeterministicStateFluents[index][(int)
                                                                            state
                                                                            .
-                                                                           deterministicStateFluents[index]];
+                                                                           deterministicStateFluents
+                                                                           [
+                                                                               index
+                                                                           ]];
             }
             for (unsigned int index = 0;
                  index < State::numberOfProbabilisticStateFluents; ++index) {
@@ -113,7 +116,10 @@ public:
                     State::stateHashKeysOfProbabilisticStateFluents[index][(int)
                                                                            state
                                                                            .
-                                                                           probabilisticStateFluents[index]];
+                                                                           probabilisticStateFluents
+                                                                           [
+                                                                               index
+                                                                           ]];
             }
         } else {
             assert(state.hashKey == -1);

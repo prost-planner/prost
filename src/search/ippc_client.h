@@ -13,7 +13,8 @@ public:
     IPPCClient(
             ProstPlanner* _planner, std::string _hostName, unsigned short _port,
             std::map<std::string,
-                     int> const& _stateVariableIndices,
+                     int>
+            const& _stateVariableIndices,
             std::vector<std::vector<std::string> > const& _stateVariableValues)
         :
           planner(_planner),

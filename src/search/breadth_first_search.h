@@ -81,10 +81,6 @@ private:
     double prob;
     bool solved;
     bool rewardLock;
-
-#ifndef NDEBUG
-    FRIEND_TEST(bfsSearchTest, testSelectAction);
-#endif
 };
 
 class BreadthFirstSearch : public THTS<BFSNode> {
@@ -117,14 +113,6 @@ protected:
     BFSNode* getRootNode() {
         return getBFSNode(1.0);
     }
-
-#ifndef NDEBUG
-    FRIEND_TEST(bfsSearchTest, testInitializeDecisionNodeChild);
-    FRIEND_TEST(bfsSearchTest, testBackupDecisionNodeLeaf);
-    FRIEND_TEST(bfsSearchTest, testBackupDecisionNode);
-    FRIEND_TEST(bfsSearchTest, testBackupChanceNode);
-    FRIEND_TEST(bfsSearchTest, testSelectAction);
-#endif
 
 private:
     // Memory management

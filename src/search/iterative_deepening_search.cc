@@ -231,12 +231,12 @@ bool IterativeDeepeningSearch::moreIterations(
                 }
             }
         } //  else {
-         //     // Noop is not applicable -> we determine the first applicable
-         //     // action
-         //     unsigned int firstApplicableActionIndex = 0;
-         //     while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
-         //     ++firstApplicableActionIndex;
-         //     }
+          //     // Noop is not applicable -> we determine the first applicable
+          //     // action
+          //     unsigned int firstApplicableActionIndex = 0;
+          //     while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
+          //     ++firstApplicableActionIndex;
+          //     }
 
         //     // There must be at least one applicable action
         //     assert(firstApplicableActionIndex < qValues.size());

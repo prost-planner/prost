@@ -391,7 +391,7 @@ void MultiConditionChecker::evaluateToPD(DiscretePD& res, State const& current,
                 }
                 valProbPairs[exprRes.values[i]] +=
                     (prob.truthProbability() * remainingProb *
-                exprRes.probabilities[i]);
+                     exprRes.probabilities[i]);
             }
         }
 
