@@ -6,7 +6,7 @@
 
 #include "uct_base.h"
 
-#ifndef NDEBUG
+#ifdef TEST
 #include <gtest/gtest.h>
 #endif
 
@@ -71,11 +71,11 @@ public:
 
 private:
 
-#ifndef NDEBUG
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
+#ifdef TEST
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLOG);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithSQRT);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLIN);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithESQRT);
     FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
     FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
     FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
@@ -112,11 +112,6 @@ protected:
     void backupDecisionNode(MCUCTNode* node, double const& immReward,
             double const& futReward);
     void backupChanceNode(MCUCTNode* node, double const& futReward);
-
-#ifndef NDEBUG
-    FRIEND_TEST(mcUctSearchTest, testInitializeDecisionNodeChild);
-    FRIEND_TEST(mcUctSearchTest, testBackupDecisionNode);
-#endif
 };
 
 #endif

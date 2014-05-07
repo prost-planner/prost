@@ -142,8 +142,8 @@ void ProstPlanner::monitorRAMUsage() {
 
         searchEngine->disableCaching();
         cout << endl << "CACHING ABORTED IN STEP " <<
-        (SearchEngine::horizon - remainingSteps +
-         1) << " OF ROUND " << (currentRound + 1) << endl << endl;
+        (SearchEngine::horizon - remainingSteps + 1)
+             << " OF ROUND " << (currentRound + 1) << endl << endl;
     }
 }
 
@@ -157,10 +157,7 @@ void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
     for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
          ++i) {
         nextValuesOfProbabilisticStateFluents.push_back(
-                nextStateVec[i +
-                             State::
-                             numberOfDeterministicStateFluents
-                ]);
+                nextStateVec[i + State::numberOfDeterministicStateFluents]);
     }
     currentState =
         State(nextValuesOfDeterministicStateFluents,

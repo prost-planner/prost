@@ -55,7 +55,8 @@ The planner can be compiled simply by going into the source directory
 and running make debug (debug version) or make release (release version).
 
 Running make without additional parameters will compile the debug version, as
-well as any unit tests in src/test, run the tests and additionally run
+well as any unit tests in src/test (note that compilation will fail if you do
+not have installed Google Test), run the tests and additionally run
 uncrustify to show any files which do not conform to our coding conventions.
 
 

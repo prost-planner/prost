@@ -63,6 +63,7 @@ endif
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
 CCOPT_DEBUG    = 
+CCOPT_TEST = -D TEST
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
 LINKOPT_DEBUG    =
@@ -102,10 +103,10 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 test_build: $(TEST_BINARIES)
 
 %Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
 
 %Test.o: %Test.cc 
-				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
 
 ## Automatically runs all tests from TEST_BINARIES.
 test: $(TEST_BINARIES)

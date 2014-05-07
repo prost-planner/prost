@@ -16,10 +16,6 @@
 #include "thts.h"
 #include "prost_planner.h"
 
-#ifndef NDEBUG
-#include <gtest/gtest.h>
-#endif
-
 template <class SearchNode>
 class UCTBase : public THTS<SearchNode> {
 public:
@@ -99,19 +95,6 @@ protected:
 
     // Variable to enable uniform action selection at root node
     bool uniformRoot;
-
-    // Tests accessing protected context
-#ifndef NDEBUG
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
-    FRIEND_TEST(uctBaseTest, testValueFromString);
-    FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
-    FRIEND_TEST(uctBaseTest, testSelectRandomAction);
-    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
-    FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
-#endif
 };
 
 /******************************************************************

@@ -186,7 +186,6 @@ bool IPPCClient::submitAction(vector<string>& actions,
     if (write(socket, os.str().c_str(), os.str().length()) == -1) {
         return false;
     }
-
     const XMLNode* serverResponse = XMLNode::readNode(socket);
 
     if (serverResponse->getName() == "round-end" ||
