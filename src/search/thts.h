@@ -393,8 +393,7 @@ void THTS<SearchNode>::initStep(State const& _rootState) {
         maxSearchDepthForThisStep = rootState.remainingSteps();
         states[maxSearchDepthForThisStep].setTo(rootState);
     }
-    assert(
-            states[maxSearchDepthForThisStep].remainingSteps() ==
+    assert(states[maxSearchDepthForThisStep].remainingSteps() ==
             maxSearchDepthForThisStep);
 
     currentStateIndex = maxSearchDepthForThisStep;
@@ -725,8 +724,9 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     node->children.resize(SearchEngine::numberOfActions, NULL);
 
     // Always backpropagate results up to newly initialized nodes
-    if (maxLockDepth == maxSearchDepthForThisStep)
+    if (maxLockDepth == maxSearchDepthForThisStep) {
         maxLockDepth = remainingConsideredSteps();
+    }
 
     // std::cout << "initializing state: " << std::endl;
     // task->printState(std::cout, states[currentStateIndex]);

@@ -373,8 +373,7 @@ protected:
     std::vector<int> getApplicableActions(State const& state) const {
         std::vector<int> res(SearchEngine::numberOfActions, 0);
 
-        std::map<State,
-                 std::vector<int> >::iterator it =
+        std::map<State, std::vector<int> >::iterator it =
             ProbabilisticSearchEngine::applicableActionsCache.find(state);
         if (it != ProbabilisticSearchEngine::applicableActionsCache.end()) {
             assert(it->second.size() == res.size());
