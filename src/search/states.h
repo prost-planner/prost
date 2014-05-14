@@ -41,6 +41,20 @@ public:
                 State::numberOfProbabilisticStateFluents);
     }
 
+    State(std::vector<double> _stateVector, int const& _remSteps) : 
+        remSteps(_remSteps), 
+        stateFluentHashKeys(State::numberOfStateFluentHashKeys, 0),
+        hashKey(-1) {
+            for (unsigned int i = 0; i < numberOfDeterministicStateFluents; ++i) {
+                deterministicStateFluents.push_back(_stateVector[i]);
+            }       
+            for (unsigned int i = 0; i < numberOfProbabilisticStateFluents; ++i) {
+                probabilisticStateFluents.push_back(
+                        _stateVector[i + numberOfDeterministicStateFluents]);
+            }
+
+        }
+
     State(State const& other) :
         deterministicStateFluents(other.deterministicStateFluents),
         probabilisticStateFluents(other.probabilisticStateFluents),
@@ -50,11 +64,11 @@ public:
 
     virtual void setTo(State const& other) {
         for (unsigned int i = 0; i < State::numberOfDeterministicStateFluents;
-             ++i) {
+                ++i) {
             deterministicStateFluents[i] = other.deterministicStateFluents[i];
         }
         for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-             ++i) {
+                ++i) {
             probabilisticStateFluents[i] = other.probabilisticStateFluents[i];
         }
 
@@ -69,11 +83,11 @@ public:
 
     virtual void reset(int _remSteps) {
         for (unsigned int i = 0; i < State::numberOfDeterministicStateFluents;
-             ++i) {
+                ++i) {
             deterministicStateFluents[i] = 0.0;
         }
         for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-             ++i) {
+                ++i) {
             probabilisticStateFluents[i] = 0.0;
         }
 
@@ -100,26 +114,26 @@ public:
         if (State::stateHashingPossible) {
             state.hashKey = 0;
             for (unsigned int index = 0;
-                 index < State::numberOfDeterministicStateFluents; ++index) {
+                    index < State::numberOfDeterministicStateFluents; ++index) {
                 state.hashKey +=
                     State::stateHashKeysOfDeterministicStateFluents[index][(int)
-                                                                           state
-                                                                           .
-                                                                           deterministicStateFluents
-                                                                           [
-                                                                               index
-                                                                           ]];
+                    state
+                    .
+                    deterministicStateFluents
+                    [
+                    index
+                    ]];
             }
             for (unsigned int index = 0;
-                 index < State::numberOfProbabilisticStateFluents; ++index) {
+                    index < State::numberOfProbabilisticStateFluents; ++index) {
                 state.hashKey +=
                     State::stateHashKeysOfProbabilisticStateFluents[index][(int)
-                                                                           state
-                                                                           .
-                                                                           probabilisticStateFluents
-                                                                           [
-                                                                               index
-                                                                           ]];
+                    state
+                    .
+                    probabilisticStateFluents
+                    [
+                    index
+                    ]];
             }
         } else {
             assert(state.hashKey == -1);
@@ -129,14 +143,14 @@ public:
     // Calculate the hash key for each state fluent in a State
     static void calcStateFluentHashKeys(State& state) {
         for (unsigned int i = 0; i < State::numberOfDeterministicStateFluents;
-             ++i) {
+                ++i) {
             if (MathUtils::doubleIsGreater(state.deterministicStateFluents[i],
                         0.0)) {
                 for (unsigned int j = 0;
-                     j <
-                     State::stateFluentHashKeysOfDeterministicStateFluents[i].
-                     size();
-                     ++j) {
+                        j <
+                        State::stateFluentHashKeysOfDeterministicStateFluents[i].
+                        size();
+                        ++j) {
                     assert(
                             state.stateFluentHashKeys.size() >
                             State::
@@ -144,27 +158,27 @@ public:
                             ].
                             first);
                     state.stateFluentHashKeys[State::
-                                              stateFluentHashKeysOfDeterministicStateFluents
-                                              [i][j].first]
+                        stateFluentHashKeysOfDeterministicStateFluents
+                        [i][j].first]
                         +=
-                            ((int) state.deterministicStateFluents[i]) *
-                            State::
-                            stateFluentHashKeysOfDeterministicStateFluents[i][j
-                            ].
-                            second;
+                        ((int) state.deterministicStateFluents[i]) *
+                        State::
+                        stateFluentHashKeysOfDeterministicStateFluents[i][j
+                        ].
+                        second;
                 }
             }
         }
 
         for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-             ++i) {
+                ++i) {
             if (MathUtils::doubleIsGreater(state.probabilisticStateFluents[i],
                         0.0)) {
                 for (unsigned int j = 0;
-                     j <
-                     State::stateFluentHashKeysOfProbabilisticStateFluents[i].
-                     size();
-                     ++j) {
+                        j <
+                        State::stateFluentHashKeysOfProbabilisticStateFluents[i].
+                        size();
+                        ++j) {
                     assert(
                             state.stateFluentHashKeys.size() >
                             State::
@@ -172,14 +186,14 @@ public:
                             ].
                             first);
                     state.stateFluentHashKeys[State::
-                                              stateFluentHashKeysOfProbabilisticStateFluents
-                                              [i][j].first]
+                        stateFluentHashKeysOfProbabilisticStateFluents
+                        [i][j].first]
                         +=
-                            ((int) state.probabilisticStateFluents[i]) *
-                            State::
-                            stateFluentHashKeysOfProbabilisticStateFluents[i][j
-                            ].
-                            second;
+                        ((int) state.probabilisticStateFluents[i]) *
+                        State::
+                        stateFluentHashKeysOfProbabilisticStateFluents[i][j
+                        ].
+                        second;
                 }
             }
         }
@@ -230,25 +244,25 @@ public:
             }
 
             for (unsigned int i = 0;
-                 i < State::numberOfDeterministicStateFluents; ++i) {
+                    i < State::numberOfDeterministicStateFluents; ++i) {
                 if (MathUtils::doubleIsSmaller(rhs.deterministicStateFluents[i],
                             lhs.deterministicStateFluents[i])) {
                     return false;
                 } else if (MathUtils::doubleIsSmaller(lhs.
-                                   deterministicStateFluents[i],
-                                   rhs.deterministicStateFluents[i])) {
+                            deterministicStateFluents[i],
+                            rhs.deterministicStateFluents[i])) {
                     return true;
                 }
             }
 
             for (unsigned int i = 0;
-                 i < State::numberOfProbabilisticStateFluents; ++i) {
+                    i < State::numberOfProbabilisticStateFluents; ++i) {
                 if (MathUtils::doubleIsSmaller(rhs.probabilisticStateFluents[i],
                             lhs.probabilisticStateFluents[i])) {
                     return false;
                 } else if (MathUtils::doubleIsSmaller(lhs.
-                                   probabilisticStateFluents[i],
-                                   rhs.probabilisticStateFluents[i])) {
+                            probabilisticStateFluents[i],
+                            rhs.probabilisticStateFluents[i])) {
                     return true;
                 }
             }
@@ -270,25 +284,25 @@ public:
             }
 
             for (unsigned int i = 0;
-                 i < State::numberOfDeterministicStateFluents; ++i) {
+                    i < State::numberOfDeterministicStateFluents; ++i) {
                 if (MathUtils::doubleIsSmaller(rhs.deterministicStateFluents[i],
                             lhs.deterministicStateFluents[i])) {
                     return false;
                 } else if (MathUtils::doubleIsSmaller(lhs.
-                                   deterministicStateFluents[i],
-                                   rhs.deterministicStateFluents[i])) {
+                            deterministicStateFluents[i],
+                            rhs.deterministicStateFluents[i])) {
                     return true;
                 }
             }
 
             for (unsigned int i = 0;
-                 i < State::numberOfProbabilisticStateFluents; ++i) {
+                    i < State::numberOfProbabilisticStateFluents; ++i) {
                 if (MathUtils::doubleIsSmaller(rhs.probabilisticStateFluents[i],
                             lhs.probabilisticStateFluents[i])) {
                     return false;
                 } else if (MathUtils::doubleIsSmaller(lhs.
-                                   probabilisticStateFluents[i],
-                                   rhs.probabilisticStateFluents[i])) {
+                            probabilisticStateFluents[i],
+                            rhs.probabilisticStateFluents[i])) {
                     return true;
                 }
             }
@@ -315,20 +329,20 @@ public:
 
     // These are used to calculate hash keys
     static std::vector<std::vector<long> >
-    stateHashKeysOfDeterministicStateFluents;
+        stateHashKeysOfDeterministicStateFluents;
     static std::vector<std::vector<long> >
-    stateHashKeysOfProbabilisticStateFluents;
+        stateHashKeysOfProbabilisticStateFluents;
 
     // The Evaluatable with index
     // stateFluentHashKeysOfDeterministicStateFluents[i][j].first depends on the
     // deterministic state fluent with index i, and is updated by multiplication
     // with stateFluentHashKeysOfDeterministicStateFluents[i][j].second
     static std::vector<std::vector<std::pair<int,
-                                             long> > >
-    stateFluentHashKeysOfDeterministicStateFluents;
+        long> > >
+            stateFluentHashKeysOfDeterministicStateFluents;
     static std::vector<std::vector<std::pair<int,
-                                             long> > >
-    stateFluentHashKeysOfProbabilisticStateFluents;
+        long> > >
+            stateFluentHashKeysOfProbabilisticStateFluents;
 
     friend class KleeneState;
     friend class PDState;
@@ -343,8 +357,8 @@ private:
 };
 
 /*****************************************************************
-                             ActionState
-*****************************************************************/
+  ActionState
+ *****************************************************************/
 
 struct ActionState {
     ActionState(int _index, std::vector<int> _state,
@@ -372,8 +386,8 @@ struct ActionState {
 };
 
 /*****************************************************************
-                               PDState
-*****************************************************************/
+  PDState
+ *****************************************************************/
 
 class PDState : public State {
 public:
@@ -401,7 +415,7 @@ public:
         State::reset(_remSteps);
 
         for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-             ++i) {
+                ++i) {
             probabilisticStateFluentsAsPD[i].reset();
         }
     }
@@ -410,7 +424,7 @@ public:
         State::setTo(other);
 
         for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-             ++i) {
+                ++i) {
             probabilisticStateFluentsAsPD[i] =
                 other.probabilisticStateFluentsAsPD[i];
         }
@@ -420,24 +434,24 @@ public:
     struct PDStateCompare {
         bool operator()(PDState const& lhs, PDState const& rhs) const {
             for (unsigned int i = 0;
-                 i < State::numberOfDeterministicStateFluents; ++i) {
+                    i < State::numberOfDeterministicStateFluents; ++i) {
                 if (MathUtils::doubleIsSmaller(rhs.deterministicStateFluents[i],
                             lhs.deterministicStateFluents[i])) {
                     return false;
                 } else if (MathUtils::doubleIsSmaller(lhs.
-                                   deterministicStateFluents[i],
-                                   rhs.deterministicStateFluents[i])) {
+                            deterministicStateFluents[i],
+                            rhs.deterministicStateFluents[i])) {
                     return true;
                 }
             }
 
             for (unsigned int i = 0;
-                 i < State::numberOfProbabilisticStateFluents; ++i) {
+                    i < State::numberOfProbabilisticStateFluents; ++i) {
                 if (rhs.probabilisticStateFluentsAsPD[i] <
-                    lhs.probabilisticStateFluentsAsPD[i]) {
+                        lhs.probabilisticStateFluentsAsPD[i]) {
                     return false;
                 } else if (lhs.probabilisticStateFluentsAsPD[i] <
-                           rhs.probabilisticStateFluentsAsPD[i]) {
+                        rhs.probabilisticStateFluentsAsPD[i]) {
                     return true;
                 }
             }
@@ -462,8 +476,8 @@ protected:
 };
 
 /*****************************************************************
-                          KleeneState
-*****************************************************************/
+  KleeneState
+ *****************************************************************/
 
 class KleeneState {
 public:
@@ -476,27 +490,27 @@ public:
         state(KleeneState::stateSize),
         stateFluentHashKeys(KleeneState::numberOfStateFluentHashKeys,
                 0), hashKey(-1) {
-        for (unsigned int index = 0;
-             index < State::numberOfDeterministicStateFluents; ++index) {
-            state[index].insert(origin.deterministicStateFluents[index]);
-        }
+            for (unsigned int index = 0;
+                    index < State::numberOfDeterministicStateFluents; ++index) {
+                state[index].insert(origin.deterministicStateFluents[index]);
+            }
 
-        for (unsigned int index = 0;
-             index < State::numberOfProbabilisticStateFluents; ++index) {
-            state[State::numberOfDeterministicStateFluents + index].insert(
-                    origin.probabilisticStateFluents[index]);
+            for (unsigned int index = 0;
+                    index < State::numberOfProbabilisticStateFluents; ++index) {
+                state[State::numberOfDeterministicStateFluents + index].insert(
+                        origin.probabilisticStateFluents[index]);
+            }
         }
-    }
 
     // Calculate the hash key of a KleeneState
     static void calcStateHashKey(KleeneState& state) {
         if (KleeneState::stateHashingPossible) {
             state.hashKey = 0;
             for (unsigned int index = 0; index < KleeneState::stateSize;
-                 ++index) {
+                    ++index) {
                 int multiplier = 0;
                 for (std::set<double>::iterator it = state[index].begin();
-                     it != state[index].end(); ++it) {
+                        it != state[index].end(); ++it) {
                     multiplier |= 1 << ((int) *it);
                 }
                 --multiplier;
@@ -513,21 +527,21 @@ public:
         for (unsigned int i = 0; i < KleeneState::stateSize; ++i) {
             int multiplier = 0;
             for (std::set<double>::iterator it = state[i].begin();
-                 it != state[i].end(); ++it) {
+                    it != state[i].end(); ++it) {
                 multiplier |= 1 << ((int) *it);
             }
             --multiplier;
             if (multiplier > 0) {
                 for (unsigned int j = 0;
-                     j < KleeneState::indexToStateFluentHashKeyMap[i].size();
-                     ++j) {
+                        j < KleeneState::indexToStateFluentHashKeyMap[i].size();
+                        ++j) {
                     assert(
                             state.stateFluentHashKeys.size() >
                             KleeneState::indexToStateFluentHashKeyMap[i][j].
                             first);
                     state.stateFluentHashKeys[KleeneState::
-                                              indexToStateFluentHashKeyMap[i][j
-                                              ].first] +=
+                        indexToStateFluentHashKeyMap[i][j
+                        ].first] +=
                         (multiplier *
                          KleeneState::indexToStateFluentHashKeyMap[i][j].second);
                 }
@@ -600,8 +614,8 @@ public:
     // depends on the CPF with index i, and is updated by multiplication with
     // indexToStateFluentHashKeyMap[i][j].second
     static std::vector<std::vector<std::pair<int,
-                                             long> > >
-    indexToStateFluentHashKeyMap;
+        long> > >
+            indexToStateFluentHashKeyMap;
 
 protected:
     std::vector<std::set<double> > state;
