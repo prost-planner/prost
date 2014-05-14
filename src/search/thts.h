@@ -4,6 +4,11 @@
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
 
+#ifdef TEST
+#include <gtest/gtest.h>
+#endif
+
+
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper (Thomas Keller and Malte
 // Helmert: Trial-based Heuristic Tree Search for Finite Horizon MDPs). The
@@ -299,6 +304,12 @@ private:
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;
+
+    // Tests which access private members
+    #ifdef TEST
+    FRIEND_TEST(thtsTest, testInitializeDecisionNodeWhereBackupDepthChanges);
+    FRIEND_TEST(thtsTest, testCorrectNumberOfInitializedDecisionNodes);
+    #endif
 };
 
 /******************************************************************
@@ -720,7 +731,6 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
         node->setRewardLock(true);
         return;
     }
-
     node->children.resize(SearchEngine::numberOfActions, NULL);
 
     // Always backpropagate results up to newly initialized nodes
@@ -778,7 +788,7 @@ int THTS<SearchNode>::getUniquePolicy() {
 
     if (isARewardLock(states[currentStateIndex])) {
         outStream << "Current root state is a reward lock state!" << std::endl;
-
+        states[currentStateIndex].print(outStream);
         for (unsigned int i = 0; i < actionsToExpand.size(); ++i) {
             if (actionsToExpand[i] == i) {
                 return i;

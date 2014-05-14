@@ -250,14 +250,19 @@ bool IterativeDeepeningSearch::moreIterations(
         //     }
         // }
     }
+    // 2. Check if the strict termination timeout is exceeded
+    if (MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
+        maxSearchDepth = currentState.remainingSteps()-1;
+        return false;
+    }
 
-    // 2. Check if we have reached the max search depth for this step
+    // 3. Check if we have reached the max search depth for this step
     return currentState.remainingSteps() < maxSearchDepthForThisStep;
 }
 
 /******************************************************************
-                   Statistics and Printers
-******************************************************************/
+  Statistics and Printers
+ ******************************************************************/
 
 void IterativeDeepeningSearch::resetStats() {
     accumulatedSearchDepth = 0;
@@ -271,8 +276,8 @@ void IterativeDeepeningSearch::printStats(ostream& out,
     SearchEngine::printStats(out, printRoundStats, indent);
     if (numberOfRuns > 0) {
         out << indent << "Average search depth: " <<
-        ((double) accumulatedSearchDepth /
-         (double) numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
+            ((double) accumulatedSearchDepth /
+             (double) numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
     }
     out << indent << "Maximal search depth: " << maxSearchDepth << endl;
     out << indent << "Cache hits: " << cacheHits << endl;

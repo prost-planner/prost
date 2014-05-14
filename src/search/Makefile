@@ -66,7 +66,7 @@ CCOPT_DEBUG    =
 CCOPT_TEST = -D TEST
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
-LINKOPT_DEBUG    =
+LINKOPT_DEBUG    = 
 
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
