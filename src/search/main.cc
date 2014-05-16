@@ -78,6 +78,11 @@ void printUsage() {
     cout << "    Specifies the magic constant scale factor (called C_p in the UCT paper of Kocsis and Szepesvari)." << endl;
     cout << "    Default: 1.0" << endl << endl;
 
+    cout << " -er <LOG | SQRT | LIN | E.SQRT>" << endl;
+    cout << "    Specified the exploration function which should be used, to compute the nominator of the"
+       "UCT formula." << endl;
+    cout << "    Default: LOG" << endl << endl;
+
     cout << " -iv <int>" << endl;
     cout << "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization." << endl;
     cout << "    Default: 5" << endl << endl;

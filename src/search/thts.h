@@ -3,6 +3,9 @@
 
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
+#ifndef NDEBUG
+#include <gtest/gtest.h>
+#endif
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper (Thomas Keller and Malte
@@ -130,6 +133,9 @@ public:
 protected:
     THTS<SearchNode>(std::string _name) :
         ProbabilisticSearchEngine(_name),
+		backupLock(false),
+        maxLockDepth(0),
+        skippedBackups(0),
         currentRootNode(NULL),
         chosenOutcome(NULL),
         states(SearchEngine::horizon+1),
@@ -210,6 +216,18 @@ protected:
         return actions[currentStateIndex-1];
     }
 
+    SearchNode const* getCurrentRootNode() const {
+        return currentRootNode;
+    }
+    
+    // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
+    // max_mc_uct would always backup the old future reward
+    bool backupLock;
+    // Backup lock won't apply at and beyond this depth.
+    int maxLockDepth;
+	// Statistic variable to count skipped Backups.
+    size_t skippedBackups;
+
 private:
     // Search nodes used in trials
     SearchNode* currentRootNode;
@@ -267,6 +285,12 @@ private:
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;
+    
+    // Tests accessing private content
+#ifndef NDEBUG
+    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
+#endif
+
 };
 
 /******************************************************************
@@ -381,8 +405,10 @@ void THTS<SearchNode>::initTrial() {
     nextStateIndex = maxSearchDepthForThisStep - 1;
     states[nextStateIndex].reset(nextStateIndex);
 
-    // Reset trial dependent counter
+    // Reset trial dependent counter and backup lock
     initializedDecisionNodes = 0;
+    backupLock = false;
+    maxLockDepth = remainingConsideredSteps();
 }
 
 template <class SearchNode>
@@ -657,6 +683,10 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     }
 
     node->children.resize(SearchEngine::numberOfActions, NULL);
+    
+    // Always backpropagate results up to newly initialized nodes
+    if (maxLockDepth == maxSearchDepthForThisStep)
+        maxLockDepth = remainingConsideredSteps();
 
     // std::cout << "initializing state: " << std::endl;
     // task->printState(std::cout, states[currentStateIndex]);
@@ -681,12 +711,11 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
        ++initializedDecisionNodes;
     }
 
-    // Don't initialize nodes if it gets too costly due to memory constraints
-    if (initializer->getMaxSearchDepth() == 0) {
+	// Don't initialize nodes if it gets too costly due to memory constraints
+	if(initializer->getMaxSearchDepth() == 0) {
         UniformEvaluationSearch* _initializer = new UniformEvaluationSearch();
         setInitializer(_initializer);
-        std::cout << "Aborted initialization as search depth is too low!" <<
-        std::endl;
+        std::cout << "Aborted initialization as search depth is too low!" << std::endl;
     }
 }
 
@@ -783,6 +812,7 @@ void THTS<SearchNode>::printStats(std::ostream& out, bool const& printRoundStats
         out << "Performed trials: " << currentTrial << std::endl;
         out << "Created SearchNodes: " << lastUsedNodePoolIndex << std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
+        out << "Skipped backups: " << skippedBackups << std::endl;
     }
     if(initializer) {
         out << "Initialization: " << std::endl;

@@ -9,6 +9,7 @@ HEADERS = parser.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
 	  uniform_evaluation_search.h \
+	  breadth_first_search.h \
 	  ippc_client.h \
 	  states.h \
 	  evaluatables.h \
@@ -40,6 +41,9 @@ TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 CC     = g++
 DEPEND = g++ -MM
 
+## Testfile binaries
+TEST_BINARIES = $(basename $(wildcard ../test/*Test.cc))
+
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
 
@@ -66,9 +70,10 @@ LINKOPT_DEBUG    =
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug
+default: debug test_build test
 
-all: release debug
+all: release debug test_build test
+
 
 ## Build rules for the release target follow.
 
@@ -92,13 +97,31 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
 
+## Build rules for test target follow
+
+test_build: $(TEST_BINARIES)
+
+%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
+
+%Test.o: %Test.cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
+
+## Automatically runs all tests from TEST_BINARIES.
+test: $(TEST_BINARIES)
+				for T in $(TEST_BINARIES); do ./$$T; done
+
+
 clean:
 	rm -rf .obj
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
+	rm -f ../test/*.o
+	rm -f ../test/*.obj
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
+	for T in $(TEST_BINARIES); do rm -f ../test/$$T; done
 
 ## Note: If we just call gcc -MM on a source file that lives within a
 ## subdirectory, it will strip the directory part in the output. Hence
@@ -123,4 +146,4 @@ ifneq ($(MAKECMDGOALS),distclean)
 endif
 endif
 
-.PHONY: default all release debug clean distclean
+.PHONY: default all release debug test_build test clean distclean

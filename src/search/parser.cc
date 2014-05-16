@@ -14,7 +14,7 @@ void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<stri
         SystemUtils::abort("Error: Unable to read problem file: " + problemFileName);
     }
     stringstream desc(problemDesc);
-
+    resetStatics();
     // Parse general task properties
     desc >> SearchEngine::taskName;
     desc >> SearchEngine::horizon;
@@ -198,7 +198,6 @@ void Parser::parseActionFluent(stringstream& desc) const {
         assert(val == j);
         values.push_back(value);
     }
-
     SearchEngine::actionFluents.push_back(new ActionFluent(index, name, values));
 }
 
@@ -528,4 +527,22 @@ void Parser::parseTrainingSet(stringstream& desc) const {
         State::calcStateHashKey(trainingState);
         SearchEngine::trainingSet.push_back(trainingState);
     }
+}
+
+// Resets static variables of SearchEngine, State, KleeneState. Necessary for
+// unit tests, because static variables don't reset between test instances.
+void Parser::resetStatics() const {
+    SearchEngine::actionFluents.clear();
+    SearchEngine::stateFluents.clear();
+    SearchEngine::probabilisticCPFs.clear();
+    SearchEngine::allCPFs.clear();
+    SearchEngine::determinizedCPFs.clear();
+    SearchEngine::allDeterminizedCPFs.clear();
+    SearchEngine::deterministicCPFs.clear();
+    SearchEngine::actionPreconditions.clear();
+    SearchEngine::actionStates.clear();
+    SearchEngine::trainingSet.clear();
+    State::stateFluentHashKeysOfDeterministicStateFluents.clear();
+    State::stateFluentHashKeysOfProbabilisticStateFluents.clear();
+    KleeneState::indexToStateFluentHashKeyMap.clear();
 }

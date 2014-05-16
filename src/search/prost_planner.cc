@@ -178,7 +178,7 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
     }
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
-    cout << "Sumitting Action: ";
+    cout << "Submitting Action: ";
     SearchEngine::actionStates[result].printCompact(cout);
     cout << endl << "------------------------------------------------------------------" << endl << endl;
     

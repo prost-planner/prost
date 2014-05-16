@@ -16,9 +16,16 @@
 #include "thts.h"
 #include "prost_planner.h"
 
+#ifndef NDEBUG
+#include <gtest/gtest.h>
+#endif
+
 template <class SearchNode>
 class UCTBase : public THTS<SearchNode> {
 public:
+    // possible types for the exploration-rate function
+    enum functionTypes {LOG, SQRT, LIN, LNQUAD};
+
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
@@ -39,20 +46,40 @@ public:
         magicConstantScaleFactor = _magicConstantScaleFactor;
     }
 
+    virtual void setExplorationRateFunction(std::string type) {
+        if (type.compare("LOG") == 0)
+            explorationRateFunction = LOG;
+        if (type.compare("SQRT") == 0)
+            explorationRateFunction = SQRT;
+        if (type.compare("LIN") == 0)
+            explorationRateFunction = LIN;
+        if (type.compare("E.SQRT") == 0)
+            explorationRateFunction = LNQUAD;
+    }
+
 protected:
     UCTBase(std::string _name) :
         THTS<SearchNode>(_name), 
+		explorationRateFunction(LOG),
         numberOfInitialVisits(5),
-        magicConstantScaleFactor(1.0) {}
+        magicConstantScaleFactor(1.0), 
+        uniformRoot(false) {}
+
 
     // Action selection
     int selectAction(SearchNode* node);
+    void selectRandomAction(SearchNode* node);
+    void selectActionPerRoundRobin(SearchNode * node);
     void selectUnselectedAction(SearchNode* node);
     void selectActionBasedOnVisitDifference(SearchNode* node);
     void selectActionBasedOnUCTFormula(SearchNode* node);
 
     // Vector for decision node children of equal quality (wrt UCT formula)
     std::vector<int> bestActionIndices;
+
+    // Variable for the UCT exploration-rate function, i.e. the part
+    // in the numerator of the UCT formula 
+    functionTypes explorationRateFunction;
 
     // Variables to calculate UCT formula
     double magicConstant;
@@ -68,6 +95,22 @@ protected:
     // Parameter
     int numberOfInitialVisits;
     double magicConstantScaleFactor;
+
+    // Variable to enable uniform action selection at root node
+    bool uniformRoot;
+
+    // Tests accessing protected context
+#ifndef NDEBUG
+	FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
+    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
+    FRIEND_TEST(uctBaseTest, testValueFromString);
+    FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
+    FRIEND_TEST(uctBaseTest, testSelectRandomAction);
+    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
+    FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
+#endif
 };
 
 /******************************************************************
@@ -82,6 +125,12 @@ bool UCTBase<SearchNode>::setValueFromString(std::string& param, std::string& va
     } else if(param == "-iv") {
         setNumberOfInitialVisits(atoi(value.c_str()));
         return true;
+    } else if(param == "-er") {
+        setExplorationRateFunction(value);
+        return true;
+    } else if(param == "-uniformroot") {
+        uniformRoot = true;
+        return true;
     }
 
     return THTS<SearchNode>::setValueFromString(param, value);
@@ -94,6 +143,12 @@ bool UCTBase<SearchNode>::setValueFromString(std::string& param, std::string& va
 template <class SearchNode>
 int UCTBase<SearchNode>::selectAction(SearchNode* node) {
     bestActionIndices.clear();
+
+    if(uniformRoot && (node == THTS<SearchNode>::getCurrentRootNode())) {
+        selectActionPerRoundRobin(node);
+        assert(bestActionIndices.size() == 1);
+        return bestActionIndices[0];
+    }
 
     selectUnselectedAction(node);
 
@@ -117,6 +172,38 @@ int UCTBase<SearchNode>::selectAction(SearchNode* node) {
 
     assert(!bestActionIndices.empty());
     return bestActionIndices[std::rand() % bestActionIndices.size()];
+}
+
+template <class SearchNode>
+inline void UCTBase<SearchNode>::selectActionPerRoundRobin(SearchNode* node) {
+    unsigned int i = 0;
+    unsigned int j = 0;
+    while(j < (node->children.size() - 1)) {
+        ++j;
+        if(node->children[i] && node->children[j]) {
+            if(node->children[i]->getNumberOfVisits()
+                    > node->children[j]->getNumberOfVisits()) {
+                bestActionIndices.push_back(j);
+                return;
+            }
+            i = j;
+        }
+    } 
+    // all actions were equally visited, return the first action.
+    for(unsigned int k = 0; k < node->children.size(); ++k) {
+        if (node->children[k]) { 
+            bestActionIndices.push_back(k);
+            return;
+        }
+    }
+}
+
+template <class SearchNode>
+inline void UCTBase<SearchNode>::selectRandomAction(SearchNode* node) {
+    for(unsigned int i = 0; i < node->children.size(); ++i) {
+        if (node->children[i]) 
+            bestActionIndices.push_back(i);
+    }
 }
 
 template <class SearchNode>
@@ -171,7 +258,22 @@ inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
     assert(node->getNumberOfVisits() > 0);
 
     bestUCTValue = -std::numeric_limits<double>::max();
-    parentVisitPart = std::log((double)node->getNumberOfVisits());
+
+    switch (explorationRateFunction) {
+        case SQRT:
+            parentVisitPart = std::sqrt((double)node->getNumberOfVisits()); 
+            break;
+        case LIN:
+            parentVisitPart = node->getNumberOfVisits();
+            break;
+        case LNQUAD: {
+                         double logPart = std::log((double)node->getNumberOfVisits());
+                         parentVisitPart = logPart * logPart;
+                         break;
+                     }
+        case LOG:
+                     parentVisitPart = std::log((double)node->getNumberOfVisits());
+    }
 
     for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
         if(node->children[childIndex] && !node->children[childIndex]->isSolved()) {

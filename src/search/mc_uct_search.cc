@@ -25,13 +25,17 @@ void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node, unsigned int cons
                          Outcome selection
 ******************************************************************/
 
-MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextState, int& varIndex) {
+MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, PDState& nextState, 
+        int& varIndex) {
     // TODO: No node should be created if nextPDState[varIndex] is deterministic
     if(node->children.empty()) {
-        node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), NULL);
+        node->children.resize(
+                SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+                NULL);
     }
 
-    int childIndex = (int)sampleVariable(nextState.probabilisticStateFluentAsPD(varIndex));
+    int childIndex = (int)sampleVariable(
+            nextState.probabilisticStateFluentAsPD(varIndex));
     nextState.probabilisticStateFluent(varIndex) = childIndex;
 
     if(!node->children[childIndex]) {
