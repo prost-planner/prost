@@ -31,10 +31,8 @@ struct PlanningTask {
     ActionFluent* getActionFluent(std::string const& name);
     NonFluent* getNonFluent(std::string const& name);
 
-    std::vector<StateFluent*> getVariablesOfSchema(ParametrizedVariable* schema);
+    std::vector<StateFluent*> getStateFluentsOfSchema(ParametrizedVariable* schema);
 
-    void addStateActionConstraint(LogicalExpression* sac);
-    void addCPF(ConditionalProbabilityFunction* const& cpf);
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
     // This instance's name
@@ -53,16 +51,24 @@ struct PlanningTask {
     std::map<std::string, ParametrizedVariable*> variableDefinitions;
     std::map<ParametrizedVariable*, LogicalExpression*> CPFDefinitions;
 
-    // Instantiated variables
+    // Instantiated variables (Careful with state fluents, they are only used to
+    // check for ambiguity. After having read all state fluents, only
+    // stateFluentCPFs and their heads are used!)
     std::vector<StateFluent*> stateFluents;
+    std::map<std::string, StateFluent*> stateFluentMap;
+    std::map<ParametrizedVariable*, std::vector<StateFluent*> > stateFluentsBySchema;
+
     std::vector<ActionFluent*> actionFluents;
+    std::map<std::string, ActionFluent*> actionFluentMap;
+
     std::vector<NonFluent*> nonFluents;
-    std::map<ParametrizedVariable*, std::vector<StateFluent*> > variablesBySchema;
+    std::map<std::string, NonFluent*> nonFluentMap;
 
     // State action constraints
     std::vector<LogicalExpression*> SACs;
     std::vector<ActionPrecondition*> dynamicSACs;
     std::vector<ActionPrecondition*> staticSACs;
+    std::set<ActionFluent*> primitiveStaticSACs;
     std::vector<ActionPrecondition*> stateInvariants;
 
     // Instantiated CPFs
@@ -79,8 +85,18 @@ struct PlanningTask {
     std::vector<int> candidatesForOptimalFinalAction;
     bool unreasonableActionDetected;
     bool unreasonableActionInDeterminizationDetected;
-    int nonTerminalStatesWithUniqueAction;
+
+    // These give the number of (unique) states that were encountered during
+    // task analysis. Roughly, the closer these are to each other, the less
+    // stochasticity is in the domain.
     int numberOfEncounteredStates;
+    int numberOfUniqueEncounteredStates;
+
+    // This is the number of states that was encountered during task analysis.
+    // Among other things, it is an indicator for how often the planner can
+    // submit the single applicable (reasonable) action and hence save the time.
+    int nonTerminalStatesWithUniqueAction;
+    int uniqueNonTerminalStatesWithUniqueAction;
 
     // Hash Keys
     std::vector<std::vector<long> > stateHashKeys;

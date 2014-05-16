@@ -18,7 +18,10 @@ PlanningTask::PlanningTask() :
     rewardLockDetected(false),
     unreasonableActionDetected(false),
     unreasonableActionInDeterminizationDetected(false),
-    nonTerminalStatesWithUniqueAction(0) {
+    numberOfEncounteredStates(0),
+    numberOfUniqueEncounteredStates(0),
+    nonTerminalStatesWithUniqueAction(0),
+    uniqueNonTerminalStatesWithUniqueAction(0) {
     // Add bool type
     addType("bool");
     addObject("bool", "false");
@@ -84,43 +87,45 @@ void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<
         SystemUtils::abort("Error: Parametrized variable " + parent->variableName + " not defined.");
     }
 
-    // We declare these here as we need parentheses in the switch otherwise
-    StateFluent* sf;
-    ActionFluent* af;
-    NonFluent* nf;
-
     switch(parent->variableType) {
-    case ParametrizedVariable::STATE_FLUENT:
-        sf = new StateFluent(*parent, params, initialValue);
-        for(unsigned int i = 0; i < stateFluents.size(); ++i) {
-            // This could already be defined if it occurs in the initial state
-            if(sf->fullName == stateFluents[i]->fullName) {
-                return;
-            }
-        }
-        stateFluents.push_back(sf);
+    case ParametrizedVariable::STATE_FLUENT: {
+        StateFluent* sf = new StateFluent(*parent, params, initialValue);
 
-        if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-            variablesBySchema[parent] = vector<StateFluent*>();
+        // This is already defined if it occurs in the initial state entry
+        if(stateFluentMap.find(sf->fullName) != stateFluentMap.end()) {
+            return;
         }
-        variablesBySchema[parent].push_back(sf);
+
+        stateFluents.push_back(sf);
+        stateFluentMap[sf->fullName] = sf;
+
+        if(stateFluentsBySchema.find(parent) == stateFluentsBySchema.end()) {
+            stateFluentsBySchema[parent] = vector<StateFluent*>();
+        }
+        stateFluentsBySchema[parent].push_back(sf);
         break;
-    case ParametrizedVariable::ACTION_FLUENT:
-        af = new ActionFluent(*parent, params);
-        for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-            assert(af->fullName != actionFluents[i]->fullName);
-        }
+    }
+    case ParametrizedVariable::ACTION_FLUENT: {
+        ActionFluent* af = new ActionFluent(*parent, params);
+
+        assert(actionFluentMap.find(af->fullName) == actionFluentMap.end());
+
         actionFluents.push_back(af);
+        actionFluentMap[af->fullName] = af;
         break;
-    case ParametrizedVariable::NON_FLUENT:
-        nf = new NonFluent(*parent, params, initialValue);
-        for(unsigned int i = 0; i < nonFluents.size(); ++i) {
-            // This mightbe defined if it occurs in the non fluents entry
-            if(nf->fullName == nonFluents[i]->fullName) {
-                return;
-            }
+    }
+    case ParametrizedVariable::NON_FLUENT: {
+        NonFluent* nf = new NonFluent(*parent, params, initialValue);
+
+        // This is already defined if it occurs in the non fluents entry
+        if(nonFluentMap.find(nf->fullName) != nonFluentMap.end()) {
+            return;
         }
+
         nonFluents.push_back(nf);
+        nonFluentMap[nf->fullName] = nf;
+        break;
+    }
         // case ParametrizedVariable::INTERM_FLUENT:
         // assert(false);
         // break;
@@ -128,51 +133,33 @@ void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<
 }
 
 StateFluent* PlanningTask::getStateFluent(string const& name) {
-    for(unsigned int i = 0; i < stateFluents.size(); ++i) {
-        if(name == stateFluents[i]->fullName) {
-            return stateFluents[i];
-        }
+    if(stateFluentMap.find(name) == stateFluentMap.end()) {
+        SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
-    return NULL;
+    return stateFluentMap[name];
 }
 
 ActionFluent* PlanningTask::getActionFluent(string const& name) {
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        if(name == actionFluents[i]->fullName) {
-            return actionFluents[i];
-        }
+    if(actionFluentMap.find(name) == actionFluentMap.end()) {
+        SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
-    return NULL;
+    return actionFluentMap[name];
 }
 
 NonFluent* PlanningTask::getNonFluent(string const& name) {
-    for(unsigned int i = 0; i < nonFluents.size(); ++i) {
-        if(name == nonFluents[i]->fullName) {
-            return nonFluents[i];
-        }
+    if(nonFluentMap.find(name) == nonFluentMap.end()) {
+        SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
-    return NULL;
+    return nonFluentMap[name];
 }
 
-vector<StateFluent*> PlanningTask::getVariablesOfSchema(ParametrizedVariable* schema) {
-    assert(variablesBySchema.find(schema) != variablesBySchema.end());
-    return variablesBySchema[schema];
-}
-
-void PlanningTask::addStateActionConstraint(LogicalExpression* sac) {
-    SACs.push_back(sac);
-}
-
-void PlanningTask::addCPF(ConditionalProbabilityFunction* const& cpf) {
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(cpf->head->fullName == CPFs[i]->head->fullName) {
-            SystemUtils::abort("Error: CPF with same name exists already: " + cpf->head->fullName);
-        }
-    }
-    CPFs.push_back(cpf);
+// TODO: Return const reference?
+vector<StateFluent*> PlanningTask::getStateFluentsOfSchema(ParametrizedVariable* schema) {
+    assert(stateFluentsBySchema.find(schema) != stateFluentsBySchema.end());
+    return stateFluentsBySchema[schema];
 }
 
 void PlanningTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
@@ -243,9 +230,17 @@ void PlanningTask::print(ostream& out) {
     out << unreasonableActionDetected << endl;
     out << "## 1 if an unreasonable action was detected in the determinization" << endl;
     out << unreasonableActionInDeterminizationDetected << endl;
-    out << "## number of states with only one applicable reasonable action that were" << endl;
-    out << "## detected during task analysis, and the total number of encountered states" << endl;
-    out << nonTerminalStatesWithUniqueAction << " " << numberOfEncounteredStates << endl;
+
+
+    out << "## number of states that were encountered during task analysis" << endl;
+    out << numberOfEncounteredStates << endl;
+    out << "## number of unique states that were encountered during task analysis" << endl;
+    out << numberOfUniqueEncounteredStates << endl;
+    out << "## number of states with only one applicable reasonable action that were encountered during task analysis" << endl;
+    out << nonTerminalStatesWithUniqueAction << endl;
+    out << "## number of unique states with only one applicable reasonable action that were encountered during task analysis" << endl;
+    out << uniqueNonTerminalStatesWithUniqueAction << endl;
+
 
     out << endl << endl << "#####ACTION FLUENTS#####" << endl;
     for(unsigned int i = 0; i < actionFluents.size(); ++i) {

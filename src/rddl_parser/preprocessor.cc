@@ -4,6 +4,7 @@
 #include "evaluatables.h"
 
 #include "utils/math_utils.h"
+#include "utils/timer.h"
 
 #include <iostream>
 #include <sstream>
@@ -12,35 +13,62 @@
 using namespace std;
 
 void Preprocessor::preprocess() {
+    Timer t;
     // Create and initialize CPFs, rewardCPF, and SACs
+    cout << "    Preparing evaluatables..." << endl;
     prepareEvaluatables();
-
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
+    
     // Create action fluents and calculate legal action states
+    cout << "    Preparing actions..." << endl;
     prepareActions();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Approximate reachable values (domains) of CPFs
+    cout << "    Calculating CPF domain..." << endl;
     calculateCPFDomains();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Remove CPFs with only one reachable value (i.e. a domain size of 1) and
     // simplify remaining CPFs, rewardCPF, and SACs
+    cout << "    Finalizing evaluatables..." << endl;
     finalizeEvaluatables();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Determinize CPFs
+    cout << "    Computing determinization..." << endl;
     determinize();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Determine some non-trivial properties
+    cout << "    Determining task properties..." << endl;
     determineTaskProperties();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Initialize Hash Key Bases and Mappings
+    cout << "    Preparing hash keys..." << endl;
     prepareStateHashKeys();
     prepareKleeneStateHashKeys();
     prepareStateFluentHashKeys();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Precompute results of evaluate for (some) evaluatables
+    cout << "    Precomputing evaluatables..." << endl;
     precomputeEvaluatables();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 
     // Approximate or calculate the min and max reward
+    cout << "    Calculating min and max reward..." << endl;
     calculateMinAndMaxReward();
+    cout << "    ...finished (" << t() << ")" << endl;
 }
 
 /*****************************************************************
@@ -49,8 +77,8 @@ void Preprocessor::preprocess() {
 
 void Preprocessor::prepareEvaluatables() {
     // Before we create the CPFs we remove those that simplify to their initial
-    // value and replace them by their initial value in all other formulas
-    map<StateFluent*, double> replacements;
+    // value and replace them by their initial value in all other evaluatables
+    map<ParametrizedVariable*, double> replacements;
     bool simplifyAgain = true;
     while(simplifyAgain) {
         simplifyAgain = false;
@@ -71,12 +99,6 @@ void Preprocessor::prepareEvaluatables() {
     // Remove state fluents that simplify to their initial value from the reward
     // and collect properties of reward
     task->rewardCPF->simplify(replacements);
-    task->rewardCPF->initialize();
-
-    // Collect properties of CPFs
-    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->initialize();
-    }
 
     // Sort CPFs for deterministic behaviour
     sort(task->CPFs.begin(), task->CPFs.end(), ConditionalProbabilityFunction::TransitionFunctionSort());
@@ -103,18 +125,31 @@ void Preprocessor::prepareEvaluatables() {
         task->CPFs[i]->setIndex(i);
     }
 
-    // Create and initialize SACs, then divide them into dynamic SACs, static
-    // SACs and state invariants.
+    vector<LogicalExpression*> preconds;
+    // Create and initialize SACs,then split all conjunctions in their elements
     for(unsigned int index = 0; index < task->SACs.size(); ++index) {
         // Remove the state fluents from the SAC formula that simplify to their
         // initial value
         task->SACs[index] = task->SACs[index]->simplify(replacements);
+
+        // Split conjunctions into their elements
+        
+        Conjunction* conj = dynamic_cast<Conjunction*>(task->SACs[index]);
+        if(conj) {
+            preconds.insert(preconds.end(), conj->exprs.begin(), conj->exprs.end());
+        } else {
+            preconds.push_back(task->SACs[index]);
+        }
+    }
+
+    // Divide preconds into dynamic SACs, static SACs, primitive static SACs and state invariants.
+    for(unsigned int index = 0; index < preconds.size(); ++index) {
         stringstream name;
         name << "SAC " << index;
-        ActionPrecondition* sac = new ActionPrecondition(name.str(), task->SACs[index]);
+        ActionPrecondition* sac = new ActionPrecondition(name.str(), preconds[index]);
 
-        // Collect the properties of the SAC that are necessary to distinguish
-        // action preconditions, static SACs and state invariants
+        // Collect the properties of the SAC that are necessary for distinction of
+        // action preconditions, (primitive) static SACs and state invariants
         sac->initialize();
         if(sac->containsStateFluent()) {
              if(sac->isActionIndependent()) {
@@ -128,29 +163,89 @@ void Preprocessor::prepareEvaluatables() {
                  task->dynamicSACs.push_back(sac);
             }
     	} else {
-            // An SAC that only contains action fluents is used to statically
-            // forbid action combinations.
-            task->staticSACs.push_back(sac);
+            Negation* neg = dynamic_cast<Negation*>(sac->formula);
+            if(neg) {
+                ActionFluent* act = dynamic_cast<ActionFluent*>(neg->expr);
+                if(act) {
+                    // This is a "primitive" static action constraint that
+                    // forbids the usage of an action fluent in general. We extract these early
+                    // to make sure that the number of possibly legal action
+                    // states in prepareActions() doesn't become too big.
+                    task->primitiveStaticSACs.insert(act);
+                } else {
+                    task->staticSACs.push_back(sac);
+                }
+            } else {            
+                // An SAC that only contains action fluents is used to statically
+                // forbid action combinations.
+                task->staticSACs.push_back(sac);
+            }
     	}
     }
 }
 
 void Preprocessor::prepareActions() {
-    // Sort action fluents for deterministic behaviour and assign indices
+    // Check if there are action fluents that can never be set to a nondefault
+    // value due to a primitive static SAC (i.e., an action precondition of the
+    // form ~a).
+    map<ParametrizedVariable*, double> replacements;
+    vector<ActionFluent*> finalActionFluents;
+
+    if(task->primitiveStaticSACs.empty()) {
+        finalActionFluents = task->actionFluents;
+    } else {
+        for(unsigned int index = 0; index < task->actionFluents.size(); ++index) {
+            if(task->primitiveStaticSACs.find(task->actionFluents[index]) == task->primitiveStaticSACs.end()) {
+                finalActionFluents.push_back(task->actionFluents[index]);
+            } else {
+                replacements[task->actionFluents[index]] = 0.0;
+            }
+        }
+
+        task->actionFluents.clear();
+        task->actionFluents = finalActionFluents;
+
+        // Simplify all evaluatables by removing the unused action fluents from their formula
+        for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+            task->CPFs[index]->simplify(replacements);
+        }
+
+        task->rewardCPF->simplify(replacements);
+
+        for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
+            task->dynamicSACs[index]->simplify(replacements);
+            // TODO: What if this became static?
+        }
+
+        for(unsigned int index = 0; index < task->staticSACs.size(); ++index) {
+            task->staticSACs[index]->simplify(replacements);
+            // TODO: Check if this became a state invariant
+        }
+
+        replacements.clear();
+    }
+
+    // Sort action fluents for deterministic behaviour and assign (possibly
+    // temporary) indices
     sort(task->actionFluents.begin(), task->actionFluents.end(), ActionFluent::ActionFluentSort());
     for(unsigned int index = 0; index < task->actionFluents.size(); ++index) {
         task->actionFluents[index]->index = index;
     }
 
     // Calculate all possible action combinations with up to
-    // numberOfConcurrentActions concurrent actions
+    // numberOfConcurrentActions concurrent actions TODO: Make sure this stops
+    // also if an static SAC is violated that constrains the number of
+    // concurrently applicable actions. As is, if max-nondef-actions is not
+    // used, this will always produce the power set over all action fluents,
+    // which is potentially huge!)
     list<vector<int> > actionCombinations;    
     calcPossiblyLegalActionStates(task->numberOfConcurrentActions, actionCombinations);
 
     State current(task->CPFs);
 
-    // Remove all illegal action combinations by checking the SACs
-    // that are state independent
+    // Remove all illegal action combinations by checking the SACs that are
+    // state independent
+    vector<ActionState> legalActionStates;
     for(list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
         vector<int>& tmp = *it;
 
@@ -170,11 +265,74 @@ void Preprocessor::prepareActions() {
         }
 
         if(isLegal) {
-            task->actionStates.push_back(actionState);
+            legalActionStates.push_back(actionState);
         }
     }
 
-    // Sort action states for deterministic behaviour
+    // Now that all legal actions have been created, we check if there are
+    // action fluents that are false (TODO: that are equal to their default
+    // value) in every legal action. We can safely remove those action fluents
+    // entirely from each action.
+    ActionState usedFluents((int)task->actionFluents.size());
+    for(unsigned int i = 0; i < legalActionStates.size(); ++i) {
+        for(unsigned int j = 0; j < legalActionStates[i].state.size(); ++j) {
+            usedFluents[j] |= legalActionStates[i].state[j];
+        }
+    }
+
+    // Assign new indices    
+    int newIndex = 0;
+    for(unsigned int i = 0; i < usedFluents.state.size(); ++i) {
+        if(usedFluents[i]) {
+            task->actionFluents[i]->index = newIndex;
+            ++newIndex;
+        } else {
+            task->actionFluents[i]->index = -1;
+        }
+    }
+
+    if(newIndex < task->actionFluents.size()) {
+        // Remove values of unused action fluents from action states
+        for(unsigned int i = 0; i < legalActionStates.size(); ++i) {
+            ActionState state(newIndex); // newIndex is equal to the number of used action fluents
+            for(unsigned int j = 0; j < legalActionStates[i].state.size(); ++j) {
+                if(task->actionFluents[j]->index != -1) {
+                    assert(task->actionFluents[j]->index < state.state.size());
+                    state[task->actionFluents[j]->index] = legalActionStates[i][j];
+                } else {
+                    replacements[task->actionFluents[j]] = 0.0;
+                }
+            }
+            task->actionStates.push_back(state);
+        }
+
+        // Remove unused action fluents
+        finalActionFluents.clear();
+        for(unsigned int i = 0; i < task->actionFluents.size(); ++i) {
+            if(task->actionFluents[i]->index != -1) {
+                assert(task->actionFluents[i]->index == finalActionFluents.size());
+                finalActionFluents.push_back(task->actionFluents[i]);
+            }
+        }
+        task->actionFluents.clear();
+        task->actionFluents = finalActionFluents;
+
+        // Simplify all evaluatables by removing unused action fluents from the
+        // formulas
+        for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+            task->CPFs[index]->simplify(replacements);
+        }
+
+        task->rewardCPF->simplify(replacements);
+
+        for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
+            task->dynamicSACs[index]->index = index;
+        }
+    } else {
+        task->actionStates = legalActionStates;
+    }
+
+    // Sort action states again for deterministic behaviour
     sort(task->actionStates.begin(), task->actionStates.end(), ActionState::ActionStateSort());
 
     // Set inidices and calculate properties of action states
@@ -188,8 +346,7 @@ void Preprocessor::prepareActions() {
             }
         }
 
-        // Determine which dynamic SACs might make this action state
-        // inapplicable
+        // Determine which dynamic SACs is relevant for this SAC
         for(unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
             if(task->dynamicSACs[i]->containsArithmeticFunction()) {
                 // If the SAC contains an arithmetic function we treat it as if
@@ -313,7 +470,7 @@ void Preprocessor::calculateCPFDomains() {
 
 void Preprocessor::finalizeEvaluatables() {
     // All CPFs with a domain that only includes its initial value are removed
-    map<StateFluent*, double> replacements;
+    map<ParametrizedVariable*, double> replacements;
     for(vector<ConditionalProbabilityFunction*>::iterator it = task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
 
@@ -367,11 +524,11 @@ void Preprocessor::determinize() {
     // interesting to try other values as well.
     NumericConstant* randomNumberReplacement = new NumericConstant(0.5);
 
-    map<StateFluent*, double> replacements;
+    map<ParametrizedVariable*, double> replacementsDummy;
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if(task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization = task->CPFs[index]->formula->determinizeMostLikely(randomNumberReplacement);
-            task->CPFs[index]->determinization = task->CPFs[index]->determinization->simplify(replacements);
+            task->CPFs[index]->determinization = task->CPFs[index]->determinization->simplify(replacementsDummy);
         }
     }
 }

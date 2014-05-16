@@ -140,7 +140,7 @@ void RDDLParser::parseDomain() {
             StringUtils::split(tokens[i],sacAsString,";");
             for(unsigned int i = 0; i< sacAsString.size(); ++i) {
                 LogicalExpression* formula = parseRDDLFormula(sacAsString[i]);
-                task->addStateActionConstraint(formula);
+                task->SACs.push_back(formula);
             }
         } else {
             SystemUtils::abort("Error: Domain token '" + tokens[i] + "' is unknown!");

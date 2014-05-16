@@ -3,12 +3,26 @@
 #include "planning_task.h"
 #include "evaluatables.h"
 
+#include "utils/timer.h"
+
 using namespace std;
 
 void Instantiator::instantiate() {
+    Timer t;
+    cout << "    Instantiating variables..." << endl;
     instantiateVariables();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
+
+    cout << "    Instantiating CPFs..." << endl;
     instantiateCPFs();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
+
+    cout << "    Instantiating preconditions..." << endl;
     instantiateSACs();
+    cout << "    ...finished (" << t() << ")" << endl;
+    t.reset();
 }
 
 void Instantiator::instantiateVariables() {
@@ -42,7 +56,7 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head, LogicalExpression*
     map<string, Object*> quantifierReplacements;
     formula = formula->replaceQuantifier(quantifierReplacements, this);
 
-    vector<StateFluent*> instantiatedVars = task->getVariablesOfSchema(head);
+    vector<StateFluent*> instantiatedVars = task->getStateFluentsOfSchema(head);
     for(unsigned int i = 0; i < instantiatedVars.size(); ++i) {
         assert(head->params.size() == instantiatedVars[i]->params.size());
 
@@ -55,7 +69,7 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head, LogicalExpression*
         }
         LogicalExpression* instantiatedFormula = formula->instantiate(task, replacements);
 
-        task->addCPF(new ConditionalProbabilityFunction(instantiatedVars[i], instantiatedFormula));
+        task->CPFs.push_back(new ConditionalProbabilityFunction(instantiatedVars[i], instantiatedFormula));
     }
 }
 

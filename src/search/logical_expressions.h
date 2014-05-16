@@ -11,8 +11,8 @@ class ConditionalProbabilityFunction;
 
 class LogicalExpression {
 public:
-    static LogicalExpression* createFromString(std::vector<StateFluent*> const& stateFluents, std::vector<ActionFluent*> const& actionFluents, std::string& desc);
-    static void createExpressions(std::vector<StateFluent*> const& stateFluents, std::vector<ActionFluent*> const& actionFluents, std::string& desc, std::vector<LogicalExpression*>& exprs);
+    static LogicalExpression* createFromString(std::string& desc);
+    static void createExpressions(std::string& desc, std::vector<LogicalExpression*>& exprs);
 
     virtual ~LogicalExpression() {}
 

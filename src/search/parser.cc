@@ -34,8 +34,7 @@ void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<stri
     desc >> State::numberOfStateFluentHashKeys;
     KleeneState::numberOfStateFluentHashKeys = State::numberOfStateFluentHashKeys;
 
-    State::stateSize = State::numberOfDeterministicStateFluents + State::numberOfProbabilisticStateFluents;
-    KleeneState::stateSize = State::stateSize;
+    KleeneState::stateSize = State::numberOfDeterministicStateFluents + State::numberOfProbabilisticStateFluents;
 
     // Parse initial state
     vector<double> initialValsOfDeterministicStateFluents(State::numberOfDeterministicStateFluents, 0.0);
@@ -80,9 +79,11 @@ void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<stri
     desc >> ProbabilisticSearchEngine::hasUnreasonableActions;
     desc >> DeterministicSearchEngine::hasUnreasonableActions;
 
-    int encounteredStatesWithUniqueAction;
     int encounteredStates;
-    desc >> encounteredStatesWithUniqueAction >> encounteredStates;
+    int encounteredUnqiueStates;
+    int encounteredStatesWithUniqueAction;
+    int encounteredUnqiueStatesWithUniqueAction;
+    desc >> encounteredStates >> encounteredUnqiueStates >> encounteredStatesWithUniqueAction >> encounteredUnqiueStatesWithUniqueAction;
     // TODO: these are currently ignored, but could use the ratio for prediction
     // of how many decision we have to make
 
@@ -115,16 +116,15 @@ void Parser::parseTask(map<string,int>& stateVariableIndices, vector<vector<stri
     assert(SearchEngine::determinizedCPFs.size() == State::numberOfProbabilisticStateFluents);
 
     assert(SearchEngine::allCPFs.size() == KleeneState::stateSize);
-    assert(SearchEngine::allDeterminizedCPFs.size() == KleeneState::stateSize);
 
     // All fluents have been created -> create the CPF formulas
     for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
-        SearchEngine::deterministicCPFs[i]->formula = LogicalExpression::createFromString(SearchEngine::stateFluents, SearchEngine::actionFluents, deterministicFormulas[i]);
+        SearchEngine::deterministicCPFs[i]->formula = LogicalExpression::createFromString(deterministicFormulas[i]);
     }
 
     for(unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-        SearchEngine::probabilisticCPFs[i]->formula = LogicalExpression::createFromString(SearchEngine::stateFluents, SearchEngine::actionFluents, probabilisticFormulas[i]);
-        SearchEngine::determinizedCPFs[i]->formula = LogicalExpression::createFromString(SearchEngine::stateFluents, SearchEngine::actionFluents, determinizedFormulas[i]);
+        SearchEngine::probabilisticCPFs[i]->formula = LogicalExpression::createFromString(probabilisticFormulas[i]);
+        SearchEngine::determinizedCPFs[i]->formula = LogicalExpression::createFromString(determinizedFormulas[i]);
     }
 
     // Parse reward function
@@ -255,7 +255,6 @@ void Parser::parseCPF(stringstream& desc,
         SearchEngine::allCPFs.push_back(probCPF);
 
         SearchEngine::determinizedCPFs.push_back(detCPF);
-        SearchEngine::allDeterminizedCPFs.push_back(detCPF);
     } else {
         DeterministicStateFluent* sf = new DeterministicStateFluent(index, name, values);
         SearchEngine::stateFluents.push_back(sf);
@@ -266,8 +265,6 @@ void Parser::parseCPF(stringstream& desc,
 
         SearchEngine::deterministicCPFs.push_back(cpf);
         SearchEngine::allCPFs.push_back(cpf);
-
-        SearchEngine::allDeterminizedCPFs.push_back(cpf);
     }
 }
 
@@ -275,7 +272,7 @@ void Parser::parseRewardFunction(stringstream& desc) const {
     string formulaAsString;
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
-    LogicalExpression* rewardFormula = LogicalExpression::createFromString(SearchEngine::stateFluents, SearchEngine::actionFluents, formulaAsString);
+    LogicalExpression* rewardFormula = LogicalExpression::createFromString(formulaAsString);
 
     double minVal;
     desc >> minVal;
@@ -303,7 +300,7 @@ void Parser::parseActionPrecondition(stringstream& desc) const {
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
 
-    LogicalExpression* formula = LogicalExpression::createFromString(SearchEngine::stateFluents, SearchEngine::actionFluents, formulaAsString);
+    LogicalExpression* formula = LogicalExpression::createFromString(formulaAsString);
 
     int hashIndex;
     desc >> hashIndex;

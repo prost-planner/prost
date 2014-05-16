@@ -13,7 +13,7 @@ void State::printCompact(ostream& out) const {
     for(unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
         out << deterministicStateFluents[index] << " ";
     }
-    out << "   ";
+    out << "| ";
     for(unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
         out << probabilisticStateFluents[index] << " ";
     }

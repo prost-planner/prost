@@ -225,21 +225,32 @@ void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
     }
 
     for(map<string,string>::iterator it = newValues.begin(); it != newValues.end(); ++it) {
-        if(stateVariableIndices.find(it->first) != stateVariableIndices.end()) {
-            if(stateVariableValues[stateVariableIndices[it->first]].empty()) {
+        string varName = it->first;
+        string value = it->second;
+
+        // If the variable has no parameters, its name is different from the one
+        // that is used by PROST internally where no parents are used (afaik,
+        // this changed at some point in rddlsim, and I am not sure if it will
+        // change back which is why this hacky solution is fine for the moment).
+        if(varName[varName.length()-2] == '(') {
+            varName = varName.substr(0,varName.length()-2);
+        }
+
+        if(stateVariableIndices.find(varName) != stateVariableIndices.end()) {
+            if(stateVariableValues[stateVariableIndices[varName]].empty()) {
                 // TODO: This should be a numerical variable without
                 // value->index mapping, but it can also be a boolean one atm.
-                if(it->second =="true") {
-                    nextState[stateVariableIndices[it->first]] = 1.0;
-                } else if(it->second == "false") {
-                    nextState[stateVariableIndices[it->first]] = 0.0;
+                if(value =="true") {
+                    nextState[stateVariableIndices[varName]] = 1.0;
+                } else if(value == "false") {
+                    nextState[stateVariableIndices[varName]] = 0.0;
                 } else {
-                    nextState[stateVariableIndices[it->first]] = atof(it->second.c_str());
+                    nextState[stateVariableIndices[varName]] = atof(value.c_str());
                 }
             } else {
-                for(unsigned int i = 0; i < stateVariableValues[stateVariableIndices[it->first]].size(); ++i) {
-                    if(stateVariableValues[stateVariableIndices[it->first]][i] == it->second) {
-                        nextState[stateVariableIndices[it->first]] = i;
+                for(unsigned int i = 0; i < stateVariableValues[stateVariableIndices[varName]].size(); ++i) {
+                    if(stateVariableValues[stateVariableIndices[varName]][i] == value) {
+                        nextState[stateVariableIndices[varName]] = i;
                         break;
                     }
                 }
