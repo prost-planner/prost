@@ -68,14 +68,17 @@ int main(int argc, char** argv) {
     analyzer.analyzeTask();
     cout << "...finished (" << t << ")." << endl;
 
-    cout << "total time: " << totalTime << endl;
-
+    t.reset();
+    cout << "writing output..." << endl;
     ofstream resultFile;
     targetDir = targetDir + "/" + task->name;
     resultFile.open(targetDir.c_str());
     task->print(resultFile);
     resultFile.close();
     //task->print(cout);
+    cout << "...finished (" << t << ")." << endl;
+
+    cout << "total time: " << totalTime << endl;
 
     return 0;
 }

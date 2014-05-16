@@ -23,6 +23,7 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeo
         analyzeStateAndApplyAction(currentState, nextState, reward);
 
         encounteredStates.insert(currentState);
+        ++task->numberOfEncounteredStates;
 
         --remainingSteps;
 
@@ -34,24 +35,19 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeo
         }
     }
 
-    task->numberOfEncounteredStates = encounteredStates.size();
+    task->numberOfUniqueEncounteredStates = encounteredStates.size();
 
     createTrainingSet(numberOfStates);
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next, double& reward) const {
-    if(encounteredStates.find(current) != encounteredStates.end()) {
-        // We have already seen this state so it won't provide new information
-        return applyRandomApplicableAction(current, next, reward);
-    }
-
     if(!task->unreasonableActionInDeterminizationDetected) {
         // As long as we haven't found unreasonable actions in the
         // determinization we check if there are any in the current state
         detectUnreasonableActionsInDeterminization(current);
     }
 
-    vector<int> applicableActions(task->actionStates.size());
+    vector<int> applicableActions;
     set<PDState, PDState::PDStateSort> childStates;
 
     for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
@@ -65,68 +61,36 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
             if(childStates.find(nxt) == childStates.end()) {
                 // This action is reasonable
                 childStates.insert(nxt);
-                applicableActions[actionIndex] = actionIndex;
+                applicableActions.push_back(actionIndex);
             } else {
                 // This action is not reasonable
                 task->unreasonableActionDetected = true;
-                applicableActions[actionIndex] = -1;
             }
-        } else {
-            applicableActions[actionIndex] = -1;
         }
     }
 
-    applyRandomApplicableAction(applicableActions, current, next, reward);
+    assert(!applicableActions.empty());
 
+    // Check if this is a state with only one reasnoable applicable action
+    if(applicableActions.size() == 1) {
+        ++task->nonTerminalStatesWithUniqueAction;
+        if(encounteredStates.find(current) == encounteredStates.end()) {
+            ++task->uniqueNonTerminalStatesWithUniqueAction;
+        }
+    }
+
+    // TODO: We could also simply sample the successor state that was calculated
+    // in the reasonable action check above
+    ActionState& randomAction = task->actionStates[applicableActions[std::rand() % applicableActions.size()]];
+    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        task->CPFs[i]->formula->evaluate(next[i], current, randomAction);
+    }
+    task->rewardCPF->formula->evaluate(reward, current, randomAction);
+
+    // Check if this is a rewward lock
     if(task->rewardFormulaAllowsRewardLockDetection && !task->rewardLockDetected && isARewardLock(current, reward)) {
         task->rewardLockDetected = true;
     }
-}
-
-void TaskAnalyzer::applyRandomApplicableAction(State const& current, State& next, double& reward) const {
-    vector<int> result;
-    for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
-        ActionState& action = task->actionStates[actionIndex];
-        bool applicable = true;
-        for(unsigned int precondIndex = 0; precondIndex < action.relevantSACs.size(); ++precondIndex) {
-            double res = 0.0;
-            action.relevantSACs[precondIndex]->formula->evaluate(res, current, action);
-            if(MathUtils::doubleIsEqual(res, 0.0)) {
-                applicable = false;
-                break;
-            }
-        }
-        if(applicable) {
-            result.push_back(actionIndex);
-        }
-    }
-
-    ActionState& randomAction = task->actionStates[result[std::rand() % result.size()]];
-    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluate(next[i], current, randomAction);
-    }
-
-    task->rewardCPF->formula->evaluate(reward, current, randomAction);
-}
-
-void TaskAnalyzer::applyRandomApplicableAction(vector<int> const& applicableActions, State const& current, State& next, double& reward) const {
-    vector<int> result;
-    for(unsigned int actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-        if(applicableActions[actionIndex] == actionIndex) {
-            result.push_back(actionIndex);
-        }
-    }
-
-    if(result.size() == 1) {
-        ++task->nonTerminalStatesWithUniqueAction;
-    }
-
-    ActionState& randomAction = task->actionStates[result[std::rand() % result.size()]];
-    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluate(next[i], current, randomAction);
-    }
-
-    task->rewardCPF->formula->evaluate(reward, current, randomAction);
 }
 
 void TaskAnalyzer::detectUnreasonableActionsInDeterminization(State const& current) const {

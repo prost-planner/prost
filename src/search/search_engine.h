@@ -164,7 +164,6 @@ public:
     static std::vector<ProbabilisticCPF*> probabilisticCPFs;
 
     // Determinized transition functions of probabilistic state fluents
-    static std::vector<DeterministicCPF*> allDeterminizedCPFs;
     static std::vector<DeterministicCPF*> determinizedCPFs;
 
     // The reward formula

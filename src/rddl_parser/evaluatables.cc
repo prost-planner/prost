@@ -13,17 +13,28 @@ using namespace std;
 *****************************************************************/
 
 void Evaluatable::initialize() {
+    isProb = false;
+    hasArithmeticFunction = false;
+    dependentStateFluents.clear();
+    dependentActionFluents.clear();
+    
     formula->collectInitialInfo(isProb, hasArithmeticFunction, dependentStateFluents, dependentActionFluents);
 }
 
 void ActionPrecondition::initialize() {
     Evaluatable::initialize();
 
+    positiveActionDependencies.clear();
+    negativeActionDependencies.clear();
+
     formula->classifyActionFluents(positiveActionDependencies, negativeActionDependencies);
 }
 
 void RewardFunction::initialize() {
     Evaluatable::initialize();
+
+    positiveActionDependencies.clear();
+    negativeActionDependencies.clear();
 
     formula->classifyActionFluents(positiveActionDependencies, negativeActionDependencies);
 
@@ -46,14 +57,10 @@ void RewardFunction::initialize() {
     // cout << endl;
 }
 
-void Evaluatable::simplify(map<StateFluent*, double>& replacements) {
+void Evaluatable::simplify(map<ParametrizedVariable*, double>& replacements) {
     formula = formula->simplify(replacements);
 
-    for(map<StateFluent*, double>::iterator it = replacements.begin(); it != replacements.end(); ++it) {
-        if(dependentStateFluents.find(it->first) != dependentStateFluents.end()) {
-            dependentStateFluents.erase(it->first);
-        }
-    }
+    initialize();
 }
 
 void Evaluatable::initializeHashKeys(PlanningTask* task) {

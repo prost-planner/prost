@@ -6,7 +6,6 @@
 #include <cassert>
 
 #include "probability_distribution.h"
-
 #include "utils/math_utils.h"
 
 class ActionFluent;
@@ -221,9 +220,6 @@ public:
 
     void printCompact(std::ostream& out) const;
     void print(std::ostream& out) const;
-
-    // The number of state fluents (this is equal to CPFs.size())
-    static int stateSize;
 
     // The number of deterministic and probabilistic state fluents
     static int numberOfDeterministicStateFluents;

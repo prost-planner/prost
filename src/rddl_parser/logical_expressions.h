@@ -16,6 +16,7 @@ class State;
 class KleeneState;
 class ActionState;
 class DiscretePD;
+class ParametrizedVariable;
 
 class LogicalExpression {
 public:
@@ -23,7 +24,7 @@ public:
 
     virtual LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     virtual LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    virtual LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    virtual LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     virtual LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     virtual void collectInitialInfo(bool& isProbabilistic,
                                     bool& containsArithmeticFunction,
@@ -59,7 +60,7 @@ public:
             if(other == comp) {
                 return true;
             }
-            comp = superType;
+            comp = comp->superType;
         }
         return false;
     }
@@ -140,7 +141,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
 
     void print(std::ostream& out) const;
@@ -159,7 +160,7 @@ public:
 
     int index;
 
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
@@ -182,6 +183,7 @@ public:
 
     int index;
 
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             std::set<StateFluent*>& dependentStateFluents,
@@ -222,7 +224,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -329,7 +331,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -351,7 +353,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -373,7 +375,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -397,7 +399,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -421,7 +423,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -445,7 +447,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -469,7 +471,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -493,7 +495,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -515,7 +517,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -539,7 +541,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -563,7 +565,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -593,7 +595,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -622,7 +624,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
 
     LogicalExpression* expr;
 
@@ -637,7 +639,7 @@ public:
 
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -664,7 +666,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -694,7 +696,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -721,7 +723,7 @@ public:
 
     LogicalExpression* replaceQuantifier(std::map<std::string, Object*>& replacements, Instantiator* instantiator);
     LogicalExpression* instantiate(PlanningTask* task, std::map<std::string, Object*>& replacements);
-    LogicalExpression* simplify(std::map<StateFluent*, double>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
     LogicalExpression* determinizeMostLikely(NumericConstant* randomNumberReplacement);
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,

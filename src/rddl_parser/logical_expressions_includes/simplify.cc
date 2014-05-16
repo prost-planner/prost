@@ -1,4 +1,4 @@
-LogicalExpression* LogicalExpression::simplify(map<StateFluent*, double>& /*replacements*/) {
+LogicalExpression* LogicalExpression::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
     print(cout);
     assert(false);
     return NULL;
@@ -8,18 +8,25 @@ LogicalExpression* LogicalExpression::simplify(map<StateFluent*, double>& /*repl
                            Atomics
 *****************************************************************/
 
-LogicalExpression* ParametrizedVariable::simplify(map<StateFluent*, double>& /*replacements*/) {
+LogicalExpression* ParametrizedVariable::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
     return this;
 }
 
-LogicalExpression* StateFluent::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* StateFluent::simplify(map<ParametrizedVariable*, double>& replacements) {
     if(replacements.find(this) != replacements.end()) {
         return new NumericConstant(replacements[this]);
     }
     return this;
 }
 
-LogicalExpression* NumericConstant::simplify(map<StateFluent*, double>& /*replacements*/) {
+LogicalExpression* ActionFluent::simplify(map<ParametrizedVariable*, double>& replacements) {
+    if(replacements.find(this) != replacements.end()) {
+        return new NumericConstant(replacements[this]);
+    }
+    return this;
+}
+
+LogicalExpression* NumericConstant::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
     return this;
 }
 
@@ -27,7 +34,7 @@ LogicalExpression* NumericConstant::simplify(map<StateFluent*, double>& /*replac
                            Connectives
 *****************************************************************/
 
-LogicalExpression* Conjunction::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Conjunction::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr = exprs[i]->simplify(replacements);
@@ -57,7 +64,7 @@ LogicalExpression* Conjunction::simplify(map<StateFluent*, double>& replacements
     return new Conjunction(newExprs);    
 }
 
-LogicalExpression* Disjunction::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Disjunction::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     for(unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr = exprs[i]->simplify(replacements);
@@ -85,7 +92,7 @@ LogicalExpression* Disjunction::simplify(map<StateFluent*, double>& replacements
     return new Disjunction(newExprs);   
 }
 
-LogicalExpression* EqualsExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* EqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     NumericConstant* constComp = NULL;
 
@@ -124,7 +131,7 @@ LogicalExpression* EqualsExpression::simplify(map<StateFluent*, double>& replace
     return new EqualsExpression(newExprs);
 }
 
-LogicalExpression* GreaterExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* GreaterExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replacements);
     LogicalExpression* expr1 = exprs[1]->simplify(replacements);
@@ -147,7 +154,7 @@ LogicalExpression* GreaterExpression::simplify(map<StateFluent*, double>& replac
     return new GreaterExpression(newExprs);
 }
 
-LogicalExpression* LowerExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* LowerExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replacements);
     LogicalExpression* expr1 = exprs[1]->simplify(replacements);
@@ -170,7 +177,7 @@ LogicalExpression* LowerExpression::simplify(map<StateFluent*, double>& replacem
     return new LowerExpression(newExprs);
 }
 
-LogicalExpression* GreaterEqualsExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* GreaterEqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replacements);
     LogicalExpression* expr1 = exprs[1]->simplify(replacements);
@@ -193,7 +200,7 @@ LogicalExpression* GreaterEqualsExpression::simplify(map<StateFluent*, double>& 
     return new GreaterEqualsExpression(newExprs);
 }
 
-LogicalExpression* LowerEqualsExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* LowerEqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replacements);
     LogicalExpression* expr1 = exprs[1]->simplify(replacements);
@@ -216,7 +223,7 @@ LogicalExpression* LowerEqualsExpression::simplify(map<StateFluent*, double>& re
     return new LowerEqualsExpression(newExprs);
 }
 
-LogicalExpression* Addition::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Addition::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     double constSum = 0.0;
 
@@ -261,7 +268,7 @@ LogicalExpression* Addition::simplify(map<StateFluent*, double>& replacements) {
     return new Addition(finalExprs);
 }
 
-LogicalExpression* Subtraction::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Subtraction::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() >= 2);
     vector<LogicalExpression*> newExprs;
     double constPart = 0.0;
@@ -310,7 +317,7 @@ LogicalExpression* Subtraction::simplify(map<StateFluent*, double>& replacements
     return new Subtraction(newExprs);
 }
 
-LogicalExpression* Multiplication::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Multiplication::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newExprs;
     double constMult = 1.0;
 
@@ -342,7 +349,7 @@ LogicalExpression* Multiplication::simplify(map<StateFluent*, double>& replaceme
     return new Multiplication(newExprs);
 }
 
-LogicalExpression* Division::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Division::simplify(map<ParametrizedVariable*, double>& replacements) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replacements);
     LogicalExpression* expr1 = exprs[1]->simplify(replacements);
@@ -365,7 +372,7 @@ LogicalExpression* Division::simplify(map<StateFluent*, double>& replacements) {
                           Unaries
 *****************************************************************/
 
-LogicalExpression* Negation::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* Negation::simplify(map<ParametrizedVariable*, double>& replacements) {
     LogicalExpression* newExpr = expr->simplify(replacements);
 
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
@@ -388,11 +395,11 @@ LogicalExpression* Negation::simplify(map<StateFluent*, double>& replacements) {
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression* KronDeltaDistribution::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* KronDeltaDistribution::simplify(map<ParametrizedVariable*, double>& replacements) {
     return expr->simplify(replacements);
 }
 
-LogicalExpression* BernoulliDistribution::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* BernoulliDistribution::simplify(map<ParametrizedVariable*, double>& replacements) {
     LogicalExpression* newExpr = expr->simplify(replacements);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if(nc) {
@@ -409,7 +416,7 @@ LogicalExpression* BernoulliDistribution::simplify(map<StateFluent*, double>& re
 // TODO: If there is a constant probability equal to 1 or higher (or lower than
 // 0), what do we do? Can we simplify such that the according value is always
 // true?
-LogicalExpression* DiscreteDistribution::simplify(map<StateFluent*,double>& replacements) {
+LogicalExpression* DiscreteDistribution::simplify(map<ParametrizedVariable*,double>& replacements) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
 
@@ -445,7 +452,7 @@ LogicalExpression* DiscreteDistribution::simplify(map<StateFluent*,double>& repl
                          Conditionals
 *****************************************************************/
 
-LogicalExpression* IfThenElseExpression::simplify(map<StateFluent*, double>& replacements) {
+LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
     LogicalExpression* newCondition = condition->simplify(replacements);
     LogicalExpression* newValueIfTrue = valueIfTrue->simplify(replacements);
     LogicalExpression* newValueIfFalse = valueIfFalse->simplify(replacements);
@@ -515,7 +522,7 @@ LogicalExpression* IfThenElseExpression::simplify(map<StateFluent*, double>& rep
     return new IfThenElseExpression(newCondition, newValueIfTrue, newValueIfFalse);
 }
 
-LogicalExpression* MultiConditionChecker::simplify(map<StateFluent*,double>& replacements) {
+LogicalExpression* MultiConditionChecker::simplify(map<ParametrizedVariable*, double>& replacements) {
     vector<LogicalExpression*> newConditions;
     vector<LogicalExpression*> newEffects;
 

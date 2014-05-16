@@ -203,39 +203,30 @@ bool IterativeDeepeningSearch::moreIterations(vector<int> const& actionsToExpand
         return (currentState.remainingSteps() < maxSearchDepthForThisStep);
     }
 
-    // 1. Check if we have a significant result
-    if(terminateWithReasonableAction) {
-        if(SearchEngine::actionStates[0].scheduledActionFluents.empty() && (actionsToExpand[0] == 0)) {
-            // Noop is applicable -> we check if another action is better than
-            // noop
-            for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
-                if((actionsToExpand[actionIndex] == actionIndex) && 
-                   MathUtils::doubleIsGreater(qValues[actionIndex], qValues[0])) {
-                    return false;
-                }
-            }
-        }//  else {
-        //     // Noop is not applicable -> we determine the first applicable
-        //     // action
-        //     unsigned int firstApplicableActionIndex = 0;
-        //     while(actionsToExpand[firstApplicableActionIndex] != firstApplicableActionIndex) {
-    	// 	++firstApplicableActionIndex;
-        //     }
-
-        //     // There must be at least one applicable action
-        //     assert(firstApplicableActionIndex < qValues.size());
-
-        //     // Check if any two applicable actions yield different results
-        //     for(unsigned int actionIndex = firstApplicableActionIndex; actionIndex < qValues.size(); ++actionIndex) {
-        //         if((actionsToExpand[actionIndex] == actionIndex) && 
-        //            !MathUtils::doubleIsEqual(qValues[actionIndex], qValues[firstApplicableActionIndex])) {
-        //             return false;
-        //         }
-        //     }
-        // }
+    // 1. Check if the strict timeout is violated
+    if(MathUtils::doubleIsGreater(time,strictTerminationTimeout)) {
+        maxSearchDepth = currentState.remainingSteps()-1;
+        if(maxSearchDepth < minSearchDepth) {
+            cout << name << ": Setting max search depth to 0!" << endl;
+            setMaxSearchDepth(0);
+        } else {
+            cout << name << ": Setting max search depth to " << maxSearchDepth << "!" << endl;
+        }
+        return false;
     }
 
-    // 2. Check if we have reached the max search depth for this step
+    // 2. Check if the result is already significant (if noop is applicable, we
+    // check if there is an action that yields a higher reward than noop)
+    if(terminateWithReasonableAction && SearchEngine::actionStates[0].scheduledActionFluents.empty() && (actionsToExpand[0] == 0)) {
+        for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
+            if((actionsToExpand[actionIndex] == actionIndex) && 
+               MathUtils::doubleIsGreater(qValues[actionIndex], qValues[0])) {
+                return false;
+            }
+        }
+    }
+
+    // 3. Check if we have reached the max search depth for this step
     return currentState.remainingSteps() < maxSearchDepthForThisStep;
 }
 

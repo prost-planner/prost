@@ -20,14 +20,15 @@ using namespace std;
                     Static variable definitions
 ******************************************************************/
 
-int State::stateSize = 0;
 int State::numberOfDeterministicStateFluents = 0;
 int State::numberOfProbabilisticStateFluents = 0;
 
 int State::numberOfStateFluentHashKeys = 0;
 bool State::stateHashingPossible = true;
+
 vector<vector<long> > State::stateHashKeysOfDeterministicStateFluents;
 vector<vector<long> > State::stateHashKeysOfProbabilisticStateFluents;
+
 vector<vector<pair<int, long> > > State::stateFluentHashKeysOfDeterministicStateFluents;
 vector<vector<pair<int, long> > > State::stateFluentHashKeysOfProbabilisticStateFluents;
 
@@ -41,16 +42,21 @@ vector<vector<pair<int,long> > > KleeneState::indexToStateFluentHashKeyMap;
 
 string SearchEngine::taskName;
 vector<State> SearchEngine::trainingSet;
-vector<ActionFluent*> SearchEngine::actionFluents;
+
 vector<ActionState> SearchEngine::actionStates;
+
+vector<ActionFluent*> SearchEngine::actionFluents;
 vector<StateFluent*> SearchEngine::stateFluents;
+
 vector<Evaluatable*> SearchEngine::allCPFs;
 vector<DeterministicCPF*> SearchEngine::deterministicCPFs;
 vector<ProbabilisticCPF*> SearchEngine::probabilisticCPFs;
-vector<DeterministicCPF*> SearchEngine::allDeterminizedCPFs;
+
 vector<DeterministicCPF*> SearchEngine::determinizedCPFs;
+
 RewardFunction* SearchEngine::rewardCPF = NULL;
 vector<DeterministicEvaluatable*> SearchEngine::actionPreconditions;
+
 bool SearchEngine::taskIsDeterministic = true;
 State SearchEngine::initialState;
 int SearchEngine::horizon = numeric_limits<int>::max();
@@ -491,7 +497,7 @@ void SearchEngine::printTask(ostream& out) {
     out << endl;
 
     for(unsigned int varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
-        out << "a change of deterministic state fluent " << varIndex << " influences variables ";
+        out << "a change of probabilistic state fluent " << varIndex << " influences variables ";
         for(unsigned int influencedVarIndex = 0; influencedVarIndex < State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex].size(); ++influencedVarIndex) {
             out << State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex][influencedVarIndex].first << " (";
             out << State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex][influencedVarIndex].second << ") ";

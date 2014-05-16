@@ -133,6 +133,8 @@ void ProstPlanner::monitorRAMUsage() {
 }
 
 void ProstPlanner::initNextStep(vector<double> const& nextStateVec) {
+    assert(nextStateVec.size() == State::numberOfDeterministicStateFluents + State::numberOfProbabilisticStateFluents);
+
     vector<double> nextValuesOfDeterministicStateFluents;
     for(unsigned int i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
         nextValuesOfDeterministicStateFluents.push_back(nextStateVec[i]);
