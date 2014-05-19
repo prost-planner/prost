@@ -22,8 +22,8 @@ public:
         rewardLock(false) {}
 
     ~DPUCTNode() {
-        for(unsigned int i = 0; i < children.size(); ++i) {
-            if(children[i]) {
+        for (unsigned int i = 0; i < children.size(); ++i) {
+            if (children[i]) {
                 delete children[i];
             }
         }
@@ -66,10 +66,12 @@ public:
     }
 
     void print(std::ostream& out, std::string indent = "") const {
-        if(solved) {
-            out << indent << "SOLVED with: " << getExpectedRewardEstimate() << " (in " << numberOfVisits << " real visits)" << std::endl;
+        if (solved) {
+            out << indent << "SOLVED with: " << getExpectedRewardEstimate() <<
+            " (in " << numberOfVisits << " real visits)" << std::endl;
         } else {
-            out << indent << getExpectedRewardEstimate() << " (in " << numberOfVisits << " real visits)" << std::endl;
+            out << indent << getExpectedRewardEstimate() << " (in " <<
+            numberOfVisits << " real visits)" << std::endl;
         }
     }
 
@@ -94,7 +96,7 @@ public:
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value) {
-        if(param == "-hw") {
+        if (param == "-hw") {
             setHeuristicWeight(atof(value.c_str()));
             return true;
         }
@@ -109,14 +111,18 @@ public:
 
 protected:
     // Initialization of nodes
-    void initializeDecisionNodeChild(DPUCTNode* node, unsigned int const& actionIndex, double const& initialQValue);
+    void initializeDecisionNodeChild(DPUCTNode* node,
+            unsigned int const& actionIndex,
+            double const& initialQValue);
 
     // Outcome selection
     DPUCTNode* selectOutcome(DPUCTNode* node, PDState& nextState, int& varIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(DPUCTNode* node, double const& immReward, double const& futReward);
-    void backupDecisionNode(DPUCTNode* node, double const& immReward, double const& futReward);
+    void backupDecisionNodeLeaf(DPUCTNode* node, double const& immReward,
+            double const& futReward);
+    void backupDecisionNode(DPUCTNode* node, double const& immReward,
+            double const& futReward);
     void backupChanceNode(DPUCTNode* node, double const& futReward);
 
     // Memory management

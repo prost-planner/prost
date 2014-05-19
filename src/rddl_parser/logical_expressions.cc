@@ -18,7 +18,8 @@ using namespace std;
 *****************************************************************/
 
 // This constructor is used for instantiation
-ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params) :
+ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
+        std::vector<Parameter*> _params) :
     LogicalExpression(),
     variableName(source.variableName),
     fullName(source.variableName),
@@ -27,19 +28,19 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
     valueType(source.valueType),
     initialValue(source.initialValue) {
     assert(params.size() == source.params.size());
-    for(unsigned int i = 0; i < params.size(); ++i) {
-        if(!params[i]->type) {
+    for (unsigned int i = 0; i < params.size(); ++i) {
+        if (!params[i]->type) {
             params[i]->type = source.params[i]->type;
         } else {
             assert(params[i]->type->isSubtypeOf(source.params[i]->type));
         }
     }
 
-    if(!params.empty()) {
+    if (!params.empty()) {
         fullName += "(";
-        for(unsigned int i = 0; i < params.size(); ++i) {
+        for (unsigned int i = 0; i < params.size(); ++i) {
             fullName += params[i]->name;
-            if(i != params.size()-1) {
+            if (i != params.size() - 1) {
                 fullName += ", ";
             }
         }
@@ -47,7 +48,9 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
     }
 }
 
-ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, std::vector<Parameter*> _params, double _initialValue) :
+ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
+        std::vector<Parameter*> _params,
+        double _initialValue) :
     LogicalExpression(),
     variableName(source.variableName),
     fullName(source.variableName),
@@ -56,19 +59,19 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source, s
     valueType(source.valueType),
     initialValue(_initialValue) {
     assert(params.size() == source.params.size());
-    for(unsigned int i = 0; i < params.size(); ++i) {
-        if(!params[i]->type) {
+    for (unsigned int i = 0; i < params.size(); ++i) {
+        if (!params[i]->type) {
             params[i]->type = source.params[i]->type;
         } else {
             assert(params[i]->type->isSubtypeOf(source.params[i]->type));
         }
     }
 
-    if(!params.empty()) {
+    if (!params.empty()) {
         fullName += "(";
-        for(unsigned int i = 0; i < params.size(); ++i) {
+        for (unsigned int i = 0; i < params.size(); ++i) {
             fullName += params[i]->name;
-            if(i != params.size()-1) {
+            if (i != params.size() - 1) {
                 fullName += ", ";
             }
         }

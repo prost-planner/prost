@@ -17,8 +17,8 @@ public:
         rewardLock(false) {}
 
     ~MaxMCUCTNode() {
-        for(unsigned int i = 0; i < children.size(); ++i) {
-            if(children[i]) {
+        for (unsigned int i = 0; i < children.size(); ++i) {
+            if (children[i]) {
                 delete children[i];
             }
         }
@@ -35,7 +35,7 @@ public:
     }
 
     double getExpectedRewardEstimate() const {
-        return (immediateReward + futureReward);
+        return immediateReward + futureReward;
     }
 
     double getExpectedFutureRewardEstimate() const {
@@ -60,7 +60,8 @@ public:
 
     // Print
     void print(std::ostream& out, std::string indent = "") const {
-        out << indent << getExpectedRewardEstimate() << " (in " << numberOfVisits << " visits)" << std::endl;
+        out << indent << getExpectedRewardEstimate() << " (in " <<
+        numberOfVisits << " visits)" << std::endl;
     }
 
     std::vector<MaxMCUCTNode*> children;
@@ -81,7 +82,7 @@ public:
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value) {
-        if(param == "-hw") {
+        if (param == "-hw") {
             setHeuristicWeight(atof(value.c_str()));
             return true;
         }
@@ -96,14 +97,19 @@ public:
 
 protected:
     // Initialization
-    void initializeDecisionNodeChild(MaxMCUCTNode* node, unsigned int const& index, double const& initialQValue);
+    void initializeDecisionNodeChild(MaxMCUCTNode* node,
+            unsigned int const& index,
+            double const& initialQValue);
 
     // Outcome selection
-    MaxMCUCTNode* selectOutcome(MaxMCUCTNode* node, PDState& nextState, int& varIndex);
+    MaxMCUCTNode* selectOutcome(MaxMCUCTNode* node, PDState& nextState,
+            int& varIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& immReward, double const& futReward);
-    void backupDecisionNode(MaxMCUCTNode* node, double const& immReward, double const& futReward);
+    void backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& immReward,
+            double const& futReward);
+    void backupDecisionNode(MaxMCUCTNode* node, double const& immReward,
+            double const& futReward);
     void backupChanceNode(MaxMCUCTNode* node, double const& futReward);
 
     // Parameter

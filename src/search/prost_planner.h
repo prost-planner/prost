@@ -53,6 +53,8 @@ private:
     void manageTimeouts();
     int combineResults();
 
+    // Creates the current state according to values of nextStateVec and resets
+    // the best actions
     void initNextStep(std::vector<double> const& nextStateVec);
 
     void monitorRAMUsage();

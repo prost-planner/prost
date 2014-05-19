@@ -21,15 +21,15 @@ double Timer::operator()() const {
 inline double Timer::getCurrentTime() const {
     timeval tv;
     gettimeofday(&tv, NULL);
-    return((double)tv.tv_sec + (double)tv.tv_usec / USEC_PER_SEC);
+    return (double) tv.tv_sec + (double) tv.tv_usec / USEC_PER_SEC;
 }
 
-ostream &operator<<(ostream &os, const Timer &timer) {
+ostream& operator<<(ostream& os, const Timer& timer) {
     double value = timer();
-    if(value < 0 && value > -1e-10)
-        value = 0.0; // We sometimes get inaccuracies from god knows where.
-    if(value < 1e-10)
-        value = 0.0; // Don't care about such small values.
+    if (value < 0 && value > -1e-10)
+        value = 0.0;  // We sometimes get inaccuracies from god knows where.
+    if (value < 1e-10)
+        value = 0.0;  // Don't care about such small values.
     os << value << "s";
     return os;
 }

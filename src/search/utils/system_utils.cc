@@ -25,47 +25,48 @@ int SystemUtils::numProcessors = 0;
 bool SystemUtils::clockRunning = false;
 bool SystemUtils::CPUMeasurementOfProcessRunning = false;
 
-void SystemUtils::abort(std::string msg)  {
+void SystemUtils::abort(std::string msg) {
     std::cerr << msg << std::endl;
     exit(0);
 }
 
-void SystemUtils::warn(std::string msg)  {
+void SystemUtils::warn(std::string msg) {
     std::cerr << msg << std::endl;
 }
 
 void SystemUtils::takeTime() {
-    if(!clockRunning) {
+    if (!clockRunning) {
         clockRunning = true;
         start = clock();
     }
 }
 
 double SystemUtils::stopTime() {
-    if(!clockRunning) {
+    if (!clockRunning) {
         return -1.0;
     }
 
     clockRunning = false;
-    return (double(clock()-start) / (double)CLOCKS_PER_SEC);
+    return double(clock() - start) / (double) CLOCKS_PER_SEC;
 }
 
-bool SystemUtils::readFile(std::string& file, std::string& res, std::string ignoreSign) {
+bool SystemUtils::readFile(std::string& file, std::string& res,
+        std::string ignoreSign) {
     std::ifstream ifs(file.c_str());
-    if(!ifs) {
+    if (!ifs) {
         return false;
     }
 
     std::string tmp;
     std::stringstream ss;
-    while(std::getline(ifs,tmp)) {
-        if(ignoreSign != "") {
-            StringUtils::deleteCommentFromLine(tmp,ignoreSign);
+    while (std::getline(ifs, tmp)) {
+        if (ignoreSign != "") {
+            StringUtils::deleteCommentFromLine(tmp, ignoreSign);
         }
 
         StringUtils::trim(tmp);
 
-        if(tmp.length() > 0) {
+        if (tmp.length() > 0) {
             ss << tmp << std::endl;
         }
     }
@@ -95,12 +96,12 @@ long SystemUtils::getUsedVirtualMemory() {
     return res;
 }
 
-int SystemUtils::parseLine(char* line){
-    int i = (int)strlen(line);
-    while (*line < '0' || *line > '9') {
+int SystemUtils::parseLine(char* line) {
+    int i = (int) strlen(line);
+    while (*line < '0' || * line > '9') {
         line++;
     }
-    line[i-3] = '\0';
+    line[i - 3] = '\0';
     i = atoi(line);
     return i;
 }
@@ -111,7 +112,7 @@ int SystemUtils::getVirtualMemoryUsedByThis() {
     int res = -1;
     char line[128];
 
-    while (fgets(line, 128, file) != NULL){
+    while (fgets(line, 128, file) != NULL) {
         if (strncmp(line, "VmSize:", 7) == 0) {
             res = parseLine(line);
             break;
@@ -144,8 +145,8 @@ int SystemUtils::getRAMUsedByThis() {
     FILE* file = fopen("/proc/self/status", "r");
     int res = -1;
     char line[128];
-    
-    while (fgets(line, 128, file) != NULL){
+
+    while (fgets(line, 128, file) != NULL) {
         if (strncmp(line, "VmRSS:", 6) == 0) {
             res = parseLine(line);
             break;
@@ -160,25 +161,25 @@ void SystemUtils::initCPUMeasurementOfThis() {
     FILE* file;
     struct tms timeSample;
     char line[128];
-    
+
     lastCPU = times(&timeSample);
     lastSysCPU = timeSample.tms_stime;
     lastUserCPU = timeSample.tms_utime;
 
     file = fopen("/proc/cpuinfo", "r");
     numProcessors = 0;
-    while(fgets(line, 128, file) != NULL){
+    while (fgets(line, 128, file) != NULL) {
         if (strncmp(line, "processor", 9) == 0) {
             numProcessors++;
         }
     }
-    fclose(file); 
+    fclose(file);
 
     CPUMeasurementOfProcessRunning = true;
 }
 
 double SystemUtils::getCPUUsageOfThis() {
-    if(!CPUMeasurementOfProcessRunning) {
+    if (!CPUMeasurementOfProcessRunning) {
         return -1.0;
     }
 
@@ -188,12 +189,15 @@ double SystemUtils::getCPUUsageOfThis() {
 
     now = times(&timeSample);
     if (now <= lastCPU || timeSample.tms_stime < lastSysCPU ||
-        timeSample.tms_utime < lastUserCPU){
+        timeSample.tms_utime < lastUserCPU) {
         //Overflow detection. Just skip this value.
         res = -1.0;
-    } else{
-        res = (double)(timeSample.tms_stime - lastSysCPU) + (double)(timeSample.tms_utime - lastUserCPU);
-        res /= (double)(now - lastCPU);
+    } else {
+        res =
+            (double) (timeSample.tms_stime -
+                      lastSysCPU) +
+            (double) (timeSample.tms_utime - lastUserCPU);
+        res /= (double) (now - lastCPU);
         res /= numProcessors;
         res *= 100;
     }
@@ -203,4 +207,3 @@ double SystemUtils::getCPUUsageOfThis() {
 
     return res;
 }
-

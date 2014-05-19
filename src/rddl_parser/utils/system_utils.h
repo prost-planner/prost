@@ -11,7 +11,8 @@ public:
     static void takeTime();
     static double stopTime();
 
-    static bool readFile(std::string& file, std::string& res, std::string ignoreSign = "");
+    static bool readFile(std::string& file, std::string& res,
+            std::string ignoreSign = "");
 
     static long getTotalVirtualMemory();
     static long getUsedVirtualMemory();
