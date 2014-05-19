@@ -12,9 +12,9 @@ void Parameter::print(ostream& out) const {
 
 void ParameterList::print(ostream& out) const {
     out << "(";
-    for(unsigned int i = 0; i < params.size(); ++i) {
+    for (unsigned int i = 0; i < params.size(); ++i) {
         out << params[i]->name << " : " << types[i]->name;
-        if(i != (params.size() -1)) {
+        if (i != (params.size() - 1)) {
             out << ", ";
         }
     }
@@ -45,7 +45,7 @@ void NumericConstant::print(ostream& out) const {
 }
 
 void Object::print(ostream& out) const {
-    if(types.size() != 1) {
+    if (types.size() != 1) {
         SystemUtils::abort("Implement object fluents in print.cc");
     }
     assert(values[0] < types[0]->objects.size());
@@ -94,9 +94,9 @@ void ExistentialQuantification::print(ostream& out) const {
 *****************************************************************/
 
 void Connective::print(ostream& out) const {
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->print(out);
-        if(i != exprs.size()-1) {
+        if (i != exprs.size() - 1) {
             out << " ";
         }
     }
@@ -198,12 +198,12 @@ void BernoulliDistribution::print(ostream& out) const {
 
 void DiscreteDistribution::print(ostream& out) const {
     out << "Discrete(";
-    for(unsigned int i = 0; i < values.size(); ++i) {
+    for (unsigned int i = 0; i < values.size(); ++i) {
         out << "(";
         values[i]->print(out);
         out << " : ";
         probabilities[i]->print(out);
-        out << ") ";	
+        out << ") ";
     }
     out << ")";
 }
@@ -223,8 +223,8 @@ void IfThenElseExpression::print(ostream& out) const {
 }
 
 void MultiConditionChecker::print(ostream& out) const {
-    for(unsigned int i = 0; i < conditions.size(); ++i) {
-        if(i == 0) {
+    for (unsigned int i = 0; i < conditions.size(); ++i) {
+        if (i == 0) {
             out << "if(";
         } else {
             out << " elif(";

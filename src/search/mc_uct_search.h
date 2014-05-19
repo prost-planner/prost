@@ -6,7 +6,7 @@
 
 #include "uct_base.h"
 
-#ifndef NDEBUG
+#ifdef TEST
 #include <gtest/gtest.h>
 #endif
 
@@ -20,8 +20,8 @@ public:
         rewardLock(false) {}
 
     ~MCUCTNode() {
-        for(unsigned int i = 0; i < children.size(); ++i) {
-            if(children[i]) {
+        for (unsigned int i = 0; i < children.size(); ++i) {
+            if (children[i]) {
                 delete children[i];
             }
         }
@@ -38,11 +38,11 @@ public:
     }
 
     double getExpectedRewardEstimate() const {
-        return (immediateReward + futureReward) / (double)numberOfVisits;
+        return (immediateReward + futureReward) / (double) numberOfVisits;
     }
 
     double getExpectedFutureRewardEstimate() const {
-        return futureReward / (double)numberOfVisits;
+        return futureReward / (double) numberOfVisits;
     }
 
     bool isSolved() const {
@@ -63,18 +63,19 @@ public:
 
     // Print
     void print(std::ostream& out, std::string indent = "") const {
-        out << indent << getExpectedRewardEstimate() << " (in " << numberOfVisits << " visits)" << std::endl;
+        out << indent << getExpectedRewardEstimate() << " (in " <<
+        numberOfVisits << " visits)" << std::endl;
     }
 
     std::vector<MCUCTNode*> children;
 
 private:
-		
-#ifndef NDEBUG
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLOG);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithSQRT);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithLIN);
-    FRIEND_TEST(uctBaseTest, testUCTSelectionWithESQRT);
+
+#ifdef TEST
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLOG);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithSQRT);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLIN);
+    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithESQRT);
     FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
     FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
     FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
@@ -91,28 +92,26 @@ private:
 class MCUCTSearch : public UCTBase<MCUCTNode> {
 public:
     MCUCTSearch() :
-    UCTBase<MCUCTNode>("MC-UCT") {}
+        UCTBase<MCUCTNode>("MC-UCT") {}
 
 protected:
     // Initialization
-    void initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& index, double const& initialQValue);
+    void initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& index,
+            double const& initialQValue);
 
     // Outcome selection
     MCUCTNode* selectOutcome(MCUCTNode* node, PDState& nextState, int& varIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(MCUCTNode* node, double const& immReward, double const& futReward) {
+    void backupDecisionNodeLeaf(MCUCTNode* node, double const& immReward,
+            double const& futReward) {
         // This is only different from backupDecisionNode if we want to label
         // nodes as solved, which is not possible in MonteCarlo-UCT.
         backupDecisionNode(node, immReward, futReward);
     }
-    void backupDecisionNode(MCUCTNode* node, double const& immReward, double const& futReward);
+    void backupDecisionNode(MCUCTNode* node, double const& immReward,
+            double const& futReward);
     void backupChanceNode(MCUCTNode* node, double const& futReward);
-
-#ifndef NDEBUG
-		FRIEND_TEST(mcUctSearchTest, testInitializeDecisionNodeChild);
-		FRIEND_TEST(mcUctSearchTest, testBackupDecisionNode);
-#endif
 };
 
 #endif

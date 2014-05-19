@@ -11,13 +11,14 @@
 
 using namespace std;
 
-void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeout) {
+void TaskAnalyzer::analyzeTask(int const& numberOfStates,
+                               double const& maxTimeout) {
     Timer t;
 
     State currentState(task->CPFs);
     int remainingSteps = task->horizon;
 
-    while(MathUtils::doubleIsSmaller(t(), maxTimeout)) {
+    while (MathUtils::doubleIsSmaller(t(), maxTimeout)) {
         State nextState(task->CPFs.size());
         double reward = 0.0;
         analyzeStateAndApplyAction(currentState, nextState, reward);
@@ -27,7 +28,7 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeo
 
         --remainingSteps;
 
-        if(remainingSteps > 0) {
+        if (remainingSteps > 0) {
             currentState = State(nextState);
         } else {
             currentState = State(task->CPFs);
@@ -41,7 +42,7 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates, double const& maxTimeo
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next, double& reward) const {
-    if(!task->unreasonableActionInDeterminizationDetected) {
+    if (!task->unreasonableActionInDeterminizationDetected) {
         // As long as we haven't found unreasonable actions in the
         // determinization we check if there are any in the current state
         detectUnreasonableActionsInDeterminization(current);
@@ -50,15 +51,17 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     vector<int> applicableActions;
     set<PDState, PDState::PDStateSort> childStates;
 
-    for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
-        if(actionIsApplicable(task->actionStates[actionIndex], current)) {
+    for (unsigned int actionIndex = 0; actionIndex < task->actionStates.size();
+         ++actionIndex) {
+        if (actionIsApplicable(task->actionStates[actionIndex], current)) {
             // This action is applicable
             PDState nxt(task->CPFs.size());
-            for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-                task->CPFs[i]->formula->evaluateToPD(nxt[i], current, task->actionStates[actionIndex]);
+            for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+                task->CPFs[i]->formula->evaluateToPD(
+                        nxt[i], current, task->actionStates[actionIndex]);
             }
 
-            if(childStates.find(nxt) == childStates.end()) {
+            if (childStates.find(nxt) == childStates.end()) {
                 // This action is reasonable
                 childStates.insert(nxt);
                 applicableActions.push_back(actionIndex);
@@ -93,22 +96,26 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     }
 }
 
-void TaskAnalyzer::detectUnreasonableActionsInDeterminization(State const& current) const {
+void TaskAnalyzer::detectUnreasonableActionsInDeterminization(
+        State const& current) const {
     set<State, State::StateSort> childStates;
-    
-    for(unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
-        if(actionIsApplicable(task->actionStates[actionIndex], current)) {
+
+    for (unsigned int actionIndex = 0; actionIndex < task->actionStates.size();
+         ++actionIndex) {
+        if (actionIsApplicable(task->actionStates[actionIndex], current)) {
             // This action is applicable
             State nxt(task->CPFs.size());
-            for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-                if(task->CPFs[i]->determinization) {
-                    task->CPFs[i]->determinization->evaluate(nxt[i], current, task->actionStates[actionIndex]);
+            for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+                if (task->CPFs[i]->determinization) {
+                    task->CPFs[i]->determinization->evaluate(
+                            nxt[i], current, task->actionStates[actionIndex]);
                 } else {
-                    task->CPFs[i]->formula->evaluate(nxt[i], current, task->actionStates[actionIndex]);
+                    task->CPFs[i]->formula->evaluate(
+                            nxt[i], current, task->actionStates[actionIndex]);
                 }
             }
 
-            if(childStates.find(nxt) == childStates.end()) {
+            if (childStates.find(nxt) == childStates.end()) {
                 // This action is reasonable
                 childStates.insert(nxt);
             } else {
@@ -120,11 +127,14 @@ void TaskAnalyzer::detectUnreasonableActionsInDeterminization(State const& curre
     }
 }
 
-inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action, State const& current) const {
-    for(unsigned int precondIndex = 0; precondIndex < action.relevantSACs.size(); ++precondIndex) {
+inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
+        State const& current) const {
+    for (unsigned int precondIndex = 0; precondIndex < action.relevantSACs.size();
+         ++precondIndex) {
         double res = 0.0;
-        action.relevantSACs[precondIndex]->formula->evaluate(res, current, action);
-        if(MathUtils::doubleIsEqual(res, 0.0)) {
+        action.relevantSACs[precondIndex]->formula->evaluate(res, current,
+                action);
+        if (MathUtils::doubleIsEqual(res, 0.0)) {
             return false;
         }
     }
@@ -132,11 +142,13 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action, State co
 }
 
 
-inline bool TaskAnalyzer::isARewardLock(State const& current, double const& reward) const {
-    if(MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+inline bool TaskAnalyzer::isARewardLock(State const& current,
+        double const& reward) const {
+    if (MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if(MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
+                       reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -147,28 +159,37 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
     KleeneState mergedSuccs(task->CPFs.size());
     set<double> reward;
 
-    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluateToKleene(mergedSuccs[i], state, task->actionStates[0]);
+    for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        task->CPFs[i]->formula->evaluateToKleene(mergedSuccs[i], state,
+                task->actionStates[0]);
     }
-    task->rewardCPF->formula->evaluateToKleene(reward, state, task->actionStates[0]);
+    task->rewardCPF->formula->evaluateToKleene(reward, state,
+            task->actionStates[0]);
 
     // If reward is not minimal with certainty this is not a dead end
-    if((reward.size() != 1) || !MathUtils::doubleIsEqual(*reward.begin(), task->rewardCPF->getMinVal())) {
+    if ((reward.size() != 1) ||
+        !MathUtils::doubleIsEqual(*reward.begin(),
+                task->rewardCPF->getMinVal())) {
         return false;
     }
 
-    for(unsigned int actionIndex = 1; actionIndex < task->actionStates.size(); ++actionIndex) {
+    for (unsigned int actionIndex = 1; actionIndex < task->actionStates.size();
+         ++actionIndex) {
         reward.clear();
 
         // Apply action actionIndex
         KleeneState succ(task->CPFs.size());
-        for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-            task->CPFs[i]->formula->evaluateToKleene(succ[i], state, task->actionStates[actionIndex]);
+        for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+            task->CPFs[i]->formula->evaluateToKleene(
+                    succ[i], state, task->actionStates[actionIndex]);
         }
-        task->rewardCPF->formula->evaluateToKleene(reward, state, task->actionStates[actionIndex]);
+        task->rewardCPF->formula->evaluateToKleene(
+                reward, state, task->actionStates[actionIndex]);
 
         // If reward is not minimal this is not a dead end
-        if((reward.size() != 1) || !MathUtils::doubleIsEqual(*reward.begin(), task->rewardCPF->getMinVal())) {
+        if ((reward.size() != 1) ||
+            !MathUtils::doubleIsEqual(*reward.begin(),
+                    task->rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -177,7 +198,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
     }
 
     // Check if nothing changed, otherwise continue dead end check
-    if((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
+    if ((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
         return true;
     }
     return false;
@@ -191,13 +212,17 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
     KleeneState succ(task->CPFs.size());
     set<double> reward;
 
-    for(unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluateToKleene(succ[i], state, task->actionStates[0]);
+    for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        task->CPFs[i]->formula->evaluateToKleene(succ[i], state,
+                task->actionStates[0]);
     }
-    task->rewardCPF->formula->evaluateToKleene(reward, state, task->actionStates[0]);
+    task->rewardCPF->formula->evaluateToKleene(reward, state,
+            task->actionStates[0]);
 
     // If reward is not maximal with certainty this is not a goal
-    if((reward.size() > 1) || !MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), *reward.begin())) {
+    if ((reward.size() > 1) ||
+        !MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
+                *reward.begin())) {
         return false;
     }
 
@@ -205,15 +230,16 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
     succ |= state;
 
     // Check if nothing changed, otherwise continue goal check
-    if((succ == state) || checkGoal(succ)) {
+    if ((succ == state) || checkGoal(succ)) {
         return true;
     }
     return false;
 }
 
 void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
-    cout << "Creating training set with " << encounteredStates.size() << " candidates." << endl;
-    if(encounteredStates.size() < numberOfStates) {
+    cout << "Creating training set with " << encounteredStates.size() <<
+    " candidates." << endl;
+    if (encounteredStates.size() < numberOfStates) {
         task->trainingSet = encounteredStates;
     } else {
         // We want the initial state to be part of the training set
@@ -224,9 +250,10 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
 
         // Then include states at random until the size of the trainingSet is as
         // desired
-        while(task->trainingSet.size() != numberOfStates) {
+        while (task->trainingSet.size() != numberOfStates) {
             int randNum = (std::rand() % encounteredStates.size());
-            set<State, State::StateSort>::const_iterator it = encounteredStates.begin();
+            set<State,
+                State::StateSort>::const_iterator it = encounteredStates.begin();
             std::advance(it, randNum);
             task->trainingSet.insert(*it);
             encounteredStates.erase(it);

@@ -20,7 +20,7 @@ void NumericConstant::print(ostream& out) const {
 
 void Conjunction::print(ostream& out) const {
     out << "(and";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -29,7 +29,7 @@ void Conjunction::print(ostream& out) const {
 
 void Disjunction::print(ostream& out) const {
     out << "(or";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -38,7 +38,7 @@ void Disjunction::print(ostream& out) const {
 
 void EqualsExpression::print(ostream& out) const {
     out << "(==";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -48,7 +48,7 @@ void EqualsExpression::print(ostream& out) const {
 void GreaterExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "(> ";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -58,7 +58,7 @@ void GreaterExpression::print(ostream& out) const {
 void LowerExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "(< ";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -68,7 +68,7 @@ void LowerExpression::print(ostream& out) const {
 void GreaterEqualsExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "(>= ";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -78,7 +78,7 @@ void GreaterEqualsExpression::print(ostream& out) const {
 void LowerEqualsExpression::print(ostream& out) const {
     assert(exprs.size() == 2);
     out << "(<= ";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -87,7 +87,7 @@ void LowerEqualsExpression::print(ostream& out) const {
 
 void Addition::print(ostream& out) const {
     out << "(+";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -96,7 +96,7 @@ void Addition::print(ostream& out) const {
 
 void Subtraction::print(ostream& out) const {
     out << "(-";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -105,7 +105,7 @@ void Subtraction::print(ostream& out) const {
 
 void Multiplication::print(ostream& out) const {
     out << "(*";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -114,7 +114,7 @@ void Multiplication::print(ostream& out) const {
 
 void Division::print(ostream& out) const {
     out << "(/";
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
         out << " ";
         exprs[i]->print(out);
     }
@@ -143,12 +143,12 @@ void BernoulliDistribution::print(ostream& out) const {
 
 void DiscreteDistribution::print(ostream& out) const {
     out << "Discrete( ";
-    for(unsigned int i = 0; i < values.size(); ++i) {
+    for (unsigned int i = 0; i < values.size(); ++i) {
         out << "[";
         values[i]->print(out);
         out << " : ";
         probabilities[i]->print(out);
-        out << "] ";	
+        out << "] ";
     }
     out << ")";
 }
@@ -159,14 +159,15 @@ void DiscreteDistribution::print(ostream& out) const {
 
 void MultiConditionChecker::print(ostream& out) const {
     out << " [ ";
-    for(unsigned int i = 0; i < conditions.size(); ++i) {
-        if(i == 0) {
+    for (unsigned int i = 0; i < conditions.size(); ++i) {
+        if (i == 0) {
             out << "(if ";
             conditions[i]->print(out);
             out << " then ";
-        } else if(i == conditions.size() -1) {
+        } else if (i == conditions.size() - 1) {
             out << "(default ";
-            assert(MathUtils::doubleIsEqual(dynamic_cast<NumericConstant*>(conditions[i])->value, 1.0));
+            assert(MathUtils::doubleIsEqual(dynamic_cast<NumericConstant*>(
+                                conditions[i])->value, 1.0));
         } else {
             out << "(elif ";
             conditions[i]->print(out);

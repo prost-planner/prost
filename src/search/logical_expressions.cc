@@ -15,56 +15,56 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
         int index = atoi(desc.c_str());
         assert((index >= 0) && (index < SearchEngine::stateFluents.size()));
         return SearchEngine::stateFluents[index];
-    } else if(StringUtils::startsWith(desc, "$a(")) {
-        desc = desc.substr(3,desc.length()-4);
+    } else if (StringUtils::startsWith(desc, "$a(")) {
+        desc = desc.substr(3, desc.length() - 4);
         int index = atoi(desc.c_str());
         assert((index >= 0) && (index < SearchEngine::actionFluents.size()));
         return SearchEngine::actionFluents[index];
-    } else if(StringUtils::startsWith(desc, "$c(")) {
-        desc = desc.substr(3,desc.length()-4);
+    } else if (StringUtils::startsWith(desc, "$c(")) {
+        desc = desc.substr(3, desc.length() - 4);
         double value = atof(desc.c_str());
         return new NumericConstant(value);
-    } else if(StringUtils::startsWith(desc, "and(")) {
+    } else if (StringUtils::startsWith(desc, "and(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Conjunction(exprs);
-    } else if(StringUtils::startsWith(desc, "or(")) {
+    } else if (StringUtils::startsWith(desc, "or(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Disjunction(exprs);
-    } else if(StringUtils::startsWith(desc, "==(")) {
+    } else if (StringUtils::startsWith(desc, "==(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new EqualsExpression(exprs);
-    } else if(StringUtils::startsWith(desc, ">(")) {
+    } else if (StringUtils::startsWith(desc, ">(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new GreaterExpression(exprs);
-    } else if(StringUtils::startsWith(desc, "<(")) {
+    } else if (StringUtils::startsWith(desc, "<(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new LowerExpression(exprs);
-    } else if(StringUtils::startsWith(desc, ">=(")) {
+    } else if (StringUtils::startsWith(desc, ">=(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new GreaterEqualsExpression(exprs);
-    } else if(StringUtils::startsWith(desc, "<=(")) {
+    } else if (StringUtils::startsWith(desc, "<=(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new LowerEqualsExpression(exprs);
-    } else if(StringUtils::startsWith(desc, "+(")) {
+    } else if (StringUtils::startsWith(desc, "+(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Addition(exprs);
-    } else if(StringUtils::startsWith(desc, "-(")) {
+    } else if (StringUtils::startsWith(desc, "-(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Subtraction(exprs);
-    } else if(StringUtils::startsWith(desc, "*(")) {
+    } else if (StringUtils::startsWith(desc, "*(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Multiplication(exprs);
-    } else if(StringUtils::startsWith(desc, "/(")) {
+    } else if (StringUtils::startsWith(desc, "/(")) {
         vector<LogicalExpression*> exprs;
         createExpressions(desc, exprs);
         return new Division(exprs);
@@ -76,15 +76,15 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
         desc = desc.substr(10,desc.length()-11);
         LogicalExpression* expr = LogicalExpression::createFromString(desc);
         return new BernoulliDistribution(expr);
-    } else if(StringUtils::startsWith(desc, "Discrete(")) {
-        desc = desc.substr(9,desc.length()-10);
+    } else if (StringUtils::startsWith(desc, "Discrete(")) {
+        desc = desc.substr(9, desc.length() - 10);
         vector<LogicalExpression*> values;
         vector<LogicalExpression*> probabilities;
 
         vector<string> tokens;
         StringUtils::tokenize(desc, tokens);
-        for(unsigned int index = 0; index < tokens.size(); ++index) {
-            tokens[index] = tokens[index].substr(1,tokens[index].length()-2);
+        for (unsigned int index = 0; index < tokens.size(); ++index) {
+            tokens[index] = tokens[index].substr(1, tokens[index].length() - 2);
             vector<string> valProbPair;
             StringUtils::split(tokens[index], valProbPair, ":");
             assert(valProbPair.size() == 2);
@@ -92,7 +92,7 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
             probabilities.push_back(LogicalExpression::createFromString(valProbPair[1]));
         }
         return new DiscreteDistribution(values, probabilities);
-    } else if(StringUtils::startsWith(desc, "if(")) {
+    } else if (StringUtils::startsWith(desc, "if(")) {
         vector<LogicalExpression*> conditions;
         vector<LogicalExpression*> effects;
 
@@ -111,7 +111,7 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
             ++index;
         }
         return new MultiConditionChecker(conditions, effects);
-    } 
+    }
 
     cout << desc << endl;
     assert(false);

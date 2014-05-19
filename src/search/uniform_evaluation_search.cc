@@ -12,9 +12,10 @@ UniformEvaluationSearch::UniformEvaluationSearch() :
     DeterministicSearchEngine("UniformEvaluation"),
     initialValue(0.0) {}
 
-bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
-    if(param == "-val") {
-        if(value == "INFTY") {
+bool UniformEvaluationSearch::setValueFromString(string& param,
+        string& value) {
+    if (param == "-val") {
+        if (value == "INFTY") {
             setInitialValue(SearchEngine::rewardCPF->getMaxVal());
         } else {
             setInitialValue(atof(value.c_str()));
@@ -29,14 +30,18 @@ bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
                        Main Search Functions
 ******************************************************************/
 
-bool UniformEvaluationSearch::estimateBestActions(State const& _rootState, std::vector<int>& bestActions) {
+bool UniformEvaluationSearch::estimateBestActions(State const& _rootState,
+        std::vector<int>& bestActions) {
     bestActions = getIndicesOfApplicableActions(_rootState);
     return true;
 }
 
-bool UniformEvaluationSearch::estimateQValues(State const& /*_rootState*/, vector<int> const& actionsToExpand, vector<double>& qValues) {
-    for(unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
-        if(actionsToExpand[actionIndex] == actionIndex) {
+bool UniformEvaluationSearch::estimateQValues(
+        State const& /*_rootState*/, vector<int> const& actionsToExpand,
+        vector<double>& qValues) {
+    for (unsigned int actionIndex = 0; actionIndex < qValues.size();
+         ++actionIndex) {
+        if (actionsToExpand[actionIndex] == actionIndex) {
             qValues[actionIndex] = initialValue;
         }
     }

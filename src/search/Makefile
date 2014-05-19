@@ -63,16 +63,17 @@ endif
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
 CCOPT_DEBUG    = 
+CCOPT_TEST = -D TEST
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
-LINKOPT_DEBUG    =
+LINKOPT_DEBUG    = 
 
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug test_build test
+default: debug test_build test uncrustify
 
-all: release debug test_build test
+all: release debug test_build test uncrustify
 
 
 ## Build rules for the release target follow.
@@ -102,15 +103,26 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 test_build: $(TEST_BINARIES)
 
 %Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
 
 %Test.o: %Test.cc 
-				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
 
 ## Automatically runs all tests from TEST_BINARIES.
 test: $(TEST_BINARIES)
 				for T in $(TEST_BINARIES); do ./$$T; done
 
+uncrustify: 
+	@echo "Files violating codestyle convention:"
+	@hg uncrustify *
+	@hg uncrustify ../test/*
+	@echo "Use 'hg uncrustify --diff <filename>' to show modifications uncrustify will apply."
+	@echo "Use 'hg uncrustify --modify <filename>' to automatically modify a file."	
+	@echo "Use 'make uncrustifyAll' to modify all files without creating backups."
+
+uncrustifyAll:
+	@hg uncrustify --modify --no-backup *
+	@hg uncrustify --modify --no-backup ../test/*
 
 clean:
 	rm -rf .obj
@@ -118,6 +130,8 @@ clean:
 	rm -f Makefile.depend
 	rm -f ../test/*.o
 	rm -f ../test/*.obj
+	find . -name "*.crusty" -type f -delete
+	find ../test -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
