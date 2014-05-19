@@ -10,6 +10,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include "utils/timer.h"
+
 using namespace std;
 
 void Preprocessor::preprocess() {
@@ -958,15 +960,37 @@ void Preprocessor::calculateMinAndMaxReward() const {
             domains[index] = task->CPFs[index]->domain;
         }
 
+        //for (unsigned int actionIndex = 0;
+        //     actionIndex < task->actionStates.size(); ++actionIndex) {
+        //    set<double> actionDependentValues;
+        //    task->rewardCPF->formula->calculateDomain(
+        //            domains, task->actionStates[actionIndex],
+        //            actionDependentValues);
+        //    task->rewardCPF->domain.insert(
+        //            actionDependentValues.begin(), actionDependentValues.end());
+        //}
+        
+        double minVal = numeric_limits<double>::max();
+        double maxVal = -numeric_limits<double>::max();
+
         for (unsigned int actionIndex = 0;
              actionIndex < task->actionStates.size(); ++actionIndex) {
-            set<double> actionDependentValues;
-            task->rewardCPF->formula->calculateDomain(
+            double min = numeric_limits<double>::max();
+            double max = -numeric_limits<double>::max();
+            task->rewardCPF->formula->calculateIntervalDomain(
                     domains, task->actionStates[actionIndex],
-                    actionDependentValues);
-            task->rewardCPF->domain.insert(
-                    actionDependentValues.begin(), actionDependentValues.end());
+                    min, max);
+            if (MathUtils::doubleIsSmaller(min, minVal)) {
+                minVal = min;
+            }
+            if (MathUtils::doubleIsGreater(max, maxVal)) {
+                maxVal = max;
+            }
         }
+
+        task->rewardCPF->domain.insert(minVal);
+        task->rewardCPF->domain.insert(maxVal);
+
     } else {
         double minVal = numeric_limits<double>::max();
         double maxVal = -numeric_limits<double>::max();

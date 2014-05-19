@@ -14,7 +14,6 @@ void StateFluent::calculateDomain(vector<set<double> > const& domains,
     assert(res.empty());
     assert(index < domains.size());
     assert(!domains[index].empty());
-
     res.insert(domains[index].begin(), domains[index].end());
 }
 
@@ -38,8 +37,7 @@ void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/,
 *****************************************************************/
 
 void Conjunction::calculateDomain(vector<set<double> > const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+        ActionState const& actions, set<double>& res) {
     assert(res.empty());
 
     // This must be true if all variables are true

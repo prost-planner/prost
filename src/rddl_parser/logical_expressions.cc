@@ -86,6 +86,7 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
 #include "logical_expressions_includes/collect_initial_info.cc"
 #include "logical_expressions_includes/classify_action_fluents.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
+#include "logical_expressions_includes/calculate_interval_domain.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/evaluate_to_pd.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
