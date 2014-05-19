@@ -44,6 +44,10 @@ public:
     virtual void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+    virtual void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     virtual void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -209,6 +213,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -238,6 +247,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -295,6 +309,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -424,6 +443,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -455,6 +479,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -491,6 +520,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -525,6 +559,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -561,6 +600,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -595,6 +639,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -631,6 +680,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -662,6 +716,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -698,6 +757,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -733,6 +797,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -767,6 +836,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -808,6 +882,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -865,6 +944,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -902,6 +986,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
@@ -949,6 +1038,11 @@ public:
             ActionState const& actions,
             std::set<double>& res);
 
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;
     void evaluateToPD(DiscretePD& res, State const& current,
@@ -987,6 +1081,11 @@ public:
     void calculateDomain(std::vector<std::set<double> > const& domains,
             ActionState const& actions,
             std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
             ActionState const& actions) const;

@@ -87,7 +87,7 @@ public:
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // All evaluatables have a hash index that is used to quckly update the
+    // All evaluatables have a hash index that is used to quickly update the
     // state fluent hash key of this evaluatable
     int hashIndex;
 

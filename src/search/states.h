@@ -35,8 +35,7 @@ public:
         assert(
                 deterministicStateFluents.size() ==
                 State::numberOfDeterministicStateFluents);
-        assert(
-                probabilisticStateFluents.size() ==
+        assert(probabilisticStateFluents.size() ==
                 State::numberOfProbabilisticStateFluents);
     }
 
