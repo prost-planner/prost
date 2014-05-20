@@ -229,8 +229,8 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(
             } else if (MathUtils::doubleIsEqual(node->children[childIndex]->
                                getNumberOfVisits(), smallestNumVisits)) {
                 bestActionIndices.push_back(childIndex);
-            } else if (MathUtils::doubleIsGreater(node->children[childIndex]->
-                               getNumberOfVisits(), highestNumVisits)) {
+            } else if (MathUtils::doubleIsGreater(node->children[childIndex]->getNumberOfVisits(), 
+                                                  highestNumVisits)) {
                 highestNumVisits =
                     node->children[childIndex]->getNumberOfVisits();
             }
@@ -243,15 +243,13 @@ inline void UCTBase<SearchNode>::selectActionBasedOnVisitDifference(
 }
 
 template <class SearchNode>
-inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
-{
-    if (MathUtils::doubleIsMinusInfinity(node->getExpectedFutureRewardEstimate())
-        || MathUtils::doubleIsEqual(node->getExpectedFutureRewardEstimate(),
-                0.0)) {
+inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node) {
+    if (MathUtils::doubleIsMinusInfinity(node->getExpectedFutureRewardEstimate()) || 
+        MathUtils::doubleIsEqual(node->getExpectedFutureRewardEstimate(), 0.0)) {
         magicConstant = 100.0;
     } else {
-        magicConstant = magicConstantScaleFactor * std::abs(
-                node->getExpectedFutureRewardEstimate());
+        magicConstant = magicConstantScaleFactor *
+            std::abs(node->getExpectedFutureRewardEstimate());
     }
     assert(node->getNumberOfVisits() > 0);
 
@@ -277,9 +275,8 @@ inline void UCTBase<SearchNode>::selectActionBasedOnUCTFormula(SearchNode* node)
          ++childIndex) {
         if (node->children[childIndex] &&
             !node->children[childIndex]->isSolved()) {
-            visitPart = magicConstant * std::sqrt(
-                    parentVisitPart /
-                    (double) node->children[childIndex]->getNumberOfVisits());
+            visitPart = magicConstant * 
+                std::sqrt(parentVisitPart / (double) node->children[childIndex]->getNumberOfVisits());
             UCTValue =
                 node->children[childIndex]->getExpectedRewardEstimate() +
                 visitPart;

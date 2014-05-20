@@ -85,18 +85,8 @@ struct Evaluatable {
     long getActionHashKey(std::vector<ActionState> const& actionStates,
             std::vector<ActionFluent*>& scheduledActions);
 
-    void initializeStateFluentHashKeys(
-            std::vector<ConditionalProbabilityFunction*> const& CPFs,
-            std::vector<std::vector<std::pair<int,
-                                              long> > >&
-            indexToStateFluentHashKeyMap,
-            long const& firstStateFluentHashKeyBase);
-    void initializeKleeneStateFluentHashKeys(
-            std::vector<ConditionalProbabilityFunction*> const& CPFs,
-            std::vector<std::vector<std::pair<int,
-                                              long> > >&
-            indexToKleeneStateFluentHashKeyMap,
-            long const& firstStateFluentHashKeyBase);
+    void initializeStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase);
+    void initializeKleeneStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase);
 };
 
 struct ActionPrecondition : public Evaluatable {

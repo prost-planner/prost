@@ -310,57 +310,6 @@ protected:
     }
 
 /*****************************************************************
-                Sampling of state transition
-*****************************************************************/
-
-    // Apply action 'actionIndex' to 'current', sample one outcome in 'next' and
-    // yield reward 'reward'
-    void sampleStateTransition(State const& current, int const& actionIndex,
-            State& next,
-            double& reward) const {
-        sampleSuccessorState(current, actionIndex, next);
-        calcReward(current, actionIndex, reward);
-    }
-
-    // Apply action 'actionIndex' to 'current' and sample one outcome in 'next'
-    void sampleSuccessorState(State const& current, int const& actionIndex,
-            State& next) const {
-        PDState pdNext(next.remainingSteps());
-        calcSuccessorState(current, actionIndex, pdNext);
-
-        for (unsigned int varIndex = 0;
-             varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
-            next.deterministicStateFluent(varIndex) =
-                pdNext.deterministicStateFluent(varIndex);
-        }
-
-        for (unsigned int varIndex = 0;
-             varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
-            next.probabilisticStateFluent(varIndex) = sampleVariable(
-                    pdNext.probabilisticStateFluentAsPD(varIndex));
-        }
-
-        State::calcStateFluentHashKeys(next);
-        State::calcStateHashKey(next);
-    }
-
-    // Return the outcome of sampling variable 'pd'
-    double sampleVariable(DiscretePD const& pd) const {
-        assert(pd.isWellDefined());
-        double randNum = MathUtils::generateRandomNumber();
-        double probSum = 0.0;
-        for (unsigned int index = 0; index < pd.probabilities.size();
-             ++index) {
-            probSum += pd.probabilities[index];
-            if (MathUtils::doubleIsSmaller(randNum, probSum)) {
-                return pd.values[index];
-            }
-        }
-        assert(false);
-        return 0.0;
-    }
-
-/*****************************************************************
              Calculation of applicable actions
 *****************************************************************/
 

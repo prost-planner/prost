@@ -345,7 +345,7 @@ LogicalExpression* Multiplication::simplify(map<ParametrizedVariable*, double>& 
     }
 
     if (newExprs.empty()) {
-        return new NumericConstant(1.0); // TODO: is an empty multiplication equal to 1 or to 0?
+        return new NumericConstant(1.0);
     } else if (newExprs.size() == 1) {
         return newExprs[0];
     }
