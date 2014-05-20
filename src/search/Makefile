@@ -42,7 +42,7 @@ CC     = g++
 DEPEND = g++ -MM
 
 ## Testfile binaries
-TEST_BINARIES = $(basename $(wildcard ../test/*Test.cc))
+TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
@@ -128,14 +128,14 @@ clean:
 	rm -rf .obj
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f ../test/*.o
-	rm -f ../test/*.obj
+	rm -f ../test/search/*.o
+	rm -f ../test/search/*.obj
 	find . -name "*.crusty" -type f -delete
-	find ../test -name "*.crusty" -type f -delete
+	find ../test/search -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
-	for T in $(TEST_BINARIES); do rm -f ../test/$$T; done
+	for T in $(TEST_BINARIES); do rm -f $$T; done
 
 ## Note: If we just call gcc -MM on a source file that lives within a
 ## subdirectory, it will strip the directory part in the output. Hence

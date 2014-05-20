@@ -172,7 +172,7 @@ void GreaterExpression::calculateIntervalDomain(vector<set<double> > const& doma
     }
 
     // The converse statement
-    if (MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
+    if (MathUtils::doubleIsGreaterOrEqual(rhsMin, lhsMax)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -201,13 +201,13 @@ void LowerExpression::calculateIntervalDomain(vector<set<double> > const& domain
     
     // If left max is lesser than right min everything is lesser
     if (MathUtils::doubleIsSmaller(lhsMax, rhsMin)) {
-        minRes = 0.0;
-        maxRes = 0.0;
+        minRes = 1.0;
+        maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsSmaller(rhsMax, lhsMin)) {
+    if (MathUtils::doubleIsSmallerOrEqual(rhsMax, lhsMin)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -243,7 +243,7 @@ void GreaterEqualsExpression::calculateIntervalDomain(
     }
 
     // The converse statement
-    if (MathUtils::doubleIsGreaterOrEqual(rhsMin, lhsMax)) {
+    if (MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -271,13 +271,13 @@ void LowerEqualsExpression::calculateIntervalDomain(vector<set<double> > const& 
     exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
     
     if (MathUtils::doubleIsSmallerOrEqual(lhsMax, rhsMin)) {
-        minRes = 0.0;
-        maxRes = 0.0;
+        minRes = 1.0;
+        maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsSmallerOrEqual(rhsMax, lhsMin)) {
+    if (MathUtils::doubleIsSmaller(rhsMax, lhsMin)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -368,9 +368,35 @@ void Division::calculateIntervalDomain(vector<set<double> > const& domains,
     double rhsMax = -numeric_limits<double>::max();
     exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
     
-    //TODO
-    minRes = lhsMin / rhsMin;
-    maxRes = lhsMax / rhsMax;
+    // Check for division by zero. Division is defined by
+    // [x_1, x_2] / [y_1, y_2] = [x_1, x_2] * (1/[y_1,y_2], where
+    // 1/[y_1,0] = [-infty, 1/y_1] and
+    // 1/[0,y_2] = [1/y_2, infty]
+    if (MathUtils::doubleIsEqual(rhsMax, 0.0) &&
+        MathUtils::doubleIsEqual(rhsMin, 0.0)) {
+        // Domain is ill-defined
+        std::cout << "WARNING: DOMAIN ILL-DEFINED" << std::endl;
+        minRes = -numeric_limits<double>::max();
+        maxRes = numeric_limits<double>::max();
+        return;
+    }
+    if (MathUtils::doubleIsEqual(rhsMax, 0.0)) {
+        rhsMax = 1.0 / rhsMin;
+        rhsMin = -numeric_limits<double>::max();
+    }
+    if (MathUtils::doubleIsEqual(rhsMin, 0.0)) {
+        rhsMin = 1.0 / rhsMax;
+        rhsMax = numeric_limits<double>::max();
+    } else {
+        rhsMin = 1.0 / rhsMin;
+        rhsMax = 1.0 / rhsMax;
+    }
+    // Now that division by zero is handled we can just do interval 
+    // multiplication 
+    minRes = std::min(std::min(lhsMin*rhsMin, lhsMin*rhsMax),
+                      std::min(lhsMax*rhsMin, lhsMax*rhsMax));
+    maxRes = std::max(std::max(lhsMin*rhsMin, lhsMin*rhsMax),
+                      std::max(lhsMax*rhsMin, rhsMax*rhsMax));
 }
 
 /*****************************************************************
@@ -383,16 +409,21 @@ void Negation::calculateIntervalDomain(vector<set<double> > const& domains,
     double tmpMin = numeric_limits<double>::max();
     double tmpMax = -numeric_limits<double>::max();
     expr->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
-    if (MathUtils::doubleIsEqual(tmpMin, 0.0)) {
-        minRes = 0.0;
-    } else {
-        minRes = 1.0;
+    // Both max and min are either 0 or 1
+    if (MathUtils::doubleIsEqual(tmpMin, tmpMax)) {
+        if (MathUtils::doubleIsEqual(tmpMin, 0.0)) {
+            minRes = 1.0;
+            maxRes = 1.0;
+            return;
+        } else {
+            minRes = 0.0;
+            maxRes = 0.0;
+            return;
+        }
     }
-    if (MathUtils::doubleIsEqual(tmpMax, 1.0)) {
-        maxRes = 1.0;
-    } else {
-        maxRes = 0.0;
-    }
+    // Otherwise 0 and 1 are possible
+    minRes = 0.0;
+    maxRes = 1.0;
 }
 
 /*****************************************************************

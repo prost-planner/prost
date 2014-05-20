@@ -126,7 +126,7 @@ clean:
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
-	for T in $(TEST_BINARIES); do rm -f ../test/parser/$$T; done
+	for T in $(TEST_BINARIES); do rm -f $$T; done
 
 
 ## Note: If we just call gcc -MM on a source file that lives within a
