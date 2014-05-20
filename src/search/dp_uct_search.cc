@@ -36,7 +36,6 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node,
 DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
                                       PDState& nextState,
                                       int& varIndex) {
-    // TODO: Prevent the case where nextPDState[varIndex] is deterministic
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
