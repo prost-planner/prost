@@ -7,8 +7,8 @@ using namespace std;
 ******************************************************************/
 
 void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node,
-        unsigned int const& actionIndex,
-        double const& initialQValue) {
+                                              unsigned int const& actionIndex,
+                                              double const& initialQValue) {
     node->children[actionIndex] = getDPUCTNode(1.0);
     node->children[actionIndex]->futureReward = heuristicWeight *
                                                 (double)
@@ -19,11 +19,12 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node,
     node->numberOfVisits += numberOfInitialVisits;
     node->futureReward =
         std::max(node->futureReward,
-                node->children[actionIndex]->getExpectedRewardEstimate());
+                 node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
     // SearchEngine::actionStates[actionIndex].printCompact(cout);
-    // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
+    // cout << " with remaining steps " << remainingConsideredSteps() 
+    //      << " and initialQValue " << initialQValue << endl;
     // node->children[actionIndex]->print(cout);
     // cout << endl;
 }
@@ -32,8 +33,9 @@ void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node,
                          Outcome selection
 ******************************************************************/
 
-DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextState,
-        int& varIndex) {
+DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
+                                      PDState& nextState,
+                                      int& varIndex) {
     // TODO: Prevent the case where nextPDState[varIndex] is deterministic
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
@@ -55,8 +57,8 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextState,
             }
         }
     }
-    assert(MathUtils::doubleIsGreater(probSum,
-                    0.0) && MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
+    assert(MathUtils::doubleIsGreater(probSum, 0.0) && 
+           MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
 
     double randNum = MathUtils::generateRandomNumber() * probSum;
     //cout << "ProbSum is " << probSum << endl;
@@ -96,8 +98,8 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node, PDState& nextState,
 ******************************************************************/
 
 void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
-        double const& immReward,
-        double const& futReward) {
+                                         double const& immReward,
+                                         double const& futReward) {
     node->children.clear();
 
     node->immediateReward = immReward;
@@ -110,8 +112,9 @@ void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
     // cout << endl;
 }
 
-void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward,
-        double const& /*futReward*/) {
+void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
+                                     double const& immReward,
+                                     double const& /*futReward*/) {
     assert(!node->children.empty());
 
     node->immediateReward = immReward;
@@ -148,13 +151,13 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node, double const& immReward,
         backupLock = true;
     }
 
-    //cout << "updated dec node with immediate reward " << immReward << endl;
-    //node->print(cout);
-    //cout << endl;
+    // cout << "updated dec node with immediate reward " << immReward << endl;
+    // node->print(cout);
+    // cout << endl;
 }
 
 void DPUCTSearch::backupChanceNode(DPUCTNode* node,
-        double const& /*futReward*/) {
+                                   double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;

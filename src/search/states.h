@@ -425,6 +425,23 @@ public:
         }
     }
 
+    double const& sample(int const& index) {
+        DiscretePD& pd = probabilisticStateFluentsAsPD[index];
+        assert(pd.isWellDefined());
+
+        double randNum = MathUtils::generateRandomNumber();
+        double probSum = 0.0;
+        for (unsigned int index = 0; index < pd.probabilities.size(); ++index) {
+            probSum += pd.probabilities[index];
+            if (MathUtils::doubleIsSmaller(randNum, probSum)) {
+                probabilisticStateFluent(index) = pd.values[index];
+                return pd.values[index];
+            }
+        }
+        assert(false);
+        return pd.values[0];
+    }
+
     // Remaining steps are not considered here!
     struct PDStateCompare {
         bool operator()(PDState const& lhs, PDState const& rhs) const {
@@ -453,16 +470,6 @@ public:
             return false;
         }
     };
-
-    // Calculate the hash key of a PDState
-    // void calcPDStateHashKey(PDState& /*state*/) const {
-    //     REPAIR AND MOVE TO PDSTATE
-    // }
-
-    // Calculate the hash key for each state fluent in a PDState
-    // void calcPDStateFluentHashKeys(PDState& state) const {
-    //     REPAIR AND MOVE TO PDSTATE
-    // }
 
     void printPDState(std::ostream& out) const;
 
@@ -593,7 +600,7 @@ public:
 
     void print(std::ostream& out) const;
 
-    // The number of state fluents (this is equal to CPFs.size())
+    // The number of state fluents
     static int stateSize;
 
     // The number of variables that have a state fluent hash key
@@ -608,9 +615,7 @@ public:
     // The Evaluatable with index indexToStateFluentHashKeyMap[i][j].first
     // depends on the CPF with index i, and is updated by multiplication with
     // indexToStateFluentHashKeyMap[i][j].second
-    static std::vector<std::vector<std::pair<int,
-        long> > >
-            indexToStateFluentHashKeyMap;
+    static std::vector<std::vector<std::pair<int, long> > > indexToStateFluentHashKeyMap;
 
 protected:
     std::vector<std::set<double> > state;

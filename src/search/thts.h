@@ -147,7 +147,6 @@ protected:
         ProbabilisticSearchEngine(_name),
         backupLock(false),
         maxLockDepth(0),
-        skippedBackups(0),
         currentRootNode(NULL),
         chosenOutcome(NULL),
         states(SearchEngine::horizon + 1),
@@ -168,7 +167,8 @@ protected:
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
         firstSolvedFound(false),
         accumulatedNumberOfTrialsInRootState(0),
-        accumulatedNumberOfSearchNodesInRootState(0) {
+        accumulatedNumberOfSearchNodesInRootState(0),
+        skippedBackups(0) {
         setMaxNumberOfNodes(18000000);
     }
 
@@ -222,6 +222,9 @@ protected:
     virtual SearchNode* getRootNode() {
         return getSearchNode();
     }
+    virtual SearchNode* getDummyNode() {
+        return getSearchNode();
+    }
     void resetNodePool();
 
     // The number of remaining steps until the max search depth for
@@ -242,10 +245,9 @@ protected:
     // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
     // dp_uct would always backup the old future reward
     bool backupLock;
+
     // Backup lock won't apply at and beyond this depth.
     int maxLockDepth;
-    // Statistic variable to count skipped Backups.
-    size_t skippedBackups;
 
 private:
     // Search nodes used in trials
@@ -274,6 +276,12 @@ private:
     // Variable used to navigate through chance node layers
     int chanceNodeVarIndex;
 
+    // This is used to make sure that at least one chance node is created
+    // between two decision nodes (this is because it causes problems in the UCT
+    // variants with the numberOfVisits counter of nodes that are both a parent
+    // and a child node)
+    bool transitionIsDeterministic;
+
     // Search engine that estimates Q-values for initialization of
     // decison node children
     SearchEngine* initializer;
@@ -297,6 +305,7 @@ private:
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
 
+protected:
     // Statistics
     int numberOfRuns;
     int cacheHits;
@@ -304,6 +313,8 @@ private:
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;
+    // Statistic variable to count skipped backups.
+    size_t skippedBackups;
 
     // Tests which access private members
     #ifdef TEST
@@ -592,15 +603,13 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
             // std::cout << "Final reward is " << futureReward << std::endl;
             backupDecisionNodeLeaf(node, reward, futureReward);
             return reward + futureReward;
-        } else if (ProbabilisticSearchEngine::stateValueCache.find(states[
-                               nextStateIndex]) !=
+        } else if (ProbabilisticSearchEngine::stateValueCache.find(states[nextStateIndex]) !=
                    ProbabilisticSearchEngine::stateValueCache.end()) {
             // This state has already been solved before
 
             node->children.clear();
             futureReward =
-                ProbabilisticSearchEngine::stateValueCache[states[
-                                                               nextStateIndex]];
+                ProbabilisticSearchEngine::stateValueCache[states[nextStateIndex]];
             // std::cout << "Cached reward is " << futureReward << std::endl;
             backupDecisionNodeLeaf(node, reward, futureReward);
             ++cacheHits;
@@ -612,7 +621,7 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
     }
 
     // std::cout << std::endl << std::endl << "Current state is: " << std::endl;
-    // states[currentStateIndex].print(std::cout);
+    // states[currentStateIndex].printCompact(std::cout);
 
     // Call initialization if necessary
     if (node->children.empty()) {
@@ -642,30 +651,18 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         // SearchEngine::actionStates[actions[currentActionIndex]].printCompact(std::cout);
         // std::cout << std::endl;
 
-        if (SearchEngine::taskIsDeterministic) {
-            // This task is deterministic -> there are no chance nodes and the
-            // successor state can be computed directly
-            sampleSuccessorState(states[currentStateIndex],
-                    actions[currentActionIndex], states[nextStateIndex]);
-            State::calcStateFluentHashKeys(states[nextStateIndex]);
-            State::calcStateHashKey(states[nextStateIndex]);
-            futureReward =
-                visitDecisionNode(node->children[actions[currentActionIndex]]);
-        } else {
-            // Sample successor state
-            calcSuccessorState(states[currentStateIndex],
-                    actions[currentActionIndex], states[nextStateIndex]);
+        // Sample successor state
+        calcSuccessorState(states[currentStateIndex], actions[currentActionIndex], states[nextStateIndex]);
 
-            // std::cout << "Sampled PDState is " << std::endl;
-            // task->printPDState(std::cout, pdStates[nextStateIndex]);
+        // std::cout << "Sampled PDState is " << std::endl;
+        // task->printPDState(std::cout, pdStates[nextStateIndex]);
 
-            // Start outcome selection with the first probabilistic variable
-            chanceNodeVarIndex = 0;
+        // Start outcome selection with the first probabilistic variable
+        chanceNodeVarIndex = 0;
+        transitionIsDeterministic = true;
 
-            // Continue trial with chance nodes
-            futureReward =
-                visitChanceNode(node->children[actions[currentActionIndex]]);
-        }
+        // Continue trial with chance nodes
+        futureReward = visitChanceNode(node->children[actions[currentActionIndex]]);
     } else {
         // We finish the trial
         actions[currentActionIndex] = -1;
@@ -697,28 +694,50 @@ double THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 
 template <class SearchNode>
 double THTS<SearchNode>::visitChanceNode(SearchNode* node) {
-    double futureReward;
-    assert(chanceNodeVarIndex < State::numberOfProbabilisticStateFluents);
-
-    // Select outcome (and set the variable in next state accordingly)
-    chosenOutcome = selectOutcome(node, states[nextStateIndex],
-            chanceNodeVarIndex);
-
-    // std::cout << "Chosen Outcome of variable " << chanceNodeVarIndex << " is " << states[nextStateIndex][chanceNodeVarIndex] << std::endl;
-
-    ++chanceNodeVarIndex;
-    if (chanceNodeVarIndex == State::numberOfProbabilisticStateFluents) {
+    if(chanceNodeVarIndex == State::numberOfProbabilisticStateFluents) {
         State::calcStateFluentHashKeys(states[nextStateIndex]);
         State::calcStateHashKey(states[nextStateIndex]);
 
-        futureReward = visitDecisionNode(chosenOutcome);
-    } else {
-        futureReward = visitChanceNode(chosenOutcome);
+        if(transitionIsDeterministic) {
+            // This state transition is deterministic -> we are in a dummy
+            // chance node, and need to continue with the single decision node
+            // that is the child of this node
+            if(node->children.empty()) {
+                // The dummy chance node doesn't exist yet
+                node->children.resize(1, NULL);
+
+                SearchNode* dummyNode = getDummyNode();
+                node->children[0] = dummyNode;
+            }
+            assert(node->children.size() == 1);
+            double futureReward = visitDecisionNode(node->children[0]);
+            backupChanceNode(node, futureReward);
+            return futureReward;
+        } else {
+            return visitDecisionNode(node);
+        }
+    } else if(states[nextStateIndex].probabilisticStateFluentAsPD(chanceNodeVarIndex).isDeterministic()) {
+        states[nextStateIndex].probabilisticStateFluent(chanceNodeVarIndex) = states[nextStateIndex].probabilisticStateFluentAsPD(chanceNodeVarIndex).values[0];
+        ++chanceNodeVarIndex;
+        return visitChanceNode(node);
+        } else {
+        // Select outcome (and set the variable in next state accordingly)
+        chosenOutcome = selectOutcome(node, states[nextStateIndex], 
+                                      chanceNodeVarIndex);
+
+        // std::cout << "Chosen Outcome of variable " << chanceNodeVarIndex 
+        //           << " is " << states[nextStateIndex][chanceNodeVarIndex] 
+        //           << std::endl;
+
+        ++chanceNodeVarIndex;
+        transitionIsDeterministic = false;
+
+        double futureReward = visitChanceNode(chosenOutcome);
+
+        backupChanceNode(node, futureReward);
+
+        return futureReward;
     }
-
-    backupChanceNode(node, futureReward);
-
-    return futureReward;
 }
 
 /******************************************************************
@@ -743,8 +762,10 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
 
     std::vector<int> actionsToExpand =
         getApplicableActions(states[currentStateIndex]);
-    initializer->estimateQValues(states[currentStateIndex], actionsToExpand,
-            initialQValues);
+
+    initializer->estimateQValues(states[currentStateIndex],
+                                 actionsToExpand,
+                                 initialQValues);
 
     for (unsigned int i = 0; i < node->children.size(); ++i) {
         if (actionsToExpand[i] == i) {

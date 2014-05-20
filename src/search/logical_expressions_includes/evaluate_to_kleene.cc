@@ -374,9 +374,9 @@ void DiscreteDistribution::evaluateToKleene(set<double>& res,
 void MultiConditionChecker::evaluateToKleene(set<double>& res,
         KleeneState const& current,
         ActionState const& actions) const {
-    //if we meet a condition that evaluates to unknown we must keep on
-    //checking conditions until we find one that is always true, and
-    //compare all potentially true ones with each other
+    // If we meet a condition that evaluates to 'true or false' we must keep on
+    // checking conditions until we find one that is always true, and compare
+    // all potentially true ones with each other
     assert(res.empty());
 
     for (unsigned int i = 0; i < conditions.size(); ++i) {

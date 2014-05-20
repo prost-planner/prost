@@ -130,6 +130,10 @@ protected:
         return getDPUCTNode(1.0);
     }
 
+    DPUCTNode* getDummyNode() {
+        return getDPUCTNode(1.0);
+    }
+
 private:
     // Memory management
     DPUCTNode* getDPUCTNode(double const& prob) {

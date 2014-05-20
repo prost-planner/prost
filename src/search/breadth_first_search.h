@@ -114,6 +114,10 @@ protected:
         return getBFSNode(1.0);
     }
 
+    BFSNode* getDummyNode() {
+        return getBFSNode(1.0);
+    }
+
 private:
     // Memory management
     BFSNode* getBFSNode(double const& _prob) {
