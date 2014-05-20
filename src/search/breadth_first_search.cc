@@ -18,9 +18,9 @@ void BreadthFirstSearch::initializeDecisionNodeChild(
                          Outcome selection
 ******************************************************************/
 
-BFSNode* BreadthFirstSearch::selectOutcome(
-        BFSNode* node, PDState& nextState, int& varIndex) {
-    // TODO: Prevent the case where nextPDState[varIndex] is deterministic
+BFSNode* BreadthFirstSearch::selectOutcome(BFSNode* node,
+                                           PDState& nextState,
+                                           int& varIndex) {
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 

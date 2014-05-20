@@ -217,13 +217,13 @@ bool IterativeDeepeningSearch::moreIterations(
     }
 
     // 1. Check if the strict timeout is violated
-    if(MathUtils::doubleIsGreater(time,strictTerminationTimeout)) {
+    if(MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         maxSearchDepth = currentState.remainingSteps()-1;
         if(maxSearchDepth < minSearchDepth) {
-            cout << name << ": Setting max search depth to 0!" << endl;
-            setMaxSearchDepth(0);
+            cout << name << ": Timeout violated (" << time << "s). Setting max search depth to " << minSearchDepth << "!" << endl;
+            setMaxSearchDepth(minSearchDepth);
         } else {
-            cout << name << ": Setting max search depth to " << maxSearchDepth << "!" << endl;
+            cout << name << ": Timeout violated (" << time << "s). Setting max search depth to " << maxSearchDepth << "!" << endl;
         }
         return false;
     }

@@ -783,14 +783,6 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
     if (node != currentRootNode) {
         ++initializedDecisionNodes;
     }
-
-    // Don't initialize nodes if it gets too costly due to memory constraints
-    if (initializer->getMaxSearchDepth() == 0) {
-        UniformEvaluationSearch* _initializer = new UniformEvaluationSearch();
-        setInitializer(_initializer);
-        std::cout << "Aborted initialization as search depth is too low!" <<
-        std::endl;
-    }
 }
 
 /******************************************************************
