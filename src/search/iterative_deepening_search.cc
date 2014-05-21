@@ -15,16 +15,16 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-map<State, vector<double>,
-    State::CompareIgnoringRemainingSteps> IterativeDeepeningSearch::rewardCache;
+IDS::HashMap IDS::rewardCache(520241);
 
-IterativeDeepeningSearch::IterativeDeepeningSearch() :
+IDS::IDS() :
     DeterministicSearchEngine("IDS"),
     currentState(State()),
     isLearning(false),
     timer(),
     time(0.0),
     maxSearchDepthForThisStep(0),
+    ramLimitReached(false),
     terminationTimeout(0.005),
     strictTerminationTimeout(0.1),
     terminateWithReasonableAction(true),
@@ -39,8 +39,7 @@ IterativeDeepeningSearch::IterativeDeepeningSearch() :
     dfs->setMaxSearchDepth(maxSearchDepth);
 }
 
-bool IterativeDeepeningSearch::setValueFromString(string& param,
-        string& value) {
+bool IDS::setValueFromString(string& param, string& value) {
     if (param == "-t") {
         setTerminationTimeout(atof(value.c_str()));
         return true;
@@ -62,13 +61,13 @@ bool IterativeDeepeningSearch::setValueFromString(string& param,
                             Parameter
 ******************************************************************/
 
-void IterativeDeepeningSearch::setMaxSearchDepth(int _maxSearchDepth) {
+void IDS::setMaxSearchDepth(int _maxSearchDepth) {
     dfs->setMaxSearchDepth(_maxSearchDepth);
     SearchEngine::setMaxSearchDepth(_maxSearchDepth);
     elapsedTime.resize(_maxSearchDepth + 1);
 }
 
-void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
+void IDS::setCachingEnabled(bool _cachingEnabled) {
     SearchEngine::setCachingEnabled(_cachingEnabled);
     dfs->setCachingEnabled(_cachingEnabled);
 }
@@ -77,12 +76,13 @@ void IterativeDeepeningSearch::setCachingEnabled(bool _cachingEnabled) {
                  Search Engine Administration
 ******************************************************************/
 
-void IterativeDeepeningSearch::disableCaching() {
+void IDS::disableCaching() {
     dfs->disableCaching();
     SearchEngine::disableCaching();
+    ramLimitReached = true;
 }
 
-void IterativeDeepeningSearch::learn() {
+void IDS::learn() {
     dfs->learn();
     cout << name << ": learning..." << endl;
 
@@ -110,7 +110,7 @@ void IterativeDeepeningSearch::learn() {
 
     isLearning = false;
     cachingEnabled = cachingEnabledBeforeLearning;
-    assert(IterativeDeepeningSearch::rewardCache.empty());
+    assert(rewardCache.empty());
 
     // Determine the maximal search depth based on the average time the search
     // needed on the training set
@@ -128,9 +128,7 @@ void IterativeDeepeningSearch::learn() {
             " / " << elapsedTime[index].size()
                  << " = " <<
             (timeSum / ((double) elapsedTime[index].size())) << endl;
-            if (MathUtils::doubleIsSmaller((timeSum /
-                                            ((double) elapsedTime[index].size())),
-                        terminationTimeout)) {
+            if (MathUtils::doubleIsSmaller((timeSum / ((double) elapsedTime[index].size())),terminationTimeout)) {
                 maxSearchDepth = index;
             } else {
                 break;
@@ -141,8 +139,7 @@ void IterativeDeepeningSearch::learn() {
     }
 
     setMaxSearchDepth(maxSearchDepth);
-    cout << name << ": Setting max search depth to " << maxSearchDepth <<
-    "!" << endl;
+    cout << name << ": Setting max search depth to " << maxSearchDepth << "!" << endl;
     resetStats();
     cout << name << ": ...finished" << endl;
 }
@@ -151,9 +148,9 @@ void IterativeDeepeningSearch::learn() {
                        Main Search Functions
 ******************************************************************/
 
-bool IterativeDeepeningSearch::estimateQValues(
-        State const& _rootState, vector<int> const& actionsToExpand,
-        vector<double>& qValues) {
+bool IDS::estimateQValues(State const& _rootState,
+                          vector<int> const& actionsToExpand,
+                          vector<double>& qValues) {
     timer.reset();
 
     if (_rootState.remainingSteps() > maxSearchDepth) {
@@ -162,10 +159,9 @@ bool IterativeDeepeningSearch::estimateQValues(
         maxSearchDepthForThisStep = _rootState.remainingSteps();
     }
 
-    map<State,
-        std::vector<double> >::iterator it =
-        IterativeDeepeningSearch::rewardCache.find(_rootState);
-    if (it != IterativeDeepeningSearch::rewardCache.end()) {
+    HashMap::iterator it = rewardCache.find(_rootState);
+
+    if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
         for (unsigned int i = 0; i < qValues.size(); ++i) {
@@ -190,7 +186,7 @@ bool IterativeDeepeningSearch::estimateQValues(
         // the result was achieved with a reasonable action, with a timeout or
         // on a state with sufficient depth
         if (cachingEnabled) {
-            IterativeDeepeningSearch::rewardCache[currentState] = qValues;
+            rewardCache[currentState] = qValues;
         }
 
         accumulatedSearchDepth += currentState.remainingSteps();
@@ -200,8 +196,8 @@ bool IterativeDeepeningSearch::estimateQValues(
     return true;
 }
 
-bool IterativeDeepeningSearch::moreIterations(
-        vector<int> const& actionsToExpand, vector<double>& qValues) {
+bool IDS::moreIterations(vector<int> const& actionsToExpand,
+                         vector<double>& qValues) {
     time = timer();
 
     // If we are learning, we apply different termination criteria
@@ -216,14 +212,20 @@ bool IterativeDeepeningSearch::moreIterations(
         return currentState.remainingSteps() < maxSearchDepthForThisStep;
     }
 
-    // 1. Check if the strict timeout is violated
-    if(MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
+    // 1. If caching was disabled, we check if the strict timeout is violated to
+    // readjust the maximal search depth
+    if(ramLimitReached && MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         maxSearchDepth = currentState.remainingSteps()-1;
-        if(maxSearchDepth < minSearchDepth) {
-            cout << name << ": Timeout violated (" << time << "s). Setting max search depth to " << minSearchDepth << "!" << endl;
+        if((currentState.remainingSteps() - 1) < minSearchDepth) {
+            cout << name << ": Timeout violated (" << time 
+                 << "s). Setting max search depth to " 
+                 << minSearchDepth << "!" << endl;
             setMaxSearchDepth(minSearchDepth);
         } else {
-            cout << name << ": Timeout violated (" << time << "s). Setting max search depth to " << maxSearchDepth << "!" << endl;
+            cout << name << ": Timeout violated (" << time 
+                 << "s). Setting max search depth to " 
+                 << (currentState.remainingSteps() - 1) << "!" << endl;
+            setMaxSearchDepth(currentState.remainingSteps()-1);
         }
         return false;
     }
@@ -247,15 +249,13 @@ bool IterativeDeepeningSearch::moreIterations(
                    Statistics and Printers
 ******************************************************************/
 
-void IterativeDeepeningSearch::resetStats() {
+void IDS::resetStats() {
     accumulatedSearchDepth = 0;
     cacheHits = 0;
     numberOfRuns = 0;
 }
 
-void IterativeDeepeningSearch::printStats(ostream& out,
-        bool const& printRoundStats,
-        string indent) const {
+void IDS::printStats(ostream& out, bool const& printRoundStats, string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
     if (numberOfRuns > 0) {
         out << indent << "Average search depth: " <<

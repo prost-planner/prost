@@ -4,7 +4,6 @@
 #include "search_engine.h"
 #include "states.h"
 
-#include <map>
 #include <cassert>
 
 class PlanningTask;

@@ -39,8 +39,6 @@ bool KleeneState::stateHashingPossible = true;
 vector<long> KleeneState::hashKeyBases;
 vector<vector<pair<int,long> > > KleeneState::indexToStateFluentHashKeyMap;
 
-//bool PDState::stateHashingPossible = true;
-
 string SearchEngine::taskName;
 vector<State> SearchEngine::trainingSet;
 
@@ -63,8 +61,7 @@ State SearchEngine::initialState;
 int SearchEngine::horizon = numeric_limits<int>::max();
 double SearchEngine::discountFactor = 1.0;
 int SearchEngine::numberOfActions = -1;
-SearchEngine::FinalRewardCalculationMethod SearchEngine::
-finalRewardCalculationMethod = NOOP;
+SearchEngine::FinalRewardCalculationMethod SearchEngine::finalRewardCalculationMethod = NOOP;
 vector<int> SearchEngine::candidatesForOptimalFinalAction;
 
 
@@ -78,19 +75,11 @@ bdd SearchEngine::cachedGoals = bddfalse;
 bool ProbabilisticSearchEngine::hasUnreasonableActions = true;
 bool DeterministicSearchEngine::hasUnreasonableActions = true;
 
-map<State, vector<int>,
-    State::CompareIgnoringRemainingSteps> ProbabilisticSearchEngine::
-applicableActionsCache;
-map<State, vector<int>,
-    State::CompareIgnoringRemainingSteps> DeterministicSearchEngine::
-applicableActionsCache;
+SearchEngine::ActionHashMap ProbabilisticSearchEngine::applicableActionsCache(520241);
+SearchEngine::ActionHashMap DeterministicSearchEngine::applicableActionsCache(520241);
 
-map<State, double,
-    State::CompareConsideringRemainingSteps> ProbabilisticSearchEngine::
-stateValueCache;
-map<State, double,
-    State::CompareConsideringRemainingSteps> DeterministicSearchEngine::
-stateValueCache;
+SearchEngine::StateValueHashMap ProbabilisticSearchEngine::stateValueCache(62233);
+SearchEngine::StateValueHashMap DeterministicSearchEngine::stateValueCache(520241);
 
 /******************************************************************
                      Search Engine Creation
@@ -128,7 +117,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         result = new DPUCTSearch();
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
-        result = new IterativeDeepeningSearch();
+        result = new IDS();
     } else if (desc.find("DFS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new DepthFirstSearch();
@@ -175,7 +164,7 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 
 bool SearchEngine::estimateBestActions(State const& _rootState,
         std::vector<int>& bestActions) {
-    vector<double> qValues(SearchEngine::numberOfActions);
+    vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
     if (!estimateQValues(_rootState, actionsToExpand, qValues)) {
@@ -201,7 +190,7 @@ bool SearchEngine::estimateBestActions(State const& _rootState,
 
 bool SearchEngine::estimateStateValue(State const& _rootState,
         double& stateValue) {
-    vector<double> qValues(SearchEngine::numberOfActions);
+    vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
     if (!estimateQValues(_rootState, actionsToExpand, qValues)) {
@@ -229,21 +218,19 @@ bool SearchEngine::estimateStateValue(State const& _rootState,
 // Nevertheless, isARewardLock is sound as is (and incomplete
 // independently from this decision).
 bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
-    if (!SearchEngine::useRewardLockDetection) {
+    if (!useRewardLockDetection) {
         return false;
     }
 
-    assert(SearchEngine::goalTestActionIndex >= 0);
+    assert(goalTestActionIndex >= 0);
 
     // Calculate the reference reward
     double reward = 0.0;
-    calcReward(current, SearchEngine::goalTestActionIndex, reward);
+    calcReward(current, goalTestActionIndex, reward);
 
-    if (MathUtils::doubleIsEqual(SearchEngine::rewardCPF->getMinVal(),
-                reward)) {
+    if (MathUtils::doubleIsEqual(rewardCPF->getMinVal(), reward)) {
         // Check if current is known to be a dead end
-        if (SearchEngine::useBDDCaching &&
-            BDDIncludes(SearchEngine::cachedDeadEnds, current)) {
+        if (useBDDCaching && BDDIncludes(cachedDeadEnds, current)) {
             return true;
         }
 
@@ -254,11 +241,9 @@ bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
 
         // Check reward lock on Kleene state
         return checkDeadEnd(currentInKleene);
-    } else if (MathUtils::doubleIsEqual(SearchEngine::rewardCPF->getMaxVal(),
-                       reward)) {
+    } else if (MathUtils::doubleIsEqual(rewardCPF->getMaxVal(), reward)) {
         // Check if current is known to be a goal
-        if (SearchEngine::useBDDCaching &&
-            BDDIncludes(SearchEngine::cachedGoals, current)) {
+        if (useBDDCaching && BDDIncludes(cachedGoals, current)) {
             return true;
         }
 
@@ -291,13 +276,11 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !MathUtils::doubleIsEqual(*reward.begin(),
-                SearchEngine::rewardCPF->getMinVal())) {
+        !MathUtils::doubleIsEqual(*reward.begin(), rewardCPF->getMinVal())) {
         return false;
     }
 
-    for (unsigned int actionIndex = 1;
-         actionIndex < SearchEngine::numberOfActions; ++actionIndex) {
+    for (unsigned int actionIndex = 1; actionIndex < numberOfActions; ++actionIndex) {
         reward.clear();
         // Apply action actionIndex
         KleeneState succ;
@@ -306,8 +289,7 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !MathUtils::doubleIsEqual(*reward.begin(),
-                    SearchEngine::rewardCPF->getMinVal())) {
+            !MathUtils::doubleIsEqual(*reward.begin(), rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -321,8 +303,8 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
     // Check if nothing changed, otherwise continue dead end check
     if ((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
-        if (SearchEngine::useBDDCaching) {
-            SearchEngine::cachedDeadEnds |= stateToBDD(state);
+        if (useBDDCaching) {
+            cachedDeadEnds |= stateToBDD(state);
         }
         return true;
     }
@@ -335,13 +317,12 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
     // Apply action goalTestActionIndex
     KleeneState succ;
     set<double> reward;
-    calcKleeneSuccessor(state, SearchEngine::goalTestActionIndex, succ);
-    calcKleeneReward(state, SearchEngine::goalTestActionIndex, reward);
+    calcKleeneSuccessor(state, goalTestActionIndex, succ);
+    calcKleeneReward(state, goalTestActionIndex, reward);
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !MathUtils::doubleIsEqual(SearchEngine::rewardCPF->getMaxVal(),
-                *reward.begin())) {
+        !MathUtils::doubleIsEqual(rewardCPF->getMaxVal(), *reward.begin())) {
         return false;
     }
 
@@ -354,8 +335,8 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
 
     // Check if nothing changed, otherwise continue goal check
     if ((succ == state) || checkGoal(succ)) {
-        if (SearchEngine::useBDDCaching) {
-            SearchEngine::cachedGoals |= stateToBDD(state);
+        if (useBDDCaching) {
+            cachedGoals |= stateToBDD(state);
         }
         return true;
     }
@@ -417,19 +398,16 @@ void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
     assert(false);
 }
 
-void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(
-        State const& current, double& reward) const {
+void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(State const& current,
+                                                              double& reward) const {
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
 
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
 
-    for (unsigned int candidateIndex = 0;
-         candidateIndex < SearchEngine::candidatesForOptimalFinalAction.size();
-         ++candidateIndex) {
-        int& actionIndex =
-            SearchEngine::candidatesForOptimalFinalAction[candidateIndex];
+    for (unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if (applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
 
@@ -441,15 +419,14 @@ void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(
 }
 
 int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
-    if (SearchEngine::finalRewardCalculationMethod == SearchEngine::NOOP) {
+    if (finalRewardCalculationMethod == NOOP) {
         return 0;
     }
 
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
 
-    if (SearchEngine::finalRewardCalculationMethod ==
-        SearchEngine::FIRST_APPLICABLE) {
+    if (finalRewardCalculationMethod == FIRST_APPLICABLE) {
         // If no action fluent occurs in the reward, all rewards are the
         // same and we only need to find an applicable action
         for (unsigned int actionIndex = 0; actionIndex < applicableActions.size();
@@ -464,18 +441,13 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
 
     // Otherwise we compute which action in the candidate set yields the highest
     // reward
-    assert(
-            SearchEngine::finalRewardCalculationMethod ==
-            SearchEngine::BEST_OF_CANDIDATE_SET);
+    assert(finalRewardCalculationMethod == BEST_OF_CANDIDATE_SET);
     double reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
     int optimalFinalActionIndex = -1;
 
-    for (unsigned int candidateIndex = 0;
-         candidateIndex < SearchEngine::candidatesForOptimalFinalAction.size();
-         ++candidateIndex) {
-        int& actionIndex =
-            SearchEngine::candidatesForOptimalFinalAction[candidateIndex];
+    for (unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if (applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
 
@@ -618,8 +590,8 @@ void SearchEngine::printTask(ostream& out) {
     out << "Hashing of KleeneStates is " <<
     (KleeneState::stateHashingPossible ? "" : "not ") << "possible." << endl;
 
-    if (SearchEngine::useRewardLockDetection) {
-        if (SearchEngine::goalTestActionIndex >= 0) {
+    if (useRewardLockDetection) {
+        if (goalTestActionIndex >= 0) {
             out <<
             "Reward lock detection is enabled for goals and dead ends." << endl;
         } else {
@@ -664,15 +636,13 @@ void SearchEngine::printTask(ostream& out) {
 }
 
 void SearchEngine::printDeterministicCPFInDetail(ostream& out,
-        int const& index) {
-    printEvaluatableInDetail(out, SearchEngine::deterministicCPFs[index]);
+                                                 int const& index) {
+    printEvaluatableInDetail(out, deterministicCPFs[index]);
     out << endl;
 
     out << "  Domain: ";
-    for (unsigned int i = 0;
-         i < SearchEngine::deterministicCPFs[index]->head->values.size();
-         ++i) {
-        out << SearchEngine::deterministicCPFs[index]->head->values[i] << " ";
+    for (unsigned int i = 0; i < deterministicCPFs[index]->head->values.size(); ++i) {
+        out << deterministicCPFs[index]->head->values[i] << " ";
     }
     out << endl;
 
@@ -701,17 +671,15 @@ void SearchEngine::printDeterministicCPFInDetail(ostream& out,
 
 void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
         int const& index) {
-    printEvaluatableInDetail(out, SearchEngine::probabilisticCPFs[index]);
+    printEvaluatableInDetail(out, probabilisticCPFs[index]);
     out << "  Determinized formula: " << endl;
     out << "    ";
-    SearchEngine::determinizedCPFs[index]->formula->print(out);
+    determinizedCPFs[index]->formula->print(out);
     out << endl;
 
     out << "  Domain: ";
-    for (unsigned int i = 0;
-         i < SearchEngine::probabilisticCPFs[index]->head->values.size();
-         ++i) {
-        out << SearchEngine::probabilisticCPFs[index]->head->values[i] << " ";
+    for (unsigned int i = 0; i < probabilisticCPFs[index]->head->values.size(); ++i) {
+        out << probabilisticCPFs[index]->head->values[i] << " ";
     }
     out << endl;
 

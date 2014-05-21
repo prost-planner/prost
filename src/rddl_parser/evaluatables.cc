@@ -177,7 +177,7 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task, long const& 
     }
 
     // TODO: Make sure this number makes sense
-    if (nextHashKeyBase > 50000) {
+    if (nextHashKeyBase > 1000000) {
         cachingType = "MAP";
     } else {
         cachingType = "VECTOR";
@@ -222,7 +222,7 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task, long c
     }
 
     // TODO: Make sure this number makes sense
-    if (nextHashKeyBase > 50000) {
+    if (nextHashKeyBase > 200000) {
         kleeneCachingType = "MAP";
     } else {
         kleeneCachingType = "VECTOR";

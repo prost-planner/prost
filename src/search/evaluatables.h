@@ -3,6 +3,8 @@
 
 #include "logical_expressions.h"
 
+#include <unordered_map>
+
 class Evaluatable {
 public:
     enum CachingType {
@@ -16,7 +18,7 @@ public:
     // result of the evaluation is a set of values, i.e., a subset of the domain
     // of this Evaluatable
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-            ActionState const& actions) {
+                          ActionState const& actions) {
         assert(res.empty());
         switch (kleeneCachingType) {
         case NONE:
@@ -99,7 +101,7 @@ public:
     // KleeneCachingType describes which of the two (if any) datastructures is
     // used to cache computed values on Kleene states
     CachingType kleeneCachingType;
-    std::map<long, std::set<double> > kleeneEvaluationCacheMap;
+    std::unordered_map<long, std::set<double> > kleeneEvaluationCacheMap;
     std::vector<std::set<double> > kleeneEvaluationCacheVector;
 
     // ActionHashKeyMap contains the hash keys of the actions that influence
@@ -195,7 +197,7 @@ public:
         return false;
     }
 
-    std::map<long, double> evaluationCacheMap;
+    std::unordered_map<long, double> evaluationCacheMap;
     std::vector<double> evaluationCacheVector;
 };
 
@@ -261,7 +263,7 @@ public:
         return true;
     }
 
-    std::map<long, DiscretePD> evaluationCacheMap;
+    std::unordered_map<long, DiscretePD> evaluationCacheMap;
     std::vector<DiscretePD> evaluationCacheVector;
 };
 

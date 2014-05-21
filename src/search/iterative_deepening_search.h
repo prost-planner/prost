@@ -10,14 +10,14 @@
 
 #include "utils/timer.h"
 
-#include <map>
+#include <unordered_map>
 
 class ProstPlanner;
 class DepthFirstSearch;
 
-class IterativeDeepeningSearch : public DeterministicSearchEngine {
+class IDS : public DeterministicSearchEngine {
 public:
-    IterativeDeepeningSearch();
+    IDS();
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
@@ -31,8 +31,8 @@ public:
 
     // Start the search engine for Q-value estimation
     bool estimateQValues(State const& _rootState,
-            std::vector<int> const& actionsToExpand,
-            std::vector<double>& qValues);
+                         std::vector<int> const& actionsToExpand,
+                         std::vector<double>& qValues);
 
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
@@ -64,6 +64,12 @@ public:
     void printStats(std::ostream& out, bool const& printRoundStats,
             std::string indent = "") const;
 
+    // Caching
+    typedef std::unordered_map<State, std::vector<double>, 
+                                    State::HashWithoutRemSteps, 
+                                    State::EqualWithoutRemSteps> HashMap;
+    static HashMap rewardCache;
+
 protected:
     // Decides whether more iterations are possible and reasonable
     bool moreIterations(std::vector<int> const& actionsToExpand,
@@ -86,6 +92,9 @@ protected:
     // The number of remaining steps for this step
     int maxSearchDepthForThisStep;
 
+    // Is true if caching was disabled at some point
+    bool ramLimitReached;
+
     // Parameter
     double terminationTimeout;
     double strictTerminationTimeout;
@@ -96,10 +105,6 @@ protected:
     int accumulatedSearchDepth;
     int cacheHits;
     int numberOfRuns;
-
-    // Caching
-    static std::map<State, std::vector<double>,
-                    State::CompareIgnoringRemainingSteps> rewardCache;
 };
 
 #endif
