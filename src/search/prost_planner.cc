@@ -2,6 +2,8 @@
 
 #include "search_engine.h"
 
+#include "iterative_deepening_search.h"
+
 #include "utils/timer.h"
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
@@ -18,7 +20,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
     remainingSteps(SearchEngine::horizon),
     numberOfRounds(-1),
     cachingEnabled(true),
-    ramLimit(2621440),
+    ramLimit(6291456),
     bitSize(sizeof(long) * 8) {
     setSeed((int) time(NULL));
 
@@ -97,15 +99,8 @@ vector<string> ProstPlanner::plan(vector<double> const& nextStateVec) {
     // PROST's communication with the environment works with strings, so we
     // collect the names of all true action fluents of the chosen action
     vector<string> result;
-    for (unsigned int i = 0;
-         i <
-         SearchEngine::actionStates[chosenActionIndex].scheduledActionFluents.
-         size();
-         ++i) {
-        result.push_back(
-                SearchEngine::actionStates[chosenActionIndex].
-                scheduledActionFluents[i]
-                ->name);
+    for (unsigned int i = 0; i < SearchEngine::actionStates[chosenActionIndex].scheduledActionFluents.size(); ++i) {
+        result.push_back(SearchEngine::actionStates[chosenActionIndex].scheduledActionFluents[i]->name);
     }
 
     // assert(false);
@@ -183,17 +178,21 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
 
     if (printSearchEngineLogs) {
         searchEngine->print(cout);
-        cout <<
-        "------------------------------------------------------------------" <<
-        endl << endl;
+        cout << "------------------------------------------------------------------"
+             << endl << endl;
     }
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
+    cout << "Buckets in probabilistic state value cache: " << ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;
+    cout << "Buckets in deterministic state value cache: " << DeterministicSearchEngine::stateValueCache.bucket_count() << endl;
+    cout << "Buckets in probabilistic applicable actions cache: " << ProbabilisticSearchEngine::applicableActionsCache.bucket_count() << endl;
+    cout << "Buckets in deterministic applicable actions cache: " << DeterministicSearchEngine::applicableActionsCache.bucket_count() << endl;
+    cout << "Buckets in IDS reward cache: " << IDS::rewardCache.bucket_count() << endl << endl;
     cout << "Submitting Action: ";
     SearchEngine::actionStates[result].printCompact(cout);
-    cout << endl <<
-    "------------------------------------------------------------------" <<
-    endl << endl;
+    cout << endl 
+         << "------------------------------------------------------------------" 
+         << endl << endl;
 
     // cout << "deadend bdd:" << endl;
     // SearchEngine::printDeadEndBDD();

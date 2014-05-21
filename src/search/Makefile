@@ -39,7 +39,7 @@ OBJECTS_DEBUG   = $(SOURCES:%.cc=.obj/%$(OBJECT_SUFFIX_DEBUG).o)
 TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 
 CC     = g++
-DEPEND = g++ -MM
+DEPEND = g++ -MM -std=c++0x
 
 ## Testfile binaries
 TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
@@ -47,7 +47,7 @@ TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
 
-CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror #-Wconversion
+CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror -std=c++0x #-Wconversion
 LINKOPT = -g
 
 OPT =
