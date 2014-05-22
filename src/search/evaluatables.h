@@ -269,11 +269,12 @@ public:
 
 class RewardFunction : public DeterministicEvaluatable {
 public:
-    RewardFunction(LogicalExpression* _formula, int _hashIndex, double _minVal,
-            double _maxVal) :
+    RewardFunction(LogicalExpression* _formula, int _hashIndex,
+                   double _minVal, double _maxVal, bool _actionIndependent) :
         DeterministicEvaluatable("Reward", _formula, _hashIndex),
         minVal(_minVal),
-        maxVal(_maxVal) {}
+        maxVal(_maxVal),
+        actionIndependent(_actionIndependent) {}
 
     double const& getMinVal() const {
         return minVal;
@@ -283,9 +284,14 @@ public:
         return maxVal;
     }
 
+    bool isActionIndependent() const {
+        return actionIndependent;
+    }
+
 private:
     double minVal;
     double maxVal;
+    bool actionIndependent;
 };
 
 class DeterministicCPF : public DeterministicEvaluatable {

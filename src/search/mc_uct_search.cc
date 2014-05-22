@@ -35,8 +35,8 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node,
                                       int& varIndex) {
     if (node->children.empty()) {
         node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-            NULL);
+                SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+                NULL);
     }
 
     int childIndex = (int)nextState.sample(varIndex);

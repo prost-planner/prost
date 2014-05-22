@@ -2,8 +2,6 @@
 
 #include "search_engine.h"
 
-#include "iterative_deepening_search.h"
-
 #include "utils/timer.h"
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
@@ -49,8 +47,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
             setSearchEngine(SearchEngine::fromString(value));
             searchEngineDefined = true;
         } else {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " + value);
         }
     }
 
@@ -166,9 +163,11 @@ void ProstPlanner::setSeed(int _seed) {
     srand(seed);
 }
 
+//#include "iterative_deepening_search.h"
+//#include "minimal_lookahead_search.h"
+
 void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
-    cout <<
-    "------------------------------------------------------------------------------------------"
+    cout << "------------------------------------------------------------------"
          << endl;
     cout << "Planning step " << (SearchEngine::horizon - remainingSteps + 1)
          << "/" << SearchEngine::horizon << " in round " << (currentRound + 1)
@@ -178,20 +177,21 @@ void ProstPlanner::printStep(int result, bool printSearchEngineLogs) {
 
     if (printSearchEngineLogs) {
         searchEngine->print(cout);
-        cout << "------------------------------------------------------------------"
+        cout << "------------------------------------"
              << endl << endl;
     }
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
-    cout << "Buckets in probabilistic state value cache: " << ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;
-    cout << "Buckets in deterministic state value cache: " << DeterministicSearchEngine::stateValueCache.bucket_count() << endl;
-    cout << "Buckets in probabilistic applicable actions cache: " << ProbabilisticSearchEngine::applicableActionsCache.bucket_count() << endl;
-    cout << "Buckets in deterministic applicable actions cache: " << DeterministicSearchEngine::applicableActionsCache.bucket_count() << endl;
-    cout << "Buckets in IDS reward cache: " << IDS::rewardCache.bucket_count() << endl << endl;
-    cout << "Submitting Action: ";
+    // cout << "Buckets in probabilistic state value cache: " << ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;
+    // cout << "Buckets in deterministic state value cache: " << DeterministicSearchEngine::stateValueCache.bucket_count() << endl;
+    // cout << "Buckets in probabilistic applicable actions cache: " << ProbabilisticSearchEngine::applicableActionsCache.bucket_count() << endl;
+    // cout << "Buckets in deterministic applicable actions cache: " << DeterministicSearchEngine::applicableActionsCache.bucket_count() << endl;
+    // cout << "Buckets in IDS reward cache: " << IDS::rewardCache.bucket_count() << endl;
+    // cout << "Buckets in MLS reward cache: " << MinimalLookaheadSearch::rewardCache.bucket_count() << endl;
+    cout << endl << "Submitting Action: ";
     SearchEngine::actionStates[result].printCompact(cout);
-    cout << endl 
-         << "------------------------------------------------------------------" 
+    cout << endl
+         << "------------------------------------"
          << endl << endl;
 
     // cout << "deadend bdd:" << endl;
