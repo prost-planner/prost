@@ -19,7 +19,7 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(
     node->numberOfVisits += numberOfInitialVisits;
     node->futureReward =
         std::max(node->futureReward,
-                node->children[actionIndex]->getExpectedRewardEstimate());
+                 node->children[actionIndex]->getExpectedRewardEstimate());
 
     // cout << "initialized child ";
     // SearchEngine::actionStates[actionIndex].printCompact(cout);
@@ -33,15 +33,15 @@ void MaxMCUCTSearch::initializeDecisionNodeChild(
 ******************************************************************/
 
 MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
-        PDState& nextState,
-        int& varIndex) {
+                                            PDState& nextState,
+                                            int& varIndex) {
     if (node->children.empty()) {
-        node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-                              NULL);
+        node->children.resize(
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+            NULL);
     }
 
     int childIndex = (int)nextState.sample(varIndex);
-    nextState.probabilisticStateFluent(varIndex) = childIndex;
 
     if (!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
@@ -54,8 +54,8 @@ MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
 ******************************************************************/
 
 void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
-        double const& immReward,
-        double const& futReward) {
+                                            double const& immReward,
+                                            double const& futReward) {
     node->immediateReward = immReward;
     node->futureReward = futReward;
 
@@ -67,8 +67,8 @@ void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
 }
 
 void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
-        double const& immReward,
-        double const& /*futReward*/) {
+                                        double const& immReward,
+                                        double const& /*futReward*/) {
     assert(!node->children.empty());
 
     node->immediateReward = immReward;
@@ -84,7 +84,7 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
         if (node->children[childIndex]) {
             node->futureReward =
                 std::max(node->futureReward,
-                        node->children[childIndex]->getExpectedRewardEstimate());
+                         node->children[childIndex]->getExpectedRewardEstimate());
         }
     }
 
@@ -94,7 +94,7 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
 }
 
 void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node,
-        double const& /*futReward*/) {
+                                      double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;

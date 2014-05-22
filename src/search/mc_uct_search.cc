@@ -7,8 +7,8 @@ using namespace std;
 ******************************************************************/
 
 void MCUCTSearch::initializeDecisionNodeChild(MCUCTNode* node,
-        unsigned int const& actionIndex,
-        double const& initialQValue) {
+                                              unsigned int const& actionIndex,
+                                              double const& initialQValue) {
     node->children[actionIndex] = getSearchNode();
     node->children[actionIndex]->futureReward =
         (double) numberOfInitialVisits * (double) remainingConsideredSteps() *
@@ -34,12 +34,12 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node,
                                       PDState& nextState,
                                       int& varIndex) {
     if (node->children.empty()) {
-        node->children.resize(SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-                              NULL);
+        node->children.resize(
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+            NULL);
     }
 
     int childIndex = (int)nextState.sample(varIndex);
-    nextState.probabilisticStateFluent(varIndex) = childIndex;
 
     if (!node->children[childIndex]) {
         node->children[childIndex] = getSearchNode();
@@ -52,7 +52,7 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node,
 ******************************************************************/
 
 void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& immReward,
-        double const& futReward) {
+                                     double const& futReward) {
     node->immediateReward += immReward;
     node->futureReward += futReward;
 
