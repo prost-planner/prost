@@ -401,6 +401,8 @@ void PlanningTask::print(ostream& out) {
     out << *rewardCPF->domain.begin() << endl;
     out << "## max" << endl;
     out << *rewardCPF->domain.rbegin() << endl;
+    out << "## independent from actions" << endl;
+    out << (rewardCPF->positiveActionDependencies.empty() && rewardCPF->negativeActionDependencies.empty()) << endl;
     out << "## hash index" << endl;
     out << rewardCPF->hashIndex << endl;
     out << "## caching type" << endl;
