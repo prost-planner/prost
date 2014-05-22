@@ -2,6 +2,7 @@
 
 #include "prost_planner.h"
 #include "depth_first_search.h"
+#include "minimal_lookahead_search.h"
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
@@ -15,7 +16,7 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-IDS::HashMap IDS::rewardCache(520241);
+IDS::HashMap IDS::rewardCache;
 
 IDS::IDS() :
     DeterministicSearchEngine("IDS"),
@@ -23,6 +24,7 @@ IDS::IDS() :
     isLearning(false),
     timer(),
     time(0.0),
+    mls(NULL),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
     terminationTimeout(0.005),
@@ -31,7 +33,9 @@ IDS::IDS() :
     accumulatedSearchDepth(0),
     cacheHits(0),
     numberOfRuns(0) {
-    setMinSearchDepth(2);
+    if (rewardCache.bucket_count() < 520241) {
+        rewardCache.reserve(520241);
+    }
 
     elapsedTime.resize(maxSearchDepth + 1);
 
@@ -48,9 +52,6 @@ bool IDS::setValueFromString(string& param, string& value) {
         return true;
     } else if (param == "-tra") {
         setTerminateWithReasonableAction(atoi(value.c_str()));
-        return true;
-    } else if (param == "-minsd") {
-        setMinSearchDepth(atoi(value.c_str()));
         return true;
     }
 
@@ -91,55 +92,52 @@ void IDS::learn() {
     cachingEnabled = false;
 
     // Perform IDS for all states in trainingSet and record the time it takes
-    for (unsigned int i = 0; i < SearchEngine::trainingSet.size(); ++i) {
-        State copy(SearchEngine::trainingSet[i]);
-        vector<double> res(SearchEngine::numberOfActions);
+    for (size_t i = 0; i < trainingSet.size(); ++i) {
+        State copy(trainingSet[i]);
+        vector<double> res(numberOfActions);
 
         vector<int> actionsToExpand = getApplicableActions(copy);
 
         estimateQValues(copy, actionsToExpand, res);
-        if (maxSearchDepth < minSearchDepth) {
-            cout << name << ": Setting max search depth to 0!" << endl;
-            setMaxSearchDepth(0);
-            isLearning = false;
-            cachingEnabled = cachingEnabledBeforeLearning;
-            resetStats();
-            return;
-        }
     }
 
     isLearning = false;
     cachingEnabled = cachingEnabledBeforeLearning;
     assert(rewardCache.empty());
 
-    // Determine the maximal search depth based on the average time the search
-    // needed on the training set
-    maxSearchDepth = 0;
-    unsigned int index = 2;
+    if (maxSearchDepth > 1) {
+        // Determine the maximal search depth based on the average time the
+        // search needed on the training set
+        maxSearchDepth = 0;
 
-    for (; index < elapsedTime.size(); ++index) {
-        if (elapsedTime[index].size() >
-            (SearchEngine::trainingSet.size() / 2)) {
-            double timeSum = 0.0;
-            for (unsigned int j = 0; j < elapsedTime[index].size(); ++j) {
-                timeSum += elapsedTime[index][j];
-            }
-            cout << name << ": Search Depth " << index << ": " << timeSum <<
-            " / " << elapsedTime[index].size()
-                 << " = " <<
-            (timeSum / ((double) elapsedTime[index].size())) << endl;
-            if (MathUtils::doubleIsSmaller((timeSum / ((double) elapsedTime[index].size())),terminationTimeout)) {
-                maxSearchDepth = index;
+        for (size_t index = 2; index < elapsedTime.size(); ++index) {
+            if (elapsedTime[index].size() > (trainingSet.size() / 2)) {
+                double timeSum = 0.0;
+                for (size_t j = 0; j < elapsedTime[index].size(); ++j) {
+                    timeSum += elapsedTime[index][j];
+                }
+                double avgTime = timeSum / ((double) elapsedTime[index].size());
+                cout << name << ": Search Depth " << index << ": " << timeSum
+                     << " / " << elapsedTime[index].size() << " = "
+                     << avgTime << endl;
+                if (MathUtils::doubleIsSmaller(avgTime, terminationTimeout)) {
+                    maxSearchDepth = index;
+                } else {
+                    break;
+                }
             } else {
                 break;
             }
-        } else {
-            break;
         }
-    }
 
-    setMaxSearchDepth(maxSearchDepth);
-    cout << name << ": Setting max search depth to " << maxSearchDepth << "!" << endl;
+        setMaxSearchDepth(maxSearchDepth);
+        cout << name << ": Setting max search depth to "
+             << maxSearchDepth << "!" << endl;
+    } else {
+        mls = new MinimalLookaheadSearch();
+
+        cout << "Replacing this with a MLS." << endl;
+    }
     resetStats();
     cout << name << ": ...finished" << endl;
 }
@@ -151,6 +149,18 @@ void IDS::learn() {
 bool IDS::estimateQValues(State const& _rootState,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
+    if(mls) {
+        HashMap::iterator it = rewardCache.find(_rootState);
+        if (it != rewardCache.end()) {
+            ++cacheHits;
+            assert(qValues.size() == it->second.size());
+            for (size_t i = 0; i < qValues.size(); ++i) {
+                qValues[i] = it->second[i];
+            }
+            return true;
+        }      
+        return mls->estimateQValues(_rootState, actionsToExpand, qValues);
+    }
     timer.reset();
 
     if (_rootState.remainingSteps() > maxSearchDepth) {
@@ -164,7 +174,7 @@ bool IDS::estimateQValues(State const& _rootState,
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
-        for (unsigned int i = 0; i < qValues.size(); ++i) {
+        for (size_t i = 0; i < qValues.size(); ++i) {
             qValues[i] = it->second[i];
         }
     } else {
@@ -175,10 +185,9 @@ bool IDS::estimateQValues(State const& _rootState,
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
         }  while (moreIterations(actionsToExpand, qValues));
 
-        for (unsigned int actionIndex = 0; actionIndex < qValues.size();
-             ++actionIndex) {
-            if (actionsToExpand[actionIndex] == actionIndex) {
-                qValues[actionIndex] /= ((double) currentState.remainingSteps());
+        for (size_t actInd = 0; actInd < qValues.size(); ++actInd) {
+            if (actionsToExpand[actInd] == actInd) {
+                qValues[actInd] /= ((double) currentState.remainingSteps());
             }
         }
 
@@ -206,7 +215,7 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
 
         if (MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
             elapsedTime.resize(currentState.remainingSteps());
-            maxSearchDepth = currentState.remainingSteps() - 1;
+            maxSearchDepth = std::max(currentState.remainingSteps() - 1, 1);
             return false;
         }
         return currentState.remainingSteps() < maxSearchDepthForThisStep;
@@ -214,28 +223,29 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
 
     // 1. If caching was disabled, we check if the strict timeout is violated to
     // readjust the maximal search depth
-    if(ramLimitReached && MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-        maxSearchDepth = currentState.remainingSteps()-1;
-        if((currentState.remainingSteps() - 1) < minSearchDepth) {
-            cout << name << ": Timeout violated (" << time 
-                 << "s). Setting max search depth to " 
-                 << minSearchDepth << "!" << endl;
-            setMaxSearchDepth(minSearchDepth);
+    if (ramLimitReached &&
+        MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
+        if (currentState.remainingSteps() == 1) {
+            mls = new MinimalLookaheadSearch();
+            cout << name << ": Timeout violated (" << time
+                 << "s) on minimal search depth. Replacing this with MLS." << endl;
         } else {
-            cout << name << ": Timeout violated (" << time 
-                 << "s). Setting max search depth to " 
+            cout << name << ": Timeout violated (" << time
+                 << "s). Setting max search depth to "
                  << (currentState.remainingSteps() - 1) << "!" << endl;
-            setMaxSearchDepth(currentState.remainingSteps()-1);
+            setMaxSearchDepth(currentState.remainingSteps() - 1);
         }
         return false;
     }
 
     // 2. Check if the result is already significant (if noop is applicable, we
     // check if there is an action that yields a higher reward than noop)
-    if(terminateWithReasonableAction && SearchEngine::actionStates[0].scheduledActionFluents.empty() && (actionsToExpand[0] == 0)) {
-        for(unsigned int actionIndex = 1; actionIndex < qValues.size(); ++actionIndex) {
-            if((actionsToExpand[actionIndex] == actionIndex) && 
-               MathUtils::doubleIsGreater(qValues[actionIndex], qValues[0])) {
+    if (terminateWithReasonableAction &&
+        actionStates[0].scheduledActionFluents.empty() &&
+        (actionsToExpand[0] == 0)) {
+        for (size_t actInd = 1; actInd < qValues.size(); ++actInd) {
+            if ((actionsToExpand[actInd] == actInd) &&
+                MathUtils::doubleIsGreater(qValues[actInd], qValues[0])) {
                 return false;
             }
         }
@@ -255,12 +265,14 @@ void IDS::resetStats() {
     numberOfRuns = 0;
 }
 
-void IDS::printStats(ostream& out, bool const& printRoundStats, string indent) const {
+void IDS::printStats(ostream& out,
+                     bool const& printRoundStats,
+                     string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
     if (numberOfRuns > 0) {
-        out << indent << "Average search depth: " <<
-            ((double) accumulatedSearchDepth /
-             (double) numberOfRuns) << " (in " << numberOfRuns << " runs)" << endl;
+        out << indent << "Average search depth: "
+            << ((double) accumulatedSearchDepth / (double) numberOfRuns)
+            << " (in " << numberOfRuns << " runs)" << endl;
     }
     out << indent << "Maximal search depth: " << maxSearchDepth << endl;
     out << indent << "Cache hits: " << cacheHits << endl;

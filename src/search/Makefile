@@ -8,6 +8,7 @@ HEADERS = parser.h \
 	  dp_uct_search.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
+	  minimal_lookahead_search.h \
 	  uniform_evaluation_search.h \
 	  breadth_first_search.h \
 	  ippc_client.h \
