@@ -399,8 +399,8 @@ public:
         }
     }
 
-    double const& sample(int const& index) {
-        DiscretePD& pd = probabilisticStateFluentsAsPD[index];
+    double sample(int const& varIndex) {
+        DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
         assert(pd.isWellDefined());
 
         double randNum = MathUtils::generateRandomNumber();
@@ -408,11 +408,13 @@ public:
         for (unsigned int index = 0; index < pd.probabilities.size(); ++index) {
             probSum += pd.probabilities[index];
             if (MathUtils::doubleIsSmaller(randNum, probSum)) {
-                probabilisticStateFluent(index) = pd.values[index];
+                probabilisticStateFluent(varIndex) = pd.values[index];
                 return pd.values[index];
             }
         }
         assert(false);
+        // This is just to make the compiler happy, the for-loop above should
+        // never be left without encountering the return statement
         return pd.values[0];
     }
 
