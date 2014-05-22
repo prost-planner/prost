@@ -287,6 +287,7 @@ void Division::evaluateToKleene(set<double>& res, KleeneState const& current,
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
         for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
              ++it2) {
+            // TODO Maybe we should add division by zero protection
             res.insert(*it / *it2);
         }
     }
@@ -355,9 +356,9 @@ void DiscreteDistribution::evaluateToKleene(set<double>& res,
         probabilities[index]->evaluateToKleene(tmp, current, actions);
         assert(!tmp.empty());
 
-        // If there is at least on value in tmp that is different from 0.0 it is
-        // possible that the according value is assigned (this is due to the
-        // fact that we cosider probabilities smaller than 0 and greater than 1
+        // If there is at least one value in tmp that is different from 0.0 it 
+        // is possible that the according value is assigned (this is due to the
+        // fact that we consider probabilities smaller than 0 and greater than 1
         // as 1)
         if ((tmp.size() > 1) || (tmp.find(0.0) == tmp.end())) {
             tmp.clear();

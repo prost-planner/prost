@@ -949,6 +949,8 @@ void Preprocessor::calculateMinAndMaxReward() const {
     // need upper and lower bounds, but we use the same function here). If the
     // cachingType is vector, we can use the non-approximated values from the
     // precomputation further below.
+    double minVal = numeric_limits<double>::max();
+    double maxVal = -numeric_limits<double>::max();
     if (task->rewardCPF->cachingType != "VECTOR") {
         // If the reward cannot be cached in vectors, we have not precomputed it
         // and must approximate the domain with the same function that is used
@@ -970,8 +972,6 @@ void Preprocessor::calculateMinAndMaxReward() const {
         //            actionDependentValues.begin(), actionDependentValues.end());
         //}
         
-        double minVal = numeric_limits<double>::max();
-        double maxVal = -numeric_limits<double>::max();
 
         for (unsigned int actionIndex = 0;
              actionIndex < task->actionStates.size(); ++actionIndex) {
@@ -992,8 +992,6 @@ void Preprocessor::calculateMinAndMaxReward() const {
         task->rewardCPF->domain.insert(maxVal);
 
     } else {
-        double minVal = numeric_limits<double>::max();
-        double maxVal = -numeric_limits<double>::max();
         for (unsigned int i = 0; i < task->rewardCPF->precomputedResults.size();
              ++i) {
             if (MathUtils::doubleIsSmaller(task->rewardCPF->precomputedResults[
