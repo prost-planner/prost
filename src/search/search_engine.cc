@@ -5,10 +5,11 @@
 #include "mc_uct_search.h"
 #include "max_mc_uct_search.h"
 #include "dp_uct_search.h"
+#include "breadth_first_search.h"
 
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
-#include "breadth_first_search.h"
+#include "minimal_lookahead_search.h"
 #include "uniform_evaluation_search.h"
 
 #include "utils/math_utils.h"
@@ -118,6 +119,9 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
+    } else if (desc.find("MLS") == 0) {
+        desc = desc.substr(3, desc.size());
+        result = new MinimalLookaheadSearch();
     } else if (desc.find("DFS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new DepthFirstSearch();
@@ -163,7 +167,7 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 ******************************************************************/
 
 bool SearchEngine::estimateBestActions(State const& _rootState,
-        std::vector<int>& bestActions) {
+                                       std::vector<int>& bestActions) {
     vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
@@ -172,8 +176,7 @@ bool SearchEngine::estimateBestActions(State const& _rootState,
     }
 
     double stateValue = -numeric_limits<double>::max();
-    for (unsigned int actionIndex = 0; actionIndex < qValues.size();
-         ++actionIndex) {
+    for (size_t actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
         if (actionsToExpand[actionIndex] == actionIndex) {
             if (MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
                 stateValue = qValues[actionIndex];
@@ -189,7 +192,7 @@ bool SearchEngine::estimateBestActions(State const& _rootState,
 }
 
 bool SearchEngine::estimateStateValue(State const& _rootState,
-        double& stateValue) {
+                                      double& stateValue) {
     vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
@@ -198,8 +201,7 @@ bool SearchEngine::estimateStateValue(State const& _rootState,
     }
 
     stateValue = -numeric_limits<double>::max();
-    for (unsigned int actionIndex = 0; actionIndex < qValues.size();
-         ++actionIndex) {
+    for (size_t actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
         if ((actionsToExpand[actionIndex] == actionIndex) &&
             MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
             stateValue = qValues[actionIndex];
@@ -280,7 +282,7 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
         return false;
     }
 
-    for (unsigned int actionIndex = 1; actionIndex < numberOfActions; ++actionIndex) {
+    for (size_t actionIndex = 1; actionIndex < numberOfActions; ++actionIndex) {
         reward.clear();
         // Apply action actionIndex
         KleeneState succ;
@@ -346,7 +348,7 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
 inline bdd ProbabilisticSearchEngine::stateToBDD(KleeneState const& state)
 const {
     bdd res = bddtrue;
-    for (unsigned int i = 0; i < KleeneState::stateSize; ++i) {
+    for (size_t i = 0; i < KleeneState::stateSize; ++i) {
         bdd tmp = bddfalse;
         for (set<double>::iterator it = state[i].begin(); it != state[i].end();
              ++it) {
@@ -359,12 +361,10 @@ const {
 
 inline bdd ProbabilisticSearchEngine::stateToBDD(State const& state) const {
     bdd res = bddtrue;
-    for (unsigned int i = 0; i < State::numberOfDeterministicStateFluents;
-         ++i) {
+    for (size_t i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
         res &= fdd_ithvar(i, state.deterministicStateFluent(i));
     }
-    for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
-         ++i) {
+    for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
         res &=
             fdd_ithvar(State::numberOfDeterministicStateFluents + i,
                     state.probabilisticStateFluent(
@@ -389,8 +389,7 @@ void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
 
     // If no action fluent occurs in the reward, the reward is the same for all
     // applicable actions, so we only need to find an applicable action
-    for (unsigned int actionIndex = 0; actionIndex < applicableActions.size();
-         ++actionIndex) {
+    for (size_t actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
         if (applicableActions[actionIndex] == actionIndex) {
             return calcReward(current, actionIndex, reward);
         }
@@ -406,7 +405,7 @@ void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(State const& curre
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
 
-    for (unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+    for (size_t candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
         int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if (applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
@@ -429,8 +428,7 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     if (finalRewardCalculationMethod == FIRST_APPLICABLE) {
         // If no action fluent occurs in the reward, all rewards are the
         // same and we only need to find an applicable action
-        for (unsigned int actionIndex = 0; actionIndex < applicableActions.size();
-             ++actionIndex) {
+        for (size_t actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
             if (applicableActions[actionIndex] == actionIndex) {
                 return actionIndex;
             }
@@ -446,7 +444,7 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     double tmpReward = 0.0;
     int optimalFinalActionIndex = -1;
 
-    for (unsigned int candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
+    for (size_t candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
         int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
         if (applicableActions[actionIndex] == actionIndex) {
             calcReward(current, actionIndex, tmpReward);
@@ -483,26 +481,24 @@ void SearchEngine::printTask(ostream& out) {
 
     out << "----------------Actions---------------" << endl << endl;
     out << "Action fluents: " << endl;
-    for (unsigned int index = 0; index < actionFluents.size(); ++index) {
+    for (size_t index = 0; index < actionFluents.size(); ++index) {
         actionFluents[index]->print(out);
         out << endl;
     }
     out << "---------------" << endl << endl;
     out << "Legal Action Combinations: " << endl;
-    for (unsigned int index = 0; index < actionStates.size(); ++index) {
+    for (size_t index = 0; index < actionStates.size(); ++index) {
         actionStates[index].print(out);
         out << "---------------" << endl;
     }
     out << endl;
     out << "-----------------CPFs-----------------" << endl << endl;
-    for (unsigned int index = 0;
-         index < State::numberOfDeterministicStateFluents; ++index) {
+    for (size_t index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
         printDeterministicCPFInDetail(out, index);
         out << endl << "--------------" << endl;
     }
 
-    for (unsigned int index = 0;
-         index < State::numberOfProbabilisticStateFluents; ++index) {
+    for (size_t index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
         printProbabilisticCPFInDetail(out, index);
         out << endl << "--------------" << endl;
     }
@@ -513,16 +509,10 @@ void SearchEngine::printTask(ostream& out) {
 
     out << "------State Fluent Hash Key Map-------" << endl << endl;
 
-    for (unsigned int varIndex = 0;
-         varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
+    for (size_t varIndex = 0; varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
         out << "a change of deterministic state fluent " << varIndex <<
         " influences variables ";
-        for (unsigned int influencedVarIndex =
-                 0;
-             influencedVarIndex <
-             State::stateFluentHashKeysOfDeterministicStateFluents[varIndex].
-             size();
-             ++influencedVarIndex) {
+        for (size_t influencedVarIndex = 0; influencedVarIndex < State::stateFluentHashKeysOfDeterministicStateFluents[varIndex].size(); ++influencedVarIndex) {
             out <<
             State::stateFluentHashKeysOfDeterministicStateFluents[varIndex][
                 influencedVarIndex].first << " (";
@@ -534,16 +524,10 @@ void SearchEngine::printTask(ostream& out) {
     }
     out << endl;
 
-    for (unsigned int varIndex = 0;
-         varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
+    for (size_t varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
         out << "a change of probabilistic state fluent " << varIndex <<
         " influences variables ";
-        for (unsigned int influencedVarIndex =
-                 0;
-             influencedVarIndex <
-             State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex].
-             size();
-             ++influencedVarIndex) {
+        for (size_t influencedVarIndex = 0; influencedVarIndex < State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex].size(); ++influencedVarIndex) {
             out <<
             State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex][
                 influencedVarIndex].first << " (";
@@ -555,15 +539,10 @@ void SearchEngine::printTask(ostream& out) {
     }
     out << endl << endl;
 
-    for (unsigned int varIndex = 0;
-         varIndex < KleeneState::indexToStateFluentHashKeyMap.size();
-         ++varIndex) {
+    for (size_t varIndex = 0; varIndex < KleeneState::indexToStateFluentHashKeyMap.size(); ++varIndex) {
         out << "a change of variable " << varIndex <<
         " influences variables in Kleene states ";
-        for (unsigned int influencedVarIndex = 0;
-             influencedVarIndex <
-             KleeneState::indexToStateFluentHashKeyMap[varIndex].size();
-             ++influencedVarIndex) {
+        for (size_t influencedVarIndex = 0; influencedVarIndex < KleeneState::indexToStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
             out <<
             KleeneState::indexToStateFluentHashKeyMap[varIndex][
                 influencedVarIndex
@@ -576,7 +555,7 @@ void SearchEngine::printTask(ostream& out) {
     out << endl;
 
     out << "---------Action Preconditions---------" << endl << endl;
-    for (unsigned int index = 0; index < actionPreconditions.size(); ++index) {
+    for (size_t index = 0; index < actionPreconditions.size(); ++index) {
         printActionPreconditionInDetail(out, index);
         out << endl << "--------------" << endl;
     }
@@ -624,8 +603,7 @@ void SearchEngine::printTask(ostream& out) {
         break;
     case BEST_OF_CANDIDATE_SET:
         out << "as the maximum over the candidate set: " << endl;
-        for (unsigned int i = 0; i < candidatesForOptimalFinalAction.size();
-             ++i) {
+        for (size_t i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
             out << "  ";
             actionStates[candidatesForOptimalFinalAction[i]].printCompact(out);
             out << endl;
@@ -641,16 +619,14 @@ void SearchEngine::printDeterministicCPFInDetail(ostream& out,
     out << endl;
 
     out << "  Domain: ";
-    for (unsigned int i = 0; i < deterministicCPFs[index]->head->values.size(); ++i) {
+    for (size_t i = 0; i < deterministicCPFs[index]->head->values.size(); ++i) {
         out << deterministicCPFs[index]->head->values[i] << " ";
     }
     out << endl;
 
     if (State::stateHashingPossible) {
         out << "  HashKeyBase: ";
-        for (unsigned int i = 0;
-             i < State::stateHashKeysOfDeterministicStateFluents[index].size();
-             ++i) {
+        for (size_t i = 0; i < State::stateHashKeysOfDeterministicStateFluents[index].size(); ++i) {
             out << i << ": " <<
             State::stateHashKeysOfDeterministicStateFluents[index][i];
             if (i !=
@@ -678,16 +654,14 @@ void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
     out << endl;
 
     out << "  Domain: ";
-    for (unsigned int i = 0; i < probabilisticCPFs[index]->head->values.size(); ++i) {
+    for (size_t i = 0; i < probabilisticCPFs[index]->head->values.size(); ++i) {
         out << probabilisticCPFs[index]->head->values[i] << " ";
     }
     out << endl;
 
     if (State::stateHashingPossible) {
         out << "  HashKeyBase: ";
-        for (unsigned int i = 0;
-             i < State::stateHashKeysOfProbabilisticStateFluents[index].size();
-             ++i) {
+        for (size_t i = 0; i < State::stateHashKeysOfProbabilisticStateFluents[index].size(); ++i) {
             out << i << ": " <<
             State::stateHashKeysOfProbabilisticStateFluents[index][i];
             if (i !=
@@ -711,8 +685,9 @@ void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
 void SearchEngine::printRewardCPFInDetail(ostream& out) {
     printEvaluatableInDetail(out, rewardCPF);
 
-    out << "Min Reward: " << rewardCPF->getMinVal() << endl;
-    out << "Max Reward: " << rewardCPF->getMaxVal() << endl;
+    out << "Minimal reward: " << rewardCPF->getMinVal() << endl;
+    out << "Maximal reward: " << rewardCPF->getMaxVal() << endl;
+    out << "Is action independent: " << rewardCPF->isActionIndependent() << endl;
 
     out << endl;
 }
@@ -765,7 +740,7 @@ void SearchEngine::printEvaluatableInDetail(ostream& out, Evaluatable* eval) {
 
     if (!eval->actionHashKeyMap.empty()) {
         out << "  Action Hash Key Map: " << endl;
-        for (unsigned int i = 0; i < eval->actionHashKeyMap.size(); ++i) {
+        for (size_t i = 0; i < eval->actionHashKeyMap.size(); ++i) {
             if (eval->actionHashKeyMap[i] != 0) {
                 out << "    ";
                 actionStates[i].printCompact(out);
