@@ -16,7 +16,42 @@
 
 using namespace std;
 
-void IPPCClient::init() {
+void IPPCClient::run(string const& problemName) {
+    // Init connection to the rddlsim server
+    initConnection();
+
+    // Request round
+    initSession(problemName);
+
+    vector<double> nextState(stateVariableIndices.size());
+    double immediateReward = 0.0;
+
+    // Main loop
+    for (unsigned int currentRound = 0; currentRound < numberOfRounds; ++currentRound) {
+        initRound(nextState, immediateReward);
+
+        while (true) {
+            planner->initStep(nextState, remainingTime);
+            vector<string> nextActions = planner->plan();
+            if (!submitAction(nextActions, nextState, immediateReward)) {
+                break;
+            }
+            planner->finishStep(immediateReward);
+        }
+    }
+
+    // Get end of session message and print total result
+    finishSession();
+
+    // Close connection to the rddlsim server
+    closeConnection();
+}
+
+/******************************************************************************
+                               Server Communication
+******************************************************************************/
+
+void IPPCClient::initConnection() {
     assert(socket == -1);
     try {
         socket = connectToServer();
@@ -29,48 +64,6 @@ void IPPCClient::init() {
         SystemUtils::abort("Error: couldn't connect to server.");
     }
 }
-
-void IPPCClient::run(string const& problemName) {
-    // Request round
-    int remainingTime = -1;
-    initSession(problemName, remainingTime);
-
-    planner->setNumberOfRounds(numberOfRounds);
-    vector<double> nextState(stateVariableIndices.size());
-
-    // Main loop
-    for (int i = 0; i < numberOfRounds; ++i) {
-        initRound(nextState);
-        planner->initNextRound();
-
-        while (true) {
-            vector<string> nextActions = planner->plan(nextState);
-            if (!submitAction(nextActions, nextState)) {
-                break;
-            }
-        }
-    }
-
-    stop();
-}
-
-void IPPCClient::stop() {
-    cout << "***********************************************" << endl;
-    cout << ">>>            END OF SESSION                  " << endl;
-    cout << ">>>           TOTAL REWARD: " << accumulatedReward << endl;
-    cout << ">>>          AVERAGE REWARD: " <<
-    (double) (accumulatedReward / (double) numberOfRounds) << endl;
-    cout << "***********************************************\n" << endl;
-
-    if (socket == -1) {
-        SystemUtils::abort("Error: couldn't disconnect from server.");
-    }
-    close(socket);
-}
-
-/******************************************************************************
-                               Server Communication
-******************************************************************************/
 
 int IPPCClient::connectToServer() {
     struct hostent* host = ::gethostbyname(hostName.c_str());
@@ -95,7 +88,18 @@ int IPPCClient::connectToServer() {
     return res;
 }
 
-void IPPCClient::initSession(string const& rddlProblem, int& remainingTime) {
+void IPPCClient::closeConnection() {
+    if (socket == -1) {
+        SystemUtils::abort("Error: couldn't disconnect from server.");
+    }
+    close(socket);
+}
+
+/******************************************************************************
+                     Session and rounds management
+******************************************************************************/
+
+void IPPCClient::initSession(string const& rddlProblem) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "<session-request>"
        << "<problem-name>" << rddlProblem << "</problem-name>"
@@ -122,9 +126,28 @@ void IPPCClient::initSession(string const& rddlProblem, int& remainingTime) {
     remainingTime = atoi(s.c_str());
 
     delete serverResponse;
+
+    planner->initSession(numberOfRounds, remainingTime);
+}
+void IPPCClient::finishSession() {
+    XMLNode const* sessionEndResponse = XMLNode::readNode(socket);
+    
+    if (sessionEndResponse->getName() != "session-end") {
+        SystemUtils::abort("Error: session end message insufficient.");
+    }
+
+    string s;
+    if (!sessionEndResponse->dissect("total-reward", s)) {
+        SystemUtils::abort("Error: session end message insufficient.");
+    }
+    double totalReward = atof(s.c_str());
+
+    delete sessionEndResponse;
+
+    planner->finishSession(totalReward);
 }
 
-void IPPCClient::initRound(vector<double>& initialState) {
+void IPPCClient::initRound(vector<double>& initialState, double& immediateReward) {
     stringstream os;
     os.str("");
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -134,7 +157,7 @@ void IPPCClient::initRound(vector<double>& initialState) {
         SystemUtils::abort("Error: writing to socket failed.");
     }
 
-    const XMLNode* serverResponse = XMLNode::readNode(socket);
+    XMLNode const* serverResponse = XMLNode::readNode(socket);
 
     if (!serverResponse || serverResponse->getName() != "round-init") {
         SystemUtils::abort("Error: round-request response insufficient.");
@@ -145,21 +168,44 @@ void IPPCClient::initRound(vector<double>& initialState) {
         SystemUtils::abort("Error: round-request response insufficient.");
     }
     remainingTime = atoi(s.c_str());
-    cout << "***********************************************" << endl;
-    cout << ">>> STARTING ROUND -- REMAINING TIME " <<
-    (remainingTime / 1000) << "s" << endl;
-    cout << "***********************************************\n" << endl;
 
     delete serverResponse;
 
     serverResponse = XMLNode::readNode(socket);
-    readState(serverResponse, initialState);
+
+    readState(serverResponse, initialState, immediateReward);
+    assert(MathUtils::doubleIsEqual(immediateReward, 0.0));
 
     delete serverResponse;
+
+    planner->initRound(remainingTime);
 }
 
+void IPPCClient::finishRound(XMLNode const* node, double& immediateReward) {
+    // TODO: Move immediate rewards
+    string s;
+    if (!node->dissect("immediate-reward", s)) {
+        SystemUtils::abort("Error: round end message insufficient.");
+    }
+    immediateReward = atof(s.c_str());
+
+    if (!node->dissect("round-reward", s)) {
+        SystemUtils::abort("Error: server communication failed.");
+    }
+
+    double roundReward = atof(s.c_str());
+
+    planner->finishStep(immediateReward);
+    planner->finishRound(roundReward);
+}
+
+/******************************************************************************
+                         Submission of actions
+******************************************************************************/
+
 bool IPPCClient::submitAction(vector<string>& actions,
-        vector<double>& nextState) {
+                              vector<double>& nextState,
+                              double& immediateReward) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" << "<actions>";
 
@@ -186,43 +232,48 @@ bool IPPCClient::submitAction(vector<string>& actions,
     if (write(socket, os.str().c_str(), os.str().length()) == -1) {
         return false;
     }
-    const XMLNode* serverResponse = XMLNode::readNode(socket);
+    XMLNode const* serverResponse = XMLNode::readNode(socket);
 
-    if (serverResponse->getName() == "round-end" ||
-        serverResponse->getName() == "end-session") {
-        string s;
-        if (!serverResponse->dissect("round-reward", s)) {
-            SystemUtils::abort("Error: server communication failed.");
-        }
-        double reward = atof(s.c_str());
-        accumulatedReward += reward;
-
-        cout << "***********************************************" << endl;
-        cout << ">>> END OF ROUND -- REWARD RECEIVED: " << reward << endl;
-        cout << "***********************************************\n" << endl;
-        delete serverResponse;
-        return false;
+    bool roundContinues = true;
+    if (serverResponse->getName() == "round-end") {
+        finishRound(serverResponse, immediateReward);
+        roundContinues = false;
+    } else {
+        readState(serverResponse, nextState, immediateReward);
     }
 
-    readState(serverResponse, nextState);
-
     delete serverResponse;
-    return true;
+    return roundContinues;
 }
 
-void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
+/******************************************************************************
+                             Receiving of states
+******************************************************************************/
+
+void IPPCClient::readState(XMLNode const* node, vector<double>& nextState, double& immediateReward) {
     assert(node);
     assert(node->getName() == "turn");
 
-    if (node->size() == 2 && node->getChild(1)->getName() ==
-        "no-observed-fluents") {
+    if (node->size() == 2 &&
+        node->getChild(1)->getName() == "no-observed-fluents") {
         assert(false);
     }
 
     map<string, string> newValues;
 
+    string s;
+    if (!node->dissect("time-left", s)) {
+        SystemUtils::abort("Error: turn response message insufficient.");
+    }
+    remainingTime = atoi(s.c_str());
+
+    if (!node->dissect("immediate-reward", s)) {
+        SystemUtils::abort("Error: turn response message insufficient.");
+    }
+    immediateReward = atof(s.c_str());
+
     for (int i = 0; i < node->size(); i++) {
-        const XMLNode* child = node->getChild(i);
+        XMLNode const* child = node->getChild(i);
         if (child->getName() == "observed-fluent") {
             readVariable(child, newValues);
         }
@@ -263,8 +314,8 @@ void IPPCClient::readState(const XMLNode* node, vector<double>& nextState) {
     }
 }
 
-void IPPCClient::readVariable(const XMLNode* node,
-        map<string, string>& result) {
+void IPPCClient::readVariable(XMLNode const* node,
+                              map<string, string>& result) {
     string name;
     if (node->getName() != "observed-fluent") {
         assert(false);
@@ -280,7 +331,7 @@ void IPPCClient::readVariable(const XMLNode* node,
     string fluentName;
 
     for (int i = 0; i < node->size(); i++) {
-        const XMLNode* paramNode = node->getChild(i);
+        XMLNode const* paramNode = node->getChild(i);
         if (!paramNode) {
             assert(false);
             continue;

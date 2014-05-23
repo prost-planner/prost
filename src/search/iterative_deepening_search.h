@@ -12,8 +12,8 @@
 
 #include <unordered_map>
 
-class ProstPlanner;
 class DepthFirstSearch;
+class MinimalLookaheadSearch;
 
 class IDS : public DeterministicSearchEngine {
 public:
@@ -37,22 +37,14 @@ public:
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
 
-    virtual void setTerminationTimeout(double _terminationTimeout) {
-        terminationTimeout = _terminationTimeout;
-    }
-
-    virtual void setStrictTerminationTimeout(double _strictTerminationTimeout)
-    {
+    virtual void setStrictTerminationTimeout(
+            double _strictTerminationTimeout) {
         strictTerminationTimeout = _strictTerminationTimeout;
     }
 
     virtual void setTerminateWithReasonableAction(
             bool _terminateWithReasonableAction) {
         terminateWithReasonableAction = _terminateWithReasonableAction;
-    }
-
-    virtual void setMinSearchDepth(int _minSearchDepth) {
-        minSearchDepth = _minSearchDepth;
     }
 
     virtual void setCachingEnabled(bool _cachingEnabled);
@@ -62,18 +54,18 @@ public:
 
     // Printer
     void printStats(std::ostream& out, bool const& printRoundStats,
-            std::string indent = "") const;
+                    std::string indent = "") const;
 
     // Caching
-    typedef std::unordered_map<State, std::vector<double>, 
-                                    State::HashWithoutRemSteps, 
-                                    State::EqualWithoutRemSteps> HashMap;
+    typedef std::unordered_map<State, std::vector<double>,
+                               State::HashWithoutRemSteps,
+                               State::EqualWithoutRemSteps> HashMap;
     static HashMap rewardCache;
 
 protected:
     // Decides whether more iterations are possible and reasonable
     bool moreIterations(std::vector<int> const& actionsToExpand,
-            std::vector<double>& qValues);
+                        std::vector<double>& qValues);
 
     // The state that is given iteratively to the DFS engine
     State currentState;
@@ -89,6 +81,12 @@ protected:
     // The depth first search engine
     DepthFirstSearch* dfs;
 
+    // The minimal lookahead search engine that is used if initialization with
+    // this is too costly. TODO: In the future, we should change bool
+    // estimateBestAction to SearchEngine* estimateBestAction and return another
+    // search engine if this wants to be replaces
+    MinimalLookaheadSearch* mls;
+
     // The number of remaining steps for this step
     int maxSearchDepthForThisStep;
 
@@ -96,10 +94,8 @@ protected:
     bool ramLimitReached;
 
     // Parameter
-    double terminationTimeout;
     double strictTerminationTimeout;
     bool terminateWithReasonableAction;
-    int minSearchDepth;
 
     // Statistics
     int accumulatedSearchDepth;

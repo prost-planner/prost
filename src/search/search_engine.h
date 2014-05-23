@@ -24,7 +24,6 @@ public:
                        Search engine creation
 *****************************************************************/
 
-public:
     virtual ~SearchEngine() {}
     // Create a SearchEngine
     static SearchEngine* fromString(std::string& desc);
@@ -39,11 +38,19 @@ public:
         cachingEnabled = false;
     }
 
+    // TODO: For now, this is only here to set the timeout from ProstPlanner
+    // (necessary for IPPC 2014). Generally, I'd like a TerminationManager class
+    // that administrates termination criteria for each kind of search engine.
+    virtual void setTimeout(double _timeout) {
+        timeout = _timeout;
+    }
+
 protected:
     SearchEngine(std::string _name) :
         name(_name),
         cachingEnabled(true),
-        maxSearchDepth(horizon) {}
+        maxSearchDepth(horizon),
+        timeout(1.0) {}
 
 /*****************************************************************
                      Main search functions
@@ -115,11 +122,9 @@ protected:
     bool actionIsApplicable(ActionState const& action,
             State const& current) const {
         double res = 0.0;
-        for (unsigned int precondIndex = 0;
-             precondIndex < action.actionPreconditions.size();
-             ++precondIndex) {
-            action.actionPreconditions[precondIndex]->evaluate(res, current,
-                    action);
+        for (size_t precondIndex = 0; precondIndex < action.actionPreconditions.size(); ++precondIndex) {
+            action.actionPreconditions[precondIndex]->evaluate(
+                    res, current, action);
             if (MathUtils::doubleIsEqual(res, 0.0)) {
                 return false;
             }
@@ -234,6 +239,7 @@ protected:
     // Parameter
     bool cachingEnabled;
     int maxSearchDepth;
+    double timeout;
 
     // Stream for nicer (and better timed) printing
     mutable std::stringstream outStream;
@@ -322,16 +328,14 @@ protected:
         ActionHashMap::iterator it = applicableActionsCache.find(state);
         if (it != applicableActionsCache.end()) {
             assert(it->second.size() == res.size());
-            for (unsigned int i = 0; i < res.size(); ++i) {
+            for (size_t i = 0; i < res.size(); ++i) {
                 res[i] = it->second[i];
             }
         } else {
             if (hasUnreasonableActions) {
                 std::map<PDState, int, PDState::PDStateCompare> childStates;
 
-                for (unsigned int actionIndex = 0;
-                     actionIndex < numberOfActions;
-                     ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         // This action is applicable
                         PDState nxt(state.remainingSteps() - 1);
@@ -351,7 +355,7 @@ protected:
                     }
                 }
             } else {
-                for (unsigned int actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         res[actionIndex] = actionIndex;
                     } else {
@@ -371,7 +375,7 @@ protected:
     std::vector<int> getIndicesOfApplicableActions(State const& state) const {
         std::vector<int> applicableActions = getApplicableActions(state);
         std::vector<int> result;
-        for (unsigned int actionIndex = 0; actionIndex < applicableActions.size();
+        for (size_t actionIndex = 0; actionIndex < applicableActions.size();
              ++actionIndex) {
             if (applicableActions[actionIndex] == actionIndex) {
                 result.push_back(actionIndex);
@@ -388,7 +392,7 @@ protected:
     void calcKleeneSuccessor(KleeneState const& current,
                              int const& actionIndex,
                              KleeneState& next) const {
-        for (unsigned int i = 0; i < KleeneState::stateSize; ++i) {
+        for (size_t i = 0; i < KleeneState::stateSize; ++i) {
             allCPFs[i]->evaluateToKleene(next[i], current, 
                                          actionStates[actionIndex]);
         }
@@ -447,24 +451,26 @@ protected:
 
     // Apply action 'actionIndex' in the determinization to 'current', get state
     // 'next' and yield reward 'reward'
-    void calcStateTransition(State const& current, int const& actionIndex,
-            State& next,
-            double& reward) const {
+    void calcStateTransition(State const& current,
+                             int const& actionIndex,
+                             State& next,
+                             double& reward) const {
         calcSuccessorState(current, actionIndex, next);
         calcReward(current, actionIndex, reward);
     }
 
     // Apply action 'actionIndex' in the determinization to 'current', resulting
     // in 'next'.
-    void calcSuccessorState(State const& current, int const& actionIndex,
+    void calcSuccessorState(State const& current,
+                            int const& actionIndex,
             State& next) const {
-        for (unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+        for (size_t index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
             deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index),
                                                current,
                                                actionStates[actionIndex]);
         }
 
-        for (unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+        for (size_t index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
             determinizedCPFs[index]->evaluate(next.probabilisticStateFluent(index),
                                               current,
                                               actionStates[actionIndex]);
@@ -489,14 +495,14 @@ protected:
         ActionHashMap::iterator it = applicableActionsCache.find(state);
         if (it != applicableActionsCache.end()) {
             assert(it->second.size() == res.size());
-            for (unsigned int i = 0; i < res.size(); ++i) {
+            for (size_t i = 0; i < res.size(); ++i) {
                 res[i] = it->second[i];
             }
         } else {
             if (hasUnreasonableActions) {
                 std::map<State, int, State::CompareIgnoringRemainingSteps> childStates;
 
-                for (unsigned int actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         // This action is applicable
                         State nxt;
@@ -517,7 +523,7 @@ protected:
                     }
                 }
             } else {
-                for (unsigned int actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         res[actionIndex] = actionIndex;
                     } else {
@@ -536,7 +542,7 @@ protected:
     std::vector<int> getIndicesOfApplicableActions(State const& state) const {
         std::vector<int> applicableActions = getApplicableActions(state);
         std::vector<int> result;
-        for (unsigned int actionIndex = 0; actionIndex < applicableActions.size();
+        for (size_t actionIndex = 0; actionIndex < applicableActions.size();
              ++actionIndex) {
             if (applicableActions[actionIndex] == actionIndex) {
                 result.push_back(actionIndex);
