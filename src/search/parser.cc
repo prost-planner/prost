@@ -270,8 +270,8 @@ void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
     desc >> hashIndex;
 
     if (isProbabilistic) {
-        ProbabilisticStateFluent* sf = new ProbabilisticStateFluent(index, name,
-                values);
+        ProbabilisticStateFluent* sf = 
+            new ProbabilisticStateFluent(index, name, values);
         SearchEngine::stateFluents.push_back(sf);
 
         ProbabilisticCPF* probCPF = new ProbabilisticCPF(hashIndex, sf);
@@ -284,8 +284,8 @@ void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
 
         SearchEngine::determinizedCPFs.push_back(detCPF);
     } else {
-        DeterministicStateFluent* sf = new DeterministicStateFluent(index, name,
-                values);
+        DeterministicStateFluent* sf = 
+            new DeterministicStateFluent(index, name, values);
         SearchEngine::stateFluents.push_back(sf);
 
         DeterministicCPF* cpf = new DeterministicCPF(hashIndex, sf);
@@ -310,11 +310,14 @@ void Parser::parseRewardFunction(stringstream& desc) const {
     double maxVal;
     desc >> maxVal;
 
+    bool actionIndependent;
+    desc >> actionIndependent;
+
     int hashIndex;
     desc >> hashIndex;
 
     SearchEngine::rewardCPF =
-        new RewardFunction(rewardFormula, hashIndex, minVal, maxVal);
+        new RewardFunction(rewardFormula, hashIndex, minVal, maxVal, actionIndependent);
 
     parseCachingType(desc, NULL, SearchEngine::rewardCPF);
     parseActionHashKeyMap(desc, NULL, SearchEngine::rewardCPF);

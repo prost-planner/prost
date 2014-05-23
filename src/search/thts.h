@@ -104,10 +104,6 @@ public:
         terminationMethod = _terminationMethod;
     }
 
-    virtual void setTimeout(double _timeout) {
-        timeout = _timeout;
-    }
-
     virtual void setMaxNumberOfTrials(int _maxNumberOfTrials) {
         maxNumberOfTrials = _maxNumberOfTrials;
     }
@@ -139,7 +135,7 @@ public:
 
     // Printer
     virtual void print(std::ostream& out);
-    virtual void printStats(std::ostream& out, bool const& printRoundStats,
+    virtual void printStats(std::ostream& out, bool const& printRoundtats,
             std::string indent = "") const;
 
 protected:
@@ -159,7 +155,6 @@ protected:
         initialQValues(SearchEngine::numberOfActions, 0.0),
         initializedDecisionNodes(0),
         terminationMethod(THTS<SearchNode>::TIME),
-        timeout(1.0),
         maxNumberOfTrials(0),
         numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
         numberOfRuns(0),
@@ -169,7 +164,8 @@ protected:
         accumulatedNumberOfTrialsInRootState(0),
         accumulatedNumberOfSearchNodesInRootState(0),
         skippedBackups(0) {
-        setMaxNumberOfNodes(18000000);
+        setMaxNumberOfNodes(24000000);
+        setTimeout(1.0);
     }
 
     // Main search functions
@@ -300,7 +296,6 @@ private:
 
     // Parameter
     THTS<SearchNode>::TerminationMethod terminationMethod;
-    double timeout;
     int maxNumberOfTrials;
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
@@ -343,9 +338,6 @@ bool THTS<SearchNode>::setValueFromString(std::string& param,
         } else {
             return false;
         }
-    } else if (param == "-t") {
-        setTimeout(atof(value.c_str()));
-        return true;
     } else if (param == "-r") {
         setMaxNumberOfTrials(atoi(value.c_str()));
         return true;
@@ -875,8 +867,8 @@ void THTS<SearchNode>::print(std::ostream& out) {
 
 template <class SearchNode>
 void THTS<SearchNode>::printStats(std::ostream& out,
-        bool const& printRoundStats,
-        std::string indent) const {
+                                  bool const& printRoundStats,
+                                  std::string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
 
     if (currentTrial > 0) {

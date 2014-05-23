@@ -22,8 +22,8 @@ DepthFirstSearch::DepthFirstSearch() :
 ******************************************************************/
 
 bool DepthFirstSearch::estimateQValues(State const& _rootState,
-        vector<int> const& actionsToExpand,
-        vector<double>& qValues) {
+                                       vector<int> const& actionsToExpand,
+                                       vector<double>& qValues) {
     assert(_rootState.remainingSteps() > 0);
     assert(_rootState.remainingSteps() <= maxSearchDepth);
     assert(qValues.size() == SearchEngine::numberOfActions);
@@ -37,7 +37,7 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState,
 }
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
-        double& reward) {
+                                   double& reward) {
     State nxt(state.remainingSteps() - 1);
     calcStateTransition(state, actionIndex, nxt, reward);
 
