@@ -157,7 +157,10 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     } else if (param == "-sd") {
         setMaxSearchDepth(atoi(value.c_str()));
         return true;
-    }
+    } else if (param == "-t") {
+        setTimeout(atof(value.c_str()));
+        return true;
+    } 
 
     return false;
 }

@@ -437,8 +437,8 @@ int main(int argc, char** argv) {
     // Create connector to rddlsim and run
     IPPCClient* client =
         new IPPCClient(planner, hostName, port, stateVariableIndices,
-                stateVariableValues);
-    client->init();
+                       stateVariableValues);
+
     client->run(SearchEngine::taskName);
 
     cout << "PROST complete running time: " << totalTime << endl;

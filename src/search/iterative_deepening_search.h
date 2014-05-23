@@ -37,10 +37,6 @@ public:
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
 
-    virtual void setTerminationTimeout(double _terminationTimeout) {
-        terminationTimeout = _terminationTimeout;
-    }
-
     virtual void setStrictTerminationTimeout(
             double _strictTerminationTimeout) {
         strictTerminationTimeout = _strictTerminationTimeout;
@@ -98,7 +94,6 @@ protected:
     bool ramLimitReached;
 
     // Parameter
-    double terminationTimeout;
     double strictTerminationTimeout;
     bool terminateWithReasonableAction;
 

@@ -24,7 +24,6 @@ public:
                        Search engine creation
 *****************************************************************/
 
-public:
     virtual ~SearchEngine() {}
     // Create a SearchEngine
     static SearchEngine* fromString(std::string& desc);
@@ -39,11 +38,19 @@ public:
         cachingEnabled = false;
     }
 
+    // TODO: For now, this is only here to set the timeout from ProstPlanner
+    // (necessary for IPPC 2014). Generally, I'd like a TerminationManager class
+    // that administrates termination criteria for each kind of search engine.
+    virtual void setTimeout(double _timeout) {
+        timeout = _timeout;
+    }
+
 protected:
     SearchEngine(std::string _name) :
         name(_name),
         cachingEnabled(true),
-        maxSearchDepth(horizon) {}
+        maxSearchDepth(horizon),
+        timeout(1.0) {}
 
 /*****************************************************************
                      Main search functions
@@ -232,6 +239,7 @@ protected:
     // Parameter
     bool cachingEnabled;
     int maxSearchDepth;
+    double timeout;
 
     // Stream for nicer (and better timed) printing
     mutable std::stringstream outStream;
