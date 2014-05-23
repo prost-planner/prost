@@ -30,7 +30,8 @@ OBJECTS_DEBUG   = $(SOURCES:%.cc=.obj/%$(OBJECT_SUFFIX_DEBUG).o)
 TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 
 CC     = g++
-DEPEND = g++ -MM
+DEPEND = g++ -MM -std=c++0x
+
 
 ## Testfile binaries
 TEST_BINARIES = $(basename $(wildcard ../test/parser/*Test.cc))
@@ -38,7 +39,7 @@ TEST_BINARIES = $(basename $(wildcard ../test/parser/*Test.cc))
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
 
-CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror #-Wconversion
+CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror -std=c++0x #-Wconversion
 LINKOPT = -g
 
 OPT =
@@ -53,8 +54,9 @@ endif
 ## Additional specialized options for the various targets follow.
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
-CCOPT_DEBUG    = 
+CCOPT_DEBUG    =  -fprofile-arcs -ftest-coverage
 CCOPT_TEST = -D TEST
+TEST_LIBRARIES = -lgtest -lgtest_main -lpthread -lbdd -lgcov
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
 LINKOPT_DEBUG    =
@@ -82,7 +84,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 debug: $(TARGET_DEBUG)
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov
 
 $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
@@ -93,7 +95,7 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 test_build: $(TEST_BINARIES)
 
 %Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ $(TEST_LIBRARIES)
 
 %Test.o: %Test.cc 
 				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
@@ -114,15 +116,26 @@ uncrustifyAll:
 	@hg uncrustify --modify --no-backup *
 	@hg uncrustify --modify --no-backup ../test/*
 
+# Creates code coverage html files.
+coverage:
+	@rm -rf ../../coverage/rddl_parser
+	@mkdir ../../coverage/rddl_parser
+	@../../scripts/gcovr -r . -b -o ../../coverage/rddl_parser/branch_coverage
+	@../../scripts/gcovr -d -r . --html --html-details -o ../../coverage/rddl_parser/coverage.html
+	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/rddl_parser/coverage.html to view code coverage" 
+	@echo "Open <PROST_DIRECTORY>/coverage/rddl_parser/branch_coverage to view branch coverage"
+
+
 
 clean:
 	rm -rf .obj
+	rm -rf ../../coverage/rddl_parser
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f ../test/parser/*.o
-	rm -f ../test/parser/*.obj
+	rm -f ../test/rddl_parser/*.o
+	rm -f ../test/rddl_parser/*.obj
 	find . -name "*.crusty" -type f -delete
-	find ../test/parser -name "*.crusty" -type f -delete
+	find ../test/rddl_parser -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
