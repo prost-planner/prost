@@ -10,46 +10,50 @@ class XMLNode;
 
 class IPPCClient {
 public:
-    IPPCClient(
-            ProstPlanner* _planner, std::string _hostName, unsigned short _port,
-            std::map<std::string,
-                     int>
-            const& _stateVariableIndices,
-            std::vector<std::vector<std::string> > const& _stateVariableValues)
-        :
+    IPPCClient(ProstPlanner* _planner,
+               std::string _hostName,
+               unsigned short _port,
+               std::map<std::string, int> const& _stateVariableIndices,
+               std::vector<std::vector<std::string> > const& _stateVariableValues) :
           planner(_planner),
           hostName(_hostName),
           port(_port),
           socket(-1),
-          accumulatedReward(0.0),
           numberOfRounds(-1),
           remainingTime(0),
           stateVariableIndices(_stateVariableIndices),
           stateVariableValues(_stateVariableValues) {}
 
-    void init();
     void run(std::string const& problemName);
-    void stop();
 
 private:
+    void initConnection();
     int connectToServer();
-    void initSession(std::string const& rddlProblem, int& remainingTime);
-    void initRound(std::vector<double>& initialState);
+    void closeConnection();
+
+    void initSession(std::string const& rddlProblem);
+    void finishSession();
+
+    void initRound(std::vector<double>& initialState, double& immediateReward);
+    void finishRound(XMLNode const* node, double& immediateReward);
 
     bool submitAction(std::vector<std::string>& action,
-            std::vector<double>& nextState);
+                      std::vector<double>& nextState,
+                      double& immediateReward);
 
-    void readState(const XMLNode* node, std::vector<double>& nextState);
-    void readVariable(const XMLNode* node, std::map<std::string,
-                                                    std::string>& result);
+    void readState(XMLNode const* node,
+                   std::vector<double>& nextState,
+                   double& immediateReward);
+    void readVariable(XMLNode const* node,
+                      std::map<std::string, std::string>& result);
 
     ProstPlanner* planner;
     std::string hostName;
     unsigned short port;
     int socket;
 
-    double accumulatedReward;
     int numberOfRounds;
+
     long remainingTime;
 
     std::map<std::string, int> stateVariableIndices;

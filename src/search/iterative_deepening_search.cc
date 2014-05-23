@@ -27,12 +27,14 @@ IDS::IDS() :
     mls(NULL),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
-    terminationTimeout(0.005),
     strictTerminationTimeout(0.1),
     terminateWithReasonableAction(true),
     accumulatedSearchDepth(0),
     cacheHits(0),
     numberOfRuns(0) {
+
+    setTimeout(0.005);
+
     if (rewardCache.bucket_count() < 520241) {
         rewardCache.reserve(520241);
     }
@@ -44,10 +46,7 @@ IDS::IDS() :
 }
 
 bool IDS::setValueFromString(string& param, string& value) {
-    if (param == "-t") {
-        setTerminationTimeout(atof(value.c_str()));
-        return true;
-    } else if (param == "-st") {
+    if (param == "-st") {
         setStrictTerminationTimeout(atof(value.c_str()));
         return true;
     } else if (param == "-tra") {
@@ -120,7 +119,7 @@ void IDS::learn() {
                 cout << name << ": Search Depth " << index << ": " << timeSum
                      << " / " << elapsedTime[index].size() << " = "
                      << avgTime << endl;
-                if (MathUtils::doubleIsSmaller(avgTime, terminationTimeout)) {
+                if (MathUtils::doubleIsSmaller(avgTime, timeout)) {
                     maxSearchDepth = index;
                 } else {
                     break;

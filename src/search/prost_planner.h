@@ -12,9 +12,24 @@ class ProstPlanner {
 public:
     ProstPlanner(std::string& plannerDesc);
 
+    // Initialized the planner
     void init();
-    void initNextRound();
-    std::vector<std::string> plan(std::vector<double> const& nextStateVec);
+
+    // These are called at the beginning and end of a session
+    void initSession(int _numberOfRounds, long totalTime);
+    void finishSession(double& totalReward);
+
+    // These are called at the beginning and end of a round
+    void initRound(long const& remainingTime);
+    void finishRound(double const& roundReward);
+
+    // These are called at the beginning and end of a step
+    void initStep(std::vector<double> const& nextStateVec, long const& remainingTime);
+    void finishStep(double const& immediateReward);
+
+    // This is the main function of the PROST planner that starts the search
+    // engine and return the next decision
+    std::vector<std::string> plan();
 
     // Parameter setters
     void setSearchEngine(SearchEngine* _searchEngine) {
@@ -22,10 +37,6 @@ public:
     }
 
     void setSeed(int _seed);
-
-    void setNumberOfRounds(int _numberOfRounds) {
-        numberOfRounds = _numberOfRounds;
-    }
 
     void setRAMLimit(int _ramLimit) {
         ramLimit = _ramLimit;
@@ -35,46 +46,32 @@ public:
         bitSize = _bitSize;
     }
 
-    // Getters for global variables and parameters
-    int const& getNumberOfRounds() const {
-        return numberOfRounds;
-    }
-
-    int const& getRAMLimit() const {
-        return ramLimit;
-    }
-
-    int const& getBitSize() const {
-        return bitSize;
-    }
-
 private:
-    void manageTimeouts();
-    int combineResults();
-
-    // Creates the current state according to values of nextStateVec and resets
-    // the best actions
-    void initNextStep(std::vector<double> const& nextStateVec);
-
+    // Checks how much memory is used and aborts caching if necessary
     void monitorRAMUsage();
 
-    void printStep(int result, bool printSearchEngineLogs = true);
+    // Assigns a timeout for the next decision
+    void manageTimeouts(long const& remainingTime);
 
     SearchEngine* searchEngine;
 
     State currentState;
 
     int currentRound;
+    int currentStep;
     int remainingSteps;
     int numberOfRounds;
 
     bool cachingEnabled;
 
+    int remainingTimeFactor;
+
     int ramLimit;
     int bitSize;
     int seed;
 
-    std::vector<int> bestActions;
+    std::vector<std::vector<double> > immediateRewards;
+    std::vector<std::vector<int> > chosenActionIndices;
 };
 
 #endif
