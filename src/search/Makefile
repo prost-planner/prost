@@ -62,8 +62,10 @@ endif
 ## Additional specialized options for the various targets follow.
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
-CCOPT_DEBUG    = 
-CCOPT_TEST = -D TEST
+CCOPT_DEBUG    = -fprofile-arcs -ftest-coverage
+CCOPT_TEST = -D TEST 
+
+TEST_LIBRARIES = -lgtest -lgtest_main -lpthread -lbdd -lgcov
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
 LINKOPT_DEBUG    = 
@@ -92,7 +94,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 debug: $(TARGET_DEBUG)
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov 
 
 $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
@@ -103,8 +105,7 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 test_build: $(TEST_BINARIES)
 
 %Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ -lgtest -lgtest_main -lpthread -lbdd
-
+				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ $(TEST_LIBRARIES)
 %Test.o: %Test.cc 
 				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
 
@@ -124,8 +125,18 @@ uncrustifyAll:
 	@hg uncrustify --modify --no-backup *
 	@hg uncrustify --modify --no-backup ../test/*
 
+# Creates code coverage html files.
+coverage:
+	@rm -rf ../../coverage
+	@mkdir ../../coverage
+	@../../scripts/gcovr -r . -b -o ../../coverage/branch_coverage
+	@../../scripts/gcovr -d -r . --html --html-details -o ../../coverage/coverage_search.html
+	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/search/coverage.html to view code coverage" 
+	@echo "Open <PROST_DIRECTORY>/coverage/search/branch_coverage to view branch coverage"
+
 clean:
 	rm -rf .obj
+	@rm -rf ../../coverage/search
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
 	rm -f ../test/search/*.o
