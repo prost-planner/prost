@@ -10,6 +10,12 @@ class PlanningTask;
 
 class ProstPlanner {
 public:
+    enum TimeoutManagementMethod {
+        NONE,
+        UNIFORM,
+        MANUAL
+    };
+
     ProstPlanner(std::string& plannerDesc);
 
     // Initialized the planner
@@ -46,6 +52,10 @@ public:
         bitSize = _bitSize;
     }
 
+    void setTimeoutManagementMethod(TimeoutManagementMethod _tmMethod) {
+        tmMethod = _tmMethod;
+    }
+
 private:
     // Checks how much memory is used and aborts caching if necessary
     void monitorRAMUsage();
@@ -69,6 +79,7 @@ private:
     int ramLimit;
     int bitSize;
     int seed;
+    TimeoutManagementMethod tmMethod;
 
     std::vector<std::vector<double> > immediateRewards;
     std::vector<std::vector<int> > chosenActionIndices;

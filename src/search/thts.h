@@ -128,6 +128,10 @@ public:
         nodePool.resize(maxNumberOfNodes + 20000, NULL);
     }
 
+    virtual void setSelectMostVisited(bool _selectMostVisited) {
+        selectMostVisited = _selectMostVisited;
+    }
+
     // Used only for testing
     void setCurrentRootNode(SearchNode* node) {
         currentRootNode = node;
@@ -299,6 +303,7 @@ private:
     int maxNumberOfTrials;
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
+    bool selectMostVisited;
 
 protected:
     // Statistics
@@ -349,6 +354,9 @@ bool THTS<SearchNode>::setValueFromString(std::string& param,
         return true;
     } else if (param == "-mnn") {
         setMaxNumberOfNodes(atoi(value.c_str()));
+        return true;
+    } else if (param == "-mv") {
+        setSelectMostVisited(atoi(value.c_str()));
         return true;
     }
 
@@ -451,7 +459,9 @@ void THTS<SearchNode>::initTrialStep() {
 
 template <class SearchNode>
 bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
-        std::vector<int>& bestActions) {
+                                           std::vector<int>& bestActions) {
+    timer.reset();
+
     assert(bestActions.empty());
 
     // Init round (if this is the first call in a round)
@@ -478,8 +488,6 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
         return true;
     }
 
-    timer.reset();
-
     // Start the main loop that starts trials until some termination criterion
     // is fullfilled
     while (moreTrials()) {
@@ -501,22 +509,33 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
 
     double stateValue = -std::numeric_limits<double>::max();
 
+    std::vector<SearchNode*> const& actNodes = currentRootNode->children;
+    bool solvedChildExists = false;
+    for (unsigned int actInd = 0; actInd < actNodes.size(); ++actInd) {
+        if (actNodes[actInd] && actNodes[actInd]->isSolved()) {
+            solvedChildExists = true;
+            break;
+        }
+    }
+
     // Write best action indices to the result vector
-    for (unsigned int actionIndex = 0;
-         actionIndex < currentRootNode->children.size(); ++actionIndex) {
-        if (currentRootNode->children[actionIndex]) {
-            if (MathUtils::doubleIsGreater(currentRootNode->children[
-                            actionIndex]->getExpectedRewardEstimate(),
-                        stateValue)) {
-                stateValue =
-                    currentRootNode->children[actionIndex]->
-                    getExpectedRewardEstimate();
+    for (unsigned int actInd = 0; actInd < actNodes.size(); ++actInd) {
+        if (actNodes[actInd]) {
+            double reward = 0.0;
+            if (selectMostVisited && !solvedChildExists) {
+                // We use the number of visits as reward, which is OK if this is
+                // the toplevel search engine but not if this is used as
+                // initializer!
+                reward = actNodes[actInd]->getNumberOfVisits();
+            } else {
+                reward = actNodes[actInd]->getExpectedRewardEstimate();
+            }
+            if (MathUtils::doubleIsGreater(reward, stateValue)) {
+                stateValue = reward;
                 bestActions.clear();
-                bestActions.push_back(actionIndex);
-            } else if (MathUtils::doubleIsEqual(currentRootNode->children[
-                                   actionIndex]->getExpectedRewardEstimate(),
-                               stateValue)) {
-                bestActions.push_back(actionIndex);
+                bestActions.push_back(actInd);
+            } else if (MathUtils::doubleIsEqual(reward, stateValue)) {
+                bestActions.push_back(actInd);
             }
         }
     }

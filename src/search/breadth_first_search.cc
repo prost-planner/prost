@@ -1,6 +1,30 @@
 #include "breadth_first_search.h"
 
 /******************************************************************
+                         Action Selection
+******************************************************************/
+
+int BreadthFirstSearch::selectAction(BFSNode* node) {
+    int minVisits = std::numeric_limits<int>::max();
+    for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
+        int const& numVisits = node->children[childIndex]->getNumberOfVisits();
+        if(node->children[childIndex] && 
+           !node->children[childIndex]->isSolved()) {
+            if(numVisits < minVisits) {
+                bestActionIndices.clear();
+                bestActionIndices.push_back(childIndex);
+                minVisits = numVisits;
+            } else if(numVisits == minVisits) {
+                bestActionIndices.push_back(childIndex);
+            }
+        }
+    }
+
+    assert(!bestActionIndices.empty());
+    return bestActionIndices[std::rand() % bestActionIndices.size()];
+}
+
+/******************************************************************
                      Initialization of Nodes
 ******************************************************************/
 
@@ -41,8 +65,8 @@ BFSNode* BreadthFirstSearch::selectOutcome(BFSNode* node,
             }
         }
     }
-    assert(MathUtils::doubleIsGreater(probSum, 0.0)
-            && MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
+    assert(MathUtils::doubleIsGreater(probSum, 0.0) &&
+           MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
 
     double randNum = MathUtils::generateRandomNumber() * probSum;
 
@@ -79,24 +103,27 @@ BFSNode* BreadthFirstSearch::selectOutcome(BFSNode* node,
 
 
 void BreadthFirstSearch::backupDecisionNodeLeaf(BFSNode* node,
-        double const& immReward,
-        double const& futReward) {
+                                                double const& immReward,
+                                                double const& futReward) {
     node->children.clear();
 
     node->immediateReward = immReward;
     node->futureReward = futReward;
     node->solved = true;
+
     ++node->numberOfVisits;
 }
 
 void BreadthFirstSearch::backupDecisionNode(BFSNode* node,
-        double const& immReward,
-        double const& /*futReward*/) {
+                                            double const& immReward,
+                                            double const& /*futReward*/) {
     assert(!node->children.empty());
 
     node->immediateReward = immReward;
 
-    ++node->numberOfVisits;
+    if (selectedActionIndex() != -1) {
+        ++node->numberOfVisits;
+    }
 
     if (backupLock) {
         skippedBackups++;
@@ -127,7 +154,7 @@ void BreadthFirstSearch::backupDecisionNode(BFSNode* node,
 }
 
 void BreadthFirstSearch::backupChanceNode(BFSNode* node,
-        double const& /*futReward*/) {
+                                          double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
@@ -157,31 +184,3 @@ void BreadthFirstSearch::backupChanceNode(BFSNode* node,
     node->solved = MathUtils::doubleIsEqual(solvedSum, 1.0);
 }
 
-// Action selection
-
-int BreadthFirstSearch::selectAction(BFSNode* node) {
-    unsigned int i = 0;
-    unsigned int j = 0;
-    while (j < (node->children.size() - 1)) {
-        ++j;
-        if (node->children[i] && node->children[j]) {
-            if (!node->children[j]->isSolved() &&
-                (node->children[i]->getNumberOfVisits()
-                 > node->children[j]->getNumberOfVisits())) {
-                assert(!node->children[j]->isSolved());
-                return j;
-            }
-            i = j;
-        }
-    }
-
-    // All actions were equally visited, return the first action.
-    for (unsigned int k = 0; k < node->children.size(); ++k) {
-        if (node->children[k] && !node->children[k]->isSolved()) {
-            assert(!node->children[k]->isSolved());
-            return k;
-        }
-    }
-    assert(false);
-    return -1;
-}
