@@ -38,8 +38,8 @@ public:
         THTS<SearchNode>::setInitializer(_initializer);
     }
 
-    virtual void setMagicConstantScaleFactor(double _magicConstantScaleFactor)
-    {
+    virtual void setMagicConstantScaleFactor(
+            double _magicConstantScaleFactor) {
         magicConstantScaleFactor = _magicConstantScaleFactor;
     }
 
@@ -50,8 +50,12 @@ public:
             explorationRateFunction = SQRT;
         if (type.compare("LIN") == 0)
             explorationRateFunction = LIN;
-        if (type.compare("E.SQRT") == 0)
+        if (type.compare("LNQUAD") == 0)
             explorationRateFunction = LNQUAD;
+    }
+
+    virtual void setSelectLeastVisitedActionInRoot(bool _selectLeastVisitedActionInRoot) {
+        selectLeastVisitedActionInRoot = _selectLeastVisitedActionInRoot;
     }
 
 protected:
@@ -60,18 +64,17 @@ protected:
         explorationRateFunction(LOG),
         numberOfInitialVisits(5),
         magicConstantScaleFactor(1.0),
-        uniformRoot(false) {}
+        selectLeastVisitedActionInRoot(false) {}
 
 
     // Action selection
     int selectAction(SearchNode* node);
-    void selectRandomAction(SearchNode* node);
-    void selectActionPerRoundRobin(SearchNode* node);
+    void selectLeastVisitedAction(SearchNode* node);
     void selectUnselectedAction(SearchNode* node);
     void selectActionBasedOnVisitDifference(SearchNode* node);
     void selectActionBasedOnUCTFormula(SearchNode* node);
 
-    // Vector for decision node children of equal quality (wrt UCT formula)
+    // Vector for decision node children of equal quality
     std::vector<int> bestActionIndices;
 
     // Variable for the UCT exploration-rate function, i.e. the part
@@ -94,7 +97,7 @@ protected:
     double magicConstantScaleFactor;
 
     // Variable to enable uniform action selection at root node
-    bool uniformRoot;
+    bool selectLeastVisitedActionInRoot;
 };
 
 /******************************************************************
@@ -103,7 +106,7 @@ protected:
 
 template <class SearchNode>
 bool UCTBase<SearchNode>::setValueFromString(std::string& param,
-        std::string& value) {
+                                             std::string& value) {
     if (param == "-mcs") {
         setMagicConstantScaleFactor(atof(value.c_str()));
         return true;
@@ -113,8 +116,8 @@ bool UCTBase<SearchNode>::setValueFromString(std::string& param,
     } else if (param == "-er") {
         setExplorationRateFunction(value);
         return true;
-    } else if (param == "-uniformroot") {
-        uniformRoot = true;
+    } else if (param == "-lvar") {
+        setSelectLeastVisitedActionInRoot(atoi(value.c_str()));
         return true;
     }
 
@@ -129,13 +132,13 @@ template <class SearchNode>
 int UCTBase<SearchNode>::selectAction(SearchNode* node) {
     bestActionIndices.clear();
 
-    if (uniformRoot && (node == THTS<SearchNode>::getCurrentRootNode())) {
-        selectActionPerRoundRobin(node);
-        assert(bestActionIndices.size() == 1);
-        return bestActionIndices[0];
+    if (selectLeastVisitedActionInRoot && (node == THTS<SearchNode>::getCurrentRootNode())) {
+        selectLeastVisitedAction(node);
     }
 
-    selectUnselectedAction(node);
+    if (bestActionIndices.empty()) {
+        selectUnselectedAction(node);
+    }
 
     if (bestActionIndices.empty()) {
         selectActionBasedOnVisitDifference(node);
@@ -160,34 +163,20 @@ int UCTBase<SearchNode>::selectAction(SearchNode* node) {
 }
 
 template <class SearchNode>
-inline void UCTBase<SearchNode>::selectActionPerRoundRobin(SearchNode* node) {
-    unsigned int i = 0;
-    unsigned int j = 0;
-    while (j < (node->children.size() - 1)) {
-        ++j;
-        if (node->children[i] && node->children[j]) {
-            if (node->children[i]->getNumberOfVisits()
-                > node->children[j]->getNumberOfVisits()) {
-                bestActionIndices.push_back(j);
-                return;
+inline void UCTBase<SearchNode>::selectLeastVisitedAction(SearchNode* node) {
+    int minVisits = std::numeric_limits<int>::max();
+    for(unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
+        int const& numVisits = node->children[childIndex]->getNumberOfVisits();
+        if(node->children[childIndex] && 
+           !node->children[childIndex]->isSolved()) {
+            if(numVisits < minVisits) {
+                bestActionIndices.clear();
+                bestActionIndices.push_back(childIndex);
+                minVisits = numVisits;
+            } else if(numVisits == minVisits) {
+                bestActionIndices.push_back(childIndex);
             }
-            i = j;
         }
-    }
-    // all actions were equally visited, return the first action.
-    for (unsigned int k = 0; k < node->children.size(); ++k) {
-        if (node->children[k]) {
-            bestActionIndices.push_back(k);
-            return;
-        }
-    }
-}
-
-template <class SearchNode>
-inline void UCTBase<SearchNode>::selectRandomAction(SearchNode* node) {
-    for (unsigned int i = 0; i < node->children.size(); ++i) {
-        if (node->children[i])
-            bestActionIndices.push_back(i);
     }
 }
 

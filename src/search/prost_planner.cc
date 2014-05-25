@@ -65,8 +65,9 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
     remainingSteps(SearchEngine::horizon),
     numberOfRounds(-1),
     cachingEnabled(true),
-    ramLimit(4194304),
-    bitSize(sizeof(long) * 8) {
+    ramLimit(2097152),
+    bitSize(sizeof(long) * 8),
+    tmMethod(NONE) {
     setSeed((int) time(NULL));
 
     StringUtils::trim(plannerDesc);
@@ -90,6 +91,17 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
             setRAMLimit(atoi(value.c_str()));
         } else if (param == "-bit") {
             setBitSize(atoi(value.c_str()));
+        } else if (param == "-tm") {
+            if(value == "UNI") {
+                setTimeoutManagementMethod(UNIFORM);
+            } else if(value == "MAN") {
+                setTimeoutManagementMethod(MANUAL);
+            } else if(value == "NONE") {
+                setTimeoutManagementMethod(NONE);
+            } else {
+                SystemUtils::abort(
+                        "Illegal timeout management method: " + value);
+            }
         } else if (param == "-se") {
             setSearchEngine(SearchEngine::fromString(value));
             searchEngineDefined = true;
@@ -159,24 +171,33 @@ void ProstPlanner::initSession(int  _numberOfRounds, long /*totalTime*/) {
     immediateRewards = vector<vector<double> >(numberOfRounds, vector<double>(SearchEngine::horizon, 0.0));
     chosenActionIndices = vector<vector<int> >(numberOfRounds, vector<int>(SearchEngine::horizon, -1));
 
-    remainingTimeFactor = FIRST_TIME_FACTOR_SUM;
-    if(numberOfRounds >= 2) {
-        remainingTimeFactor += SECOND_TIME_FACTOR_SUM;
-    }
-    if(numberOfRounds >= 3) {
-        remainingTimeFactor += THIRD_TIME_FACTOR_SUM;
-    }
-    if(numberOfRounds >= 4) {
-        remainingTimeFactor += FOURTH_TIME_FACTOR_SUM;
-    }
-    if(numberOfRounds >= 5) {
-        remainingTimeFactor += FIFTH_TIME_FACTOR_SUM;
-    }
-    if(numberOfRounds >= 6) {
-        remainingTimeFactor += LAST_TIME_FACTOR_SUM;
-    }
-    if(numberOfRounds >= 6) {
-        remainingTimeFactor += ((numberOfRounds - 6) * DEFAULT_TIME_FACTOR_SUM);
+    switch(tmMethod) {
+    case NONE:
+        break;
+    case UNIFORM:
+        remainingTimeFactor = numberOfRounds * SearchEngine::horizon;
+        break;
+    case MANUAL:
+        remainingTimeFactor = FIRST_TIME_FACTOR_SUM;
+        if(numberOfRounds >= 2) {
+            remainingTimeFactor += SECOND_TIME_FACTOR_SUM;
+        }
+        if(numberOfRounds >= 3) {
+            remainingTimeFactor += THIRD_TIME_FACTOR_SUM;
+        }
+        if(numberOfRounds >= 4) {
+            remainingTimeFactor += FOURTH_TIME_FACTOR_SUM;
+        }
+        if(numberOfRounds >= 5) {
+            remainingTimeFactor += FIFTH_TIME_FACTOR_SUM;
+        }
+        if(numberOfRounds >= 6) {
+            remainingTimeFactor += LAST_TIME_FACTOR_SUM;
+        }
+        if(numberOfRounds >= 6) {
+            remainingTimeFactor += ((numberOfRounds - 6) * DEFAULT_TIME_FACTOR_SUM);
+        }
+        break;
     }
 }
 
@@ -270,28 +291,47 @@ void ProstPlanner::monitorRAMUsage() {
 }
 
 void ProstPlanner::manageTimeouts(long const& remainingTime) {
-    double timeFactor = 0.0;
-    if(currentRound == 0) {
-        timeFactor = (double)FIRST_TIME_FACTOR[currentStep];
-    } else if(currentRound == 1) {
-        timeFactor = (double)SECOND_TIME_FACTOR[currentStep];
-    } else if(currentRound == 2) {
-        timeFactor = (double)THIRD_TIME_FACTOR[currentStep];
-    } else if(currentRound == 3) {
-        timeFactor = (double)FOURTH_TIME_FACTOR[currentStep];
-    } else if(currentRound == 4) {
-        timeFactor = (double)FIFTH_TIME_FACTOR[currentStep];
-    } else if(currentRound == (numberOfRounds - 1)) {
-        timeFactor = (double)LAST_TIME_FACTOR[currentStep];
-    } else {
-        timeFactor = (double)DEFAULT_TIME_FACTOR[currentStep];
+    double remainingTimeInSeconds = ((double)remainingTime) / 1000.0;
+    if(MathUtils::doubleIsGreater(remainingTimeInSeconds, 3.0)) {
+        // We use a buffer of 3 seconds
+        remainingTimeInSeconds -= 3.0;
     }
-    timeFactor /= ((double)remainingTimeFactor);
-    double timeForStep = remainingTime * timeFactor / 1000.0;
-    cout << "Setting time for this decision to " << timeForStep << "s." << endl;
-    searchEngine->setTimeout(timeForStep);
+    double timeFactor = 0.0;
+    double timeForThisStep = 0.0;
 
-    remainingTimeFactor -= timeFactor;
+    switch(tmMethod) {
+    case NONE:
+        return;
+        break;
+    case UNIFORM:
+        timeForThisStep = remainingTimeInSeconds / remainingTimeFactor;
+        --remainingTimeFactor;
+        break;
+    case MANUAL:
+        if(currentRound == 0) {
+            timeFactor = (double)FIRST_TIME_FACTOR[currentStep];
+        } else if(currentRound == 1) {
+            timeFactor = (double)SECOND_TIME_FACTOR[currentStep];
+        } else if(currentRound == 2) {
+            timeFactor = (double)THIRD_TIME_FACTOR[currentStep];
+        } else if(currentRound == 3) {
+            timeFactor = (double)FOURTH_TIME_FACTOR[currentStep];
+        } else if(currentRound == 4) {
+            timeFactor = (double)FIFTH_TIME_FACTOR[currentStep];
+        } else if(currentRound == (numberOfRounds - 1)) {
+            timeFactor = (double)LAST_TIME_FACTOR[currentStep];
+        } else {
+            timeFactor = (double)DEFAULT_TIME_FACTOR[currentStep];
+        }
+        timeFactor /= ((double)remainingTimeFactor);
+
+        timeForThisStep = remainingTimeInSeconds * timeFactor;
+
+        remainingTimeFactor -= timeFactor;
+        break;
+    }
+    cout << "Setting time for this decision to " << timeForThisStep << "s." << endl;
+    searchEngine->setTimeout(timeForThisStep);
 }
 
 void ProstPlanner::finishStep(double const& immediateReward) {

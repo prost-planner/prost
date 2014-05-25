@@ -125,6 +125,9 @@ private:
         res->prob = _prob;
         return res;
     }
+
+    // Vector for decision node children of equal quality
+    std::vector<int> bestActionIndices;
 };
 
 #endif

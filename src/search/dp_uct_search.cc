@@ -136,16 +136,15 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
          ++childIndex) {
         if (node->children[childIndex]) {
             node->solved &= node->children[childIndex]->solved;
-            node->futureReward =
-                std::max(node->futureReward,
-                        node->children[childIndex]->getExpectedRewardEstimate());
+            node->futureReward = std::max(node->futureReward,
+                    node->children[childIndex]->getExpectedRewardEstimate());
         }
     }
 
     // If the future reward did not change we did not find a better node and
     // therefore do not need to update the rewards in preceding parents.
     if (!node->solved &&
-        remainingConsideredSteps() > maxLockDepth &&
+        (remainingConsideredSteps() > maxLockDepth) &&
         MathUtils::doubleIsEqual(oldFutureReward, node->futureReward)) {
         backupLock = true;
     }
@@ -172,9 +171,8 @@ void DPUCTSearch::backupChanceNode(DPUCTNode* node,
 
     for (unsigned int i = 0; i < node->children.size(); ++i) {
         if (node->children[i]) {
-            node->futureReward +=
-                (node->children[i]->prob *
-                 node->children[i]->getExpectedRewardEstimate());
+            node->futureReward += (node->children[i]->prob *
+                                   node->children[i]->getExpectedRewardEstimate());
             probSum += node->children[i]->prob;
 
             if (node->children[i]->solved) {
