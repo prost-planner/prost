@@ -314,6 +314,17 @@ void Negation::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
+void ExponentialFunction::calculateDomain(vector<set<double> > const& domains,
+                                          ActionState const& actions,
+                                          set<double>& res) {
+    set<double> tmp;
+    expr->calculateDomain(domains, actions, tmp);
+
+    for (set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+        res.insert(std::exp(*it));
+    }
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

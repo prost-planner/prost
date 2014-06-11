@@ -397,6 +397,18 @@ LogicalExpression* Negation::simplify(map<ParametrizedVariable*, double>& replac
     return new Negation(newExpr);
 }
 
+LogicalExpression* ExponentialFunction::simplify(
+        map<ParametrizedVariable*, double>& replacements) {
+    LogicalExpression* newExpr = expr->simplify(replacements);
+
+    NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
+    if (nc) {
+        return new NumericConstant(std::exp(nc->value));
+    }
+
+    return new ExponentialFunction(newExpr);
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

@@ -315,6 +315,16 @@ void Negation::evaluateToPD(DiscretePD& res, State const& current,
     res.assignBernoulli(exprRes.falsityProbability());
 }
 
+void ExponentialFunction::evaluateToPD(DiscretePD& res,
+                                       State const& current,
+                                       ActionState const& actions) const {
+    expr->evaluateToPD(res, current, actions);
+
+    for (unsigned int i = 0; i < res.values.size(); ++i) {
+        res.values[i] = std::exp(res.values[i]);
+    }
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

@@ -622,6 +622,12 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
             }
         }
         return new Negation(new EqualsExpression(exprs));
+    } else if (tokens[0] == "exp") {
+        // Exponential Function
+        assert(tokens.size() == 2);
+
+        LogicalExpression* expr = parseRDDLFormula(tokens[1]);
+        return new ExponentialFunction(expr);
     } else if (tokens[0] == ">") {
         // GreaterExpression
 

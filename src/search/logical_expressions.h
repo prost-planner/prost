@@ -322,6 +322,26 @@ public:
     void print(std::ostream& out) const;
 };
 
+class ExponentialFunction : public LogicalExpression {
+public:
+    ExponentialFunction(LogicalExpression*& _expr) :
+        expr(_expr) {}
+
+    LogicalExpression* expr;
+
+    void evaluate(double& res,
+                  State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res,
+                      State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
+
+    void print(std::ostream& out) const;
+};
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

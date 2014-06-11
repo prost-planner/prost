@@ -154,6 +154,13 @@ LogicalExpression* Negation::determinizeMostLikely(
     return new Negation(newExpr);
 }
 
+LogicalExpression* ExponentialFunction::determinizeMostLikely(
+        NumericConstant* randomNumberReplacement) {
+    LogicalExpression* newExpr =
+            expr->determinizeMostLikely(randomNumberReplacement);
+    return new ExponentialFunction(newExpr);
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

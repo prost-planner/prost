@@ -205,6 +205,13 @@ LogicalExpression* Negation::instantiate(PlanningTask* task, map<string,
     return new Negation(newExpr);
 }
 
+LogicalExpression* ExponentialFunction::instantiate(
+        PlanningTask* task,
+        map<string, Object*>& replacements) {
+    LogicalExpression* newExpr = expr->instantiate(task, replacements);
+    return new ExponentialFunction(newExpr);
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

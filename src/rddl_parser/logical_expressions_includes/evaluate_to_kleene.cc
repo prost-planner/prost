@@ -311,6 +311,18 @@ void Negation::evaluateToKleene(set<double>& res, KleeneState const& current,
     }
 }
 
+void ExponentialFunction::evaluateToKleene(set<double>& res,
+                                           KleeneState const& current,
+                                           ActionState const& actions) const {
+    set<double> exprRes;
+
+    expr->evaluateToKleene(exprRes, current, actions);
+
+    for(set<double>::iterator it = exprRes.begin(); it != exprRes.end(); ++it) {
+        res.insert(std::exp(*it));
+    }
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/
