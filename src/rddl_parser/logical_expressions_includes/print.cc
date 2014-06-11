@@ -182,6 +182,12 @@ void Negation::print(ostream& out) const {
     out << ")";
 }
 
+void ExponentialFunction::print(ostream& out) const {
+    out << "exp(";
+    expr->print(out);
+    out << ")";
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

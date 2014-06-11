@@ -426,6 +426,17 @@ void Negation::calculateIntervalDomain(vector<set<double> > const& domains,
     maxRes = 1.0;
 }
 
+void ExponentialFunction::calculateIntervalDomain(
+        vector<set<double> > const& domains,
+        ActionState const& actions,
+        double& minRes, double& maxRes) {
+    expr->calculateIntervalDomain(domains, actions, minRes, maxRes);
+
+    minRes = std::exp(minRes);
+    maxRes = std::exp(maxRes);
+}
+
+
 /*****************************************************************
   Probability Distributions
  *****************************************************************/

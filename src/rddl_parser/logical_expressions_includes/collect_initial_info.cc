@@ -193,6 +193,18 @@ void Negation::collectInitialInfo(bool& isProbabilistic,
             dependentActionFluents);
 }
 
+void ExponentialFunction::collectInitialInfo(bool& isProbabilistic,
+                                             bool& containsArithmeticFunction,
+                                             set<StateFluent*>& dependentStateFluents,
+                                             set<ActionFluent*>& dependentActionFluents) {
+    expr->collectInitialInfo(isProbabilistic,
+                             containsArithmeticFunction,
+                             dependentStateFluents,
+                             dependentActionFluents);
+
+    containsArithmeticFunction = true;
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

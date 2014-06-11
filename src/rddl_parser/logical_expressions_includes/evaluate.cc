@@ -181,6 +181,13 @@ void Negation::evaluate(double& res, State const& current,
     res = MathUtils::doubleIsEqual(res, 0.0);
 }
 
+void ExponentialFunction::evaluate(double& res, State const& current,
+                                   ActionState const& actions) const {
+    expr->evaluate(res, current, actions);
+
+    res = std::exp(res);
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

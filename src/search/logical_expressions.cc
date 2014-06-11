@@ -72,6 +72,10 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
         desc = desc.substr(2,desc.length()-3);
         LogicalExpression* expr = LogicalExpression::createFromString(desc);
         return new Negation(expr);
+    } else if (StringUtils::startsWith(desc, "exp(")) {
+        desc = desc.substr(4, desc.length() - 5);
+        LogicalExpression* expr = LogicalExpression::createFromString(desc);
+        return new ExponentialFunction(expr);
     } else if(StringUtils::startsWith(desc, "Bernoulli(")) {
         desc = desc.substr(10,desc.length()-11);
         LogicalExpression* expr = LogicalExpression::createFromString(desc);

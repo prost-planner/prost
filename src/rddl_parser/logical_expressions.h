@@ -898,6 +898,47 @@ public:
     void print(std::ostream& out) const;
 };
 
+class ExponentialFunction : public LogicalExpression {
+public:
+    ExponentialFunction(LogicalExpression* _expr) :
+        expr(_expr) {}
+
+    LogicalExpression* expr;
+
+    LogicalExpression* replaceQuantifier(
+            std::map<std::string, Object*>& replacements,
+            Instantiator* instantiator);
+    LogicalExpression* instantiate(PlanningTask* task,
+                                   std::map<std::string, Object*>& replacements);
+    LogicalExpression* simplify(std::map<ParametrizedVariable*, double>& replacements);
+    LogicalExpression* determinizeMostLikely(
+            NumericConstant* randomNumberReplacement);
+    void collectInitialInfo(bool& isProbabilistic,
+                            bool& containsArithmeticFunction,
+                            std::set<StateFluent*>& dependentStateFluents,
+                            std::set<ActionFluent*>& dependentActionFluents);
+    void classifyActionFluents(
+            std::set<ActionFluent*>& positiveDependentActionFluents,
+            std::set<ActionFluent*>& negativeDependentActionFluents);
+    void calculateDomain(std::vector<std::set<double> > const& domains,
+                         ActionState const& actions,
+                         std::set<double>& res);
+
+    void calculateIntervalDomain(
+            std::vector<std::set<double> > const& domains,
+            ActionState const& actions,
+            double& minRes, double& maxRes);
+
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+                          ActionState const& actions) const;
+
+    void print(std::ostream& out) const;
+};
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/

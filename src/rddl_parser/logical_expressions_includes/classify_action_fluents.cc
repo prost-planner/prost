@@ -204,6 +204,13 @@ void Negation::classifyActionFluents(
     negativeDependentActionFluents.insert(neg.begin(), neg.end());
 }
 
+void ExponentialFunction::classifyActionFluents(
+        set<ActionFluent*>& positiveDependentActionFluents,
+        set <ActionFluent*>& negativeDependentActionFluents) {
+    expr->classifyActionFluents(positiveDependentActionFluents,
+                                negativeDependentActionFluents);
+}
+
 /*****************************************************************
                          Conditionals
 *****************************************************************/

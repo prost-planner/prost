@@ -301,6 +301,14 @@ LogicalExpression* Negation::replaceQuantifier(map<string,
     return new Negation(newExpr);
 }
 
+LogicalExpression* ExponentialFunction::replaceQuantifier(
+        map<string, Object*>& replacements,
+        Instantiator* instantiator) {
+    LogicalExpression* newExpr =
+	    expr->replaceQuantifier(replacements, instantiator);
+    return new ExponentialFunction(newExpr);
+}
+
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/
