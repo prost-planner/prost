@@ -652,7 +652,6 @@ void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
         int const& index) {
     printEvaluatableInDetail(out, probabilisticCPFs[index]);
     out << "  Determinized formula: " << endl;
-    out << "    ";
     determinizedCPFs[index]->formula->print(out);
     out << endl;
 
@@ -755,7 +754,6 @@ void SearchEngine::printEvaluatableInDetail(ostream& out, Evaluatable* eval) {
     }
 
     out << "  Formula: " << endl;
-    out << "    ";
     eval->formula->print(out);
     out << endl;
 }

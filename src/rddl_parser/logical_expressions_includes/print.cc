@@ -203,7 +203,7 @@ void BernoulliDistribution::print(ostream& out) const {
 }
 
 void DiscreteDistribution::print(ostream& out) const {
-    out << "Discrete(";
+    out << "Discrete( ";
     for (unsigned int i = 0; i < values.size(); ++i) {
         out << "(";
         values[i]->print(out);
@@ -219,25 +219,26 @@ void DiscreteDistribution::print(ostream& out) const {
 *****************************************************************/
 
 void IfThenElseExpression::print(ostream& out) const {
-    out << "if(";
+    out << "switch( (";
     condition->print(out);
-    out << ") then(";
+    out << " : ";
     valueIfTrue->print(out);
-    out << ") elif($c(1)) then(";
+    // IfThenElseExpression and MultiConditionChecker are no longer
+    // distinguished in the search part, so a condition is inserted for the else
+    // case (the constant 1)
+    out << ") ($c(1) : ";
     valueIfFalse->print(out);
-    out << ")";
+    out << ") )";
 }
 
 void MultiConditionChecker::print(ostream& out) const {
+    out << "switch( ";
     for (unsigned int i = 0; i < conditions.size(); ++i) {
-        if (i == 0) {
-            out << "if(";
-        } else {
-            out << " elif(";
-        }
+        out << "(";
         conditions[i]->print(out);
-        out << ") then(";
+        out << " : ";
         effects[i]->print(out);
-        out << ")";
+        out << ") ";
     }
+    out << ")";
 }
