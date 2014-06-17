@@ -4,6 +4,9 @@
 //
 // Author: Scott Sanner (ssanner [at] gmail.com)
 //
+// State action constraints added by Thomas Keller 
+// (tkeller [at] informatik.uni-freiburg.de)
+//
 ////////////////////////////////////////////////////////////////////
 
 domain navigation_mdp {

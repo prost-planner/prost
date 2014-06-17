@@ -1,0 +1,28 @@
+# Starts translation of rddl files to rddl prefix format (as required by PROST).
+# rddlsim must be downloaded from https://rddlsim.googlecode.com/svn and
+# compiled, and the lib and bin directories must be copied to testbed/rddlsim
+# for this script to work. If you have any questions on rddlsim, please contact
+# Scott Sanner (ssanner [@] gmail.com)
+
+Home=rddlsim
+libDir=${Home}/lib
+CP=${Home}/bin
+CYGWIN_SEP=";"
+UNIX_SEP=":"
+
+# Choose separator as appropriate for shell system (Cygwin, otherwise UNIX)
+SEP=":" 
+if [[ $OSTYPE == "cygwin" ]] ; then
+    SEP=";" 
+fi
+
+for i in ${libDir}/*.jar ; do
+    CP="${CP}${SEP}$i"
+done
+if [ $# == 1 ] ; then
+   rm -rf $1/rddl/*~
+   rm -rf $1/rddl_prefix
+   mkdir $1/rddl_prefix
+   java -Xms100M -Xmx500M -classpath $CP rddl.translate.RDDL2Prefix $1/rddl $1/rddl_prefix
+fi
+
