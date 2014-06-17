@@ -509,43 +509,66 @@ LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, dou
         }
     }
 
-    // Check for cases of the form "If a then b else if ..." and
-    // simplify to a MultiConditionChecker
+    // Check for nested IfThenElseExpressions and MultiConditionCheckers
+    IfThenElseExpression* thenIf =
+        dynamic_cast<IfThenElseExpression*>(newValueIfTrue);
+    MultiConditionChecker* thenMCC =
+        dynamic_cast<MultiConditionChecker*>(newValueIfTrue);
     IfThenElseExpression* elseIf =
         dynamic_cast<IfThenElseExpression*>(newValueIfFalse);
-    if (elseIf) {
-        vector<LogicalExpression*> conditions;
-        conditions.push_back(newCondition);
-        conditions.push_back(elseIf->condition);
-        conditions.push_back(new NumericConstant(1.0));
-
-        vector<LogicalExpression*> effects;
-        effects.push_back(newValueIfTrue);
-        effects.push_back(elseIf->valueIfTrue);
-        effects.push_back(elseIf->valueIfFalse);
-
-        MultiConditionChecker* mc = new MultiConditionChecker(conditions,
-                effects);
-        return mc->simplify(replacements);
-    }
-
-    // Check if there is a condition checker nested inside this
     MultiConditionChecker* elseMCC =
         dynamic_cast<MultiConditionChecker*>(newValueIfFalse);
-    if (elseMCC) {
+
+    if (thenIf || elseIf || elseMCC) {
         vector<LogicalExpression*> conditions;
-        conditions.push_back(newCondition);
-        conditions.insert(conditions.end(),
-                elseMCC->conditions.begin(), elseMCC->conditions.end());
-
         vector<LogicalExpression*> effects;
-        effects.push_back(newValueIfTrue);
-        effects.insert(effects.end(),
-                elseMCC->effects.begin(), elseMCC->effects.end());
 
-        MultiConditionChecker* mc = new MultiConditionChecker(conditions,
-                effects);
-        return mc->simplify(replacements);
+        if (thenIf) {
+            vector<LogicalExpression*> combinedConds;
+            combinedConds.push_back(newCondition);
+            combinedConds.push_back(thenIf->condition);
+            Conjunction* combinedCond = new Conjunction(combinedConds);
+
+            conditions.push_back(combinedCond->simplify(replacements));
+            effects.push_back(thenIf->valueIfTrue);
+
+            conditions.push_back(newCondition);
+            effects.push_back(thenIf->valueIfFalse);
+        } else if (thenMCC) {
+            for(unsigned int i = 0; i < thenMCC->conditions.size(); ++i) {
+                vector<LogicalExpression*> combinedConds;
+                combinedConds.push_back(newCondition);
+                combinedConds.push_back(thenMCC->conditions[i]);
+
+                Conjunction* combinedCond = new Conjunction(combinedConds);
+                conditions.push_back(combinedCond->simplify(replacements));
+                effects.push_back(thenMCC->effects[i]);
+            }
+        } else {
+            conditions.push_back(newCondition);
+            effects.push_back(newValueIfTrue);
+        }
+
+        if (elseIf) {
+            conditions.push_back(elseIf->condition);
+            conditions.push_back(new NumericConstant(1.0));
+
+            effects.push_back(elseIf->valueIfTrue);
+            effects.push_back(elseIf->valueIfFalse);
+        } else if (elseMCC) {
+            conditions.insert(conditions.end(),
+                              elseMCC->conditions.begin(),
+                              elseMCC->conditions.end());
+
+            effects.insert(effects.end(),
+                           elseMCC->effects.begin(),
+                           elseMCC->effects.end());
+        } else {
+            conditions.push_back(new NumericConstant(1.0));
+            effects.push_back(newValueIfFalse);
+        }
+
+        return new MultiConditionChecker(conditions, effects);
     }
 
     return new IfThenElseExpression(newCondition, newValueIfTrue,
@@ -574,6 +597,10 @@ LogicalExpression* MultiConditionChecker::simplify(map<ParametrizedVariable*, do
 
         newConditions.push_back(newCond);
         newEffects.push_back(newEff);
+    }
+
+    if (newConditions.size() == 1) {
+        return newEffects[0];
     }
 
     return new MultiConditionChecker(newConditions, newEffects);

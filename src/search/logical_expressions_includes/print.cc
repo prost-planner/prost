@@ -164,23 +164,11 @@ void DiscreteDistribution::print(ostream& out) const {
 *****************************************************************/
 
 void MultiConditionChecker::print(ostream& out) const {
-    out << " [ ";
     for (unsigned int i = 0; i < conditions.size(); ++i) {
-        if (i == 0) {
-            out << "(if ";
-            conditions[i]->print(out);
-            out << " then ";
-        } else if (i == conditions.size() - 1) {
-            out << "(default ";
-            assert(MathUtils::doubleIsEqual(dynamic_cast<NumericConstant*>(
-                                conditions[i])->value, 1.0));
-        } else {
-            out << "(elif ";
-            conditions[i]->print(out);
-            out << " then ";
-        }
+        out << "case ";
+        conditions[i]->print(out);
+        out << " then ";
         effects[i]->print(out);
-        out << " ) ";
+        out << endl;
     }
-    out << " ] ";
 }
