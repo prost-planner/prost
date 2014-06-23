@@ -1,8 +1,4 @@
-using std::numeric_limits;
-using std::set;
-using std::vector;
-
-void LogicalExpression::calculateIntervalDomain(vector<set<double> > const& /*domains*/,
+void LogicalExpression::calculateDomainAsInterval(Domains const& /*domains*/,
         ActionState const& /*actions*/,
         double& /*minRes*/, double& /*maxRes*/) {
     assert(false);
@@ -12,7 +8,7 @@ void LogicalExpression::calculateIntervalDomain(vector<set<double> > const& /*do
                            Atomics
 *****************************************************************/
 
-void StateFluent::calculateIntervalDomain(vector<set<double> > const& domains,
+void StateFluent::calculateDomainAsInterval(Domains const& domains,
         ActionState const& /*actions*/,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -23,7 +19,7 @@ void StateFluent::calculateIntervalDomain(vector<set<double> > const& domains,
     maxRes = *(domains[index].rbegin());
 }
 
-void ActionFluent::calculateIntervalDomain(vector<set<double> > const& /*domains*/,
+void ActionFluent::calculateDomainAsInterval(Domains const& /*domains*/,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -33,7 +29,7 @@ void ActionFluent::calculateIntervalDomain(vector<set<double> > const& /*domains
     maxRes = actions[index];
 }
 
-void NumericConstant::calculateIntervalDomain(vector<set<double> > const& /*domains*/,
+void NumericConstant::calculateDomainAsInterval(Domains const& /*domains*/,
         ActionState const& /*actions*/,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -46,7 +42,7 @@ void NumericConstant::calculateIntervalDomain(vector<set<double> > const& /*doma
                            Connectives
 *****************************************************************/
 
-void Conjunction::calculateIntervalDomain(vector<set<double> > const& domains,
+void Conjunction::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions, 
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -59,7 +55,7 @@ void Conjunction::calculateIntervalDomain(vector<set<double> > const& domains,
         minRes = numeric_limits<double>::max();
         maxRes = -numeric_limits<double>::max();
 
-        exprs[i]->calculateIntervalDomain(domains, actions, minRes, maxRes);
+        exprs[i]->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
         // If one max value is false every max and min value is false
         if (MathUtils::doubleIsEqual(maxRes,0.0)) {
@@ -79,7 +75,7 @@ void Conjunction::calculateIntervalDomain(vector<set<double> > const& domains,
     }
 }
 
-void Disjunction::calculateIntervalDomain(vector<set<double> > const& domains,
+void Disjunction::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -91,7 +87,7 @@ void Disjunction::calculateIntervalDomain(vector<set<double> > const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         minRes = numeric_limits<double>::max();
         maxRes = -numeric_limits<double>::max();
-        exprs[i]->calculateIntervalDomain(domains, actions, minRes, maxRes);
+        exprs[i]->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
         // If one min value is true every max and min value is true 
         if (MathUtils::doubleIsEqual(minRes,1.0)) {
@@ -113,7 +109,7 @@ void Disjunction::calculateIntervalDomain(vector<set<double> > const& domains,
 
 }
 
-void EqualsExpression::calculateIntervalDomain(vector<set<double> > const& domains,
+void EqualsExpression::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(exprs.size() == 2);
@@ -122,11 +118,11 @@ void EqualsExpression::calculateIntervalDomain(vector<set<double> > const& domai
 
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
 
     // If both intervals dont overlap they won't ever be equal
     if (MathUtils::doubleIsGreater(lhsMin, rhsMax) ||
@@ -148,7 +144,7 @@ void EqualsExpression::calculateIntervalDomain(vector<set<double> > const& domai
     maxRes = 1.0;
 }
 
-void GreaterExpression::calculateIntervalDomain(vector<set<double> > const& domains,
+void GreaterExpression::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -158,11 +154,11 @@ void GreaterExpression::calculateIntervalDomain(vector<set<double> > const& doma
     
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
     
     // If left min is greater than right max everything is greater
     if (MathUtils::doubleIsGreater(lhsMin, rhsMax)) {
@@ -183,7 +179,7 @@ void GreaterExpression::calculateIntervalDomain(vector<set<double> > const& doma
     maxRes = 1.0; 
 }
 
-void LowerExpression::calculateIntervalDomain(vector<set<double> > const& domains,
+void LowerExpression::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -193,11 +189,11 @@ void LowerExpression::calculateIntervalDomain(vector<set<double> > const& domain
     
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
     
     // If left max is lesser than right min everything is lesser
     if (MathUtils::doubleIsSmaller(lhsMax, rhsMin)) {
@@ -218,8 +214,8 @@ void LowerExpression::calculateIntervalDomain(vector<set<double> > const& domain
     maxRes = 1.0; 
 }
 
-void GreaterEqualsExpression::calculateIntervalDomain(
-        vector<set<double> > const& domains, ActionState const& actions,
+void GreaterEqualsExpression::calculateDomainAsInterval(
+        Domains const& domains, ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
     assert(maxRes = -numeric_limits<double>::max());
@@ -228,11 +224,11 @@ void GreaterEqualsExpression::calculateIntervalDomain(
     
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
     
     // If left min is greater or equal than right max everything is greater or
     // equal
@@ -254,7 +250,7 @@ void GreaterEqualsExpression::calculateIntervalDomain(
     maxRes = 1.0; 
 }
 
-void LowerEqualsExpression::calculateIntervalDomain(vector<set<double> > const& domains,
+void LowerEqualsExpression::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -264,11 +260,11 @@ void LowerEqualsExpression::calculateIntervalDomain(vector<set<double> > const& 
     
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
     
     if (MathUtils::doubleIsSmallerOrEqual(lhsMax, rhsMin)) {
         minRes = 1.0;
@@ -288,7 +284,7 @@ void LowerEqualsExpression::calculateIntervalDomain(vector<set<double> > const& 
     maxRes = 1.0; 
 }
 
-void Addition::calculateIntervalDomain(vector<set<double> > const& domains,
+void Addition::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -297,19 +293,19 @@ void Addition::calculateIntervalDomain(vector<set<double> > const& domains,
     // Addition on Intervals:
     // [x1,x2] + [y1,y2] = [x1+y1, x2+y2]
 
-    exprs[0]->calculateIntervalDomain(domains, actions, minRes, maxRes);
+    exprs[0]->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
     for (unsigned int i = 1; i < exprs.size(); ++i) {
         double min = numeric_limits<double>::max();
         double max = -numeric_limits<double>::max();
 
-        exprs[i]->calculateIntervalDomain(domains, actions, min, max);
+        exprs[i]->calculateDomainAsInterval(domains, actions, min, max);
         minRes += min;
         maxRes += max;
     }
 }
 
-void Subtraction::calculateIntervalDomain(vector<set<double> > const& domains,
+void Subtraction::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -318,19 +314,19 @@ void Subtraction::calculateIntervalDomain(vector<set<double> > const& domains,
     // Subtraction on Intervals:
     // [x1,x2] - [y1,y2] = [x1-y2, x2-y1]
 
-    exprs[0]->calculateIntervalDomain(domains, actions, minRes, maxRes);
+    exprs[0]->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
     for (unsigned int i = 1; i < exprs.size(); ++i) {
         double min = numeric_limits<double>::max();
         double max = -numeric_limits<double>::max();
 
-        exprs[i]->calculateIntervalDomain(domains, actions, min, max);
+        exprs[i]->calculateDomainAsInterval(domains, actions, min, max);
         minRes -= max;
         maxRes -= min;
     }
 }
 
-void Multiplication::calculateIntervalDomain(vector<set<double> > const& domains,
+void Multiplication::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(minRes = numeric_limits<double>::max());
@@ -339,12 +335,12 @@ void Multiplication::calculateIntervalDomain(vector<set<double> > const& domains
     // Multiplication on Intervals:
     // [x1,x2] * [y1,y2] = [min(x1*y1, x1*y2, x2*y1, x2*y2), max(x1*y1, x1*y2, x2*y1, x2*y2)]
 
-    exprs[0]->calculateIntervalDomain(domains, actions, minRes, maxRes);
+    exprs[0]->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
     for (unsigned int i = 1; i < exprs.size(); ++i) {
         double min = numeric_limits<double>::max();
         double max = -numeric_limits<double>::max();
-        exprs[i]->calculateIntervalDomain(domains, actions, min, max);
+        exprs[i]->calculateDomainAsInterval(domains, actions, min, max);
         // We could alternatively evaluate the signs of the individual values
         minRes = std::min(std::min(minRes*min, minRes*max),
                            std::min(maxRes*min, maxRes*max));
@@ -353,7 +349,7 @@ void Multiplication::calculateIntervalDomain(vector<set<double> > const& domains
     }
 }
 
-void Division::calculateIntervalDomain(vector<set<double> > const& domains,
+void Division::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     assert(exprs.size() == 2);
@@ -362,11 +358,11 @@ void Division::calculateIntervalDomain(vector<set<double> > const& domains,
 
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
-    exprs[0]->calculateIntervalDomain(domains, actions, lhsMin, lhsMax);
+    exprs[0]->calculateDomainAsInterval(domains, actions, lhsMin, lhsMax);
 
     double rhsMin = numeric_limits<double>::max();
     double rhsMax = -numeric_limits<double>::max();
-    exprs[1]->calculateIntervalDomain(domains, actions, rhsMin, rhsMax);
+    exprs[1]->calculateDomainAsInterval(domains, actions, rhsMin, rhsMax);
     
     // Check for division by zero. Division is defined by
     // [x_1, x_2] / [y_1, y_2] = [x_1, x_2] * (1/[y_1,y_2], where
@@ -403,12 +399,12 @@ void Division::calculateIntervalDomain(vector<set<double> > const& domains,
   Unaries
  *****************************************************************/
 
-void Negation::calculateIntervalDomain(vector<set<double> > const& domains,
+void Negation::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     double tmpMin = numeric_limits<double>::max();
     double tmpMax = -numeric_limits<double>::max();
-    expr->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
+    expr->calculateDomainAsInterval(domains, actions, tmpMin, tmpMax);
     // Both max and min are either 0 or 1
     if (MathUtils::doubleIsEqual(tmpMin, tmpMax)) {
         if (MathUtils::doubleIsEqual(tmpMin, 0.0)) {
@@ -426,11 +422,11 @@ void Negation::calculateIntervalDomain(vector<set<double> > const& domains,
     maxRes = 1.0;
 }
 
-void ExponentialFunction::calculateIntervalDomain(
-        vector<set<double> > const& domains,
+void ExponentialFunction::calculateDomainAsInterval(
+        Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
-    expr->calculateIntervalDomain(domains, actions, minRes, maxRes);
+    expr->calculateDomainAsInterval(domains, actions, minRes, maxRes);
 
     minRes = std::exp(minRes);
     maxRes = std::exp(maxRes);
@@ -441,12 +437,12 @@ void ExponentialFunction::calculateIntervalDomain(
   Probability Distributions
  *****************************************************************/
 
-void BernoulliDistribution::calculateIntervalDomain(vector<set<double> > const& domains,
+void BernoulliDistribution::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     double tmpMin = numeric_limits<double>::max();
     double tmpMax = -numeric_limits<double>::max();
-    expr->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
+    expr->calculateDomainAsInterval(domains, actions, tmpMin, tmpMax);
 
     if (MathUtils::doubleIsGreater(tmpMax, 0.0)) {
         maxRes = 1.0;
@@ -460,20 +456,20 @@ void BernoulliDistribution::calculateIntervalDomain(vector<set<double> > const& 
     }
 }
 
-void DiscreteDistribution::calculateIntervalDomain(vector<set<double> > const& domains,
+void DiscreteDistribution::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     for (unsigned int i = 0; i < values.size(); ++i) {
         double probMin = numeric_limits<double>::max();
         double probMax = -numeric_limits<double>::max();
 
-        probabilities[i]->calculateIntervalDomain(domains, actions, probMin, probMax);
+        probabilities[i]->calculateDomainAsInterval(domains, actions, probMin, probMax);
         if (!MathUtils::doubleIsEqual(probMin, probMax) || 
             !MathUtils::doubleIsEqual(0.0, probMax)) {
             double valMin = numeric_limits<double>::max();
             double valMax = -numeric_limits<double>::max();
 
-            values[i]->calculateIntervalDomain(domains, actions, valMin, valMax);
+            values[i]->calculateDomainAsInterval(domains, actions, valMin, valMax);
             if (MathUtils::doubleIsSmaller(valMin, minRes)) {
                 minRes = valMin;
             }
@@ -488,22 +484,22 @@ void DiscreteDistribution::calculateIntervalDomain(vector<set<double> > const& d
   Conditionals
  *****************************************************************/
 
-void IfThenElseExpression::calculateIntervalDomain(vector<set<double> > const& domains,
+void IfThenElseExpression::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     double condMin =  numeric_limits<double>::max();
     double condMax =  -numeric_limits<double>::max();
 
-    condition->calculateIntervalDomain(domains, actions, condMin, condMax);
+    condition->calculateDomainAsInterval(domains, actions, condMin, condMax);
     if (!MathUtils::doubleIsEqual(condMin, condMax)) {
         // cond has more than one value, one of which must represent 'true'
-        valueIfTrue->calculateIntervalDomain(domains, actions, minRes, maxRes);
+        valueIfTrue->calculateDomainAsInterval(domains, actions, minRes, maxRes);
         if (MathUtils::doubleIsEqual(0.0, minRes)) {
             // and false is also possible
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
 
-            valueIfFalse->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
+            valueIfFalse->calculateDomainAsInterval(domains, actions, tmpMin, tmpMax);
             if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }
@@ -513,26 +509,26 @@ void IfThenElseExpression::calculateIntervalDomain(vector<set<double> > const& d
         }
     } else if (MathUtils::doubleIsEqual(minRes, 0.0)) {
         // there is only one value in cond which is 'false'
-        valueIfFalse->calculateIntervalDomain(domains, actions, minRes, maxRes);
+        valueIfFalse->calculateDomainAsInterval(domains, actions, minRes, maxRes);
     } else {
-        valueIfTrue->calculateIntervalDomain(domains, actions, minRes, maxRes);
+        valueIfTrue->calculateDomainAsInterval(domains, actions, minRes, maxRes);
     }
 }
 
-void MultiConditionChecker::calculateIntervalDomain(vector<set<double> > const& domains,
+void MultiConditionChecker::calculateDomainAsInterval(Domains const& domains,
         ActionState const& actions,
         double& minRes, double& maxRes) {
     for (unsigned int i = 0; i < conditions.size(); ++i) {
         double condMin =  numeric_limits<double>::max();
         double condMax =  -numeric_limits<double>::max();
 
-        conditions[i]->calculateIntervalDomain(domains, actions, condMin, condMax);
+        conditions[i]->calculateDomainAsInterval(domains, actions, condMin, condMax);
         if (!MathUtils::doubleIsEqual(condMin, condMax)) {
             // cond has more than one value, one of which must represent 'true'
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
 
-            effects[i]->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
+            effects[i]->calculateDomainAsInterval(domains, actions, tmpMin, tmpMax);
             if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }
@@ -547,7 +543,7 @@ void MultiConditionChecker::calculateIntervalDomain(vector<set<double> > const& 
             // there is only one value in cond, and it is true
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
-            effects[i]->calculateIntervalDomain(domains, actions, tmpMin, tmpMax);
+            effects[i]->calculateDomainAsInterval(domains, actions, tmpMin, tmpMax);
             if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }

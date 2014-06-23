@@ -364,26 +364,12 @@ void RDDLParser::parseVariableDefinition(string& desc) {
             defaultVal = atof(defaultValString.c_str());
         } else {
             if (task->objects.find(defaultValString) == task->objects.end()) {
-                SystemUtils::abort(
-                        "Error: Default value " + defaultValString +
-                        " of variable " +
-                        name + " not defined.");
+                string err = "Error: Default value " + defaultValString +
+                    " of variable " + name + " not defined.";
+                SystemUtils::abort(err);
             }
             Object* val = task->objects[defaultValString];
-            int typeIndex = -1;
-            for (unsigned int i = 0; i < val->types.size(); ++i) {
-                if (val->types[i] == valueType) {
-                    typeIndex = i;
-                    break;
-                }
-            }
-            if (typeIndex < 0) {
-                SystemUtils::abort(
-                        "Error: Default value " + defaultValString +
-                        " of variable " +
-                        name + " is of wrong type.");
-            }
-            defaultVal = val->values[typeIndex];
+            defaultVal = val->value;
         }
         break;
         //case ParametrizedVariable::INTERM_FLUENT:

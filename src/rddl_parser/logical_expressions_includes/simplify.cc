@@ -1,4 +1,4 @@
-LogicalExpression* LogicalExpression::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
+LogicalExpression* LogicalExpression::simplify(Simplifications& /*replace*/) {
     print(cout);
     assert(false);
     return NULL;
@@ -8,25 +8,26 @@ LogicalExpression* LogicalExpression::simplify(map<ParametrizedVariable*, double
                            Atomics
 *****************************************************************/
 
-LogicalExpression* ParametrizedVariable::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
+LogicalExpression*
+ParametrizedVariable::simplify(Simplifications& /*replace*/) {
     return this;
 }
 
-LogicalExpression* StateFluent::simplify(map<ParametrizedVariable*, double>& replacements) {
-    if (replacements.find(this) != replacements.end()) {
-        return new NumericConstant(replacements[this]);
+LogicalExpression* StateFluent::simplify(Simplifications& replace) {
+    if (replace.find(this) != replace.end()) {
+        return new NumericConstant(replace[this]);
     }
     return this;
 }
 
-LogicalExpression* ActionFluent::simplify(map<ParametrizedVariable*, double>& replacements) {
-    if (replacements.find(this) != replacements.end()) {
-        return new NumericConstant(replacements[this]);
+LogicalExpression* ActionFluent::simplify(Simplifications& replace) {
+    if (replace.find(this) != replace.end()) {
+        return new NumericConstant(replace[this]);
     }
     return this;
 }
 
-LogicalExpression* NumericConstant::simplify(map<ParametrizedVariable*, double>& /*replacements*/) {
+LogicalExpression* NumericConstant::simplify(Simplifications& /*replace*/) {
     return this;
 }
 
@@ -34,22 +35,22 @@ LogicalExpression* NumericConstant::simplify(map<ParametrizedVariable*, double>&
                            Connectives
 *****************************************************************/
 
-LogicalExpression* Conjunction::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Conjunction::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
             if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
-                // False constant element -> Conjunction is always false
+                // False constant element -> conjunction is always false
                 return new NumericConstant(0.0);
             }
-            // else true constant element -> can be omitted
+            // Otherwise, tis is a true constant element that can be omitted
         } else {
             Conjunction* conj = dynamic_cast<Conjunction*>(newExpr);
             if (conj) {
-                newExprs.insert(newExprs.end(),
-                        conj->exprs.begin(), conj->exprs.end());
+                newExprs.insert(newExprs.end(), conj->exprs.begin(),
+                                conj->exprs.end());
             } else {
                 newExprs.push_back(newExpr);
             }
@@ -57,7 +58,8 @@ LogicalExpression* Conjunction::simplify(map<ParametrizedVariable*, double>& rep
     }
 
     if (newExprs.empty()) {
-        return new NumericConstant(1.0); //all elements are constants and true -> Conjunction is always true
+        // All elements are constants and true -> Conjunction is always true
+        return new NumericConstant(1.0);
     } else if (newExprs.size() == 1) {
         return newExprs[0];
     }
@@ -65,20 +67,22 @@ LogicalExpression* Conjunction::simplify(map<ParametrizedVariable*, double>& rep
     return new Conjunction(newExprs);
 }
 
-LogicalExpression* Disjunction::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Disjunction::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
             if (!MathUtils::doubleIsEqual(nc->value, 0.0)) {
-                return new NumericConstant(1.0); //true constant element -> Disjunction is always true
+                // True constant element -> disjunction is always true
+                return new NumericConstant(1.0);
             }
+            // Otherwise, tis is a false constant element that can be omitted
         } else {
             Disjunction* disj = dynamic_cast<Disjunction*>(newExpr);
             if (disj) {
-                newExprs.insert(newExprs.end(),
-                        disj->exprs.begin(), disj->exprs.end());
+                newExprs.insert(newExprs.end(), disj->exprs.begin(),
+                                disj->exprs.end());
             } else {
                 newExprs.push_back(newExpr);
             }
@@ -86,7 +90,8 @@ LogicalExpression* Disjunction::simplify(map<ParametrizedVariable*, double>& rep
     }
 
     if (newExprs.empty()) {
-        return new NumericConstant(0.0); //all elements are constants and false -> Disjunction is always false
+        // All elements are constants and false -> Disjunction is always false
+        return new NumericConstant(0.0);
     } else if (newExprs.size() == 1) {
         return newExprs[0];
     }
@@ -94,49 +99,49 @@ LogicalExpression* Disjunction::simplify(map<ParametrizedVariable*, double>& rep
     return new Disjunction(newExprs);
 }
 
-LogicalExpression* EqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* EqualsExpression::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
     NumericConstant* constComp = NULL;
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
 
         if (nc) {
+            // This element is a numeric constant
             if (constComp) {
-                //...and there is already another constant one
+                // ...and there is already another constant one
                 if (!MathUtils::doubleIsEqual(nc->value, constComp->value)) {
-                    //...which is inequal -> this is always false
+                    // ...which is inequal -> this is always false
                     return new NumericConstant(0.0);
                 }
-                //...which is equal -> we dont need to compare to the second
-                //one as it is the same as the one stored in constComp
+                // ...which is equal, so we can omit this one
             } else {
-                //...and the first constant one
+                // ...and it is the first constant one
                 constComp = nc;
                 newExprs.push_back(newExpr);
             }
         } else {
-            //this is not constant
+            // This is not constant
             newExprs.push_back(newExpr);
         }
     }
 
     if (newExprs.size() == 1) {
-        //either all were constant and equal to the comparator, or there was only
-        //one (constant or dynamic) -> this is always true
+        // Either all were constant and equal to the comparator, or there was
+        // only one (constant or dynamic) -> this is always true
         return new NumericConstant(1.0);
     }
 
-    //we must keep this and check, as there are at least 2 expressions which
-    //might be equal or not, depending on the state
+    // We must keep this and check, as there are at least 2 expressions which
+    // might be equal or not, depending on the state
     return new EqualsExpression(newExprs);
 }
 
-LogicalExpression* GreaterExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* GreaterExpression::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replace);
+    LogicalExpression* expr1 = exprs[1]->simplify(replace);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
@@ -156,10 +161,10 @@ LogicalExpression* GreaterExpression::simplify(map<ParametrizedVariable*, double
     return new GreaterExpression(newExprs);
 }
 
-LogicalExpression* LowerExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* LowerExpression::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replace);
+    LogicalExpression* expr1 = exprs[1]->simplify(replace);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
@@ -179,10 +184,11 @@ LogicalExpression* LowerExpression::simplify(map<ParametrizedVariable*, double>&
     return new LowerExpression(newExprs);
 }
 
-LogicalExpression* GreaterEqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression*
+GreaterEqualsExpression::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replace);
+    LogicalExpression* expr1 = exprs[1]->simplify(replace);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
@@ -202,10 +208,10 @@ LogicalExpression* GreaterEqualsExpression::simplify(map<ParametrizedVariable*, 
     return new GreaterEqualsExpression(newExprs);
 }
 
-LogicalExpression* LowerEqualsExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* LowerEqualsExpression::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replace);
+    LogicalExpression* expr1 = exprs[1]->simplify(replace);
 
     NumericConstant* nc0 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
@@ -225,12 +231,13 @@ LogicalExpression* LowerEqualsExpression::simplify(map<ParametrizedVariable*, do
     return new LowerEqualsExpression(newExprs);
 }
 
-LogicalExpression* Addition::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Addition::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
     double constSum = 0.0;
 
+    // Simplify and collect all constant expressions
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
             constSum += nc->value;
@@ -252,12 +259,12 @@ LogicalExpression* Addition::simplify(map<ParametrizedVariable*, double>& replac
     for (unsigned int i = 0; i < newExprs.size(); ++i) {
         Addition* add = dynamic_cast<Addition*>(newExprs[i]);
         if (add) {
-            finalExprs.insert(finalExprs.end(),
-                    add->exprs.begin(), add->exprs.end());
-            //if the merged addition had an constant element it must have been the last!
+            finalExprs.insert(finalExprs.end(), add->exprs.begin(),
+                              add->exprs.end());
+            // If the merged addition had an constant element it must have been
+            // the last, so its also the last element in finalExprs now.
             NumericConstant* nc =
-                dynamic_cast<NumericConstant*>(finalExprs[finalExprs.size() -
-                                                          1]);
+                dynamic_cast<NumericConstant*>(*finalExprs.rbegin());
             if (nc) {
                 constSum += nc->value;
                 finalExprs.pop_back();
@@ -267,6 +274,9 @@ LogicalExpression* Addition::simplify(map<ParametrizedVariable*, double>& replac
         }
     }
 
+    // TODO: Collect all Subtractions and merge
+
+    // Add the constant part of the addition
     if (!MathUtils::doubleIsEqual(constSum, 0.0)) {
         finalExprs.push_back(new NumericConstant(constSum));
     }
@@ -274,24 +284,25 @@ LogicalExpression* Addition::simplify(map<ParametrizedVariable*, double>& replac
     return new Addition(finalExprs);
 }
 
-LogicalExpression* Subtraction::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Subtraction::simplify(Simplifications& replace) {
     assert(exprs.size() >= 2);
     vector<LogicalExpression*> newExprs;
     double constPart = 0.0;
 
-    LogicalExpression* firstExpr = exprs[0]->simplify(replacements);
-    NumericConstant* nc1 = dynamic_cast<NumericConstant*>(firstExpr);
-    bool firstPartIsConst = false;
+    LogicalExpression* minuend = exprs[0]->simplify(replace);
+    NumericConstant* nc1 = dynamic_cast<NumericConstant*>(minuend);
+    bool minuendIsConst = false;
 
     if (nc1) {
         constPart = nc1->value;
-        firstPartIsConst = true;
+        minuendIsConst = true;
     } else {
-        newExprs.push_back(firstExpr);
+        newExprs.push_back(minuend);
     }
 
+    // Simplify and collect all constant expressions
     for (unsigned int i = 1; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
             constPart -= nc->value;
@@ -300,15 +311,20 @@ LogicalExpression* Subtraction::simplify(map<ParametrizedVariable*, double>& rep
         }
     }
 
-    if (newExprs.empty()) { //all elements are constant!
-        assert(firstPartIsConst);
+    // TODO: Collect all Additions and Subtractions and merge
+
+    if (newExprs.empty()) {
+        // All elements are constant!
+        assert(minuendIsConst);
         return new NumericConstant(constPart);
     }
 
-    if (firstPartIsConst) { //the first element is a constant -> insert it at the beginning!
+    if (minuendIsConst) {
+        // The minuend is a constant -> insert it at the beginning!
         assert(!newExprs.empty());
         newExprs.insert(newExprs.begin(), new NumericConstant(constPart));
-    } else { //the first element is not a constant
+    } else {
+        // The minuend is not a constant, so the const part is a subtrahend
         assert(!newExprs.empty());
         if (!MathUtils::doubleIsEqual(constPart, 0.0)) {
             newExprs.push_back(new NumericConstant(constPart * -1.0));
@@ -323,12 +339,12 @@ LogicalExpression* Subtraction::simplify(map<ParametrizedVariable*, double>& rep
     return new Subtraction(newExprs);
 }
 
-LogicalExpression* Multiplication::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Multiplication::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
     double constMult = 1.0;
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        LogicalExpression* newExpr = exprs[i]->simplify(replacements);
+        LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
             if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
@@ -355,10 +371,10 @@ LogicalExpression* Multiplication::simplify(map<ParametrizedVariable*, double>& 
     return new Multiplication(newExprs);
 }
 
-LogicalExpression* Division::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* Division::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
-    LogicalExpression* expr0 = exprs[0]->simplify(replacements);
-    LogicalExpression* expr1 = exprs[1]->simplify(replacements);
+    LogicalExpression* expr0 = exprs[0]->simplify(replace);
+    LogicalExpression* expr1 = exprs[1]->simplify(replace);
 
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr0);
     NumericConstant* nc2 = dynamic_cast<NumericConstant*>(expr1);
@@ -378,8 +394,8 @@ LogicalExpression* Division::simplify(map<ParametrizedVariable*, double>& replac
                           Unaries
 *****************************************************************/
 
-LogicalExpression* Negation::simplify(map<ParametrizedVariable*, double>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(replacements);
+LogicalExpression* Negation::simplify(Simplifications& replace) {
+    LogicalExpression* newExpr = expr->simplify(replace);
 
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if (nc) {
@@ -397,9 +413,8 @@ LogicalExpression* Negation::simplify(map<ParametrizedVariable*, double>& replac
     return new Negation(newExpr);
 }
 
-LogicalExpression* ExponentialFunction::simplify(
-        map<ParametrizedVariable*, double>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(replacements);
+LogicalExpression* ExponentialFunction::simplify(Simplifications& replace) {
+    LogicalExpression* newExpr = expr->simplify(replace);
 
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if (nc) {
@@ -413,18 +428,17 @@ LogicalExpression* ExponentialFunction::simplify(
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression* KronDeltaDistribution::simplify(map<ParametrizedVariable*, double>& replacements) {
-    return expr->simplify(replacements);
+LogicalExpression* KronDeltaDistribution::simplify(Simplifications& replace) {
+    return expr->simplify(replace);
 }
 
-LogicalExpression* BernoulliDistribution::simplify(map<ParametrizedVariable*, double>& replacements) {
-    LogicalExpression* newExpr = expr->simplify(replacements);
+LogicalExpression* BernoulliDistribution::simplify(Simplifications& replace) {
+    LogicalExpression* newExpr = expr->simplify(replace);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if (nc) {
         if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
             return new NumericConstant(0.0);
-        } else if (MathUtils::doubleIsGreaterOrEqual(nc->value,
-                           1.0) ||
+        } else if (MathUtils::doubleIsGreaterOrEqual(nc->value, 1.0) ||
                    MathUtils::doubleIsSmaller(nc->value, 0.0)) {
             return new NumericConstant(1.0);
         }
@@ -436,13 +450,13 @@ LogicalExpression* BernoulliDistribution::simplify(map<ParametrizedVariable*, do
 // TODO: If there is a constant probability equal to 1 or higher (or lower than
 // 0), what do we do? Can we simplify such that the according value is always
 // true?
-LogicalExpression* DiscreteDistribution::simplify(map<ParametrizedVariable*,double>& replacements) {
+LogicalExpression* DiscreteDistribution::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
 
     for (unsigned int i = 0; i < values.size(); ++i) {
-        newValues.push_back(values[i]->simplify(replacements));
-        newProbs.push_back(probabilities[i]->simplify(replacements));
+        newValues.push_back(values[i]->simplify(replace));
+        newProbs.push_back(probabilities[i]->simplify(replace));
     }
 
     // Remove all values with constant probability 0
@@ -472,10 +486,10 @@ LogicalExpression* DiscreteDistribution::simplify(map<ParametrizedVariable*,doub
                          Conditionals
 *****************************************************************/
 
-LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, double>& replacements) {
-    LogicalExpression* newCondition = condition->simplify(replacements);
-    LogicalExpression* newValueIfTrue = valueIfTrue->simplify(replacements);
-    LogicalExpression* newValueIfFalse = valueIfFalse->simplify(replacements);
+LogicalExpression* IfThenElseExpression::simplify(Simplifications& replace) {
+    LogicalExpression* newCondition = condition->simplify(replace);
+    LogicalExpression* newValueIfTrue = valueIfTrue->simplify(replace);
+    LogicalExpression* newValueIfFalse = valueIfFalse->simplify(replace);
 
     // Check if the condition is a constant
     NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCondition);
@@ -496,14 +510,13 @@ LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, dou
     NumericConstant* ncFalse = dynamic_cast<NumericConstant*>(newValueIfFalse);
 
     if (ncTrue && ncFalse) {
-        if (MathUtils::doubleIsEqual(ncTrue->value,
-                    1.0) && MathUtils::doubleIsEqual(ncFalse->value, 0.0)) {
+        if (MathUtils::doubleIsEqual(ncTrue->value, 1.0) &&
+            MathUtils::doubleIsEqual(ncFalse->value, 0.0)) {
             return newCondition;
-        } else if (MathUtils::doubleIsEqual(ncTrue->value,
-                           0.0) &&
+        } else if (MathUtils::doubleIsEqual(ncTrue->value, 0.0) &&
                    MathUtils::doubleIsEqual(ncFalse->value, 1.0)) {
             Negation* res = new Negation(newCondition);
-            return res->simplify(replacements);
+            return res->simplify(replace);
         } else if (MathUtils::doubleIsEqual(ncTrue->value, ncFalse->value)) {
             return ncTrue;
         }
@@ -529,19 +542,19 @@ LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, dou
             combinedConds.push_back(thenIf->condition);
             Conjunction* combinedCond = new Conjunction(combinedConds);
 
-            conditions.push_back(combinedCond->simplify(replacements));
+            conditions.push_back(combinedCond->simplify(replace));
             effects.push_back(thenIf->valueIfTrue);
 
             conditions.push_back(newCondition);
             effects.push_back(thenIf->valueIfFalse);
         } else if (thenMCC) {
-            for(unsigned int i = 0; i < thenMCC->conditions.size(); ++i) {
+            for (unsigned int i = 0; i < thenMCC->conditions.size(); ++i) {
                 vector<LogicalExpression*> combinedConds;
                 combinedConds.push_back(newCondition);
                 combinedConds.push_back(thenMCC->conditions[i]);
 
                 Conjunction* combinedCond = new Conjunction(combinedConds);
-                conditions.push_back(combinedCond->simplify(replacements));
+                conditions.push_back(combinedCond->simplify(replace));
                 effects.push_back(thenMCC->effects[i]);
             }
         } else {
@@ -572,16 +585,16 @@ LogicalExpression* IfThenElseExpression::simplify(map<ParametrizedVariable*, dou
     }
 
     return new IfThenElseExpression(newCondition, newValueIfTrue,
-            newValueIfFalse);
+                                    newValueIfFalse);
 }
 
-LogicalExpression* MultiConditionChecker::simplify(map<ParametrizedVariable*, double>& replacements) {
+LogicalExpression* MultiConditionChecker::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newConditions;
     vector<LogicalExpression*> newEffects;
 
     for (unsigned int i = 0; i < conditions.size(); ++i) {
-        LogicalExpression* newCond = conditions[i]->simplify(replacements);
-        LogicalExpression* newEff = effects[i]->simplify(replacements);
+        LogicalExpression* newCond = conditions[i]->simplify(replace);
+        LogicalExpression* newEff = effects[i]->simplify(replace);
 
         // Check if the condition is a constant
         NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCond);

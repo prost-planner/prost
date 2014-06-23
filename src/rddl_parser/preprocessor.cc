@@ -554,16 +554,15 @@ void Preprocessor::finalizeEvaluatables() {
 *****************************************************************/
 
 void Preprocessor::determinize() {
-    // Calculate determinzation of CPFs. Bernoulli statements are replaced with
-    // <= randomNumberReplacement. It is variable because it might be
-    // interesting to try other values as well.
-    NumericConstant* randomNumberReplacement = new NumericConstant(0.5);
+    // Calculate determinzation of CPFs.
 
     map<ParametrizedVariable*, double> replacementsDummy;
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if(task->CPFs[index]->isProbabilistic()) {
-            task->CPFs[index]->determinization = task->CPFs[index]->formula->determinizeMostLikely(randomNumberReplacement);
-            task->CPFs[index]->determinization = task->CPFs[index]->determinization->simplify(replacementsDummy);
+            task->CPFs[index]->determinization =
+                task->CPFs[index]->formula->determinizeMostLikely();
+            task->CPFs[index]->determinization =
+                task->CPFs[index]->determinization->simplify(replacementsDummy);
         }
     }
 }
@@ -962,22 +961,11 @@ void Preprocessor::calculateMinAndMaxReward() const {
             domains[index] = task->CPFs[index]->domain;
         }
 
-        //for (unsigned int actionIndex = 0;
-        //     actionIndex < task->actionStates.size(); ++actionIndex) {
-        //    set<double> actionDependentValues;
-        //    task->rewardCPF->formula->calculateDomain(
-        //            domains, task->actionStates[actionIndex],
-        //            actionDependentValues);
-        //    task->rewardCPF->domain.insert(
-        //            actionDependentValues.begin(), actionDependentValues.end());
-        //}
-        
-
         for (unsigned int actionIndex = 0;
              actionIndex < task->actionStates.size(); ++actionIndex) {
             double min = numeric_limits<double>::max();
             double max = -numeric_limits<double>::max();
-            task->rewardCPF->formula->calculateIntervalDomain(
+            task->rewardCPF->formula->calculateDomainAsInterval(
                     domains, task->actionStates[actionIndex],
                     min, max);
             if (MathUtils::doubleIsSmaller(min, minVal)) {

@@ -19,7 +19,7 @@ using namespace std;
 
 // This constructor is used for instantiation
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
-        std::vector<Parameter*> _params) :
+                                           std::vector<Parameter*> _params) :
     LogicalExpression(),
     variableName(source.variableName),
     fullName(source.variableName),
@@ -49,8 +49,8 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
 }
 
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
-        std::vector<Parameter*> _params,
-        double _initialValue) :
+                                           std::vector<Parameter*> _params,
+                                           double _initialValue) :
     LogicalExpression(),
     variableName(source.variableName),
     fullName(source.variableName),
@@ -86,7 +86,7 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
 #include "logical_expressions_includes/collect_initial_info.cc"
 #include "logical_expressions_includes/classify_action_fluents.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
-#include "logical_expressions_includes/calculate_interval_domain.cc"
+#include "logical_expressions_includes/calculate_domain_as_interval.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/evaluate_to_pd.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
