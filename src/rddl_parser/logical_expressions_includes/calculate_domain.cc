@@ -1,4 +1,4 @@
-void LogicalExpression::calculateDomain(vector<set<double> > const& /*domains*/,
+void LogicalExpression::calculateDomain(Domains const& /*domains*/,
         ActionState const& /*actions*/,
         set<double>& /*res*/) {
     assert(false);
@@ -8,7 +8,7 @@ void LogicalExpression::calculateDomain(vector<set<double> > const& /*domains*/,
                            Atomics
 *****************************************************************/
 
-void StateFluent::calculateDomain(vector<set<double> > const& domains,
+void StateFluent::calculateDomain(Domains const& domains,
         ActionState const& /*actions*/,
         set<double>& res) {
     assert(res.empty());
@@ -17,7 +17,7 @@ void StateFluent::calculateDomain(vector<set<double> > const& domains,
     res.insert(domains[index].begin(), domains[index].end());
 }
 
-void ActionFluent::calculateDomain(vector<set<double> > const& /*domains*/,
+void ActionFluent::calculateDomain(Domains const& /*domains*/,
         ActionState const& actions,
         set<double>& res) {
     assert(res.empty());
@@ -25,7 +25,7 @@ void ActionFluent::calculateDomain(vector<set<double> > const& /*domains*/,
     res.insert(actions[index]);
 }
 
-void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/,
+void NumericConstant::calculateDomain(Domains const& /*domains*/,
         ActionState const& /*actions*/,
         set<double>& res) {
     assert(res.empty());
@@ -36,7 +36,7 @@ void NumericConstant::calculateDomain(vector<set<double> > const& /*domains*/,
                            Connectives
 *****************************************************************/
 
-void Conjunction::calculateDomain(vector<set<double> > const& domains,
+void Conjunction::calculateDomain(Domains const& domains,
         ActionState const& actions, set<double>& res) {
     assert(res.empty());
 
@@ -64,7 +64,7 @@ void Conjunction::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void Disjunction::calculateDomain(vector<set<double> > const& domains,
+void Disjunction::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(res.empty());
@@ -96,7 +96,7 @@ void Disjunction::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void EqualsExpression::calculateDomain(vector<set<double> > const& domains,
+void EqualsExpression::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -125,7 +125,7 @@ void EqualsExpression::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void GreaterExpression::calculateDomain(vector<set<double> > const& domains,
+void GreaterExpression::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -148,7 +148,7 @@ void GreaterExpression::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void LowerExpression::calculateDomain(vector<set<double> > const& domains,
+void LowerExpression::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -170,7 +170,7 @@ void LowerExpression::calculateDomain(vector<set<double> > const& domains,
 }
 
 void GreaterEqualsExpression::calculateDomain(
-        vector<set<double> > const& domains, ActionState const& actions,
+        Domains const& domains, ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
@@ -190,7 +190,7 @@ void GreaterEqualsExpression::calculateDomain(
     }
 }
 
-void LowerEqualsExpression::calculateDomain(vector<set<double> > const& domains,
+void LowerEqualsExpression::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -211,7 +211,7 @@ void LowerEqualsExpression::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void Addition::calculateDomain(vector<set<double> > const& domains,
+void Addition::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(res.empty());
@@ -234,7 +234,7 @@ void Addition::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void Subtraction::calculateDomain(vector<set<double> > const& domains,
+void Subtraction::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -253,7 +253,7 @@ void Subtraction::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void Multiplication::calculateDomain(vector<set<double> > const& domains,
+void Multiplication::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(res.empty());
@@ -277,7 +277,7 @@ void Multiplication::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void Division::calculateDomain(vector<set<double> > const& domains,
+void Division::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     assert(exprs.size() == 2);
@@ -300,7 +300,7 @@ void Division::calculateDomain(vector<set<double> > const& domains,
                           Unaries
 *****************************************************************/
 
-void Negation::calculateDomain(vector<set<double> > const& domains,
+void Negation::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     set<double> tmp;
@@ -314,7 +314,7 @@ void Negation::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void ExponentialFunction::calculateDomain(vector<set<double> > const& domains,
+void ExponentialFunction::calculateDomain(Domains const& domains,
                                           ActionState const& actions,
                                           set<double>& res) {
     set<double> tmp;
@@ -329,7 +329,7 @@ void ExponentialFunction::calculateDomain(vector<set<double> > const& domains,
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::calculateDomain(vector<set<double> > const& domains,
+void BernoulliDistribution::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     set<double> tmp;
@@ -351,7 +351,7 @@ void BernoulliDistribution::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void DiscreteDistribution::calculateDomain(vector<set<double> > const& domains,
+void DiscreteDistribution::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     for (unsigned int i = 0; i < values.size(); ++i) {
@@ -369,7 +369,7 @@ void DiscreteDistribution::calculateDomain(vector<set<double> > const& domains,
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::calculateDomain(vector<set<double> > const& domains,
+void IfThenElseExpression::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     set<double> cond;
@@ -391,7 +391,7 @@ void IfThenElseExpression::calculateDomain(vector<set<double> > const& domains,
     }
 }
 
-void MultiConditionChecker::calculateDomain(vector<set<double> > const& domains,
+void MultiConditionChecker::calculateDomain(Domains const& domains,
         ActionState const& actions,
         set<double>& res) {
     for (unsigned int i = 0; i < conditions.size(); ++i) {

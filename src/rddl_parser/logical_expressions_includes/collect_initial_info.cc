@@ -1,7 +1,7 @@
 void LogicalExpression::collectInitialInfo(
         bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/,
-        set<StateFluent*>& /*dependentStateFluents*/,
-        set<ActionFluent*>& /*dependentActionFluents*/) {
+        StateFluentSet& /*dependentStateFluents*/,
+        ActionFluentSet& /*dependentActionFluents*/) {
     print(cout);
     assert(false);
 }
@@ -12,22 +12,22 @@ void LogicalExpression::collectInitialInfo(
 
 void StateFluent::collectInitialInfo(
         bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& /*dependentActionFluents*/) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& /*dependentActionFluents*/) {
     dependentStateFluents.insert(this);
 }
 
 void ActionFluent::collectInitialInfo(
         bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/,
-        set<StateFluent*>& /*dependentStateFluents*/,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& /*dependentStateFluents*/,
+        ActionFluentSet& dependentActionFluents) {
     dependentActionFluents.insert(this);
 }
 
 void NumericConstant::collectInitialInfo(
         bool& /*isProbabilistic*/, bool& /*containsArithmeticFunction*/,
-        set<StateFluent*>& /*dependentStateFluents*/,
-        set<ActionFluent*>& /*dependentActionFluents*/) {}
+        StateFluentSet& /*dependentStateFluents*/,
+        ActionFluentSet& /*dependentActionFluents*/) {}
 
 /*****************************************************************
                            Connectives
@@ -35,8 +35,8 @@ void NumericConstant::collectInitialInfo(
 
 void Conjunction::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     bool containsArithmetic = false;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -50,8 +50,8 @@ void Conjunction::collectInitialInfo(bool& isProbabilistic,
 
 void Disjunction::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     bool containsArithmetic = false;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -65,8 +65,8 @@ void Disjunction::collectInitialInfo(bool& isProbabilistic,
 
 void EqualsExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     bool containsArithmetic = false;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -80,8 +80,8 @@ void EqualsExpression::collectInitialInfo(
 
 void GreaterExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -92,8 +92,8 @@ void GreaterExpression::collectInitialInfo(
 
 void LowerExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -104,8 +104,8 @@ void LowerExpression::collectInitialInfo(
 
 void GreaterEqualsExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -117,8 +117,8 @@ void GreaterEqualsExpression::collectInitialInfo(
 
 void LowerEqualsExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -130,8 +130,8 @@ void LowerEqualsExpression::collectInitialInfo(
 
 void Addition::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -143,8 +143,8 @@ void Addition::collectInitialInfo(bool& isProbabilistic,
 
 void Subtraction::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -156,8 +156,8 @@ void Subtraction::collectInitialInfo(bool& isProbabilistic,
 
 void Multiplication::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -169,8 +169,8 @@ void Multiplication::collectInitialInfo(
 
 void Division::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->collectInitialInfo(isProbabilistic,
                 containsArithmeticFunction, dependentStateFluents,
@@ -186,8 +186,8 @@ void Division::collectInitialInfo(bool& isProbabilistic,
 
 void Negation::collectInitialInfo(bool& isProbabilistic,
         bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     expr->collectInitialInfo(isProbabilistic, containsArithmeticFunction,
             dependentStateFluents,
             dependentActionFluents);
@@ -195,8 +195,8 @@ void Negation::collectInitialInfo(bool& isProbabilistic,
 
 void ExponentialFunction::collectInitialInfo(bool& isProbabilistic,
                                              bool& containsArithmeticFunction,
-                                             set<StateFluent*>& dependentStateFluents,
-                                             set<ActionFluent*>& dependentActionFluents) {
+                                             StateFluentSet& dependentStateFluents,
+                                             ActionFluentSet& dependentActionFluents) {
     expr->collectInitialInfo(isProbabilistic,
                              containsArithmeticFunction,
                              dependentStateFluents,
@@ -211,8 +211,8 @@ void ExponentialFunction::collectInitialInfo(bool& isProbabilistic,
 
 void BernoulliDistribution::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     expr->collectInitialInfo(isProbabilistic, containsArithmeticFunction,
             dependentStateFluents,
             dependentActionFluents);
@@ -221,8 +221,8 @@ void BernoulliDistribution::collectInitialInfo(
 
 void DiscreteDistribution::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     for (unsigned int i = 0; i < probabilities.size(); ++i) {
         bool containsArithmetic = false;
@@ -247,8 +247,8 @@ void DiscreteDistribution::collectInitialInfo(
 
 void IfThenElseExpression::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     bool containsArithmetic = false;
 
@@ -273,8 +273,8 @@ void IfThenElseExpression::collectInitialInfo(
 
 void MultiConditionChecker::collectInitialInfo(
         bool& isProbabilistic, bool& containsArithmeticFunction,
-        set<StateFluent*>& dependentStateFluents,
-        set<ActionFluent*>& dependentActionFluents) {
+        StateFluentSet& dependentStateFluents,
+        ActionFluentSet& dependentActionFluents) {
     containsArithmeticFunction = false;
     bool containsArithmetic = false;
 

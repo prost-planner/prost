@@ -50,27 +50,25 @@ void PlanningTask::addType(string const& name, string const& superType) {
 }
 
 void PlanningTask::addObject(string const& typeName,
-        string const& objectName) {
+                             string const& objectName) {
     if (types.find(typeName) == types.end()) {
         SystemUtils::abort("Error: Type " + typeName + " not defined.");
     }
 
     if (objects.find(objectName) != objects.end()) {
         SystemUtils::abort(
-                "Error: Object name " + objectName + " is ambiguous.");
+            "Error: Object name " + objectName + " is ambiguous.");
     }
 
     Type* type = types[typeName];
-
     Object* object = new Object(objectName, type);
-    objects[objectName] = object;
 
-    do {
+    objects[objectName] = object;
+    while (type) {
         object->types.push_back(type);
-        object->values.push_back(type->objects.size());
         type->objects.push_back(object);
         type = type->superType;
-    } while (type);
+    }
 }
 
 void PlanningTask::addVariableDefinition(ParametrizedVariable* varDef) {

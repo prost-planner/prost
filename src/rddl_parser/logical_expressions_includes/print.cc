@@ -45,12 +45,7 @@ void NumericConstant::print(ostream& out) const {
 }
 
 void Object::print(ostream& out) const {
-    if (types.size() != 1) {
-        SystemUtils::abort("Implement object fluents in print.cc");
-    }
-    assert(values[0] < types[0]->objects.size());
-    assert(name == types[0]->objects[values[0]]->name);
-    out << name << "(" << values[0] << ") ";
+    out << name << "(" << value << ") ";
 }
 
 /*****************************************************************

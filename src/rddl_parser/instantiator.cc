@@ -59,7 +59,7 @@ void Instantiator::instantiateCPFs() {
 }
 
 void Instantiator::instantiateCPF(ParametrizedVariable* head,
-        LogicalExpression* formula) {
+                                  LogicalExpression* formula) {
     map<string, Object*> quantifierReplacements;
     formula = formula->replaceQuantifier(quantifierReplacements, this);
 
@@ -93,8 +93,9 @@ void Instantiator::instantiateSACs() {
 }
 
 void Instantiator::instantiateParams(vector<Parameter*> params,
-        vector<vector<Parameter*> >& result, vector<Parameter*> addTo,
-        int indexToProcess) {
+                                     vector<vector<Parameter*> >& result,
+                                     vector<Parameter*> addTo,
+                                     int indexToProcess) {
     assert(indexToProcess < params.size());
 
     int nextIndex = indexToProcess + 1;

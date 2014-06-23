@@ -1,6 +1,6 @@
 void LogicalExpression::classifyActionFluents(
-        set<ActionFluent*>& /*positiveDependentActionFluents*/,
-        set<ActionFluent*>& /*negativeDependentActionFluents*/) {
+        ActionFluentSet& /*positive*/,
+        ActionFluentSet& /*negative*/) {
     print(cout);
     assert(false);
     SystemUtils::abort(
@@ -12,111 +12,111 @@ void LogicalExpression::classifyActionFluents(
 *****************************************************************/
 
 void StateFluent::classifyActionFluents(
-        set<ActionFluent*>& /*positiveDependentActionFluents*/,
-        set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
+        ActionFluentSet& /*positive*/,
+        ActionFluentSet& /*negative*/) {}
 
 void ActionFluent::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& /*negativeDependentActionFluents*/) {
-    positiveDependentActionFluents.insert(this);
+        ActionFluentSet& positive,
+        ActionFluentSet& /*negative*/) {
+    positive.insert(this);
 }
 
 void NumericConstant::classifyActionFluents(
-        set<ActionFluent*>& /*positiveDependentActionFluents*/,
-        set<ActionFluent*>& /*negativeDependentActionFluents*/) {}
+        ActionFluentSet& /*positive*/,
+        ActionFluentSet& /*negative*/) {}
 
 /*****************************************************************
                            Connectives
 *****************************************************************/
 
 void Connective::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->classifyActionFluents(positiveDependentActionFluents,
-                negativeDependentActionFluents);
+        exprs[i]->classifyActionFluents(positive,
+                negative);
     }
 }
 
 void EqualsExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> fluents;
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
     // All actions depend positively and negatively
-    positiveDependentActionFluents.insert(fluents.begin(), fluents.end());
-    negativeDependentActionFluents.insert(fluents.begin(), fluents.end());
+    positive.insert(fluents.begin(), fluents.end());
+    negative.insert(fluents.begin(), fluents.end());
 }
 
 void GreaterExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> fluents;
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
     // All actions depend positively and negatively
-    positiveDependentActionFluents.insert(fluents.begin(), fluents.end());
-    negativeDependentActionFluents.insert(fluents.begin(), fluents.end());
+    positive.insert(fluents.begin(), fluents.end());
+    negative.insert(fluents.begin(), fluents.end());
 }
 
 void LowerExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> fluents;
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
     // All actions depend positively and negatively
-    positiveDependentActionFluents.insert(fluents.begin(), fluents.end());
-    negativeDependentActionFluents.insert(fluents.begin(), fluents.end());
+    positive.insert(fluents.begin(), fluents.end());
+    negative.insert(fluents.begin(), fluents.end());
 }
 
 void GreaterEqualsExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> fluents;
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
     // All actions depend positively and negatively
-    positiveDependentActionFluents.insert(fluents.begin(), fluents.end());
-    negativeDependentActionFluents.insert(fluents.begin(), fluents.end());
+    positive.insert(fluents.begin(), fluents.end());
+    negative.insert(fluents.begin(), fluents.end());
 }
 
 void LowerEqualsExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> fluents;
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
     // All actions depend positively and negatively
-    positiveDependentActionFluents.insert(fluents.begin(), fluents.end());
-    negativeDependentActionFluents.insert(fluents.begin(), fluents.end());
+    positive.insert(fluents.begin(), fluents.end());
+    negative.insert(fluents.begin(), fluents.end());
 }
 
 void Subtraction::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
-    exprs[0]->classifyActionFluents(positiveDependentActionFluents,
-            negativeDependentActionFluents);
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
+    exprs[0]->classifyActionFluents(positive,
+            negative);
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         // Negative and positive are reversed for all elements besides the first
-        exprs[1]->classifyActionFluents(negativeDependentActionFluents,
-                positiveDependentActionFluents);
+        exprs[1]->classifyActionFluents(negative,
+                positive);
     }
 }
 
 void Multiplication::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
     assert(exprs.size() == 2);
 
-    set<ActionFluent*> tmpPos0;
-    set<ActionFluent*> tmpNeg0;
+    ActionFluentSet tmpPos0;
+    ActionFluentSet tmpNeg0;
     exprs[0]->classifyActionFluents(tmpPos0, tmpNeg0);
 
-    set<ActionFluent*> tmpPos1;
-    set<ActionFluent*> tmpNeg1;
+    ActionFluentSet tmpPos1;
+    ActionFluentSet tmpNeg1;
     exprs[1]->classifyActionFluents(tmpPos1, tmpNeg1);
 
     NumericConstant* tmp0 = dynamic_cast<NumericConstant*>(exprs[0]);
@@ -130,35 +130,35 @@ void Multiplication::classifyActionFluents(
          MathUtils::doubleIsGreaterOrEqual(tmp0->value,
                  0.0)) ||
         (tmp1 && MathUtils::doubleIsGreaterOrEqual(tmp1->value, 0.0))) {
-        positiveDependentActionFluents.insert(tmpPos0.begin(), tmpPos0.end());
-        positiveDependentActionFluents.insert(tmpPos1.begin(), tmpPos1.end());
+        positive.insert(tmpPos0.begin(), tmpPos0.end());
+        positive.insert(tmpPos1.begin(), tmpPos1.end());
 
-        negativeDependentActionFluents.insert(tmpNeg0.begin(), tmpNeg0.end());
-        negativeDependentActionFluents.insert(tmpNeg1.begin(), tmpNeg1.end());
+        negative.insert(tmpNeg0.begin(), tmpNeg0.end());
+        negative.insert(tmpNeg1.begin(), tmpNeg1.end());
     } else if (tmp0) {
         assert(MathUtils::doubleIsSmaller(tmp0->value, 0.0));
         assert(tmpPos0.empty() && tmpNeg0.empty());
-        positiveDependentActionFluents.insert(tmpNeg1.begin(), tmpNeg1.end());
-        negativeDependentActionFluents.insert(tmpPos1.begin(), tmpPos1.end());
+        positive.insert(tmpNeg1.begin(), tmpNeg1.end());
+        negative.insert(tmpPos1.begin(), tmpPos1.end());
     } else {
         assert(tmp1 && MathUtils::doubleIsSmaller(tmp1->value, 0.0));
         assert(tmpPos1.empty() && tmpNeg1.empty());
-        positiveDependentActionFluents.insert(tmpNeg0.begin(), tmpNeg0.end());
-        negativeDependentActionFluents.insert(tmpPos0.begin(), tmpPos0.end());
+        positive.insert(tmpNeg0.begin(), tmpNeg0.end());
+        negative.insert(tmpPos0.begin(), tmpPos0.end());
     }
 }
 
 void Division::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
     assert(exprs.size() == 2);
 
-    set<ActionFluent*> tmpPos0;
-    set<ActionFluent*> tmpNeg0;
+    ActionFluentSet tmpPos0;
+    ActionFluentSet tmpNeg0;
     exprs[0]->classifyActionFluents(tmpPos0, tmpNeg0);
 
-    set<ActionFluent*> tmpPos1;
-    set<ActionFluent*> tmpNeg1;
+    ActionFluentSet tmpPos1;
+    ActionFluentSet tmpNeg1;
     exprs[1]->classifyActionFluents(tmpPos1, tmpNeg1);
 
     NumericConstant* tmp0 = dynamic_cast<NumericConstant*>(exprs[0]);
@@ -172,21 +172,21 @@ void Division::classifyActionFluents(
          MathUtils::doubleIsGreaterOrEqual(tmp0->value,
                  0.0)) ||
         (tmp1 && MathUtils::doubleIsGreaterOrEqual(tmp1->value, 0.0))) {
-        positiveDependentActionFluents.insert(tmpPos0.begin(), tmpPos0.end());
-        positiveDependentActionFluents.insert(tmpPos1.begin(), tmpPos1.end());
+        positive.insert(tmpPos0.begin(), tmpPos0.end());
+        positive.insert(tmpPos1.begin(), tmpPos1.end());
 
-        negativeDependentActionFluents.insert(tmpNeg0.begin(), tmpNeg0.end());
-        negativeDependentActionFluents.insert(tmpNeg1.begin(), tmpNeg1.end());
+        negative.insert(tmpNeg0.begin(), tmpNeg0.end());
+        negative.insert(tmpNeg1.begin(), tmpNeg1.end());
     } else if (tmp0) {
         assert(MathUtils::doubleIsSmaller(tmp0->value, 0.0));
         assert(tmpPos0.empty() && tmpNeg0.empty());
-        positiveDependentActionFluents.insert(tmpNeg1.begin(), tmpNeg1.end());
-        negativeDependentActionFluents.insert(tmpPos1.begin(), tmpPos1.end());
+        positive.insert(tmpNeg1.begin(), tmpNeg1.end());
+        negative.insert(tmpPos1.begin(), tmpPos1.end());
     } else {
         assert(tmp1 && MathUtils::doubleIsSmaller(tmp1->value, 0.0));
         assert(tmpPos1.empty() && tmpNeg1.empty());
-        positiveDependentActionFluents.insert(tmpNeg0.begin(), tmpNeg0.end());
-        negativeDependentActionFluents.insert(tmpPos0.begin(), tmpPos0.end());
+        positive.insert(tmpNeg0.begin(), tmpNeg0.end());
+        negative.insert(tmpPos0.begin(), tmpPos0.end());
     }
 }
 
@@ -195,20 +195,20 @@ void Division::classifyActionFluents(
 *****************************************************************/
 
 void Negation::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set <ActionFluent*>& negativeDependentActionFluents) {
-    set<ActionFluent*> pos;
-    set<ActionFluent*> neg;
+        ActionFluentSet& positive,
+        set <ActionFluent*>& negative) {
+    ActionFluentSet pos;
+    ActionFluentSet neg;
     expr->classifyActionFluents(neg, pos);
-    positiveDependentActionFluents.insert(pos.begin(), pos.end());
-    negativeDependentActionFluents.insert(neg.begin(), neg.end());
+    positive.insert(pos.begin(), pos.end());
+    negative.insert(neg.begin(), neg.end());
 }
 
 void ExponentialFunction::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set <ActionFluent*>& negativeDependentActionFluents) {
-    expr->classifyActionFluents(positiveDependentActionFluents,
-                                negativeDependentActionFluents);
+        ActionFluentSet& positive,
+        set <ActionFluent*>& negative) {
+    expr->classifyActionFluents(positive,
+                                negative);
 }
 
 /*****************************************************************
@@ -216,45 +216,45 @@ void ExponentialFunction::classifyActionFluents(
 *****************************************************************/
 
 void IfThenElseExpression::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
     // TODO: For now, to simplify things, all action fluents that occur in the
     // condition are both positive and negative
-    set<ActionFluent*> pos;
-    set<ActionFluent*> neg;
+    ActionFluentSet pos;
+    ActionFluentSet neg;
     condition->classifyActionFluents(pos, neg);
-    positiveDependentActionFluents.insert(pos.begin(), pos.end());
-    negativeDependentActionFluents.insert(neg.begin(), neg.end());
+    positive.insert(pos.begin(), pos.end());
+    negative.insert(neg.begin(), neg.end());
 
     pos.clear();
     neg.clear();
     valueIfTrue->classifyActionFluents(pos, neg);
-    positiveDependentActionFluents.insert(pos.begin(), pos.end());
-    negativeDependentActionFluents.insert(neg.begin(), neg.end());
+    positive.insert(pos.begin(), pos.end());
+    negative.insert(neg.begin(), neg.end());
 
     pos.clear();
     neg.clear();
     valueIfFalse->classifyActionFluents(pos, neg);
-    positiveDependentActionFluents.insert(pos.begin(), pos.end());
-    negativeDependentActionFluents.insert(neg.begin(), neg.end());
+    positive.insert(pos.begin(), pos.end());
+    negative.insert(neg.begin(), neg.end());
 }
 
 void MultiConditionChecker::classifyActionFluents(
-        set<ActionFluent*>& positiveDependentActionFluents,
-        set<ActionFluent*>& negativeDependentActionFluents) {
+        ActionFluentSet& positive,
+        ActionFluentSet& negative) {
     for (unsigned int i = 0; i < conditions.size(); ++i) {
         // TODO: For now, to simplify things, all action fluents that occur in
         // the condition are both positive and negative
-        set<ActionFluent*> pos;
-        set<ActionFluent*> neg;
+        ActionFluentSet pos;
+        ActionFluentSet neg;
         conditions[i]->classifyActionFluents(pos, neg);
-        positiveDependentActionFluents.insert(pos.begin(), pos.end());
-        negativeDependentActionFluents.insert(neg.begin(), neg.end());
+        positive.insert(pos.begin(), pos.end());
+        negative.insert(neg.begin(), neg.end());
 
         pos.clear();
         neg.clear();
         effects[i]->classifyActionFluents(pos, neg);
-        positiveDependentActionFluents.insert(pos.begin(), pos.end());
-        negativeDependentActionFluents.insert(neg.begin(), neg.end());
+        positive.insert(pos.begin(), pos.end());
+        negative.insert(neg.begin(), neg.end());
     }
 }
