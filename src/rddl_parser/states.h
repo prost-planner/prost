@@ -190,6 +190,24 @@ public:
         return state[index];
     }
 
+    bool operator<(ActionState const& other) const {
+        if (state.size() < other.state.size()) {
+            return true;
+        } else if(state.size() > other.state.size()) {
+            return false;
+        }
+
+        for(unsigned int i = 0; i < state.size(); ++i) {
+            if(state[i] < other.state[i]) {
+                return true;
+            } else if(state[i] > other.state[i]) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     std::string getName() const;
 
     std::vector<int> state;

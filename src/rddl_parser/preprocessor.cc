@@ -192,12 +192,59 @@ void Preprocessor::prepareEvaluatables() {
     }
 }
 
+void Preprocessor::removeInapplicableActionFluents(map<int, int>& indexMap) {
+    // Check if there are action fluents that aren't used in any CPF or SAC
+    vector<bool> fluentIsUsed(task->actionFluents.size(), 0);
+
+    for (unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
+        for (set<ActionFluent*>::const_iterator it = task->dynamicSACs[i]->dependentActionFluents.begin();
+            it != task->dynamicSACs[i]->dependentActionFluents.end(); ++it) {
+            fluentIsUsed[(*it)->index] = 1;
+        }
+    }
+
+    for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
+        for (set<ActionFluent*>::const_iterator it = task->CPFs[i]->dependentActionFluents.begin();
+            it != task->CPFs[i]->dependentActionFluents.end(); ++it) {
+            fluentIsUsed[(*it)->index] = 1;
+        }
+    }
+
+    for (set<ActionFluent*>::const_iterator it = task->rewardCPF->dependentActionFluents.begin();
+        it != task->rewardCPF->dependentActionFluents.end(); ++it) {
+        fluentIsUsed[(*it)->index] = 1;
+    }
+
+    vector<ActionFluent*> tmpActFluents = task->actionFluents;
+    task->actionFluents.clear();
+
+    int newIndex = 0;
+    for (unsigned int i = 0; i < fluentIsUsed.size(); ++i) {
+        assert(tmpActFluents[i]->index == i);
+        if(fluentIsUsed[i]) {
+            task->actionFluents.push_back(tmpActFluents[i]);
+            tmpActFluents[i]->index = newIndex;
+            indexMap[newIndex] = i;
+            ++newIndex;
+        }
+    }
+}
+
 void Preprocessor::prepareActions() {
+    // Assign initial indices to the action fluents
+    for (unsigned int i = 0; i < task->actionFluents.size(); ++i) {
+        task->actionFluents[i]->index = i;
+    }
+
+    // Remove action fluents that are never reasonable
+    map<int, int> indexMap;
+    removeInapplicableActionFluents(indexMap);
+
     // Check if there are action fluents that can never be set to a nondefault
     // value due to a primitive static SAC (i.e., an action precondition of the
     // form ~a).
-    map<ParametrizedVariable*, double> replacements;
     vector<ActionFluent*> finalActionFluents;
+    map<ParametrizedVariable*, double> replacements;
 
     if(task->primitiveStaticSACs.empty()) {
         finalActionFluents = task->actionFluents;
@@ -547,6 +594,40 @@ void Preprocessor::finalizeEvaluatables() {
     for (unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
         task->dynamicSACs[index]->index = index;
     }
+
+    // Finalize action fluents
+    int numActFluentsBefore = task->actionFluents.size();
+    map<int, int> indexMap;
+    removeInapplicableActionFluents(indexMap);
+
+    if (numActFluentsBefore > task->actionFluents.size()) {
+        // We deleted additional action fluents -> adjust the action states
+        set<ActionState> minimizedActionStates;
+        for(unsigned int i = 0; i < task->actionStates.size(); ++i) {
+            ActionState finalActState(task->actionFluents.size());
+            finalActState.scheduledActionFluents = task->actionStates[i].scheduledActionFluents;
+            finalActState.relevantSACs = task->actionStates[i].relevantSACs;
+
+            for(map<int, int>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
+                finalActState[it->first] = task->actionStates[i][it->second];
+            }
+            minimizedActionStates.insert(finalActState);
+        }
+
+        task->actionStates.clear();
+
+        for (set<ActionState>::iterator it = minimizedActionStates.begin(); it !=  minimizedActionStates.end(); ++it) {
+            task->actionStates.push_back(*it);
+        }
+
+        // Sort action states again for deterministic behaviour
+        sort(task->actionStates.begin(),
+             task->actionStates.end(), ActionState::ActionStateSort());
+
+        for(unsigned int i = 0; i < task->actionStates.size(); ++i) {
+            task->actionStates[i].index = i;
+        }
+    }
 }
 
 /*****************************************************************
@@ -555,7 +636,6 @@ void Preprocessor::finalizeEvaluatables() {
 
 void Preprocessor::determinize() {
     // Calculate determinzation of CPFs.
-
     map<ParametrizedVariable*, double> replacementsDummy;
     for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if(task->CPFs[index]->isProbabilistic()) {
