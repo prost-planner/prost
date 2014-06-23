@@ -25,6 +25,7 @@ private:
 
     void prepareEvaluatables();
     void prepareActions();
+    void removeInapplicableActionFluents(std::map<int, int>& indexMap);
 
     void calcPossiblyLegalActionStates(
             int actionsToSchedule, std::list<std::vector<int> >& result,
