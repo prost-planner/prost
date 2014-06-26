@@ -69,10 +69,9 @@ struct PlanningTask {
 
     // State action constraints
     std::vector<LogicalExpression*> SACs;
-    std::vector<ActionPrecondition*> dynamicSACs;
+    std::vector<ActionPrecondition*> actionPreconds;
     std::vector<ActionPrecondition*> staticSACs;
     std::set<ActionFluent*> primitiveStaticSACs;
-    std::vector<ActionPrecondition*> stateInvariants;
 
     // Instantiated CPFs
     std::vector<ConditionalProbabilityFunction*> CPFs;
@@ -105,11 +104,8 @@ struct PlanningTask {
     std::vector<std::vector<long> > stateHashKeys;
     std::vector<long> kleeneStateHashKeyBases;
 
-    std::vector<std::vector<std::pair<int,
-                                      long> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int,
-                                      long> > >
-    indexToKleeneStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long> > > indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long> > > indexToKleeneStateFluentHashKeyMap;
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;

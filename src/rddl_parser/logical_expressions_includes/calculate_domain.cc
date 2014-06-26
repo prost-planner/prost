@@ -1,6 +1,6 @@
 void LogicalExpression::calculateDomain(Domains const& /*domains*/,
-        ActionState const& /*actions*/,
-        set<double>& /*res*/) {
+                                        ActionState const& /*actions*/,
+                                        set<double>& /*res*/) {
     assert(false);
 }
 
@@ -9,8 +9,8 @@ void LogicalExpression::calculateDomain(Domains const& /*domains*/,
 *****************************************************************/
 
 void StateFluent::calculateDomain(Domains const& domains,
-        ActionState const& /*actions*/,
-        set<double>& res) {
+                                  ActionState const& /*actions*/,
+                                  set<double>& res) {
     assert(res.empty());
     assert(index < domains.size());
     assert(!domains[index].empty());
@@ -18,16 +18,16 @@ void StateFluent::calculateDomain(Domains const& domains,
 }
 
 void ActionFluent::calculateDomain(Domains const& /*domains*/,
-        ActionState const& actions,
-        set<double>& res) {
+                                   ActionState const& actions,
+                                   set<double>& res) {
     assert(res.empty());
     assert(index < actions.state.size());
     res.insert(actions[index]);
 }
 
 void NumericConstant::calculateDomain(Domains const& /*domains*/,
-        ActionState const& /*actions*/,
-        set<double>& res) {
+                                      ActionState const& /*actions*/,
+                                      set<double>& res) {
     assert(res.empty());
     res.insert(value);
 }
@@ -37,7 +37,8 @@ void NumericConstant::calculateDomain(Domains const& /*domains*/,
 *****************************************************************/
 
 void Conjunction::calculateDomain(Domains const& domains,
-        ActionState const& actions, set<double>& res) {
+                                  ActionState const& actions,
+                                  set<double>& res) {
     assert(res.empty());
 
     // This must be true if all variables are true
@@ -65,8 +66,8 @@ void Conjunction::calculateDomain(Domains const& domains,
 }
 
 void Disjunction::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                  ActionState const& actions,
+                                  set<double>& res) {
     assert(res.empty());
 
     // This must be false if all variables are false
@@ -97,8 +98,8 @@ void Disjunction::calculateDomain(Domains const& domains,
 }
 
 void EqualsExpression::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                       ActionState const& actions,
+                                       set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -126,8 +127,8 @@ void EqualsExpression::calculateDomain(Domains const& domains,
 }
 
 void GreaterExpression::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                        ActionState const& actions,
+                                        set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -149,8 +150,8 @@ void GreaterExpression::calculateDomain(Domains const& domains,
 }
 
 void LowerExpression::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                      ActionState const& actions,
+                                      set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -169,9 +170,9 @@ void LowerExpression::calculateDomain(Domains const& domains,
     }
 }
 
-void GreaterEqualsExpression::calculateDomain(
-        Domains const& domains, ActionState const& actions,
-        set<double>& res) {
+void GreaterEqualsExpression::calculateDomain(Domains const& domains,
+                                              ActionState const& actions,
+                                              set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -191,8 +192,8 @@ void GreaterEqualsExpression::calculateDomain(
 }
 
 void LowerEqualsExpression::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                            ActionState const& actions,
+                                            set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -212,8 +213,8 @@ void LowerEqualsExpression::calculateDomain(Domains const& domains,
 }
 
 void Addition::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                               ActionState const& actions,
+                               set<double>& res) {
     assert(res.empty());
     set<double> sums;
     exprs[0]->calculateDomain(domains, actions, sums);
@@ -235,8 +236,8 @@ void Addition::calculateDomain(Domains const& domains,
 }
 
 void Subtraction::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                  ActionState const& actions,
+                                  set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -254,8 +255,8 @@ void Subtraction::calculateDomain(Domains const& domains,
 }
 
 void Multiplication::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                     ActionState const& actions,
+                                     set<double>& res) {
     assert(res.empty());
     set<double> prods;
     exprs[0]->calculateDomain(domains, actions, prods);
@@ -278,8 +279,8 @@ void Multiplication::calculateDomain(Domains const& domains,
 }
 
 void Division::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                               ActionState const& actions,
+                               set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -301,8 +302,8 @@ void Division::calculateDomain(Domains const& domains,
 *****************************************************************/
 
 void Negation::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                               ActionState const& actions,
+                               set<double>& res) {
     set<double> tmp;
     expr->calculateDomain(domains, actions, tmp);
 
@@ -330,8 +331,8 @@ void ExponentialFunction::calculateDomain(Domains const& domains,
 *****************************************************************/
 
 void BernoulliDistribution::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                            ActionState const& actions,
+                                            set<double>& res) {
     set<double> tmp;
     expr->calculateDomain(domains, actions, tmp);
 
@@ -352,8 +353,8 @@ void BernoulliDistribution::calculateDomain(Domains const& domains,
 }
 
 void DiscreteDistribution::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                           ActionState const& actions,
+                                           set<double>& res) {
     for (unsigned int i = 0; i < values.size(); ++i) {
         set<double> probs;
         probabilities[i]->calculateDomain(domains, actions, probs);
@@ -370,8 +371,8 @@ void DiscreteDistribution::calculateDomain(Domains const& domains,
 *****************************************************************/
 
 void IfThenElseExpression::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                           ActionState const& actions,
+                                           set<double>& res) {
     set<double> cond;
     condition->calculateDomain(domains, actions, cond);
     if (cond.size() > 1) {
@@ -392,8 +393,8 @@ void IfThenElseExpression::calculateDomain(Domains const& domains,
 }
 
 void MultiConditionChecker::calculateDomain(Domains const& domains,
-        ActionState const& actions,
-        set<double>& res) {
+                                            ActionState const& actions,
+                                            set<double>& res) {
     for (unsigned int i = 0; i < conditions.size(); ++i) {
         set<double> cond;
         conditions[i]->calculateDomain(domains, actions, cond);

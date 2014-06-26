@@ -73,16 +73,7 @@ public:
     Type* superType;
     std::vector<Object*> objects;
 
-    bool isSubtypeOf(Type* const& other) const {
-        Type const* comp = this;
-        while (comp) {
-            if (other == comp) {
-                return true;
-            }
-            comp = comp->superType;
-        }
-        return false;
-    }
+    bool isSubtypeOf(Type* const& other) const;
 };
 
 // We need Parameter and Object as LogicalExpressions because of
@@ -116,12 +107,7 @@ public:
 
 class Object : public Parameter {
 public:
-    Object(std::string _name, Type* _type) :
-        Parameter(_name, _type), types() {
-        static double objectID = 0.0;
-        value = objectID;
-        objectID += 1.0;
-    }
+    Object(std::string _name, Type* _type);
     ~Object() {}
 
     std::vector<Type*> types;

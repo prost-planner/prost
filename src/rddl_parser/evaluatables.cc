@@ -19,8 +19,8 @@ void Evaluatable::initialize() {
     dependentActionFluents.clear();
 
     formula->collectInitialInfo(isProb, hasArithmeticFunction,
-            dependentStateFluents,
-            dependentActionFluents);
+                                dependentStateFluents,
+                                dependentActionFluents);
 }
 
 void ActionPrecondition::initialize() {
@@ -30,7 +30,7 @@ void ActionPrecondition::initialize() {
     negativeActionDependencies.clear();
 
     formula->classifyActionFluents(positiveActionDependencies,
-            negativeActionDependencies);
+                                   negativeActionDependencies);
 }
 
 void RewardFunction::initialize() {
@@ -40,7 +40,7 @@ void RewardFunction::initialize() {
     negativeActionDependencies.clear();
 
     formula->classifyActionFluents(positiveActionDependencies,
-            negativeActionDependencies);
+                                   negativeActionDependencies);
 
     // cout << "Action fluents: " << endl;
     // for(set<ActionFluent*>::iterator it = dependentActionFluents.begin(); it != dependentActionFluents.end(); ++it) {
@@ -70,22 +70,21 @@ void Evaluatable::simplify(map<ParametrizedVariable*, double>& replacements) {
 void Evaluatable::initializeHashKeys(PlanningTask* task) {
     assert(hashIndex >= 0);
 
-    long firstStateFluentHashKeyBase = initializeActionHashKeys(
-            task->actionStates);
-    initializeStateFluentHashKeys(task, firstStateFluentHashKeyBase);
-    initializeKleeneStateFluentHashKeys(task, firstStateFluentHashKeyBase);
+    long baseKey = initializeActionHashKeys(task->actionStates);
+    initializeStateFluentHashKeys(task, baseKey);
+    initializeKleeneStateFluentHashKeys(task, baseKey);
 }
 
 long Evaluatable::initializeActionHashKeys(
         vector<ActionState> const& actionStates) {
-    long firstStateFluentHashKeyBase = 1;
+    long baseKey = 1;
     actionHashKeyMap = vector<long>(actionStates.size(), 0);
     bool dependsOnAllActions = true;
     for (unsigned int actionIndex = 0; actionIndex < actionStates.size();
          ++actionIndex) {
-        dependsOnAllActions &= calculateActionHashKey(
-                actionStates, actionStates[actionIndex],
-                firstStateFluentHashKeyBase);
+        dependsOnAllActions &= calculateActionHashKey(actionStates,
+                                                      actionStates[actionIndex],
+                                                      baseKey);
     }
     if (dependsOnAllActions) {
         // If an action hash key is assigned to all actions, the key '0' is
@@ -96,14 +95,14 @@ long Evaluatable::initializeActionHashKeys(
             assert(actionHashKeyMap[i] > 0);
             --actionHashKeyMap[i];
         }
-        --firstStateFluentHashKeyBase;
+        --baseKey;
     }
-    return firstStateFluentHashKeyBase;
+    return baseKey;
 }
 
-bool Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates,
-                                         ActionState const& action,
-                                         long& nextKey) {
+bool Evaluatable::calculateActionHashKey(
+        vector<ActionState> const& actionStates, ActionState const& action,
+        long& nextKey) {
     vector<ActionFluent*> depActs;
     for (unsigned int i = 0; i < action.scheduledActionFluents.size(); ++i) {
         if (dependentActionFluents.find(action.scheduledActionFluents[i]) !=
@@ -133,7 +132,7 @@ bool Evaluatable::calculateActionHashKey(vector<ActionState> const& actionStates
 }
 
 long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates,
-        vector<ActionFluent*>& scheduledActions) {
+                                   vector<ActionFluent*>& scheduledActions) {
     for (unsigned int i = 0; i < actionStates.size(); ++i) {
         if (actionStates[i].scheduledActionFluents == scheduledActions) {
             return actionHashKeyMap[i];
@@ -142,38 +141,40 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates,
     return -1;
 }
 
-void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase) {
-    long nextHashKeyBase = firstStateFluentHashKeyBase;
+void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
+                                                long const& baseKey) {
+    long nextHashKeyBase = baseKey;
 
     // We use this to store the state fluent update rules temporary as it is
     // possible that this evaluatable cannot use caching. This evaluatable
-    // depends on the variables tmpStateFluentDependencies[i].first, and its
-    // StateFluentHashKey is thereby increased by that variable's value
-    // multiplied with tmpStateFluentDependencies[i].second
-    vector<pair<int, long> > tmpStateFluentDependencies;
+    // depends on the variables tmpHashMap[i].first, and its StateFluentHashKey
+    // is thereby increased by that variable's value multiplied with
+    // tmpHashMap[i].second
+    vector<pair<int, long> > tmpHashMap;
 
     // We iterate over the CPFs instead of directly over the
     // dependentStateFluents vector as we have to access the CPF objects
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (dependentStateFluents.find(task->CPFs[index]->head) !=
             dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair(index,
-                            nextHashKeyBase));
+            tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if (!task->CPFs[index]->hasFiniteDomain() ||
                 !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                        task->CPFs[index]->getDomainSize())) {
+                                                      task->CPFs[index]->getDomainSize())) {
                 cachingType = "NONE";
                 return;
             }
         }
     }
 
-    for (unsigned int index = 0; index < tmpStateFluentDependencies.size();
-         ++index) {
-        task->indexToStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].
-        push_back(make_pair(hashIndex, tmpStateFluentDependencies[index].second));
-        stateFluentHashKeyBases.push_back(tmpStateFluentDependencies[index]);
+    vector<vector<pair<int, long> > >& hashMap =
+        task->indexToStateFluentHashKeyMap;
+
+    for (unsigned int index = 0; index < tmpHashMap.size(); ++index) {
+        hashMap[tmpHashMap[index].first].push_back(
+            make_pair(hashIndex, tmpHashMap[index].second));
+        stateFluentHashKeyBases.push_back(tmpHashMap[index]);
     }
 
     // TODO: Make sure this number makes sense
@@ -188,37 +189,39 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task, long const& 
     }
 }
 
-void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase) {
-    long nextHashKeyBase = firstStateFluentHashKeyBase;
+void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task,
+                                                      long const& baseKey) {
+    long nextHashKeyBase = baseKey;
 
     // We use this to store the state fluent update rules temporary as it is
     // possible that this evaluatable cannot use caching. This evaluatable
-    // depends on the variables tmpStateFluentDependencies[i].first, and its
+    // depends on the variables tmpHashMap[i].first, and its
     // KleeneStateFluentHashKey is thereby increased by that variable's value
-    // multiplied with tmpStateFluentDependencies[i].second
-    vector<pair<int, long> > tmpStateFluentDependencies;
+    // multiplied with tmpHashMap[i].second
+    vector<pair<int, long> > tmpHashMap;
 
     // We iterate over the CPFs instead of directly over the
     // dependentStateFluents vector as we have to access the CPF objects
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (dependentStateFluents.find(task->CPFs[index]->head) !=
             dependentStateFluents.end()) {
-            tmpStateFluentDependencies.push_back(make_pair(index,
-                            nextHashKeyBase));
+            tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if ((task->CPFs[index]->kleeneDomainSize == 0) ||
                 !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                        task->CPFs[index]->kleeneDomainSize)) {
+                                                      task->CPFs[index]->kleeneDomainSize)) {
                 kleeneCachingType = "NONE";
                 return;
             }
         }
     }
 
-    for (unsigned int index = 0; index < tmpStateFluentDependencies.size();
-         ++index) {
-        task->indexToKleeneStateFluentHashKeyMap[tmpStateFluentDependencies[index].first].push_back(
-						make_pair(hashIndex, tmpStateFluentDependencies[index].second));
+    vector<vector<pair<int, long> > >& hashMap =
+        task->indexToKleeneStateFluentHashKeyMap;
+
+    for (unsigned int index = 0; index < tmpHashMap.size(); ++index) {
+        hashMap[tmpHashMap[index].first].push_back(
+            make_pair(hashIndex, tmpHashMap[index].second));
     }
 
     // TODO: Make sure this number makes sense

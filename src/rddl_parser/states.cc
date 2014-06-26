@@ -12,6 +12,13 @@ State::State(vector<ConditionalProbabilityFunction*> const& cpfs) {
     }
 }
 
+void State::print(ostream& out) const {
+    for (unsigned int index = 0; index < state.size(); ++index) {
+        out << state[index] << " ";
+    }
+    out << endl;
+}
+
 string ActionState::getName() const {
     if (scheduledActionFluents.empty()) {
         return "noop";
@@ -21,4 +28,11 @@ string ActionState::getName() const {
         name << scheduledActionFluents[i]->fullName << " ";
     }
     return name.str();
+}
+
+void ActionState::print(ostream& out) const {
+    for (unsigned int index = 0; index < state.size(); ++index) {
+        out << state[index] << " ";
+    }
+    out << endl;
 }

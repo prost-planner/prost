@@ -34,6 +34,8 @@ struct State {
         return state[index];
     }
 
+    void print(std::ostream& out) const;
+
     struct StateSort {
         bool operator()(State const& lhs, State const& rhs) const {
             assert(lhs.state.size() == rhs.state.size());
@@ -207,6 +209,8 @@ public:
 
         return false;
     }
+
+    void print(std::ostream& out) const;
 
     std::string getName() const;
 

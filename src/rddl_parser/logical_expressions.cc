@@ -17,6 +17,18 @@ using namespace std;
                         Constructors
 *****************************************************************/
 
+Object::Object(std::string _name, Type* _type) :
+        Parameter(_name, _type), types() {
+    Type* tmpType = type;
+
+    while (tmpType) {
+        types.push_back(tmpType);
+        value = tmpType->objects.size();
+        tmpType->objects.push_back(this);
+        tmpType = tmpType->superType;
+    }
+}
+
 // This constructor is used for instantiation
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
                                            std::vector<Parameter*> _params) :
@@ -77,6 +89,17 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
         }
         fullName += ")";
     }
+}
+
+bool Type::isSubtypeOf(Type* const& other) const {
+    Type const* comp = this;
+    while (comp) {
+        if (other == comp) {
+            return true;
+        }
+        comp = comp->superType;
+    }
+    return false;
 }
 
 #include "logical_expressions_includes/instantiate.cc"

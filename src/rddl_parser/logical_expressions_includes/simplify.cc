@@ -532,7 +532,7 @@ LogicalExpression* IfThenElseExpression::simplify(Simplifications& replace) {
     MultiConditionChecker* elseMCC =
         dynamic_cast<MultiConditionChecker*>(newValueIfFalse);
 
-    if (thenIf || elseIf || elseMCC) {
+    if (thenIf || thenMCC || elseIf || elseMCC) {
         vector<LogicalExpression*> conditions;
         vector<LogicalExpression*> effects;
 

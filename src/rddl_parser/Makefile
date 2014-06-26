@@ -132,10 +132,10 @@ clean:
 	rm -rf ../../coverage/rddl_parser
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f ../test/rddl_parser/*.o
-	rm -f ../test/rddl_parser/*.obj
+	rm -f ../test/parser/*.o
+	rm -f ../test/parser/*.obj
 	find . -name "*.crusty" -type f -delete
-	find ../test/rddl_parser -name "*.crusty" -type f -delete
+	find ../test/parser -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)

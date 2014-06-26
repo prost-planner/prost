@@ -80,13 +80,14 @@ struct Evaluatable {
     void initializeHashKeys(PlanningTask* task);
     long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
     bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
-            ActionState const& action,
-            long& nextKey);
+                                ActionState const& action,
+                                long& nextKey);
     long getActionHashKey(std::vector<ActionState> const& actionStates,
-            std::vector<ActionFluent*>& scheduledActions);
+                          std::vector<ActionFluent*>& scheduledActions);
 
-    void initializeStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase);
-    void initializeKleeneStateFluentHashKeys(PlanningTask* task, long const& firstStateFluentHashKeyBase);
+    void initializeStateFluentHashKeys(PlanningTask* task, long const& baseKey);
+    void initializeKleeneStateFluentHashKeys(PlanningTask* task,
+                                             long const& baseKey);
 };
 
 struct ActionPrecondition : public Evaluatable {
@@ -136,13 +137,13 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     // deterministic behaviour
     struct TransitionFunctionSort {
         bool operator()(ConditionalProbabilityFunction* const& lhs,
-                ConditionalProbabilityFunction* const& rhs) const {
+                        ConditionalProbabilityFunction* const& rhs) const {
             return lhs->name < rhs->name;
         }
     };
 
     ConditionalProbabilityFunction(StateFluent* _head,
-            LogicalExpression* _formula) :
+                                   LogicalExpression* _formula) :
         Evaluatable(_head->fullName, _formula),
         head(_head),
         kleeneDomainSize(0) {}
