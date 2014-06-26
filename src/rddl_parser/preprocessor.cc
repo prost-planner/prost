@@ -21,7 +21,7 @@ void Preprocessor::preprocess() {
     prepareEvaluatables();
     cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
-    
+
     // Create action fluents and calculate legal action states
     cout << "    Preparing actions..." << endl;
     prepareActions();
@@ -84,18 +84,15 @@ void Preprocessor::prepareEvaluatables() {
     bool simplifyAgain = true;
     while (simplifyAgain) {
         simplifyAgain = false;
-        for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
-            task->CPFs[i]->simplify(replacements);
-            NumericConstant* nc =
-                dynamic_cast<NumericConstant*>(task->CPFs[i]->formula);
+        for (ConditionalProbabilityFunction*& cpf : task->CPFs) {
+            cpf->simplify(replacements);
+            NumericConstant* nc = dynamic_cast<NumericConstant*>(cpf->formula);
             if (nc &&
-                MathUtils::doubleIsEqual(task->CPFs[i]->head->initialValue,
-                        nc->value)) {
+                MathUtils::doubleIsEqual(cpf->head->initialValue, nc->value)) {
                 simplifyAgain = true;
-                assert(replacements.find(
-                                task->CPFs[i]->head) == replacements.end());
-                replacements[task->CPFs[i]->head] = nc->value;
-                swap(task->CPFs[i], task->CPFs[task->CPFs.size() - 1]);
+                assert(replacements.find(cpf->head) == replacements.end());
+                replacements[cpf->head] = nc->value;
+                swap(cpf, task->CPFs[task->CPFs.size() - 1]);
                 task->CPFs.pop_back();
                 break;
             }
@@ -107,28 +104,28 @@ void Preprocessor::prepareEvaluatables() {
     task->rewardCPF->simplify(replacements);
 
     // Sort CPFs for deterministic behaviour
-    sort(task->CPFs.begin(),
-            task->CPFs.end(),
-            ConditionalProbabilityFunction::TransitionFunctionSort());
+    sort(task->CPFs.begin(), task->CPFs.end(),
+         ConditionalProbabilityFunction::TransitionFunctionSort());
 
     // Distinguish deterministic and probabilistic CPFs
     vector<ConditionalProbabilityFunction*> detCPFs;
     vector<ConditionalProbabilityFunction*> probCPFs;
-    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        if (task->CPFs[index]->isProbabilistic()) {
-            probCPFs.push_back(task->CPFs[index]);
+    for (ConditionalProbabilityFunction*& cpf : task->CPFs) {
+        if (cpf->isProbabilistic()) {
+            probCPFs.push_back(cpf);
         } else {
-            detCPFs.push_back(task->CPFs[index]);
+            detCPFs.push_back(cpf);
         }
     }
+
+    // Rearrange the CPFs such that the deterministic ones come first
     task->CPFs.clear();
     task->CPFs.insert(task->CPFs.end(), detCPFs.begin(), detCPFs.end());
     task->CPFs.insert(task->CPFs.end(), probCPFs.begin(), probCPFs.end());
 
-    // We set these indices as we have to evaluate formulas in the next step to
-    // determine legal action combinations. These indices are still temporal,
-    // though, as we remove state fluents with a rechable domain that only
-    // includes the initial value later
+    // We set the CPF indices as we have to evaluate formulas in the next step
+    // to determine legal action combinations. The indices are still temporal,
+    // though, as it is possible that we remove additional state fluents later.
     for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
         task->CPFs[i]->setIndex(i);
     }
@@ -160,86 +157,108 @@ void Preprocessor::prepareEvaluatables() {
         // action preconditions, (primitive) static SACs and state invariants
         sac->initialize();
         if (sac->containsStateFluent()) {
-            if (sac->isActionIndependent()) {
-                // An SAC that only contains state fluents represents a state
-                // invariant that must be true in every state.
-                task->stateInvariants.push_back(sac);
-            } else {
-                // An SAC that contain both state and action fluents must be
-                // evaluated like a precondition for actions.
-                sac->index = task->dynamicSACs.size();
-                task->dynamicSACs.push_back(sac);
+            // An SAC that contain both state and action fluents is an action
+            // precondition, and an SAC that contains only state fluents is a
+            // state invariant that is ignored in PROST.
+            if (!sac->isActionIndependent()) {
+                sac->index = task->actionPreconds.size();
+                task->actionPreconds.push_back(sac);
             }
     	} else {
             Negation* neg = dynamic_cast<Negation*>(sac->formula);
             if(neg) {
                 ActionFluent* act = dynamic_cast<ActionFluent*>(neg->expr);
                 if(act) {
-                    // This is a "primitive" static action constraint that
-                    // forbids the usage of an action fluent in general. We extract these early
-                    // to make sure that the number of possibly legal action
-                    // states in prepareActions() doesn't become too big.
+                    // This is a "primitive" static action constraint of the
+                    // form "not doSomething(params)", i.e., an sac that forbids
+                    // the usage of an action fluent in general. We extract
+                    // these early to make sure that the number of possibly
+                    // legal action states in prepareActions() doesn't become
+                    // too big.
                     task->primitiveStaticSACs.insert(act);
                 } else {
                     task->staticSACs.push_back(sac);
                 }
             } else {            
-                // An SAC that only contains action fluents is used to statically
-                // forbid action combinations.
+                // An SAC that only contains action fluents is used to
+                // statically forbid action combinations.
                 task->staticSACs.push_back(sac);
             }
         }
     }
 }
 
-void Preprocessor::removeInapplicableActionFluents(map<int, int>& indexMap) {
+void Preprocessor::removeInapplicableActionFluents(bool const& updateActionStates) {
     // Check if there are action fluents that aren't used in any CPF or SAC
-    vector<bool> fluentIsUsed(task->actionFluents.size(), 0);
+    vector<bool> fluentIsUsed(task->actionFluents.size(), false);
 
-    for (unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
-        for (set<ActionFluent*>::const_iterator it = task->dynamicSACs[i]->dependentActionFluents.begin();
-            it != task->dynamicSACs[i]->dependentActionFluents.end(); ++it) {
-            fluentIsUsed[(*it)->index] = 1;
+    for (unsigned int i = 0; i < task->actionPreconds.size(); ++i) {
+        for (set<ActionFluent*>::const_iterator it = task->actionPreconds[i]->dependentActionFluents.begin();
+            it != task->actionPreconds[i]->dependentActionFluents.end(); ++it) {
+            fluentIsUsed[(*it)->index] = true;
+        }
+    }
+
+    for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+        for (set<ActionFluent*>::const_iterator it = task->staticSACs[i]->dependentActionFluents.begin();
+            it != task->staticSACs[i]->dependentActionFluents.end(); ++it) {
+            fluentIsUsed[(*it)->index] = true;
         }
     }
 
     for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
         for (set<ActionFluent*>::const_iterator it = task->CPFs[i]->dependentActionFluents.begin();
             it != task->CPFs[i]->dependentActionFluents.end(); ++it) {
-            fluentIsUsed[(*it)->index] = 1;
+            fluentIsUsed[(*it)->index] = true;
         }
     }
 
     for (set<ActionFluent*>::const_iterator it = task->rewardCPF->dependentActionFluents.begin();
         it != task->rewardCPF->dependentActionFluents.end(); ++it) {
-        fluentIsUsed[(*it)->index] = 1;
+        fluentIsUsed[(*it)->index] = true;
     }
 
-    vector<ActionFluent*> tmpActFluents = task->actionFluents;
+    vector<ActionFluent*> afCopy = task->actionFluents;
     task->actionFluents.clear();
+    int nextIndex = 0;
 
-    int newIndex = 0;
     for (unsigned int i = 0; i < fluentIsUsed.size(); ++i) {
-        assert(tmpActFluents[i]->index == i);
-        if(fluentIsUsed[i]) {
-            task->actionFluents.push_back(tmpActFluents[i]);
-            tmpActFluents[i]->index = newIndex;
-            indexMap[newIndex] = i;
-            ++newIndex;
+        if (fluentIsUsed[i]) {
+            afCopy[i]->index = nextIndex;
+            ++nextIndex;
+
+            task->actionFluents.push_back(afCopy[i]);
         }
+    }
+
+    if(updateActionStates) {
+        set<ActionState> newActionStates;
+        for (unsigned int i = 0; i < task->actionStates.size(); ++i) {
+           ActionState& state = task->actionStates[i];
+           ActionState newState(nextIndex);
+           int newVarIndex = 0;
+
+           assert(fluentIsUsed.size() == state.state.size());
+           for (unsigned int j = 0; j < fluentIsUsed.size(); ++j) {
+               if (fluentIsUsed[j]) {
+                   newState[newVarIndex] = state[j];
+                   ++newVarIndex;
+               }
+           }
+           newActionStates.insert(newState);
+        }
+
+        task->actionStates.clear();
+        task->actionStates.insert(task->actionStates.end(), newActionStates.begin(), newActionStates.end());
+
+        initializeActionStates();
     }
 }
 
 void Preprocessor::prepareActions() {
-    // Assign initial indices to the action fluents
-    for (unsigned int i = 0; i < task->actionFluents.size(); ++i) {
-        task->actionFluents[i]->index = i;
-    }
-
     // Remove action fluents that are never reasonable
-    map<int, int> indexMap;
-    removeInapplicableActionFluents(indexMap);
-
+    removeInapplicableActionFluents(false);
+    
     // Check if there are action fluents that can never be set to a nondefault
     // value due to a primitive static SAC (i.e., an action precondition of the
     // form ~a).
@@ -267,8 +286,8 @@ void Preprocessor::prepareActions() {
 
         task->rewardCPF->simplify(replacements);
 
-        for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
-            task->dynamicSACs[index]->simplify(replacements);
+        for(unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+            task->actionPreconds[index]->simplify(replacements);
             // TODO: What if this became static?
         }
 
@@ -283,7 +302,7 @@ void Preprocessor::prepareActions() {
     // Sort action fluents for deterministic behaviour and assign (possibly
     // temporary) indices
     sort(task->actionFluents.begin(),
-            task->actionFluents.end(), ActionFluent::ActionFluentSort());
+         task->actionFluents.end(), ActionFluent::ActionFluentSort());
     for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
         task->actionFluents[index]->index = index;
     }
@@ -295,16 +314,14 @@ void Preprocessor::prepareActions() {
     // used, this will always produce the power set over all action fluents,
     // which is potentially huge!)
     list<vector<int> > actionCombinations;
-    calcPossiblyLegalActionStates(task->numberOfConcurrentActions,
-            actionCombinations);
+    calcPossiblyLegalActionStates(task->numberOfConcurrentActions, actionCombinations);
 
     State current(task->CPFs);
 
     // Remove all illegal action combinations by checking the SACs that are
     // state independent
     vector<ActionState> legalActionStates;
-    for (list<vector<int> >::iterator it = actionCombinations.begin();
-         it != actionCombinations.end(); ++it) {
+    for (list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
         vector<int>& tmp = *it;
 
         ActionState actionState((int) task->actionFluents.size());
@@ -383,16 +400,20 @@ void Preprocessor::prepareActions() {
 
         task->rewardCPF->simplify(replacements);
 
-        for(unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
-            task->dynamicSACs[index]->index = index;
+        for(unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+            task->actionPreconds[index]->index = index;
         }
     } else {
         task->actionStates = legalActionStates;
     }
 
+    initializeActionStates();
+}
+
+void Preprocessor::initializeActionStates() {
     // Sort action states again for deterministic behaviour
     sort(task->actionStates.begin(),
-            task->actionStates.end(), ActionState::ActionStateSort());
+         task->actionStates.end(), ActionState::ActionStateSort());
 
     // Set inidices and calculate properties of action states
     for (unsigned int i = 0; i < task->actionStates.size(); ++i) {
@@ -407,23 +428,23 @@ void Preprocessor::prepareActions() {
         }
 
         // Determine which dynamic SACs are relevant for this action
-        for (unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
-            if (task->dynamicSACs[i]->containsArithmeticFunction()) {
+        for (unsigned int i = 0; i < task->actionPreconds.size(); ++i) {
+            if (task->actionPreconds[i]->containsArithmeticFunction()) {
                 // If the SAC contains an arithmetic function we treat it as if
                 // it influenced this action. TODO: Implement a function that
                 // checks if it does influence this!
-                actionState.relevantSACs.push_back(task->dynamicSACs[i]);
-            } else if (sacContainsNegativeActionFluent(task->dynamicSACs[i],
+                actionState.relevantSACs.push_back(task->actionPreconds[i]);
+            } else if (sacContainsNegativeActionFluent(task->actionPreconds[i],
                                actionState)) {
                 // If the SAC contains one of this ActionStates' action fluents
                 // negatively it might forbid this action.
-                actionState.relevantSACs.push_back(task->dynamicSACs[i]);
+                actionState.relevantSACs.push_back(task->actionPreconds[i]);
             } else if (sacContainsAdditionalPositiveActionFluent(task->
-                               dynamicSACs[i], actionState)) {
+                               actionPreconds[i], actionState)) {
                 // If the SAC contains action fluents positively that are not in
                 // this ActionStates' action fluents it might enforce that
                 // action fluent (and thereby forbid this action)
-                actionState.relevantSACs.push_back(task->dynamicSACs[i]);
+                actionState.relevantSACs.push_back(task->actionPreconds[i]);
             }
         }
     }
@@ -504,10 +525,8 @@ void Preprocessor::calculateCPFDomains() {
         vector<set<double> > reachable(task->CPFs.size());
 
         // For each cpf, apply all actions and collect all reachable values
-        for (unsigned int varIndex = 0; varIndex < task->CPFs.size();
-             ++varIndex) {
-            for (unsigned int actionIndex = 0;
-                 actionIndex < task->actionStates.size(); ++actionIndex) {
+        for (unsigned int varIndex = 0; varIndex < task->CPFs.size(); ++varIndex) {
+            for (unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
                 set<double> actionDependentValues;
                 task->CPFs[varIndex]->formula->calculateDomain(
                         domains, task->actionStates[actionIndex],
@@ -547,16 +566,16 @@ void Preprocessor::calculateCPFDomains() {
 }
 
 void Preprocessor::finalizeEvaluatables() {
-    // All CPFs with a domain that only includes its initial value are removed
+    // Remove all CPFs with a domain that only includes their initial value
     map<ParametrizedVariable*, double> replacements;
-    for (vector<ConditionalProbabilityFunction*>::iterator it =
-             task->CPFs.begin();
-         it != task->CPFs.end(); ++it) {
+    for (vector<ConditionalProbabilityFunction*>::iterator it = task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
 
         if ((*it)->getDomainSize() == 1) {
             // As the initial value must be included, the only value must be the
             // initial value
+            assert(MathUtils::doubleIsEqual(*((*it)->domain.begin()), (*it)->getInitialValue()));
+
             replacements[(*it)->head] = (*it)->getInitialValue();
             task->CPFs.erase(it);
             --it;
@@ -568,66 +587,32 @@ void Preprocessor::finalizeEvaluatables() {
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->setIndex(index);
         task->CPFs[index]->simplify(replacements);
-        assert(!dynamic_cast<NumericConstant*>(task->CPFs[index]->formula));
     }
 
     // Simplify rewardCPF
     task->rewardCPF->simplify(replacements);
 
-    // Simplify dynamicSACs and check if they have become a state invariant
-    for (unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
-        task->dynamicSACs[i]->simplify(replacements);
+    // Simplify actionPreconds and check if they have become a state invariant
+    for (unsigned int i = 0; i < task->actionPreconds.size(); ++i) {
+        task->actionPreconds[i]->simplify(replacements);
         NumericConstant* nc =
-            dynamic_cast<NumericConstant*>(task->dynamicSACs[i]->formula);
+            dynamic_cast<NumericConstant*>(task->actionPreconds[i]->formula);
         if (nc) {
             assert(!MathUtils::doubleIsEqual(nc->value, 0.0));
             // This SAC is not dynamic anymore after simplification as it
             // simplifies to a state invariant
-            task->stateInvariants.push_back(task->dynamicSACs[i]);
-            swap(task->dynamicSACs[i],
-                    task->dynamicSACs[task->dynamicSACs.size() - 1]);
-            task->dynamicSACs.pop_back();
+            swap(task->actionPreconds[i], task->actionPreconds[task->actionPreconds.size() - 1]);
+            task->actionPreconds.pop_back();
             --i;
         }
     }
 
-    for (unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
-        task->dynamicSACs[index]->index = index;
+    for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+        task->actionPreconds[index]->index = index;
     }
 
     // Finalize action fluents
-    int numActFluentsBefore = task->actionFluents.size();
-    map<int, int> indexMap;
-    removeInapplicableActionFluents(indexMap);
-
-    if (numActFluentsBefore > task->actionFluents.size()) {
-        // We deleted additional action fluents -> adjust the action states
-        set<ActionState> minimizedActionStates;
-        for(unsigned int i = 0; i < task->actionStates.size(); ++i) {
-            ActionState finalActState(task->actionFluents.size());
-            finalActState.scheduledActionFluents = task->actionStates[i].scheduledActionFluents;
-            finalActState.relevantSACs = task->actionStates[i].relevantSACs;
-
-            for(map<int, int>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
-                finalActState[it->first] = task->actionStates[i][it->second];
-            }
-            minimizedActionStates.insert(finalActState);
-        }
-
-        task->actionStates.clear();
-
-        for (set<ActionState>::iterator it = minimizedActionStates.begin(); it !=  minimizedActionStates.end(); ++it) {
-            task->actionStates.push_back(*it);
-        }
-
-        // Sort action states again for deterministic behaviour
-        sort(task->actionStates.begin(),
-             task->actionStates.end(), ActionState::ActionStateSort());
-
-        for(unsigned int i = 0; i < task->actionStates.size(); ++i) {
-            task->actionStates[i].index = i;
-        }
-    }
+    removeInapplicableActionFluents(true);
 }
 
 /*****************************************************************
@@ -852,33 +837,6 @@ void Preprocessor::prepareKleeneStateHashKeys() {
     }
 }
 
-// Check if state hashing is possible with states as probability
-// distributuions, and assign prob hash key bases if so
-// void Preprocessor::preparePDStateHashKeys() {
-//REPAIR
-//pdStateHashingPossible = false;
-//return;
-// // Assign hash key bases
-// pdStateHashingPossible = true;
-// long nextHashKeyBase = 1;
-// vector<long> hashKeyBases;
-// for(unsigned int i = 0; i < CPFs.size(); ++i) {
-//     hashKeyBases.push_back(nextHashKeyBase);
-//     if(!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, CPFs[i]->probDomainMap.size())) {
-//         pdStateHashingPossible = false;
-//         return;
-//     }
-// }
-
-// assert(hashKeyBases.size() == CPFs.size());
-
-// for(unsigned int index = 0; index < hashKeyBases.size(); ++index) {
-//     for(map<double, long>::iterator it = CPFs[index]->probDomainMap.begin(); it != CPFs[index]->probDomainMap.end(); ++it) {
-//         it->second *= hashKeyBases[index];
-//     }
-// }
-// }
-
 void Preprocessor::prepareStateFluentHashKeys() {
     task->indexToStateFluentHashKeyMap.resize(task->CPFs.size());
     task->indexToKleeneStateFluentHashKeyMap.resize(task->CPFs.size());
@@ -892,10 +850,10 @@ void Preprocessor::prepareStateFluentHashKeys() {
     task->rewardCPF->hashIndex = hashIndex;
     task->rewardCPF->initializeHashKeys(task);
 
-    for (unsigned int i = 0; i < task->dynamicSACs.size(); ++i) {
+    for (unsigned int i = 0; i < task->actionPreconds.size(); ++i) {
         ++hashIndex;
-        task->dynamicSACs[i]->hashIndex = hashIndex;
-        task->dynamicSACs[i]->initializeHashKeys(task);
+        task->actionPreconds[i]->hashIndex = hashIndex;
+        task->actionPreconds[i]->initializeHashKeys(task);
     }
 }
 
@@ -914,9 +872,9 @@ void Preprocessor::precomputeEvaluatables() {
         precomputeEvaluatable(task->rewardCPF);
     }
 
-    for (unsigned int index = 0; index < task->dynamicSACs.size(); ++index) {
-        if (task->dynamicSACs[index]->cachingType == "VECTOR") {
-            precomputeEvaluatable(task->dynamicSACs[index]);
+    for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+        if (task->actionPreconds[index]->cachingType == "VECTOR") {
+            precomputeEvaluatable(task->actionPreconds[index]);
         }
     }
 }

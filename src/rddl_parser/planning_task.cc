@@ -60,15 +60,7 @@ void PlanningTask::addObject(string const& typeName,
             "Error: Object name " + objectName + " is ambiguous.");
     }
 
-    Type* type = types[typeName];
-    Object* object = new Object(objectName, type);
-
-    objects[objectName] = object;
-    while (type) {
-        object->types.push_back(type);
-        type->objects.push_back(object);
-        type = type->superType;
-    }
+    objects[objectName] = new Object(objectName, types[typeName]);
 }
 
 void PlanningTask::addVariableDefinition(ParametrizedVariable* varDef) {
@@ -81,15 +73,14 @@ void PlanningTask::addVariableDefinition(ParametrizedVariable* varDef) {
 }
 
 void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
-        vector<Parameter*> const& params) {
+                                           vector<Parameter*> const& params) {
     addParametrizedVariable(parent, params, parent->initialValue);
 }
 
 void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
-        vector<Parameter*> const& params,
-        double initialValue) {
-    if (variableDefinitions.find(parent->variableName) ==
-        variableDefinitions.end()) {
+                                           vector<Parameter*> const& params,
+                                           double initialValue) {
+    if (variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
         SystemUtils::abort(
                 "Error: Parametrized variable " + parent->variableName +
                 " not defined.");
@@ -118,6 +109,7 @@ void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
 
         assert(actionFluentMap.find(af->fullName) == actionFluentMap.end());
 
+        af->index = actionFluents.size();
         actionFluents.push_back(af);
         actionFluentMap[af->fullName] = af;
         break;
@@ -206,11 +198,11 @@ void PlanningTask::print(ostream& out) {
     out << "## number of prob state fluents" << endl;
     out << (CPFs.size() - firstProbabilisticVarIndex) << endl;
     out << "## number of preconds" << endl;
-    out << dynamicSACs.size() << endl;
+    out << actionPreconds.size() << endl;
     out << "## number of actions" << endl;
     out << actionStates.size() << endl;
     out << "## number of hashing functions" << endl;
-    out << (dynamicSACs.size() + CPFs.size() + 1) << endl;
+    out << (actionPreconds.size() + CPFs.size() + 1) << endl;
     out << "## initial state" << endl;
     for (unsigned int i = 0; i < CPFs.size(); ++i) {
         out << CPFs[i]->getInitialValue() << " ";
@@ -440,39 +432,39 @@ void PlanningTask::print(ostream& out) {
 
     out << endl << endl << "#####PRECONDITIONS#####" << endl;
 
-    for (unsigned int index = 0; index < dynamicSACs.size(); ++index) {
-        assert(dynamicSACs[index]->index == index);
+    for (unsigned int index = 0; index < actionPreconds.size(); ++index) {
+        assert(actionPreconds[index]->index == index);
         out << "## index" << endl;
         out << index << endl;
         out << "## formula" << endl;
-        dynamicSACs[index]->formula->print(out);
+        actionPreconds[index]->formula->print(out);
         out << endl;
         out << "## hash index" << endl;
-        out << dynamicSACs[index]->hashIndex << endl;
+        out << actionPreconds[index]->hashIndex << endl;
         out << "## caching type" << endl;
-        out << dynamicSACs[index]->cachingType << endl;
-        if (dynamicSACs[index]->cachingType == "VECTOR") {
+        out << actionPreconds[index]->cachingType << endl;
+        if (actionPreconds[index]->cachingType == "VECTOR") {
             out << "## precomputed results" << endl;
-            out << dynamicSACs[index]->precomputedResults.size() << endl;
+            out << actionPreconds[index]->precomputedResults.size() << endl;
             for (unsigned int res = 0;
-                 res < dynamicSACs[index]->precomputedResults.size(); ++res) {
+                 res < actionPreconds[index]->precomputedResults.size(); ++res) {
                 out << res << " " <<
-                dynamicSACs[index]->precomputedResults[res] << endl;
+                actionPreconds[index]->precomputedResults[res] << endl;
             }
         }
         out << "## kleene caching type" << endl;
-        out << dynamicSACs[index]->kleeneCachingType << endl;
-        if (dynamicSACs[index]->kleeneCachingType == "VECTOR") {
+        out << actionPreconds[index]->kleeneCachingType << endl;
+        if (actionPreconds[index]->kleeneCachingType == "VECTOR") {
             out << "## kleene caching vec size" << endl;
-            out << dynamicSACs[index]->kleeneCachingVectorSize << endl;
+            out << actionPreconds[index]->kleeneCachingVectorSize << endl;
         }
 
         out << "## action hash keys" << endl;
         for (unsigned int actionIndex = 0;
-             actionIndex < dynamicSACs[index]->actionHashKeyMap.size();
+             actionIndex < actionPreconds[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " " <<
-            dynamicSACs[index]->actionHashKeyMap[actionIndex] << endl;
+            actionPreconds[index]->actionHashKeyMap[actionIndex] << endl;
         }
 
         out << endl;

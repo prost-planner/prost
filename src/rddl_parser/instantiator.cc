@@ -26,9 +26,7 @@ void Instantiator::instantiate() {
 }
 
 void Instantiator::instantiateVariables() {
-    for (map<string, ParametrizedVariable*>::iterator it =
-             task->variableDefinitions.begin();
-         it != task->variableDefinitions.end(); ++it) {
+    for (map<string, ParametrizedVariable*>::iterator it = task->variableDefinitions.begin(); it != task->variableDefinitions.end(); ++it) {
         ParametrizedVariable*& var = it->second;
         if (!var->params.empty()) {
             vector<vector<Parameter*> > instantiatedParams;
@@ -51,11 +49,11 @@ void Instantiator::instantiateCPFs() {
 
     // Instantiate rewardCPF
     map<string, Object*> quantifierReplacements;
-    task->rewardCPF->formula = task->rewardCPF->formula->replaceQuantifier(
-            quantifierReplacements, this);
+    task->rewardCPF->formula =
+        task->rewardCPF->formula->replaceQuantifier(quantifierReplacements, this);
     map<string, Object*> replacements;
-    task->rewardCPF->formula = task->rewardCPF->formula->instantiate(
-            task, replacements);
+    task->rewardCPF->formula =
+        task->rewardCPF->formula->instantiate(task, replacements);
 }
 
 void Instantiator::instantiateCPF(ParametrizedVariable* head,
@@ -74,11 +72,11 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
             assert(obj);
             replacements[head->params[j]->name] = obj;
         }
-        LogicalExpression* instantiatedFormula = formula->instantiate(
-                task, replacements);
+        LogicalExpression* instantiatedFormula =
+            formula->instantiate(task, replacements);
 
-        task->CPFs.push_back(new ConditionalProbabilityFunction(instantiatedVars[i],
-                        instantiatedFormula));
+        task->CPFs.push_back(
+                new ConditionalProbabilityFunction(instantiatedVars[i], instantiatedFormula));
     }
 }
 

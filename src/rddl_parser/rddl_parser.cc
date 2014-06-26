@@ -360,7 +360,9 @@ void RDDLParser::parseVariableDefinition(string& desc) {
         assert(optionals[2].find("default =") == 0);
         defaultValString = optionals[2].substr(9, optionals[2].length());
         StringUtils::trim(defaultValString);
-        if ((valueType->name == "int") || (valueType->name == "real")) {
+        if (valueType->name == "int") {
+            defaultVal = atoi(defaultValString.c_str());
+        } else if (valueType->name == "real") {
             defaultVal = atof(defaultValString.c_str());
         } else {
             if (task->objects.find(defaultValString) == task->objects.end()) {
@@ -380,8 +382,11 @@ void RDDLParser::parseVariableDefinition(string& desc) {
         //break;
     }
 
-    task->addVariableDefinition(new ParametrizedVariable(name, params, varType,
-                    valueType, defaultVal));
+    ParametrizedVariable* var =
+        new ParametrizedVariable(name, params, varType, valueType, defaultVal);
+
+    task->addVariableDefinition(var);
+        
 }
 
 void RDDLParser::parseCPFDefinition(string& desc) {
@@ -432,9 +437,9 @@ void RDDLParser::parseCPFDefinition(string& desc) {
 void RDDLParser::parseAtomicLogicalExpression(string& desc) {
     if (desc.find("~") == 0) {
         assert(desc.find("=") == string::npos);
-        desc = desc.substr(1) + " = 0";
+        desc = desc.substr(1) + " = false";
     } else if (desc.find("=") == string::npos) {
-        desc += " = 1";
+        desc += " = true";
     }
     size_t cutPos = desc.find("=");
     assert(cutPos != string::npos);
@@ -442,8 +447,8 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
     string nameAndParams = desc.substr(0, cutPos);
     StringUtils::trim(nameAndParams);
 
-    string valString = desc.substr(cutPos + 1);
-    StringUtils::trim(valString);
+    string initialValString = desc.substr(cutPos + 1);
+    StringUtils::trim(initialValString);
 
     string name;
     vector<Parameter*> params;
@@ -474,7 +479,23 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
 
     // Instantiation is not performed yet, so the according fluents don't exist
     // and we have to create them here
-    task->addParametrizedVariable(parent, params, atof(valString.c_str()));
+
+    double initialVal = 0.0;
+    if (parent->valueType->name == "int") {
+        initialVal = atoi(initialValString.c_str());
+    } else if (parent->valueType->name == "real") {
+        initialVal = atof(initialValString.c_str());
+    } else {
+        if (task->objects.find(initialValString) == task->objects.end()) {
+            string err = "Error: Initial value" + initialValString +
+                " of variable " + name + " not defined.";
+            SystemUtils::abort(err);
+        }
+        Object* val = task->objects[initialValString];
+        initialVal = val->value;
+    }
+
+    task->addParametrizedVariable(parent, params, initialVal);
 }
 
 LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
