@@ -44,7 +44,9 @@ DEPEND = g++ -MM -std=c++0x
 
 ## Test related
 GTEST_DIR = ../test/gtest
+TEST_MAIN = ../test/testMain
 TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
+TEST_OBJECTS = $(addsuffix .o, $(TEST_BINARIES)) 
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
@@ -105,25 +107,26 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 
 ## Build rules for test target follow
 
-test_build: $(TEST_BINARIES)
+test_build:  $(TEST_MAIN).o $(GTEST_DIR)/gtest-all.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG)) $(TEST_OBJECTS)
+				$(CC) $(CCOPT) $(OPT) -o runTests  $^ -lbdd -lgcov
 
-%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))  $(GTEST_DIR)/gtest-all.o $(GTEST_DIR)/gtest_main.o
-				$(CC) $(CCOPT) $(OPT) -o $@ $^ -lbdd -lgcov
-
-%Test.o: %Test.cc 
-				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c $< -o $@
+$(TEST_MAIN).o: $(TEST_MAIN).cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c  $< -o $@
 
 $(GTEST_DIR)/gtest_main.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest_main.cc
 	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest_main.cc -o $(GTEST_DIR)/gtest_main.o
 
-
 $(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
 	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o 
 
+%Test.o: %Test.cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c $< -o $@
 
-## Automatically runs all tests from TEST_BINARIES.
-run_tests: $(TEST_BINARIES)
-				for T in $(TEST_BINARIES); do ./$$T; done
+## Automatically runs all tests
+run_tests: 
+	./runTests
+
+## codestyle checks
 
 uncrustify: 
 	@echo "Files violating codestyle convention:"
@@ -163,8 +166,7 @@ clean:
 	find ../test/search -name "*.crusty" -type f -delete
 
 distclean: clean
-	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
-	for T in $(TEST_BINARIES); do rm -f $$T; done
+	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG) runTests
 
 
 ## Note: If we just call gcc -MM on a source file that lives within a
