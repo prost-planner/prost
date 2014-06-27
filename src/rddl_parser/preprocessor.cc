@@ -14,77 +14,63 @@
 
 using namespace std;
 
-void Preprocessor::preprocess() {
+void Preprocessor::preprocess(bool const& output) {
     Timer t;
     // Create and initialize CPFs, rewardCPF, and SACs
-    cout << "    Preparing evaluatables..." << endl;
+    if (output) cout << "    Preparing evaluatables..." << endl;
     prepareEvaluatables();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Create action fluents and calculate legal action states
-    cout << "    Preparing actions..." << endl;
+    if (output) cout << "    Preparing actions..." << endl;
     prepareActions();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Approximate reachable values (domains) of CPFs
-    cout << "    Calculating CPF domain..." << endl;
+    if (output) cout << "    Calculating CPF domain..." << endl;
     calculateCPFDomains();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Remove CPFs with only one reachable value (i.e. a domain size of 1) and
     // simplify remaining CPFs, rewardCPF, and SACs
-    cout << "    Finalizing evaluatables..." << endl;
+    if (output) cout << "    Finalizing evaluatables..." << endl;
     finalizeEvaluatables();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Determinize CPFs
-    cout << "    Computing determinization..." << endl;
+    if (output) cout << "    Computing determinization..." << endl;
     determinize();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Determine some non-trivial properties
-    cout << "    Determining task properties..." << endl;
+    if (output) cout << "    Determining task properties..." << endl;
     determineTaskProperties();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Initialize Hash Key Bases and Mappings
-    cout << "    Preparing hash keys..." << endl;
+    if (output) cout << "    Preparing hash keys..." << endl;
     prepareStateHashKeys();
     prepareKleeneStateHashKeys();
     prepareStateFluentHashKeys();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Precompute results of evaluate for (some) evaluatables
-    cout << "    Precomputing evaluatables..." << endl;
+    if (output) cout << "    Precomputing evaluatables..." << endl;
     precomputeEvaluatables();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Approximate or calculate the min and max reward
-    cout << "    Calculating min and max reward..." << endl;
+    if (output) cout << "    Calculating min and max reward..." << endl;
     calculateMinAndMaxReward();
-    cout << "    ...finished (" << t() << ")" << endl;
-}
-
-void Preprocessor::preprocessNoOutput() {
-    prepareEvaluatables();
-    prepareActions();
-    calculateCPFDomains();
-    finalizeEvaluatables();
-    determinize();
-    determineTaskProperties();
-    prepareStateHashKeys();
-    prepareKleeneStateHashKeys();
-    prepareStateFluentHashKeys();
-    precomputeEvaluatables();
-    calculateMinAndMaxReward();
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
 }
 
 /*****************************************************************

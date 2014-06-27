@@ -13,8 +13,7 @@ public:
     Instantiator(PlanningTask* _task) :
         task(_task) {}
 
-    void instantiate();
-    void instantiateNoOutput();
+    void instantiate(bool const& output = true);
     void instantiateParams(
             std::vector<Parameter*> params,
             std::vector<std::vector<Parameter*> >& result,

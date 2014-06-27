@@ -1,5 +1,4 @@
-LogicalExpression* LogicalExpression::determinizeMostLikely()
-{
+LogicalExpression* LogicalExpression::determinizeMostLikely() {
     assert(false);
     return NULL;
 }
@@ -8,13 +7,11 @@ LogicalExpression* LogicalExpression::determinizeMostLikely()
                            Atomics
 *****************************************************************/
 
-LogicalExpression* ParametrizedVariable::determinizeMostLikely()
-{
+LogicalExpression* ParametrizedVariable::determinizeMostLikely() {
     return this;
 }
 
-LogicalExpression* NumericConstant::determinizeMostLikely()
-{
+LogicalExpression* NumericConstant::determinizeMostLikely() {
     return this;
 }
 

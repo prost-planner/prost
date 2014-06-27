@@ -43,19 +43,19 @@ public:
     virtual void classifyActionFluents(ActionFluentSet& positive,
                                        ActionFluentSet& negative);
     virtual void calculateDomain(Domains const& domains,
-                                 ActionState const& actions,
+                                 ActionState const& action,
                                  std::set<double>& res);
     virtual void calculateDomainAsInterval(Domains const& domains,
-                                           ActionState const& actions,
+                                           ActionState const& action,
                                            double& minRes, double& maxRes);
 
     virtual void evaluate(double& res, State const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
     virtual void evaluateToPD(DiscretePD& res, State const& current,
-                              ActionState const& actions) const;
+                              ActionState const& action) const;
     virtual void evaluateToKleene(std::set<double>& res,
                                   KleeneState const& current,
-                                  ActionState const& actions) const;
+                                  ActionState const& action) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -192,19 +192,19 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -226,19 +226,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
-
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 
@@ -285,19 +284,19 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -412,18 +411,18 @@ public:
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -446,18 +445,18 @@ public:
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -482,18 +481,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -518,18 +517,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -554,18 +553,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -590,18 +589,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -626,18 +625,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -660,18 +659,18 @@ public:
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -696,18 +695,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -732,18 +731,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -768,18 +767,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -810,18 +809,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -848,18 +847,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -904,19 +903,19 @@ public:
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 
@@ -945,18 +944,18 @@ public:
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -992,18 +991,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };
@@ -1032,18 +1031,18 @@ public:
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
     void calculateDomain(Domains const& domains,
-                         ActionState const& actions,
+                         ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& actions,
+                                   ActionState const& action,
                                    double& minRes, double& maxRes);
 
     void evaluate(double& res, State const& current,
-                  ActionState const& actions) const;
+                  ActionState const& action) const;
     void evaluateToPD(DiscretePD& res, State const& current,
-                      ActionState const& actions) const;
+                      ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
-                          ActionState const& actions) const;
+                          ActionState const& action) const;
 
     void print(std::ostream& out) const;
 };

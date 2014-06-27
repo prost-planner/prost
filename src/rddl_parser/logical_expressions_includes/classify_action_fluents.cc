@@ -33,8 +33,7 @@ void Connective::classifyActionFluents(
         ActionFluentSet& positive,
         ActionFluentSet& negative) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
-        exprs[i]->classifyActionFluents(positive,
-                negative);
+        exprs[i]->classifyActionFluents(positive, negative);
     }
 }
 
@@ -96,13 +95,11 @@ void LowerEqualsExpression::classifyActionFluents(
 void Subtraction::classifyActionFluents(
         ActionFluentSet& positive,
         ActionFluentSet& negative) {
-    exprs[0]->classifyActionFluents(positive,
-            negative);
+    exprs[0]->classifyActionFluents(positive, negative);
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         // Negative and positive are reversed for all elements besides the first
-        exprs[1]->classifyActionFluents(negative,
-                positive);
+        exprs[i]->classifyActionFluents(negative, positive);
     }
 }
 
@@ -164,13 +161,8 @@ void Division::classifyActionFluents(
     NumericConstant* tmp0 = dynamic_cast<NumericConstant*>(exprs[0]);
     NumericConstant* tmp1 = dynamic_cast<NumericConstant*>(exprs[1]);
 
-    if ((tmp0 &&
-         tmp1) ||
-        (!tmp0 &&
-         !tmp1) ||
-        (tmp0 &&
-         MathUtils::doubleIsGreaterOrEqual(tmp0->value,
-                 0.0)) ||
+    if ((tmp0 && tmp1) || (!tmp0 && !tmp1) ||
+        (tmp0 && MathUtils::doubleIsGreaterOrEqual(tmp0->value, 0.0)) ||
         (tmp1 && MathUtils::doubleIsGreaterOrEqual(tmp1->value, 0.0))) {
         positive.insert(tmpPos0.begin(), tmpPos0.end());
         positive.insert(tmpPos1.begin(), tmpPos1.end());
@@ -207,8 +199,7 @@ void Negation::classifyActionFluents(
 void ExponentialFunction::classifyActionFluents(
         ActionFluentSet& positive,
         set <ActionFluent*>& negative) {
-    expr->classifyActionFluents(positive,
-                                negative);
+    expr->classifyActionFluents(positive, negative);
 }
 
 /*****************************************************************

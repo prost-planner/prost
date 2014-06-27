@@ -7,28 +7,22 @@
 
 using namespace std;
 
-void Instantiator::instantiate() {
+void Instantiator::instantiate(bool const& output) {
     Timer t;
-    cout << "    Instantiating variables..." << endl;
+    if (output) cout << "    Instantiating variables..." << endl;
     instantiateVariables();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
-    cout << "    Instantiating CPFs..." << endl;
+    if (output) cout << "    Instantiating CPFs..." << endl;
     instantiateCPFs();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
-    cout << "    Instantiating preconditions..." << endl;
+    if (output) cout << "    Instantiating preconditions..." << endl;
     instantiateSACs();
-    cout << "    ...finished (" << t() << ")" << endl;
+    if (output) cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
-}
-
-void Instantiator::instantiateNoOutput() {
-    instantiateVariables();
-    instantiateCPFs();
-    instantiateSACs();
 }
 
 void Instantiator::instantiateVariables() {
