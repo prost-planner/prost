@@ -13,12 +13,15 @@ using namespace std;
 PlanningTask::PlanningTask() :
     numberOfConcurrentActions(numeric_limits<int>::max()),
     horizon(1),
-    discountFactor(1.0), 
+    discountFactor(1.0),
     rewardCPF(NULL),
     rewardLockDetected(false),
     unreasonableActionDetected(false),
     unreasonableActionInDeterminizationDetected(false),
-    nonTerminalStatesWithUniqueAction(0) {
+    numberOfEncounteredStates(0),
+    numberOfUniqueEncounteredStates(0),
+    nonTerminalStatesWithUniqueAction(0),
+    uniqueNonTerminalStatesWithUniqueAction(0) {
     // Add bool type
     addType("bool");
     addObject("bool", "false");
@@ -33,150 +36,134 @@ PlanningTask::PlanningTask() :
 }
 
 void PlanningTask::addType(string const& name, string const& superType) {
-    if(types.find(name) != types.end()) {
+    if (types.find(name) != types.end()) {
         SystemUtils::abort("Error: Type " + name + " is ambiguous.");
     }
 
-    if(superType.empty()) {
+    if (superType.empty()) {
         types[name] = new Type(name);
-    } else if(types.find(superType) == types.end()) {
+    } else if (types.find(superType) == types.end()) {
         SystemUtils::abort("Error: Supertype not found: " + superType);
     } else {
         types[name] = new Type(name, types[superType]);
     }
 }
 
-void PlanningTask::addObject(string const& typeName, string const& objectName) {
-    if(types.find(typeName) == types.end()) {
+void PlanningTask::addObject(string const& typeName,
+                             string const& objectName) {
+    if (types.find(typeName) == types.end()) {
         SystemUtils::abort("Error: Type " + typeName + " not defined.");
     }
 
-    if(objects.find(objectName) != objects.end()) {
-        SystemUtils::abort("Error: Object name " + objectName + " is ambiguous.");
+    if (objects.find(objectName) != objects.end()) {
+        SystemUtils::abort(
+            "Error: Object name " + objectName + " is ambiguous.");
     }
 
-    Type* type = types[typeName];
-
-    Object* object = new Object(objectName, type);
-    objects[objectName] = object;
-
-    do {
-        object->types.push_back(type);
-        object->values.push_back(type->objects.size());
-        type->objects.push_back(object);
-        type = type->superType;
-    } while(type);
+    objects[objectName] = new Object(objectName, types[typeName]);
 }
 
 void PlanningTask::addVariableDefinition(ParametrizedVariable* varDef) {
-    if(variableDefinitions.find(varDef->fullName) != variableDefinitions.end()) {
-        SystemUtils::abort("Error: Ambiguous variable name: " + varDef->fullName);
+    if (variableDefinitions.find(varDef->fullName) !=
+        variableDefinitions.end()) {
+        SystemUtils::abort(
+                "Error: Ambiguous variable name: " + varDef->fullName);
     }
     variableDefinitions[varDef->fullName] = varDef;
 }
 
-void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<Parameter*> const& params) {
+void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
+                                           vector<Parameter*> const& params) {
     addParametrizedVariable(parent, params, parent->initialValue);
 }
 
-void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent, vector<Parameter*> const& params, double initialValue) {
-    if(variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
-        SystemUtils::abort("Error: Parametrized variable " + parent->variableName + " not defined.");
+void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
+                                           vector<Parameter*> const& params,
+                                           double initialValue) {
+    if (variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
+        SystemUtils::abort(
+                "Error: Parametrized variable " + parent->variableName +
+                " not defined.");
     }
 
-    // We declare these here as we need parentheses in the switch otherwise
-    StateFluent* sf;
-    ActionFluent* af;
-    NonFluent* nf;
-
     switch(parent->variableType) {
-    case ParametrizedVariable::STATE_FLUENT:
-        sf = new StateFluent(*parent, params, initialValue);
-        for(unsigned int i = 0; i < stateFluents.size(); ++i) {
-            // This could already be defined if it occurs in the initial state
-            if(sf->fullName == stateFluents[i]->fullName) {
-                return;
-            }
-        }
-        stateFluents.push_back(sf);
+    case ParametrizedVariable::STATE_FLUENT: {
+        StateFluent* sf = new StateFluent(*parent, params, initialValue);
 
-        if(variablesBySchema.find(parent) == variablesBySchema.end()) {
-            variablesBySchema[parent] = vector<StateFluent*>();
+        // This is already defined if it occurs in the initial state entry
+        if(stateFluentMap.find(sf->fullName) != stateFluentMap.end()) {
+            return;
         }
-        variablesBySchema[parent].push_back(sf);
+
+        stateFluents.push_back(sf);
+        stateFluentMap[sf->fullName] = sf;
+
+        if(stateFluentsBySchema.find(parent) == stateFluentsBySchema.end()) {
+            stateFluentsBySchema[parent] = vector<StateFluent*>();
+        }
+        stateFluentsBySchema[parent].push_back(sf);
         break;
-    case ParametrizedVariable::ACTION_FLUENT:
-        af = new ActionFluent(*parent, params);
-        for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-            assert(af->fullName != actionFluents[i]->fullName);
-        }
+    }
+    case ParametrizedVariable::ACTION_FLUENT: {
+        ActionFluent* af = new ActionFluent(*parent, params);
+
+        assert(actionFluentMap.find(af->fullName) == actionFluentMap.end());
+
+        af->index = actionFluents.size();
         actionFluents.push_back(af);
+        actionFluentMap[af->fullName] = af;
         break;
-    case ParametrizedVariable::NON_FLUENT:
-        nf = new NonFluent(*parent, params, initialValue);
-        for(unsigned int i = 0; i < nonFluents.size(); ++i) {
-            // This mightbe defined if it occurs in the non fluents entry
-            if(nf->fullName == nonFluents[i]->fullName) {
-                return;
-            }
+    }
+    case ParametrizedVariable::NON_FLUENT: {
+        NonFluent* nf = new NonFluent(*parent, params, initialValue);
+
+        // This is already defined if it occurs in the non fluents entry
+        if(nonFluentMap.find(nf->fullName) != nonFluentMap.end()) {
+            return;
         }
+
         nonFluents.push_back(nf);
+        nonFluentMap[nf->fullName] = nf;
+        break;
+    }
         // case ParametrizedVariable::INTERM_FLUENT:
         // assert(false);
         // break;
-    }    
+    }
 }
 
 StateFluent* PlanningTask::getStateFluent(string const& name) {
-    for(unsigned int i = 0; i < stateFluents.size(); ++i) {
-        if(name == stateFluents[i]->fullName) {
-            return stateFluents[i];
-        }
+    if(stateFluentMap.find(name) == stateFluentMap.end()) {
+        SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
-    return NULL;
+    return stateFluentMap[name];
 }
 
 ActionFluent* PlanningTask::getActionFluent(string const& name) {
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
-        if(name == actionFluents[i]->fullName) {
-            return actionFluents[i];
-        }
+    if(actionFluentMap.find(name) == actionFluentMap.end()) {
+        SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
-    return NULL;
+    return actionFluentMap[name];
 }
 
 NonFluent* PlanningTask::getNonFluent(string const& name) {
-    for(unsigned int i = 0; i < nonFluents.size(); ++i) {
-        if(name == nonFluents[i]->fullName) {
-            return nonFluents[i];
-        }
+    if(nonFluentMap.find(name) == nonFluentMap.end()) {
+        SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+        return NULL;
     }
-    SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
-    return NULL;
+    return nonFluentMap[name];
 }
 
-vector<StateFluent*> PlanningTask::getVariablesOfSchema(ParametrizedVariable* schema) {
-    assert(variablesBySchema.find(schema) != variablesBySchema.end());
-    return variablesBySchema[schema];
-}
-
-void PlanningTask::addStateActionConstraint(LogicalExpression* sac) {
-    SACs.push_back(sac);
-}
-
-void PlanningTask::addCPF(ConditionalProbabilityFunction* const& cpf) {
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(cpf->head->fullName == CPFs[i]->head->fullName) {
-            SystemUtils::abort("Error: CPF with same name exists already: " + cpf->head->fullName);
-        }
-    }
-    CPFs.push_back(cpf);
+// TODO: Return const reference?
+vector<StateFluent*> PlanningTask::getStateFluentsOfSchema(ParametrizedVariable* schema) {
+    assert(stateFluentsBySchema.find(schema) != stateFluentsBySchema.end());
+    return stateFluentsBySchema[schema];
 }
 
 void PlanningTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
-    if(rewardCPF) {
+    if (rewardCPF) {
         SystemUtils::abort("Error: RewardCPF exists already.");
     }
     rewardCPF = new RewardFunction(rewardFormula);
@@ -187,10 +174,10 @@ void PlanningTask::print(ostream& out) {
     out.unsetf(ios::floatfield);
     out.precision(numeric_limits<double>::digits10);
 
-    int firstProbabilisticVarIndex = (int)CPFs.size();
+    int firstProbabilisticVarIndex = (int) CPFs.size();
     bool deterministic = true;
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
-        if(CPFs[i]->isProbabilistic()) {
+    for (unsigned int i = 0; i < CPFs.size(); ++i) {
+        if (CPFs[i]->isProbabilistic()) {
             firstProbabilisticVarIndex = i;
             deterministic = false;
             break;
@@ -211,44 +198,59 @@ void PlanningTask::print(ostream& out) {
     out << "## number of prob state fluents" << endl;
     out << (CPFs.size() - firstProbabilisticVarIndex) << endl;
     out << "## number of preconds" << endl;
-    out << dynamicSACs.size() << endl;
+    out << actionPreconds.size() << endl;
     out << "## number of actions" << endl;
     out << actionStates.size() << endl;
     out << "## number of hashing functions" << endl;
-    out << (dynamicSACs.size() + CPFs.size() + 1) << endl;
+    out << (actionPreconds.size() + CPFs.size() + 1) << endl;
     out << "## initial state" << endl;
-    for(unsigned int i = 0; i < CPFs.size(); ++i) {
+    for (unsigned int i = 0; i < CPFs.size(); ++i) {
         out << CPFs[i]->getInitialValue() << " ";
     }
     out << endl;
     out << "## 1 if task is deterministic" << endl;
     out << deterministic << endl;
-    out << "## 1 if state hashing possible"  << endl;
+    out << "## 1 if state hashing possible" << endl;
     out << !stateHashKeys.empty() << endl;
     out << "## 1 if kleene state hashing possible" << endl;
     out << !kleeneStateHashKeyBases.empty() << endl;
     out << "## method to calculate the final reward" << endl;
     out << finalRewardCalculationMethod << endl;
-    if(finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
-        out << "## set of candidates to calculate final reward (first line is the number)" << endl;
+    if (finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
+        out <<
+        "## set of candidates to calculate final reward (first line is the number)"
+            << endl;
         out << candidatesForOptimalFinalAction.size() << endl;
-        for(unsigned int i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
+        for (unsigned int i = 0; i < candidatesForOptimalFinalAction.size();
+             ++i) {
             out << candidatesForOptimalFinalAction[i] << " ";
         }
         out << endl;
     }
-    out << "## 1 if reward formula allows reward lock detection and a reward lock was found during task analysis" << endl;
+    out <<
+    "## 1 if reward formula allows reward lock detection and a reward lock was found during task analysis"
+        << endl;
     out << rewardLockDetected << endl;
     out << "## 1 if an unreasonable action was detected" << endl;
     out << unreasonableActionDetected << endl;
-    out << "## 1 if an unreasonable action was detected in the determinization" << endl;
+    out <<
+    "## 1 if an unreasonable action was detected in the determinization" <<
+    endl;
     out << unreasonableActionInDeterminizationDetected << endl;
-    out << "## number of states with only one applicable reasonable action that were" << endl;
-    out << "## detected during task analysis, and the total number of encountered states" << endl;
-    out << nonTerminalStatesWithUniqueAction << " " << numberOfEncounteredStates << endl;
+
+
+    out << "## number of states that were encountered during task analysis" << endl;
+    out << numberOfEncounteredStates << endl;
+    out << "## number of unique states that were encountered during task analysis" << endl;
+    out << numberOfUniqueEncounteredStates << endl;
+    out << "## number of states with only one applicable reasonable action that were encountered during task analysis" << endl;
+    out << nonTerminalStatesWithUniqueAction << endl;
+    out << "## number of unique states with only one applicable reasonable action that were encountered during task analysis" << endl;
+    out << uniqueNonTerminalStatesWithUniqueAction << endl;
+
 
     out << endl << endl << "#####ACTION FLUENTS#####" << endl;
-    for(unsigned int i = 0; i < actionFluents.size(); ++i) {
+    for (unsigned int i = 0; i < actionFluents.size(); ++i) {
         out << "## index" << endl;
         out << actionFluents[i]->index << endl;
         out << "## name" << endl;
@@ -261,7 +263,7 @@ void PlanningTask::print(ostream& out) {
     }
 
     out << endl << endl << "#####DET STATE FLUENTS AND CPFS#####" << endl;
-    for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
+    for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         assert(!CPFs[index]->isProbabilistic());
         out << "## index" << endl;
@@ -271,8 +273,10 @@ void PlanningTask::print(ostream& out) {
         out << "## number of values" << endl;
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
-        for(set<double>::iterator it = CPFs[index]->domain.begin(); it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " " << CPFs[index]->head->valueType->objects[*it]->name << endl;
+        for (set<double>::iterator it = CPFs[index]->domain.begin();
+             it != CPFs[index]->domain.end(); ++it) {
+            out << *it << " " <<
+            CPFs[index]->head->valueType->objects[*it]->name << endl;
         }
 
         out << "## formula" << endl;
@@ -283,29 +287,35 @@ void PlanningTask::print(ostream& out) {
         out << CPFs[index]->hashIndex << endl;
         out << "## caching type " << endl;
         out << CPFs[index]->cachingType << endl;
-        if(CPFs[index]->cachingType == "VECTOR") {
+        if (CPFs[index]->cachingType == "VECTOR") {
             out << "## precomputed results" << endl;
             out << CPFs[index]->precomputedResults.size() << endl;
-            for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << CPFs[index]->precomputedResults[res] << endl;
+            for (unsigned int res = 0;
+                 res < CPFs[index]->precomputedResults.size(); ++res) {
+                out << res << " " << CPFs[index]->precomputedResults[res] <<
+                endl;
             }
         }
         out << "## kleene caching type" << endl;
         out << CPFs[index]->kleeneCachingType << endl;
-        if(CPFs[index]->kleeneCachingType == "VECTOR") {
+        if (CPFs[index]->kleeneCachingType == "VECTOR") {
             out << "## kleene caching vec size" << endl;
             out << CPFs[index]->kleeneCachingVectorSize << endl;
         }
 
         out << "## action hash keys" << endl;
-        for(unsigned int actionIndex = 0; actionIndex < CPFs[index]->actionHashKeyMap.size(); ++actionIndex) {
-            out << actionIndex << " " << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
+        for (unsigned int actionIndex = 0;
+             actionIndex < CPFs[index]->actionHashKeyMap.size();
+             ++actionIndex) {
+            out << actionIndex << " " <<
+            CPFs[index]->actionHashKeyMap[actionIndex] << endl;
         }
         out << endl;
     }
 
     out << endl << endl << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
-    for(unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
+    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
+         ++index) {
         assert(CPFs[index]->head->index == index);
         assert(CPFs[index]->isProbabilistic());
         out << "## index" << endl;
@@ -315,8 +325,10 @@ void PlanningTask::print(ostream& out) {
         out << "## number of values" << endl;
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
-        for(set<double>::iterator it = CPFs[index]->domain.begin(); it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " " << CPFs[index]->head->valueType->objects[*it]->name << endl;
+        for (set<double>::iterator it = CPFs[index]->domain.begin();
+             it != CPFs[index]->domain.end(); ++it) {
+            out << *it << " " <<
+            CPFs[index]->head->valueType->objects[*it]->name << endl;
         }
 
         out << "## formula" << endl;
@@ -331,27 +343,41 @@ void PlanningTask::print(ostream& out) {
         out << CPFs[index]->hashIndex << endl;
         out << "## caching type " << endl;
         out << CPFs[index]->cachingType << endl;
-        if(CPFs[index]->cachingType == "VECTOR") {
-            out << "## precomputed results (of determinization)" << endl;
+        if (CPFs[index]->cachingType == "VECTOR") {
+            out <<
+            "## precomputed results (key - determinization - size of distribution - value-probability pairs)"
+                << endl;
             out << CPFs[index]->precomputedResults.size() << endl;
-            for(unsigned int res = 0; res < CPFs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << CPFs[index]->precomputedResults[res] << " " << CPFs[index]->precomputedPDResults[res].values.size();
-                for(unsigned int valProbPair = 0; valProbPair < CPFs[index]->precomputedPDResults[res].values.size(); ++valProbPair) {
-                    out << " " << CPFs[index]->precomputedPDResults[res].values[valProbPair] << " " << CPFs[index]->precomputedPDResults[res].probabilities[valProbPair];
+            for (unsigned int res = 0;
+                 res < CPFs[index]->precomputedResults.size(); ++res) {
+                out << res << " " << CPFs[index]->precomputedResults[res] <<
+                " " << CPFs[index]->precomputedPDResults[res].values.size();
+                for (unsigned int valProbPair = 0;
+                     valProbPair <
+                     CPFs[index]->precomputedPDResults[res].values.size();
+                     ++valProbPair) {
+                    out << " " <<
+                    CPFs[index]->precomputedPDResults[res].values[valProbPair]
+                        << " " <<
+                    CPFs[index]->precomputedPDResults[res].probabilities[
+                        valProbPair];
                 }
                 out << endl;
             }
         }
         out << "## kleene caching type" << endl;
         out << CPFs[index]->kleeneCachingType << endl;
-        if(CPFs[index]->kleeneCachingType == "VECTOR") {
+        if (CPFs[index]->kleeneCachingType == "VECTOR") {
             out << "## kleene caching vec size" << endl;
             out << CPFs[index]->kleeneCachingVectorSize << endl;
         }
 
         out << "## action hash keys" << endl;
-        for(unsigned int actionIndex = 0; actionIndex < CPFs[index]->actionHashKeyMap.size(); ++actionIndex) {
-            out << actionIndex << " " << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
+        for (unsigned int actionIndex = 0;
+             actionIndex < CPFs[index]->actionHashKeyMap.size();
+             ++actionIndex) {
+            out << actionIndex << " " <<
+            CPFs[index]->actionHashKeyMap[actionIndex] << endl;
         }
 
         out << endl;
@@ -365,27 +391,32 @@ void PlanningTask::print(ostream& out) {
     out << *rewardCPF->domain.begin() << endl;
     out << "## max" << endl;
     out << *rewardCPF->domain.rbegin() << endl;
+    out << "## independent from actions" << endl;
+    out << (rewardCPF->positiveActionDependencies.empty() && rewardCPF->negativeActionDependencies.empty()) << endl;
     out << "## hash index" << endl;
     out << rewardCPF->hashIndex << endl;
-    out << "## caching type" << endl; 
+    out << "## caching type" << endl;
     out << rewardCPF->cachingType << endl;
-    if(rewardCPF->cachingType == "VECTOR") {
+    if (rewardCPF->cachingType == "VECTOR") {
         out << "## precomputed results" << endl;
         out << rewardCPF->precomputedResults.size() << endl;
-        for(unsigned int res = 0; res < rewardCPF->precomputedResults.size(); ++res) {
+        for (unsigned int res = 0; res < rewardCPF->precomputedResults.size();
+             ++res) {
             out << res << " " << rewardCPF->precomputedResults[res] << endl;
         }
     }
     out << "## kleene caching type" << endl;
     out << rewardCPF->kleeneCachingType << endl;
-    if(rewardCPF->kleeneCachingType == "VECTOR") {
+    if (rewardCPF->kleeneCachingType == "VECTOR") {
         out << "## kleene caching vec size" << endl;
         out << rewardCPF->kleeneCachingVectorSize << endl;
     }
 
     out << "## action hash keys" << endl;
-    for(unsigned int actionIndex = 0; actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
-        out << actionIndex << " " << rewardCPF->actionHashKeyMap[actionIndex] << endl;
+    for (unsigned int actionIndex = 0;
+         actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
+        out << actionIndex << " " <<
+        rewardCPF->actionHashKeyMap[actionIndex] << endl;
     }
 
     // for(set<double>::iterator it = rewardCPF->domain.begin(); it != rewardCPF->domain.end();) {
@@ -401,51 +432,58 @@ void PlanningTask::print(ostream& out) {
 
     out << endl << endl << "#####PRECONDITIONS#####" << endl;
 
-    for(unsigned int index = 0; index < dynamicSACs.size(); ++index) {
-        assert(dynamicSACs[index]->index == index);
+    for (unsigned int index = 0; index < actionPreconds.size(); ++index) {
+        assert(actionPreconds[index]->index == index);
         out << "## index" << endl;
         out << index << endl;
         out << "## formula" << endl;
-        dynamicSACs[index]->formula->print(out);
+        actionPreconds[index]->formula->print(out);
         out << endl;
         out << "## hash index" << endl;
-        out << dynamicSACs[index]->hashIndex << endl;
+        out << actionPreconds[index]->hashIndex << endl;
         out << "## caching type" << endl;
-        out << dynamicSACs[index]->cachingType << endl;
-        if(dynamicSACs[index]->cachingType == "VECTOR") {
+        out << actionPreconds[index]->cachingType << endl;
+        if (actionPreconds[index]->cachingType == "VECTOR") {
             out << "## precomputed results" << endl;
-            out << dynamicSACs[index]->precomputedResults.size() << endl;
-            for(unsigned int res = 0; res < dynamicSACs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << dynamicSACs[index]->precomputedResults[res] << endl;
+            out << actionPreconds[index]->precomputedResults.size() << endl;
+            for (unsigned int res = 0;
+                 res < actionPreconds[index]->precomputedResults.size(); ++res) {
+                out << res << " " <<
+                actionPreconds[index]->precomputedResults[res] << endl;
             }
         }
         out << "## kleene caching type" << endl;
-        out << dynamicSACs[index]->kleeneCachingType << endl;
-        if(dynamicSACs[index]->kleeneCachingType == "VECTOR") {
+        out << actionPreconds[index]->kleeneCachingType << endl;
+        if (actionPreconds[index]->kleeneCachingType == "VECTOR") {
             out << "## kleene caching vec size" << endl;
-            out << dynamicSACs[index]->kleeneCachingVectorSize << endl;
+            out << actionPreconds[index]->kleeneCachingVectorSize << endl;
         }
 
         out << "## action hash keys" << endl;
-        for(unsigned int actionIndex = 0; actionIndex < dynamicSACs[index]->actionHashKeyMap.size(); ++actionIndex) {
-            out << actionIndex << " " << dynamicSACs[index]->actionHashKeyMap[actionIndex] << endl;
+        for (unsigned int actionIndex = 0;
+             actionIndex < actionPreconds[index]->actionHashKeyMap.size();
+             ++actionIndex) {
+            out << actionIndex << " " <<
+            actionPreconds[index]->actionHashKeyMap[actionIndex] << endl;
         }
 
         out << endl;
     }
 
     out << endl << endl << "#####ACTION STATES#####" << endl;
-    for(unsigned int index = 0; index < actionStates.size(); ++index) {
+    for (unsigned int index = 0; index < actionStates.size(); ++index) {
         out << "## index" << endl;
         out << index << endl;
         out << "## state" << endl;
-        for(unsigned int varIndex = 0; varIndex < actionStates[index].state.size(); ++varIndex) {
+        for (unsigned int varIndex = 0;
+             varIndex < actionStates[index].state.size(); ++varIndex) {
             out << actionStates[index][varIndex] << " ";
         }
         out << endl;
         out << "## relevant preconditions" << endl;
         out << actionStates[index].relevantSACs.size() << endl;
-        for(unsigned int sacIndex = 0; sacIndex < actionStates[index].relevantSACs.size(); ++sacIndex) {
+        for (unsigned int sacIndex = 0;
+             sacIndex < actionStates[index].relevantSACs.size(); ++sacIndex) {
             out << actionStates[index].relevantSACs[sacIndex]->index << " ";
         }
         out << endl;
@@ -453,36 +491,43 @@ void PlanningTask::print(ostream& out) {
     }
 
     out << endl << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << endl;
-    for(unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
+    for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << endl;
         out << index << endl;
-        if(!stateHashKeys.empty()) {
+        if (!stateHashKeys.empty()) {
             out << "## state hash key (for each value in the domain)" << endl;
-            for(unsigned int valIndex = 0; valIndex < stateHashKeys[index].size(); ++valIndex) {
+            for (unsigned int valIndex = 0;
+                 valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
-                if(valIndex != stateHashKeys[index].size() - 1) {
+                if (valIndex != stateHashKeys[index].size() - 1) {
                     out << " ";
                 }
             }
         }
         out << endl;
 
-        if(!kleeneStateHashKeyBases.empty()) {
+        if (!kleeneStateHashKeyBases.empty()) {
             out << "## kleene state hash key base" << endl;
             out << kleeneStateHashKeyBases[index] << endl;
         }
 
-        out << "## state fluent hash keys (first line is the number of keys)" << endl;
+        out <<
+        "## state fluent hash keys (first line is the number of keys)" << endl;
         out << indexToStateFluentHashKeyMap[index].size() << endl;
-        for(unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size(); ++i) {
+        for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
+             ++i) {
             out << indexToStateFluentHashKeyMap[index][i].first << " ";
             out << indexToStateFluentHashKeyMap[index][i].second << endl;
         }
 
-        out << "## kleene state fluent hash keys (first line is the number of keys)" << endl;
+        out <<
+        "## kleene state fluent hash keys (first line is the number of keys)"
+            <<
+        endl;
         out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
-        for(unsigned int i = 0; i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
+        for (unsigned int i = 0;
+             i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
             out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
         }
@@ -490,36 +535,44 @@ void PlanningTask::print(ostream& out) {
     }
 
     out << endl << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << endl;
-    for(unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
+    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
+         ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << endl;
-        out << (index-firstProbabilisticVarIndex) << endl;
-        if(!stateHashKeys.empty()) {
+        out << (index - firstProbabilisticVarIndex) << endl;
+        if (!stateHashKeys.empty()) {
             out << "## state hash key (for each value in the domain)" << endl;
-            for(unsigned int valIndex = 0; valIndex < stateHashKeys[index].size(); ++valIndex) {
+            for (unsigned int valIndex = 0;
+                 valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
-                if(valIndex != stateHashKeys[index].size() - 1) {
+                if (valIndex != stateHashKeys[index].size() - 1) {
                     out << " ";
                 }
             }
         }
         out << endl;
 
-        if(!kleeneStateHashKeyBases.empty()) {
+        if (!kleeneStateHashKeyBases.empty()) {
             out << "## kleene state hash key base" << endl;
             out << kleeneStateHashKeyBases[index] << endl;
         }
 
-        out << "## state fluent hash keys (first line is the number of keys)" << endl;
+        out <<
+        "## state fluent hash keys (first line is the number of keys)" << endl;
         out << indexToStateFluentHashKeyMap[index].size() << endl;
-        for(unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size(); ++i) {
+        for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
+             ++i) {
             out << indexToStateFluentHashKeyMap[index][i].first << " ";
             out << indexToStateFluentHashKeyMap[index][i].second << endl;
         }
 
-        out << "## kleene state fluent hash keys (first line is the number of keys)" << endl;
+        out <<
+        "## kleene state fluent hash keys (first line is the number of keys)"
+            <<
+        endl;
         out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
-        for(unsigned int i = 0; i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
+        for (unsigned int i = 0;
+             i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
             out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
         }
@@ -528,8 +581,9 @@ void PlanningTask::print(ostream& out) {
 
     out << endl << endl << "#####TRAINING SET#####" << endl;
     out << trainingSet.size() << endl;
-    for(set<State>::iterator it = trainingSet.begin(); it != trainingSet.end(); ++it) {
-        for(unsigned int i = 0; i < it->state.size(); ++i) {
+    for (set<State>::iterator it = trainingSet.begin(); it != trainingSet.end();
+         ++it) {
+        for (unsigned int i = 0; i < it->state.size(); ++i) {
             out << it->state[i] << " ";
         }
         out << endl;

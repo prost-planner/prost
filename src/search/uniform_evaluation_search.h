@@ -15,7 +15,8 @@ public:
     bool setValueFromString(std::string& param, std::string& value);
 
     // Start the search engine to calculate best actions
-    bool estimateBestActions(State const& _rootState, std::vector<int>& bestActions);
+    bool estimateBestActions(State const& _rootState,
+            std::vector<int>& bestActions);
 
     // Start the search engine for state value estimation
     bool estimateStateValue(State const& /*_rootState*/, double& stateValue) {
@@ -24,7 +25,9 @@ public:
     }
 
     // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+    bool estimateQValues(State const& _rootState,
+            std::vector<int> const& actionsToExpand,
+            std::vector<double>& qValues);
 
     // Parameter setter
     virtual void setInitialValue(double const& _initialValue) {

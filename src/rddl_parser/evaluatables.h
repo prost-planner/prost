@@ -20,7 +20,7 @@ struct Evaluatable {
     virtual void initialize();
 
     // Simplification
-    virtual void simplify(std::map<StateFluent*, double>& replacements);
+    virtual void simplify(std::map<ParametrizedVariable*, double>& replace);
 
     bool isActionIndependent() const {
         return dependentActionFluents.empty();
@@ -79,20 +79,20 @@ struct Evaluatable {
     // and computed within states).
     void initializeHashKeys(PlanningTask* task);
     long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
-    void calculateActionHashKey(std::vector<ActionState> const& actionStates, ActionState const& action, long& nextKey);
-    long getActionHashKey(std::vector<ActionState> const& actionStates, std::vector<ActionFluent*>& scheduledActions);
+    bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
+                                ActionState const& action,
+                                long& nextKey);
+    long getActionHashKey(std::vector<ActionState> const& actionStates,
+                          std::vector<ActionFluent*>& scheduledActions);
 
-    void initializeStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                                       std::vector<std::vector<std::pair<int,long> > >& indexToStateFluentHashKeyMap,
-                                       long const& firstStateFluentHashKeyBase);
-    void initializeKleeneStateFluentHashKeys(std::vector<ConditionalProbabilityFunction*> const& CPFs,
-                                             std::vector<std::vector<std::pair<int,long> > >& indexToKleeneStateFluentHashKeyMap,
-                                             long const& firstStateFluentHashKeyBase);
+    void initializeStateFluentHashKeys(PlanningTask* task, long const& baseKey);
+    void initializeKleeneStateFluentHashKeys(PlanningTask* task,
+                                             long const& baseKey);
 };
 
 struct ActionPrecondition : public Evaluatable {
     ActionPrecondition(std::string _name, LogicalExpression* _formula) :
-        Evaluatable(_name , _formula) {}
+        Evaluatable(_name, _formula) {}
 
     void initialize();
 
@@ -112,7 +112,7 @@ struct ActionPrecondition : public Evaluatable {
 
 struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula) :
-        Evaluatable("Reward" , _formula) {}
+        Evaluatable("Reward", _formula) {}
 
     void initialize();
 
@@ -136,12 +136,14 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     // This is used to sort transition functions by their name to ensure
     // deterministic behaviour
     struct TransitionFunctionSort {
-        bool operator() (ConditionalProbabilityFunction* const& lhs, ConditionalProbabilityFunction* const& rhs) const {
+        bool operator()(ConditionalProbabilityFunction* const& lhs,
+                        ConditionalProbabilityFunction* const& rhs) const {
             return lhs->name < rhs->name;
         }
     };
 
-    ConditionalProbabilityFunction(StateFluent* _head, LogicalExpression* _formula) :
+    ConditionalProbabilityFunction(StateFluent* _head,
+                                   LogicalExpression* _formula) :
         Evaluatable(_head->fullName, _formula),
         head(_head),
         kleeneDomainSize(0) {}
@@ -151,7 +153,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     }
 
     bool hasFiniteDomain() const {
-        return (!domain.empty());
+        return !domain.empty();
     }
 
     void setIndex(int _index) {

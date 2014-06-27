@@ -18,19 +18,24 @@ public:
     Preprocessor(PlanningTask* _task) :
         task(_task) {}
 
-    void preprocess();
+    void preprocess(bool const& output = true);
 
 private:
     PlanningTask* task;
 
     void prepareEvaluatables();
     void prepareActions();
+    void removeInapplicableActionFluents(bool const& updateActionStates);
+    void initializeActionStates();
 
-    void calcPossiblyLegalActionStates(int actionsToSchedule,
-                                       std::list<std::vector<int> >& result,
-                                       std::vector<int> addTo = std::vector<int>()) const;
-    bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
-    bool sacContainsAdditionalPositiveActionFluent(ActionPrecondition* const& sac, ActionState const& actionState) const;
+    void calcPossiblyLegalActionStates(
+            int actionsToSchedule, std::list<std::vector<int> >& result,
+            std::vector<int> addTo = std::vector<int>()) const;
+    bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
+            ActionState const& actionState) const;
+    bool sacContainsAdditionalPositiveActionFluent(
+            ActionPrecondition* const& sac,
+            ActionState const& actionState) const;
 
     void calculateCPFDomains();
     void finalizeEvaluatables();
@@ -38,7 +43,8 @@ private:
 
     void determineTaskProperties();
     bool actionStateIsDominated(int stateIndex) const;
-    bool actionStateDominates(ActionState const& lhs, ActionState const& rhs) const;
+    bool actionStateDominates(ActionState const& lhs,
+            ActionState const& rhs) const;
     void addDominantState(int stateIndex) const;
 
     void prepareStateHashKeys();
@@ -47,8 +53,10 @@ private:
 
     void precomputeEvaluatables();
     void precomputeEvaluatable(Evaluatable* eval);
-    void createRelevantStates(std::vector<StateFluent*>& dependentStateFluents, std::vector<State>& result);
-    long calculateStateFluentHashKey(Evaluatable* eval, State const& state) const;
+    void createRelevantStates(std::vector<StateFluent*>& dependentStateFluents,
+            std::vector<State>& result);
+    long calculateStateFluentHashKey(Evaluatable* eval,
+            State const& state) const;
 
     void calculateMinAndMaxReward() const;
 };

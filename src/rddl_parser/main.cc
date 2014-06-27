@@ -14,12 +14,13 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>" << endl << endl;
+    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>" <<
+    endl << endl;
 }
 
 int main(int argc, char** argv) {
     Timer totalTime;
-    if(argc < 4) {
+    if (argc < 4) {
         printUsage();
         return 1;
     }
@@ -32,9 +33,9 @@ int main(int argc, char** argv) {
     double seed = time(NULL);
 
     // Read optinals
-    for(unsigned int i = 4; i < argc; ++i) {
+    for (unsigned int i = 4; i < argc; ++i) {
         string nextOption = string(argv[i]);
-        if(nextOption == "-s") {
+        if (nextOption == "-s") {
             seed = atoi(string(argv[++i]).c_str());
         } else {
             assert(false);
@@ -68,14 +69,17 @@ int main(int argc, char** argv) {
     analyzer.analyzeTask();
     cout << "...finished (" << t << ")." << endl;
 
-    cout << "total time: " << totalTime << endl;
-
+    t.reset();
+    cout << "writing output..." << endl;
     ofstream resultFile;
     targetDir = targetDir + "/" + task->name;
     resultFile.open(targetDir.c_str());
     task->print(resultFile);
     resultFile.close();
     //task->print(cout);
+    cout << "...finished (" << t << ")." << endl;
+
+    cout << "total time: " << totalTime << endl;
 
     return 0;
 }

@@ -9,23 +9,35 @@ Contact:  joris [@] almende.org
 
 Updated by Thomas Keller (tkeller [@] informatik.uni-freiburg.de) on
 September 27, 2013.
+Updated by Florian Geißer (geisserf [@] informatik.uni-freiburg.de) on
+July 27, 2014.
 
 
 ===[ Prerequisites ]===
 
-Libraries: Boost (libboost), BuDDy
-(http://sourceforge.net/projects/buddy/)
+Libraries: Boost (libboost),  BuDDy (http://sourceforge.net/projects/buddy/)
+For Development only: uncrustify 
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
-give an error on running the PROST solver
+give an error on running the PROST solver. 
 
+Uncrustify:
+After installing uncrustify (e.g. via apt-get install uncrustify) add the
+following lines to your .hgrc:
+
+[extensions]
+uncrustify = FULL_PATH_TO_PROST/scripts/uncrustify.py
+
+where FULL_PATH_TO is the absolute path to your prost directory
 
 ===[ Compiling the PROST planner ]===
 
 The planner can be compiled simply by going into the source directory
-and running make (debug version) or make release (release version).
+and running make. 
 
+Running make debug will compile the debug version, as well as the codestyle 
+script uncrustify. Running make test will build the unit tests and execute them.
 
 ===[ Running PROST ]===
 
@@ -99,6 +111,17 @@ Have a look at thts.h if you are interested in creating a search
 engine that can be modelled within the THTS framework (see the ICAPS
 2013 paper by Keller and Helmert for more information on THTS).
 
+===[ Test your own search engine ]===
+
+We use the Google Test framework to implement unit tests for our code. All tests
+are contained in /src/test/ and will be run automatically by compiling the debug
+version of the planner (i.e. calling make in src/search/). If you want to
+implement your own unit tests you have to keep the following naming conventions:
+- No underscore (_) in test case names and test names. 
+- Every test should end with *Test.cc
+
+The first convention is necessary by the framework and the second rule allows
+make to automatically compile and run your tests.
 
 ===[ Compare your search engine ]===
 
@@ -112,3 +135,4 @@ and 2.) all algorithms that are in your <resultdir> by running:
 
 which creates a texfile that contains both an instance-by-instance
 comparison and a table with IPPC scores.
+

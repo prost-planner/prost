@@ -1,3 +1,9 @@
+# Starts the rddlsim server, which is available as a svn repository at
+# https://rddlsim.googlecode.com/svn. Must be downloaded and compiled, and the
+# lib and bin directories must be copied to testbed/rddlsim for this script to
+# work. If you have any questions on rddlsim, please contact Scott Sanner
+# (ssanner [@] gmail.com)
+
 Home=rddlsim
 libDir=${Home}/lib
 CP=${Home}/bin
@@ -14,7 +20,7 @@ for i in ${libDir}/*.jar ; do
     CP="${CP}${SEP}$i"
 done
 if [ $# == 0 ] ; then
-   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server benchmarks/ippc2011/rddl
+   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server benchmarks/ippc-all/rddl
 else
-   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
+   java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server $1/rddl $2 $3 $4 $5 $6 $7 $8 $9 ${10}
 fi

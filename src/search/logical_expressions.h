@@ -11,14 +11,21 @@ class ConditionalProbabilityFunction;
 
 class LogicalExpression {
 public:
-    static LogicalExpression* createFromString(std::vector<StateFluent*> const& stateFluents, std::vector<ActionFluent*> const& actionFluents, std::string& desc);
-    static void createExpressions(std::vector<StateFluent*> const& stateFluents, std::vector<ActionFluent*> const& actionFluents, std::string& desc, std::vector<LogicalExpression*>& exprs);
+
+    static LogicalExpression* createFromString(std::string& desc);
+    static std::vector<LogicalExpression*> createExpressions(std::string& desc);
+    static std::pair<LogicalExpression*, LogicalExpression*>
+        splitExpressionPair(std::string& desc);
 
     virtual ~LogicalExpression() {}
 
-    virtual void evaluate(double& res, State const& current, ActionState const& actions) const;
-    virtual void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    virtual void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    virtual void evaluate(double& res, State const& current,
+                          ActionState const& actions) const;
+    virtual void evaluateToPD(DiscretePD& res, State const& current,
+                              ActionState const& actions) const;
+    virtual void evaluateToKleene(std::set<double>& res,
+                                  KleeneState const& current,
+                                  ActionState const& actions) const;
 
     virtual void print(std::ostream& out) const = 0;
 };
@@ -36,42 +43,58 @@ public:
     void print(std::ostream& out) const;
 
 protected:
-    StateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+    StateFluent(int _index, std::string _name,
+                std::vector<std::string> _values) :
         index(_index), name(_name), values(_values) {}
 };
 
 class DeterministicStateFluent : public StateFluent {
 public:
-    DeterministicStateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+    DeterministicStateFluent(int _index, std::string _name,
+                             std::vector<std::string> _values) :
         StateFluent(_index, _name, _values) {}
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 };
 
 class ProbabilisticStateFluent : public StateFluent {
 public:
-    ProbabilisticStateFluent(int _index, std::string _name, std::vector<std::string> _values) :
+    ProbabilisticStateFluent(int _index, std::string _name,
+                             std::vector<std::string> _values) :
         StateFluent(_index, _name, _values) {}
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 };
 
 class ActionFluent : public LogicalExpression {
 public:
-    ActionFluent(int _index, std::string _name, std::vector<std::string> _values) :
+    ActionFluent(int _index, std::string _name,
+                 std::vector<std::string> _values) :
         index(_index), name(_name), values(_values) {}
 
     int index;
     std::string name;
     std::vector<std::string> values;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -83,9 +106,13 @@ public:
 
     double value;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -101,9 +128,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -115,9 +146,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -129,9 +164,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -143,9 +182,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -157,9 +200,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -171,9 +218,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -185,9 +236,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -199,9 +254,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -213,9 +272,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -227,9 +290,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -241,9 +308,13 @@ public:
 
     std::vector<LogicalExpression*> exprs;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -259,9 +330,31 @@ public:
 
     LogicalExpression* expr;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
+
+    void print(std::ostream& out) const;
+};
+
+class ExponentialFunction : public LogicalExpression {
+public:
+    ExponentialFunction(LogicalExpression*& _expr) :
+        expr(_expr) {}
+
+    LogicalExpression* expr;
+
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -277,24 +370,33 @@ public:
 
     LogicalExpression* expr;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
 
 class DiscreteDistribution : public LogicalExpression {
 public:
-    DiscreteDistribution(std::vector<LogicalExpression*>& _values, std::vector<LogicalExpression*> _probabilities) :
+    DiscreteDistribution(std::vector<LogicalExpression*>& _values,
+                         std::vector<LogicalExpression*> _probabilities) :
         values(_values), probabilities(_probabilities) {}
 
     std::vector<LogicalExpression*> values;
     std::vector<LogicalExpression*> probabilities;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };
@@ -305,15 +407,20 @@ public:
 
 class MultiConditionChecker : public LogicalExpression {
 public:
-    MultiConditionChecker(std::vector<LogicalExpression*> _conditions, std::vector<LogicalExpression*> _effects) :
+    MultiConditionChecker(std::vector<LogicalExpression*> _conditions,
+                          std::vector<LogicalExpression*> _effects) :
         conditions(_conditions), effects(_effects) {}
 
     std::vector<LogicalExpression*> conditions;
     std::vector<LogicalExpression*> effects;
 
-    void evaluate(double& res, State const& current, ActionState const& actions) const;
-    void evaluateToPD(DiscretePD& res, State const& current, ActionState const& actions) const;
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) const;
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) const;
+    void evaluateToPD(DiscretePD& res, State const& current,
+                      ActionState const& actions) const;
+    void evaluateToKleene(std::set<double>& res,
+                          KleeneState const& current,
+                          ActionState const& actions) const;
 
     void print(std::ostream& out) const;
 };

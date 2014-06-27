@@ -13,9 +13,12 @@ public:
     Instantiator(PlanningTask* _task) :
         task(_task) {}
 
-    void instantiate();
-    void instantiateParams(std::vector<Parameter*> params, std::vector<std::vector<Parameter*> >& result, 
-                           std::vector<Parameter*> addTo = std::vector<Parameter*>(), int indexToProcess = 0);
+    void instantiate(bool const& output = true);
+    void instantiateParams(
+            std::vector<Parameter*> params,
+            std::vector<std::vector<Parameter*> >& result,
+            std::vector<Parameter*> addTo = std::vector<Parameter*>(),
+            int indexToProcess = 0);
 
 private:
     PlanningTask* task;

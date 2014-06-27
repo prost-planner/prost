@@ -3,6 +3,8 @@
 
 #include "logical_expressions.h"
 
+#include <unordered_map>
+
 class Evaluatable {
 public:
     enum CachingType {
@@ -15,17 +17,22 @@ public:
     // This function is called for state transitions with KleeneStates. The
     // result of the evaluation is a set of values, i.e., a subset of the domain
     // of this Evaluatable
-    void evaluateToKleene(std::set<double>& res, KleeneState const& current, ActionState const& actions) {
+    void evaluateToKleene(std::set<double>& res, KleeneState const& current,
+                          ActionState const& actions) {
         assert(res.empty());
-        switch(kleeneCachingType) {
+        switch (kleeneCachingType) {
         case NONE:
             formula->evaluateToKleene(res, current, actions);
             break;
         case MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(kleeneEvaluationCacheMap.find(stateHashKey) != kleeneEvaluationCacheMap.end()) {
+            if (kleeneEvaluationCacheMap.find(stateHashKey) !=
+                kleeneEvaluationCacheMap.end()) {
                 res = kleeneEvaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluateToKleene(res, current, actions);
@@ -33,10 +40,14 @@ public:
             }
             break;
         case DISABLED_MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(kleeneEvaluationCacheMap.find(stateHashKey) != kleeneEvaluationCacheMap.end()) {
+            if (kleeneEvaluationCacheMap.find(stateHashKey) !=
+                kleeneEvaluationCacheMap.end()) {
                 res = kleeneEvaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluateToKleene(res, current, actions);
@@ -44,11 +55,14 @@ public:
 
             break;
         case VECTOR:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
             assert(stateHashKey < kleeneEvaluationCacheVector.size());
 
-            if(kleeneEvaluationCacheVector[stateHashKey].empty()) {
+            if (kleeneEvaluationCacheVector[stateHashKey].empty()) {
                 formula->evaluateToKleene(res, current, actions);
                 kleeneEvaluationCacheVector[stateHashKey] = res;
             } else {
@@ -75,7 +89,7 @@ public:
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // All evaluatables have a hash index that is used to quckly update the
+    // All evaluatables have a hash index that is used to quickly update the
     // state fluent hash key of this evaluatable
     int hashIndex;
 
@@ -87,7 +101,7 @@ public:
     // KleeneCachingType describes which of the two (if any) datastructures is
     // used to cache computed values on Kleene states
     CachingType kleeneCachingType;
-    std::map<long, std::set<double> > kleeneEvaluationCacheMap;
+    std::unordered_map<long, std::set<double> > kleeneEvaluationCacheMap;
     std::vector<std::set<double> > kleeneEvaluationCacheVector;
 
     // ActionHashKeyMap contains the hash keys of the actions that influence
@@ -108,7 +122,8 @@ protected:
         cachingType(NONE),
         kleeneCachingType(NONE) {}
 
-    Evaluatable(std::string _name, LogicalExpression* _formula, int _hashIndex) :
+    Evaluatable(std::string _name, LogicalExpression* _formula,
+            int _hashIndex) :
         name(_name),
         formula(_formula),
         hashIndex(_hashIndex),
@@ -118,23 +133,29 @@ protected:
 
 class DeterministicEvaluatable : public Evaluatable {
 public:
-    DeterministicEvaluatable(std::string _name, LogicalExpression* _formula, int _hashIndex) :
+    DeterministicEvaluatable(std::string _name, LogicalExpression* _formula,
+            int _hashIndex) :
         Evaluatable(_name, _formula, _hashIndex) {}
 
     DeterministicEvaluatable(std::string _name, int _hashIndex) :
         Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula (deterministically) to a double
-    void evaluate(double& res, State const& current, ActionState const& actions) {
-        switch(cachingType) {
+    void evaluate(double& res, State const& current,
+            ActionState const& actions) {
+        switch (cachingType) {
         case NONE:
             formula->evaluate(res, current, actions);
             break;
         case MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
+            if (evaluationCacheMap.find(stateHashKey) !=
+                evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluate(res, current, actions);
@@ -142,10 +163,14 @@ public:
             }
             break;
         case DISABLED_MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
+            if (evaluationCacheMap.find(stateHashKey) !=
+                evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluate(res, current, actions);
@@ -153,11 +178,15 @@ public:
 
             break;
         case VECTOR:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
 
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
             assert(stateHashKey < evaluationCacheVector.size());
-            assert(!MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey]));
+            assert(!MathUtils::doubleIsMinusInfinity(evaluationCacheVector[
+                                stateHashKey]));
 
             res = evaluationCacheVector[stateHashKey];
             break;
@@ -168,7 +197,7 @@ public:
         return false;
     }
 
-    std::map<long, double> evaluationCacheMap;
+    std::unordered_map<long, double> evaluationCacheMap;
     std::vector<double> evaluationCacheVector;
 };
 
@@ -178,18 +207,23 @@ public:
         Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula to a discrete probability distribution
-    void evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+    void evaluate(DiscretePD& res, State const& current,
+            ActionState const& actions) {
         assert(res.isUndefined());
 
-        switch(cachingType) {
+        switch (cachingType) {
         case NONE:
             formula->evaluateToPD(res, current, actions);
             break;
         case MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
+            if (evaluationCacheMap.find(stateHashKey) !=
+                evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluateToPD(res, current, actions);
@@ -197,20 +231,27 @@ public:
             }
             break;
         case DISABLED_MAP:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
 
-            if(evaluationCacheMap.find(stateHashKey) != evaluationCacheMap.end()) {
+            if (evaluationCacheMap.find(stateHashKey) !=
+                evaluationCacheMap.end()) {
                 res = evaluationCacheMap[stateHashKey];
             } else {
                 formula->evaluateToPD(res, current, actions);
             }
             break;
         case VECTOR:
-            stateHashKey = current.stateFluentHashKey(hashIndex) + actionHashKeyMap[actions.index];
+            stateHashKey = current.stateFluentHashKey(hashIndex) +
+                           actionHashKeyMap[actions.index];
 
-            assert((current.stateFluentHashKey(hashIndex) >= 0) && (actionHashKeyMap[actions.index] >= 0) && (stateHashKey >= 0));
-            assert(stateHashKey < pdEvaluationCacheVector.size());
+            assert((current.stateFluentHashKey(hashIndex) >= 0) &&
+                    (actionHashKeyMap[actions.index] >= 0) &&
+                    (stateHashKey >= 0));
+            assert(stateHashKey < evaluationCacheVector.size());
             assert(!evaluationCacheVector[stateHashKey].isUndefined());
 
             res = evaluationCacheVector[stateHashKey];
@@ -222,16 +263,18 @@ public:
         return true;
     }
 
-    std::map<long, DiscretePD> evaluationCacheMap;
+    std::unordered_map<long, DiscretePD> evaluationCacheMap;
     std::vector<DiscretePD> evaluationCacheVector;
 };
 
 class RewardFunction : public DeterministicEvaluatable {
 public:
-    RewardFunction(LogicalExpression* _formula, int _hashIndex, double _minVal, double _maxVal) :
+    RewardFunction(LogicalExpression* _formula, int _hashIndex,
+                   double _minVal, double _maxVal, bool _actionIndependent) :
         DeterministicEvaluatable("Reward", _formula, _hashIndex),
         minVal(_minVal),
-        maxVal(_maxVal) {}
+        maxVal(_maxVal),
+        actionIndependent(_actionIndependent) {}
 
     double const& getMinVal() const {
         return minVal;
@@ -241,9 +284,14 @@ public:
         return maxVal;
     }
 
+    bool isActionIndependent() const {
+        return actionIndependent;
+    }
+
 private:
     double minVal;
     double maxVal;
+    bool actionIndependent;
 };
 
 class DeterministicCPF : public DeterministicEvaluatable {

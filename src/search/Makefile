@@ -8,7 +8,9 @@ HEADERS = parser.h \
 	  dp_uct_search.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
+	  minimal_lookahead_search.h \
 	  uniform_evaluation_search.h \
+	  breadth_first_search.h \
 	  ippc_client.h \
 	  states.h \
 	  evaluatables.h \
@@ -38,12 +40,18 @@ OBJECTS_DEBUG   = $(SOURCES:%.cc=.obj/%$(OBJECT_SUFFIX_DEBUG).o)
 TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 
 CC     = g++
-DEPEND = g++ -MM
+DEPEND = g++ -MM -std=c++0x
+
+## Test related
+GTEST_DIR = ../test/gtest
+TEST_MAIN = ../test/testMain
+TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
+TEST_OBJECTS = $(addsuffix .o, $(TEST_BINARIES)) 
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
 
-CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror #-Wconversion
+CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror -std=c++0x #-Wconversion
 LINKOPT = -g
 
 OPT =
@@ -58,17 +66,22 @@ endif
 ## Additional specialized options for the various targets follow.
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
-CCOPT_DEBUG    = 
+CCOPT_DEBUG    = -fprofile-arcs -ftest-coverage
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
-LINKOPT_DEBUG    =
+LINKOPT_DEBUG    = 
+
+CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
+
 
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug
+default: release
 
-all: release debug
+test: covclear test_build run_tests uncrustify
+
+all: covclear release debug test_build test uncrustify
 
 ## Build rules for the release target follow.
 
@@ -83,22 +96,78 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 
 ## Build rules for the debug target follow.
 
-debug: $(TARGET_DEBUG)
+debug: $(TARGET_DEBUG) covclear uncrustify
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov
 
 $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CCOPT) $(OPT) $(CCOPT_DEBUG) -c $< -o $@
 
+## Build rules for test target follow
+
+test_build:  $(TEST_MAIN).o $(GTEST_DIR)/gtest-all.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG)) $(TEST_OBJECTS)
+				$(CC) $(CCOPT) $(OPT) -o runTests  $^ -lbdd -lgcov
+
+$(TEST_MAIN).o: $(TEST_MAIN).cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c  $< -o $@
+
+$(GTEST_DIR)/gtest_main.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest_main.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest_main.cc -o $(GTEST_DIR)/gtest_main.o
+
+$(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o 
+
+%Test.o: %Test.cc 
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c $< -o $@
+
+## Automatically runs all tests
+run_tests: 
+	./runTests
+
+## codestyle checks
+
+uncrustify: 
+	@echo "Files violating codestyle convention:"
+	@hg uncrustify *
+	@hg uncrustify ../test/*
+	@echo "Use 'hg uncrustify --diff <filename>' to show modifications uncrustify will apply."
+	@echo "Use 'hg uncrustify --modify <filename>' to automatically modify a file."	
+	@echo "Use 'make uncrustifyAll' to modify all files without creating backups."
+
+uncrustifyAll:
+	@hg uncrustify --modify --no-backup *
+	@hg uncrustify --modify --no-backup ../test/*
+
+# Creates code coverage html files.
+coverage:
+	@rm -rf ../../coverage/search
+	@mkdir -p ../../coverage
+	@mkdir ../../coverage/search
+	@../../scripts/gcovr -r . -b -o ../../coverage/search/branch_coverage
+	@../../scripts/gcovr -r . --html --html-details -o ../../coverage/search/coverage.html
+	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/search/coverage.html to view code coverage" 
+	@echo "Open <PROST_DIRECTORY>/coverage/search/branch_coverage to view branch coverage"
+
+# Deletes code coverage gcda files.
+covclear:
+		find .obj/ -name '*.gcda' | xargs rm -f
+
 clean:
 	rm -rf .obj
+	@rm -rf ../../coverage/search
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
+	rm -f ../test/search/*.o
+	rm -f ../test/search/*.obj
+	rm -f ../test/gtest/*.o
+	find . -name "*.crusty" -type f -delete
+	find ../test/search -name "*.crusty" -type f -delete
 
 distclean: clean
-	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
+	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG) runTests
+
 
 ## Note: If we just call gcc -MM on a source file that lives within a
 ## subdirectory, it will strip the directory part in the output. Hence
@@ -123,4 +192,4 @@ ifneq ($(MAKECMDGOALS),distclean)
 endif
 endif
 
-.PHONY: default all release debug clean distclean
+.PHONY: default all release debug test_build test clean distclean
