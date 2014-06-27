@@ -153,6 +153,7 @@ protected:
         initializer(NULL),
         initialQValues(SearchEngine::numberOfActions, 0.0),
         initializedDecisionNodes(0),
+        lastUsedNodePoolIndex(0),
         terminationMethod(THTS<SearchNode>::TIME),
         maxNumberOfTrials(0),
         numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
@@ -312,7 +313,7 @@ protected:
     size_t skippedBackups;
 
     // Tests which access private members
-    friend class thtsTest;
+    friend class THTSTest;
 };
 
 /******************************************************************
