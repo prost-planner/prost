@@ -75,7 +75,9 @@ CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: covclear debug test_build test uncrustify
+default: release
+
+test: covclear test_build run_tests uncrustify
 
 all: covclear release debug test_build test uncrustify
 
@@ -92,7 +94,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 
 ## Build rules for the debug target follow.
 
-debug: $(TARGET_DEBUG)
+debug: $(TARGET_DEBUG) covclear uncrustify
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
 	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov
@@ -120,7 +122,7 @@ $(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
 
 
 ## Automatically runs all tests from TEST_BINARIES.
-test: $(TEST_BINARIES)
+run_tests: $(TEST_BINARIES)
 				for T in $(TEST_BINARIES); do ./$$T; done
 
 uncrustify: 

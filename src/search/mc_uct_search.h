@@ -66,7 +66,7 @@ public:
     std::vector<MCUCTNode*> children;
 
     // Tests accessing private members of this class
-    friend class uctBaseTest;
+    friend class UCTBaseTest;
 
 private:
     double immediateReward;

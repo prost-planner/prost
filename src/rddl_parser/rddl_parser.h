@@ -51,7 +51,7 @@ private:
     std::string instanceName;
 
     // tests which access private members
-    friend class simplifyTest;
+    friend class SimplifyTest;
 };
 
 #endif

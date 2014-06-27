@@ -34,13 +34,10 @@ where FULL_PATH_TO is the absolute path to your prost directory
 ===[ Compiling the PROST planner ]===
 
 The planner can be compiled simply by going into the source directory
-and running make debug (debug version) or make release (release version).
+and running make. 
 
-Running make without additional parameters will compile the debug version, as
-well as any unit tests in src/test (note that compilation will fail if you do
-not have installed Google Test), run the tests and additionally run
-uncrustify to show any files which do not conform to our coding conventions.
-
+Running make debug will compile the debug version, as well as the codestyle 
+script uncrustify. Running make test will build the unit tests and execute them.
 
 ===[ Running PROST ]===
 
