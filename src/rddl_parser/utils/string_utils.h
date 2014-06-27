@@ -34,6 +34,7 @@ public:
     static void removeFirstAndLastCharacter(std::string& s);
     static void nextParamValuePair(std::string& desc, std::string& param,
             std::string& value);
+    static bool startsWith(std::string const& s, std::string const& prefix);
 
     template<typename T>
     static void concatenateNames(std::vector<T*>& tokens, std::string& res,

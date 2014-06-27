@@ -265,3 +265,9 @@ void StringUtils::nextParamValuePair(std::string& desc, std::string& param,
     }
     StringUtils::trim(desc);
 }
+
+bool StringUtils::startsWith(std::string const& s, std::string const& prefix) {
+    std::string tmp = s.substr(0, prefix.length());
+    return prefix == tmp;
+}
+

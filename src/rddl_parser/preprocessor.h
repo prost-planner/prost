@@ -18,8 +18,7 @@ public:
     Preprocessor(PlanningTask* _task) :
         task(_task) {}
 
-    void preprocess();
-    void preprocessNoOutput();
+    void preprocess(bool const& output = true);
 
 private:
     PlanningTask* task;
