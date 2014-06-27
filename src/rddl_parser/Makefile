@@ -32,9 +32,9 @@ TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 CC     = g++
 DEPEND = g++ -MM -std=c++0x
 
-
-## Testfile binaries
-TEST_BINARIES = $(basename $(wildcard ../test/parser/*Test.cc))
+## Test related
+GTEST_DIR = ../test/gtest
+TEST_BINARIES = $(basename $(wildcard ../test/rddl_parser/*Test.cc))
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
 ## for both targets (release and debug).
@@ -54,19 +54,20 @@ endif
 ## Additional specialized options for the various targets follow.
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
-CCOPT_DEBUG    =  -fprofile-arcs -ftest-coverage
-CCOPT_TEST = -D TEST
-TEST_LIBRARIES = -lgtest -lgtest_main -lpthread -lbdd -lgcov
+CCOPT_DEBUG    = -fprofile-arcs -ftest-coverage
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
-LINKOPT_DEBUG    =
+LINKOPT_DEBUG    = 
+
+CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
+
 
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug test_build test uncrustify
+default: covclear debug test_build test uncrustify
 
-all: release debug test_build test uncrustify
+all: covclear release debug test_build test uncrustify
 
 ## Build rules for the release target follow.
 
@@ -94,11 +95,19 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 
 test_build: $(TEST_BINARIES)
 
-%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ $(TEST_LIBRARIES)
+%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))  $(GTEST_DIR)/gtest-all.o $(GTEST_DIR)/gtest_main.o
+				$(CC) $(CCOPT) $(OPT) -o $@ $^ -lbdd -lgcov
 
 %Test.o: %Test.cc 
-				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c $< -o $@
+
+$(GTEST_DIR)/gtest_main.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest_main.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest_main.cc -o $(GTEST_DIR)/gtest_main.o
+
+
+$(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o 
+
 
 ## Automatically runs all tests from TEST_BINARIES.
 test: $(TEST_BINARIES)
@@ -119,23 +128,26 @@ uncrustifyAll:
 # Creates code coverage html files.
 coverage:
 	@rm -rf ../../coverage/rddl_parser
+	@mkdir -p ../../coverage
 	@mkdir ../../coverage/rddl_parser
 	@../../scripts/gcovr -r . -b -o ../../coverage/rddl_parser/branch_coverage
-	@../../scripts/gcovr -d -r . --html --html-details -o ../../coverage/rddl_parser/coverage.html
+	@../../scripts/gcovr -r . --html --html-details -o ../../coverage/rddl_parser/coverage.html
 	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/rddl_parser/coverage.html to view code coverage" 
 	@echo "Open <PROST_DIRECTORY>/coverage/rddl_parser/branch_coverage to view branch coverage"
 
-
-
+# Deletes code coverage gcda files.
+covclear:
+		find .obj/ -name '*.gcda' | xargs rm -f
 clean:
 	rm -rf .obj
 	rm -rf ../../coverage/rddl_parser
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f ../test/parser/*.o
-	rm -f ../test/parser/*.obj
+	rm -f ../test/rddl_parser/*.o
+	rm -f ../test/rddl_parser/*.obj
+	rm -f ../test/gtest/*.o
 	find . -name "*.crusty" -type f -delete
-	find ../test/parser -name "*.crusty" -type f -delete
+	find ../test/rddl_parser -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)

@@ -25,6 +25,12 @@ void Instantiator::instantiate() {
     t.reset();
 }
 
+void Instantiator::instantiateNoOutput() {
+    instantiateVariables();
+    instantiateCPFs();
+    instantiateSACs();
+}
+
 void Instantiator::instantiateVariables() {
     for (map<string, ParametrizedVariable*>::iterator it = task->variableDefinitions.begin(); it != task->variableDefinitions.end(); ++it) {
         ParametrizedVariable*& var = it->second;

@@ -10,35 +10,17 @@ Contact:  joris [@] almende.org
 Updated by Thomas Keller (tkeller [@] informatik.uni-freiburg.de) on
 September 27, 2013.
 Updated by Florian Geißer (geisserf [@] informatik.uni-freiburg.de) on
-May 06, 2014.
+July 27, 2014.
 
 
 ===[ Prerequisites ]===
 
 Libraries: Boost (libboost),  BuDDy (http://sourceforge.net/projects/buddy/)
-For Development only: Google Test (libgtest-dev), uncrustify 
+For Development only: uncrustify 
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
 give an error on running the PROST solver. 
-
-Google Test:
-If you have installed Google Test make sure that the installation worked by
-verifying the existence of either:
-
-/usr/local/include/gtest/gtest.h
-/usr/local/lib/libgtest.a
-/usr/local/lib/libgtest.so
-
-or:
-
-/usr/include/gtest/gtest.h
-/usr/lib/libgtest.a
-/usr/lib/libgtest.so
-
-If you don't find these files, please download gtest manually
-(https://code.google.com/p/googletest/) and refer to the gtest README to build
-it from source.
 
 Uncrustify:
 After installing uncrustify (e.g. via apt-get install uncrustify) add the

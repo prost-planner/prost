@@ -73,6 +73,20 @@ void Preprocessor::preprocess() {
     cout << "    ...finished (" << t() << ")" << endl;
 }
 
+void Preprocessor::preprocessNoOutput() {
+    prepareEvaluatables();
+    prepareActions();
+    calculateCPFDomains();
+    finalizeEvaluatables();
+    determinize();
+    determineTaskProperties();
+    prepareStateHashKeys();
+    prepareKleeneStateHashKeys();
+    prepareStateFluentHashKeys();
+    precomputeEvaluatables();
+    calculateMinAndMaxReward();
+}
+
 /*****************************************************************
                        Basic Preprocesses
 *****************************************************************/

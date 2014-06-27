@@ -49,6 +49,9 @@ private:
     std::string domainName;
     std::string nonFluentsName;
     std::string instanceName;
+
+    // tests which access private members
+    friend class simplifyTest;
 };
 
 #endif

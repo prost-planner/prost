@@ -14,6 +14,7 @@ public:
         task(_task) {}
 
     void instantiate();
+    void instantiateNoOutput();
     void instantiateParams(
             std::vector<Parameter*> params,
             std::vector<std::vector<Parameter*> >& result,

@@ -6,10 +6,6 @@
 
 #include "uct_base.h"
 
-#ifdef TEST
-#include <gtest/gtest.h>
-#endif
-
 class MCUCTNode { //Monte Carlo UCTNode
 public:
     MCUCTNode() :
@@ -69,18 +65,10 @@ public:
 
     std::vector<MCUCTNode*> children;
 
+    // Tests accessing private members of this class
+    friend class uctBaseTest;
+
 private:
-
-#ifdef TEST
-    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLOG);
-    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithSQRT);
-    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithLIN);
-    FRIEND_TEST(uctBaseTest, testMCUCTSelectionWithESQRT);
-    FRIEND_TEST(uctBaseTest, testSelectUnselectedAction);
-    FRIEND_TEST(uctBaseTest, testSelectActionOnRoot);
-    FRIEND_TEST(uctBaseTest, testSelectActionRoundRobin);
-#endif
-
     double immediateReward;
     double futureReward;
 

@@ -19,6 +19,7 @@ public:
         task(_task) {}
 
     void preprocess();
+    void preprocessNoOutput();
 
 private:
     PlanningTask* task;
