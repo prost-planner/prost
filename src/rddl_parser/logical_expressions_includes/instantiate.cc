@@ -1,4 +1,6 @@
-LogicalExpression* LogicalExpression::instantiate(PlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
+LogicalExpression*
+LogicalExpression::instantiate(PlanningTask* /*task*/,
+                               Instantiations& /*replace*/) {
     assert(false);
     return NULL;
 }
@@ -7,30 +9,31 @@ LogicalExpression* LogicalExpression::instantiate(PlanningTask* /*task*/, map<st
                          Schematics
 *****************************************************************/
 
-LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task,
+                                                     Instantiations& replace) {
     vector<Object*> newParams;
-    for(unsigned int i = 0; i < params.size(); ++i) {
+    for (unsigned int i = 0; i < params.size(); ++i) {
         Object* param = dynamic_cast<Object*>(params[i]);
-        if(!param) {
-            assert(replacements.find(params[i]->name) != replacements.end());
-            param = replacements[params[i]->name];
+        if (!param) {
+            assert(replace.find(params[i]->name) != replace.end());
+            param = replace[params[i]->name];
         }
         newParams.push_back(param);
     }
 
     string instantiatedName(variableName);
-    if(!newParams.empty()) {
+    if (!newParams.empty()) {
         instantiatedName += "(";
-        for(unsigned int i = 0; i < newParams.size(); ++i) {
+        for (unsigned int i = 0; i < newParams.size(); ++i) {
             instantiatedName += newParams[i]->name;
-            if(i != newParams.size()-1) {
+            if (i != newParams.size() - 1) {
                 instantiatedName += ", ";
             }
         }
         instantiatedName += ")";
     }
-    
-    switch(variableType) {
+
+    switch (variableType) {
     case ParametrizedVariable::STATE_FLUENT:
         return task->getStateFluent(instantiatedName);
         break;
@@ -38,7 +41,8 @@ LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task, map<str
         return task->getActionFluent(instantiatedName);
         break;
     case ParametrizedVariable::NON_FLUENT:
-        return new NumericConstant(task->getNonFluent(instantiatedName)->initialValue);
+        double& val = task->getNonFluent(instantiatedName)->initialValue;
+        return new NumericConstant(val);
         break;
     }
     assert(false);
@@ -49,113 +53,124 @@ LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task, map<str
                            Atomics
 *****************************************************************/
 
-LogicalExpression* NumericConstant::instantiate(PlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
+LogicalExpression* NumericConstant::instantiate(PlanningTask* /*task*/,
+                                                Instantiations& /*replace*/) {
     return this;
 }
 
-LogicalExpression* Parameter::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
-    // This is only called if this is not used as parameter but as part of an
-    // EqualsExpression.
-    assert(replacements.find(name) != replacements.end());
-    return replacements[name]->instantiate(task, replacements);
+LogicalExpression* Parameter::instantiate(PlanningTask* task,
+                                          Instantiations& replace) {
+    // This is only called if this parameter is not a fluent's parameter but to
+    // compare parameters and/or objects
+    assert(replace.find(name) != replace.end());
+    return replace[name]->instantiate(task, replace);
 }
 
-LogicalExpression* Object::instantiate(PlanningTask* /*task*/, map<string, Object*>& /*replacements*/) {
-    // This is only called if this is not used as parameter but as part of an
-    // EqualsExpression.
-    if(values.size() != 1) {
-        SystemUtils::abort("Error: Implement object fluents in instantiate.cc.");
-    }
-    return new NumericConstant(values[0]);
+LogicalExpression* Object::instantiate(PlanningTask* /*task*/,
+                                       Instantiations& /*replace*/) {
+    return new NumericConstant(value);
 }
 
 /*****************************************************************
                            Connectives
 *****************************************************************/
 
-LogicalExpression* Conjunction::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Conjunction::instantiate(PlanningTask* task,
+                                            Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Conjunction(newExpr);
 }
-LogicalExpression* Disjunction::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Disjunction::instantiate(PlanningTask* task,
+                                            Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Disjunction(newExpr);
 }
 
-LogicalExpression* EqualsExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* EqualsExpression::instantiate(PlanningTask* task,
+                                                 Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new EqualsExpression(newExpr);
 }
 
-LogicalExpression* GreaterExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* GreaterExpression::instantiate(PlanningTask* task,
+                                                  Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new GreaterExpression(newExpr);
 }
 
-LogicalExpression* LowerExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* LowerExpression::instantiate(PlanningTask* task,
+                                                Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new LowerExpression(newExpr);
 }
 
-LogicalExpression* GreaterEqualsExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression*
+GreaterEqualsExpression::instantiate(PlanningTask* task,
+                                     Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new GreaterEqualsExpression(newExpr);
 }
 
-LogicalExpression* LowerEqualsExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression*
+LowerEqualsExpression::instantiate(PlanningTask* task,
+                                   Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new LowerEqualsExpression(newExpr);
 }
 
-LogicalExpression* Addition::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Addition::instantiate(PlanningTask* task,
+                                         Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Addition(newExpr);
 }
 
-LogicalExpression* Subtraction::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Subtraction::instantiate(PlanningTask* task,
+                                            Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Subtraction(newExpr);
 }
 
-LogicalExpression* Multiplication::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Multiplication::instantiate(PlanningTask* task,
+                                               Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Multiplication(newExpr);
 }
 
-LogicalExpression* Division::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression* Division::instantiate(PlanningTask* task,
+                                         Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
-    for(unsigned int i = 0; i < exprs.size(); ++i) {
-        newExpr.push_back(exprs[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < exprs.size(); ++i) {
+        newExpr.push_back(exprs[i]->instantiate(task, replace));
     }
     return new Division(newExpr);
 }
@@ -164,32 +179,45 @@ LogicalExpression* Division::instantiate(PlanningTask* task, map<string, Object*
                           Unaries
 *****************************************************************/
 
-LogicalExpression* Negation::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
-    LogicalExpression* newExpr = expr->instantiate(task, replacements);
+LogicalExpression* Negation::instantiate(PlanningTask* task,
+                                         Instantiations& replace) {
+    LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new Negation(newExpr);
+}
+
+LogicalExpression* ExponentialFunction::instantiate(PlanningTask* task,
+                                                    Instantiations& replace) {
+    LogicalExpression* newExpr = expr->instantiate(task, replace);
+    return new ExponentialFunction(newExpr);
 }
 
 /*****************************************************************
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression* KronDeltaDistribution::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
-    LogicalExpression* newExpr = expr->instantiate(task, replacements);
+LogicalExpression*
+KronDeltaDistribution::instantiate(PlanningTask* task,
+                                   Instantiations& replace) {
+    LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new KronDeltaDistribution(newExpr);
 }
 
-LogicalExpression* BernoulliDistribution::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
-    LogicalExpression* newExpr = expr->instantiate(task, replacements);
+LogicalExpression*
+BernoulliDistribution::instantiate(PlanningTask* task,
+                                   Instantiations& replace) {
+    LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new BernoulliDistribution(newExpr);
 }
 
-LogicalExpression* DiscreteDistribution::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression*
+DiscreteDistribution::instantiate(PlanningTask* task,
+                                  Instantiations& replace) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
 
-    for(unsigned int i = 0; i < values.size(); ++i) {
-        newValues.push_back(values[i]->instantiate(task, replacements));
-        newProbs.push_back(probabilities[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < values.size(); ++i) {
+        newValues.push_back(values[i]->instantiate(task, replace));
+        newProbs.push_back(probabilities[i]->instantiate(task, replace));
     }
     return new DiscreteDistribution(newValues, newProbs);
 }
@@ -198,20 +226,25 @@ LogicalExpression* DiscreteDistribution::instantiate(PlanningTask* task, map<str
                          Conditionals
 *****************************************************************/
 
-LogicalExpression* IfThenElseExpression::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
-    LogicalExpression* newCondition = condition->instantiate(task, replacements);
-    LogicalExpression* newValueIfTrue = valueIfTrue->instantiate(task, replacements);
-    LogicalExpression* newValueIfFalse = valueIfFalse->instantiate(task, replacements);
-    return new IfThenElseExpression(newCondition, newValueIfTrue, newValueIfFalse);
+LogicalExpression* IfThenElseExpression::instantiate(PlanningTask* task,
+                                                     Instantiations& replace) {
+    LogicalExpression* newCondition = condition->instantiate(task, replace);
+    LogicalExpression* newValueIfTrue = valueIfTrue->instantiate(task, replace);
+    LogicalExpression* newValueIfFalse =
+        valueIfFalse->instantiate(task, replace);
+    return new IfThenElseExpression(newCondition, newValueIfTrue,
+                                    newValueIfFalse);
 }
 
-LogicalExpression* MultiConditionChecker::instantiate(PlanningTask* task, map<string, Object*>& replacements) {
+LogicalExpression*
+MultiConditionChecker::instantiate(PlanningTask* task,
+                                   Instantiations& replace) {
     std::vector<LogicalExpression*> newConditions;
     std::vector<LogicalExpression*> newEffects;
 
-    for(unsigned int i = 0; i < conditions.size(); ++i) {
-        newConditions.push_back(conditions[i]->instantiate(task, replacements));
-        newEffects.push_back(effects[i]->instantiate(task, replacements));
+    for (unsigned int i = 0; i < conditions.size(); ++i) {
+        newConditions.push_back(conditions[i]->instantiate(task, replace));
+        newEffects.push_back(effects[i]->instantiate(task, replace));
     }
     return new MultiConditionChecker(newConditions, newEffects);
 }

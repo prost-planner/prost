@@ -1,4 +1,6 @@
-void LogicalExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void LogicalExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     assert(false);
 }
 
@@ -6,7 +8,9 @@ void LogicalExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*doma
                            Atomics
 *****************************************************************/
 
-void StateFluent::calculatePDDomain(vector<set<DiscretePD> > const& domains, ActionState const& /*actions*/, set<DiscretePD>& res) {
+void StateFluent::calculatePDDomain(vector<set<DiscretePD> > const& domains,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& res) {
     assert(res.empty());
     assert(index < domains.size());
     assert(!domains[index].empty());
@@ -14,7 +18,9 @@ void StateFluent::calculatePDDomain(vector<set<DiscretePD> > const& domains, Act
     res.insert(domains[index].begin(), domains[index].end());
 }
 
-void ActionFluent::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& actions, set<DiscretePD>& res) {
+void ActionFluent::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& actions,
+        set<DiscretePD>& res) {
     assert(res.empty());
     assert(index < actions.state.size());
     DiscretePD resPD;
@@ -22,7 +28,9 @@ void ActionFluent::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/
     res.insert(resPD);
 }
 
-void NumericConstant::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& res) {
+void NumericConstant::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& res) {
     assert(res.empty());
     DiscretePD resPD;
     resPD.assignDiracDelta(value);
@@ -33,9 +41,11 @@ void NumericConstant::calculatePDDomain(vector<set<DiscretePD> > const& /*domain
                            Connectives
 *****************************************************************/
 
-void Conjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Conjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(res.empty());
-    
+
     // for(unsigned int i = 0; i < exprs.size(); ++i) {
     //     res.clear();
     //     set<double> tmp;
@@ -50,7 +60,9 @@ void Conjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
     // }
 }
 
-void Disjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Disjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(res.empty());
     // set<double> tmp1;
     // tmp1.insert(1.0);
@@ -73,7 +85,9 @@ void Disjunction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
     // }
 }
 
-void EqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void EqualsExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(exprs.size() == 2);
     // assert(res.empty());
     // set<double> childRes;
@@ -106,15 +120,21 @@ void EqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domai
     // }
 }
 
-void GreaterExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void GreaterExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(false);
 }
 
-void LowerExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void LowerExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(false);
 }
 
-void GreaterEqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void GreaterEqualsExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(exprs.size() == 2);
     // assert(res.empty());
     // set<double> childRes;
@@ -146,7 +166,9 @@ void GreaterEqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& 
     // }
 }
 
-void LowerEqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void LowerEqualsExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(exprs.size() == 2);
     // assert(res.empty());
     // set<double> childRes;
@@ -175,10 +197,12 @@ void LowerEqualsExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*
     //     //cout << "might be smaller" << endl;
     // } else {
     //     res.insert(1.0);
-    // } 
+    // }
 }
 
-void Addition::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Addition::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(res.empty());
     // set<double> childRes;
     // exprs[0]->calculatePDDomain(actions, childRes);
@@ -197,7 +221,9 @@ void Addition::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, Ac
     // }
 }
 
-void Subtraction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Subtraction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(exprs.size() == 2);
     // assert(res.empty());
     // set<double> childRes1;
@@ -211,7 +237,9 @@ void Subtraction::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
     // }
 }
 
-void Multiplication::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Multiplication::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(res.empty());
     // set<double> childRes;
     // exprs[0]->calculatePDDomain(actions, childRes);
@@ -230,7 +258,9 @@ void Multiplication::calculatePDDomain(vector<set<DiscretePD> > const& /*domains
     // }
 }
 
-void Division::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Division::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(exprs.size() == 2);
     // assert(res.empty());
 
@@ -249,7 +279,9 @@ void Division::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, Ac
                           Unaries
 *****************************************************************/
 
-void Negation::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void Negation::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/,
+        ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // set<double> tmp;
     // expr->calculatePDDomain(actions, tmp);
     // for(set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
@@ -262,11 +294,15 @@ void Negation::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, Ac
                    Probability Distributions
 *****************************************************************/
 
-void BernoulliDistribution::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void BernoulliDistribution::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // expr->calculatePDDomain(actions,res);
 }
 
-void DiscreteDistribution::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void DiscreteDistribution::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(false);
 }
 
@@ -274,7 +310,9 @@ void DiscreteDistribution::calculatePDDomain(vector<set<DiscretePD> > const& /*d
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void IfThenElseExpression::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // assert(res.empty());
     // condition->calculatePDDomain(actions, res);
     // assert(!res.empty());
@@ -293,7 +331,9 @@ void IfThenElseExpression::calculatePDDomain(vector<set<DiscretePD> > const& /*d
     // }
 }
 
-void MultiConditionChecker::calculatePDDomain(vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/, set<DiscretePD>& /*res*/) {
+void MultiConditionChecker::calculatePDDomain(
+        vector<set<DiscretePD> > const& /*domains*/, ActionState const& /*actions*/,
+        set<DiscretePD>& /*res*/) {
     // for(unsigned int i = 0; i < conditions.size(); ++i) {
     //     set<double> tmp;
     //     conditions[i]->calculatePDDomain(actions, tmp);
@@ -305,4 +345,3 @@ void MultiConditionChecker::calculatePDDomain(vector<set<DiscretePD> > const& /*
     //     }
     // }
 }
-

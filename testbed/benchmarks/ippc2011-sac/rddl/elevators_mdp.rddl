@@ -5,6 +5,9 @@
 //
 // Edited for competition and translation purposes by Scott Sanner.
 //
+// State action constraints added by Thomas Keller 
+// (tkeller [at] informatik.uni-freiburg.de)
+//
 // The "elevators" domain has a number of elevators delivering passengers 
 // to either the top or the bottom floor (the only allowable destinations).
 // Potential passengers arrive at a floor based on Bernoulli draws 
@@ -140,9 +143,9 @@ domain elevators_mdp {
 		elevator-at-floor'(?e, ?f) =
 		
 			//////////////////////////////////////////////////////////////////
-			// Elevator does not move if door is open or elevator does not move
+			// Elevator does not move
 			//////////////////////////////////////////////////////////////////
-			if (~elevator-closed(?e) | ~move-current-dir(?e))
+			if (~move-current-dir(?e))
 				then KronDelta( elevator-at-floor(?e, ?f) )
 
 			//////////////////////////////////////////////////////////////////
@@ -154,16 +157,6 @@ domain elevators_mdp {
 			else if (move-current-dir(?e) ^ ~elevator-dir-up(?e) ^ exists_{?cur : floor} 
 						[elevator-at-floor(?e, ?cur) ^ ADJACENT-UP(?f,?cur)])
 				then KronDelta(true)
-
-			//////////////////////////////////////////////////////////////////
-			// These handle failed actions -- stay at current floor
-			//////////////////////////////////////////////////////////////////
-			else if (move-current-dir(?e) ^ elevator-dir-up(?e) ^ ~exists_{?next : floor} 
-					 [elevator-at-floor(?e, ?f) ^ ADJACENT-UP(?f,?next)])
-				then KronDelta( elevator-at-floor(?e, ?f) )
-			else if (move-current-dir(?e) ^ ~elevator-dir-up(?e) ^ ~exists_{?next : floor} 
-						[elevator-at-floor(?e, ?f) ^ ADJACENT-UP(?next,?f)])
-				then KronDelta( elevator-at-floor(?e, ?f) )
 
 			//////////////////////////////////////////////////////////////////
 			// Otherwise elevator ?e does not move to floor ?f

@@ -1,0 +1,29 @@
+This folder aims to contain all RDDL MDP domains that are publically available.
+Please contact us if you find domains that are missing in our collection.
+
+Author:   Thomas Keller
+Date:     June 17, 2014
+Contact:  tkeller [@] informatik.uni-freiburg.de
+
+===[ Subfolders ]===
+
+[ippc2011] 
+These are the domains and instances that were used for the International
+Probabilistic Planning Competition in 2011.
+
+[ippc2011-sac]
+All problems in this folder are functionally equivalent to the IPPC2011
+problems, but (dynamic) state action constraints (action preconditions in RDDL2)
+are added. Note that all added action preconditions are such that only actions
+that are considered unreasonable by the PROST planner become inapplicable.
+
+[ippc2011-enum] 
+All problems (currently, only the instances of the elevators domain) in this
+folder are functionally equivalent to the IPPC2011 problems, and are based on
+the problems in the ippc2011-sac folder. These problems additionally use enums
+to simplify the domain description.
+
+[ippc2014]
+These are the domains and instances that were used for the International
+Probabilistic Planning Competition in 2014.
+

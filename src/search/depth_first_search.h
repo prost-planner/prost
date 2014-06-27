@@ -17,7 +17,9 @@ public:
     DepthFirstSearch();
 
     // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState, std::vector<int> const& actionsToExpand, std::vector<double>& qValues);
+    bool estimateQValues(State const& _rootState,
+            std::vector<int> const& actionsToExpand,
+            std::vector<double>& qValues);
 
 private:
     // Returns the reward that can be achieved if the action with

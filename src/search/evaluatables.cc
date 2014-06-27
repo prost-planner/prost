@@ -9,13 +9,13 @@ using namespace std;
 *****************************************************************/
 
 void Evaluatable::disableCaching() {
-    //We only disable caching if it is done in maps as the 
+    //We only disable caching if it is done in maps as the
     //space for vectors is already reserved and thus not growing.
-    if(cachingType == MAP) {
+    if (cachingType == MAP) {
         cachingType = DISABLED_MAP;
     }
 
-    if(kleeneCachingType == MAP) {
+    if (kleeneCachingType == MAP) {
         kleeneCachingType = DISABLED_MAP;
     }
 }

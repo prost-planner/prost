@@ -6,6 +6,9 @@
 //
 // Modified for competition and translation purposes by Scott Sanner.
 //
+// State action constraints added by Thomas Keller 
+// (tkeller [at] informatik.uni-freiburg.de)
+//
 // In a grid, a robot (R) must get to a goal (G) and avoid obstacles (O)
 // arriving randomly and moving left.  If an obstacle overlaps with the
 // robot, the robot disappears and can no longer move around.  The robot

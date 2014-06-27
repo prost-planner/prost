@@ -20,7 +20,7 @@ struct XMLNode {
     virtual ~XMLNode() {}
 
     virtual const XMLNode* getChild(int /*i*/) const {
-        return NULL; 
+        return NULL;
     }
 
     virtual const XMLNode* getChild(const std::string& /*name*/) const {
@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& os, const XMLNode& xn);
 std::ostream& operator<<(std::ostream& os, const XMLNode* xn);
 
 struct XMLText : public XMLNode {
-    XMLText(const std::string& _text) : 
+    XMLText(const std::string& _text) :
         text(_text) {}
 
     std::string getText() const;
@@ -59,7 +59,7 @@ struct XMLText : public XMLNode {
 };
 
 struct XMLParent : public XMLNode {
-    XMLParent(const std::string& _name) : 
+    XMLParent(const std::string& _name) :
         name(_name) {}
     virtual ~XMLParent();
 

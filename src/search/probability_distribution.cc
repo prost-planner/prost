@@ -6,7 +6,7 @@ bool DiscretePD::isWellDefined() const {
     // Only use this funciton in assertions, it's quite inefficient!
 
     // Each value must have a probability
-    if(isUndefined() || (values.size() != probabilities.size())) {
+    if (isUndefined() || (values.size() != probabilities.size())) {
         return false;
     }
 
@@ -14,12 +14,12 @@ bool DiscretePD::isWellDefined() const {
     // not be 0.0 and the values must be ordered and unique
     double probSum = probabilities[0];
     double lastVal = values[0];
-    for(unsigned int i = 1; i < probabilities.size(); ++i) {
-        if(MathUtils::doubleIsEqual(probabilities[i], 0.0)) {
+    for (unsigned int i = 1; i < probabilities.size(); ++i) {
+        if (MathUtils::doubleIsEqual(probabilities[i], 0.0)) {
             return false;
         }
         probSum += probabilities[i];
-        if(!MathUtils::doubleIsGreater(values[i], lastVal)) {
+        if (!MathUtils::doubleIsGreater(values[i], lastVal)) {
             return false;
         }
         lastVal = values[i];
@@ -29,7 +29,7 @@ bool DiscretePD::isWellDefined() const {
 
 void DiscretePD::print(ostream& out) const {
     out << "[ ";
-    for(unsigned int i = 0; i < values.size(); ++i) {
+    for (unsigned int i = 0; i < values.size(); ++i) {
         out << values[i] << ":" << probabilities[i] << " ";
     }
     out << "]" << endl;

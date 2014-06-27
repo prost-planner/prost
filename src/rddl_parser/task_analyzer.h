@@ -13,7 +13,8 @@ public:
     TaskAnalyzer(PlanningTask* _task) :
         task(_task) {}
 
-    void analyzeTask(int const& numberOfStates = 200, double const& maxTimeout = 2.0);
+    void analyzeTask(int const& numberOfStates = 200,
+            double const& maxTimeout = 2.0);
 
 protected:
     PlanningTask* task;
@@ -21,8 +22,7 @@ protected:
     std::set<State, State::StateSort> encounteredStates;
 
     void analyzeStateAndApplyAction(State const& current, State& next, double& reward) const;
-    void applyRandomApplicableAction(State const& current, State& next, double& reward) const;
-    void applyRandomApplicableAction(std::vector<int> const& applicableActions, State const& current, State& next, double& reward) const;
+
     bool actionIsApplicable(ActionState const& action, State const& current) const;
 
     void detectUnreasonableActionsInDeterminization(State const& current) const;
