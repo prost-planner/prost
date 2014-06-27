@@ -4,11 +4,6 @@
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
 
-#ifdef TEST
-#include <gtest/gtest.h>
-#endif
-
-
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper (Thomas Keller and Malte
 // Helmert: Trial-based Heuristic Tree Search for Finite Horizon MDPs). The
@@ -317,10 +312,7 @@ protected:
     size_t skippedBackups;
 
     // Tests which access private members
-    #ifdef TEST
-    FRIEND_TEST(thtsTest, testInitializeDecisionNodeWhereBackupDepthChanges);
-    FRIEND_TEST(thtsTest, testCorrectNumberOfInitializedDecisionNodes);
-    #endif
+    friend class thtsTest;
 };
 
 /******************************************************************

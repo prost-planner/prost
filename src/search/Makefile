@@ -42,7 +42,8 @@ TARGET_DEBUG    = $(TARGET)$(TARGET_SUFFIX_DEBUG)
 CC     = g++
 DEPEND = g++ -MM -std=c++0x
 
-## Testfile binaries
+## Test related
+GTEST_DIR = ../test/gtest
 TEST_BINARIES = $(basename $(wildcard ../test/search/*Test.cc))
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
@@ -64,20 +65,19 @@ endif
 
 CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
 CCOPT_DEBUG    = -fprofile-arcs -ftest-coverage
-CCOPT_TEST = -D TEST 
-
-TEST_LIBRARIES = -lgtest -lgtest_main -lpthread -lbdd -lgcov
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
 LINKOPT_DEBUG    = 
 
+CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
+
+
 ## Define the default target up here so that the LP stuff below
 ## doesn't define a default target.
 
-default: debug test_build test uncrustify
+default: covclear debug test_build test uncrustify
 
-all: release debug test_build test uncrustify
-
+all: covclear release debug test_build test uncrustify
 
 ## Build rules for the release target follow.
 
@@ -95,7 +95,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 debug: $(TARGET_DEBUG)
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov 
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov
 
 $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
@@ -105,10 +105,19 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 
 test_build: $(TEST_BINARIES)
 
-%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))
-				$(CC) $(CCOPT) $(OPT) $(CCOPT_TEST) -o $@ $^ $(TEST_LIBRARIES)
+%Test: %Test.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG))  $(GTEST_DIR)/gtest-all.o $(GTEST_DIR)/gtest_main.o
+				$(CC) $(CCOPT) $(OPT) -o $@ $^ -lbdd -lgcov
+
 %Test.o: %Test.cc 
-				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) $(CCOPT_TEST) -c $< -o $@
+				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c $< -o $@
+
+$(GTEST_DIR)/gtest_main.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest_main.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest_main.cc -o $(GTEST_DIR)/gtest_main.o
+
+
+$(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
+	$(CC) $(CCOPT_GTEST) -g -c $(GTEST_DIR)/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o 
+
 
 ## Automatically runs all tests from TEST_BINARIES.
 test: $(TEST_BINARIES)
@@ -128,12 +137,17 @@ uncrustifyAll:
 
 # Creates code coverage html files.
 coverage:
-	@rm -rf ../../coverage
-	@mkdir ../../coverage
-	@../../scripts/gcovr -r . -b -o ../../coverage/branch_coverage
-	@../../scripts/gcovr -d -r . --html --html-details -o ../../coverage/coverage_search.html
+	@rm -rf ../../coverage/search
+	@mkdir -p ../../coverage
+	@mkdir ../../coverage/search
+	@../../scripts/gcovr -r . -b -o ../../coverage/search/branch_coverage
+	@../../scripts/gcovr -r . --html --html-details -o ../../coverage/search/coverage.html
 	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/search/coverage.html to view code coverage" 
 	@echo "Open <PROST_DIRECTORY>/coverage/search/branch_coverage to view branch coverage"
+
+# Deletes code coverage gcda files.
+covclear:
+		find .obj/ -name '*.gcda' | xargs rm -f
 
 clean:
 	rm -rf .obj
@@ -142,12 +156,14 @@ clean:
 	rm -f Makefile.depend
 	rm -f ../test/search/*.o
 	rm -f ../test/search/*.obj
+	rm -f ../test/gtest/*.o
 	find . -name "*.crusty" -type f -delete
 	find ../test/search -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG)
 	for T in $(TEST_BINARIES); do rm -f $$T; done
+
 
 ## Note: If we just call gcc -MM on a source file that lives within a
 ## subdirectory, it will strip the directory part in the output. Hence
