@@ -67,8 +67,8 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
     assert(!cachingEnabled ||
-            (DeterministicSearchEngine::stateValueCache.find(state) ==
-             DeterministicSearchEngine::stateValueCache.end()));
+           (DeterministicSearchEngine::stateValueCache.find(state) ==
+            DeterministicSearchEngine::stateValueCache.end()));
     assert(MathUtils::doubleIsMinusInfinity(result));
 
     // Get applicable actions

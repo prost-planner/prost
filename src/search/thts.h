@@ -157,6 +157,7 @@ protected:
         terminationMethod(THTS<SearchNode>::TIME),
         maxNumberOfTrials(0),
         numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
+        selectMostVisited(false),
         numberOfRuns(0),
         cacheHits(0),
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),

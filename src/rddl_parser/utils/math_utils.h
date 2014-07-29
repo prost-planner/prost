@@ -57,6 +57,8 @@ public:
         return true;
     }
 
+    // TODO: Make sure that this always generates a number that is smaller than
+    // 1.0 - EPSILON
     static double generateRandomNumber() {
         return (double) (rand() % 1000001) / 1000001.0;
     }
