@@ -61,15 +61,15 @@ bool IDS::setValueFromString(string& param, string& value) {
                             Parameter
 ******************************************************************/
 
-void IDS::setMaxSearchDepth(int _maxSearchDepth) {
-    dfs->setMaxSearchDepth(_maxSearchDepth);
-    SearchEngine::setMaxSearchDepth(_maxSearchDepth);
-    elapsedTime.resize(_maxSearchDepth + 1);
+void IDS::setMaxSearchDepth(int newValue) {
+    dfs->setMaxSearchDepth(newValue);
+    SearchEngine::setMaxSearchDepth(newValue);
+    elapsedTime.resize(newValue + 1);
 }
 
-void IDS::setCachingEnabled(bool _cachingEnabled) {
-    SearchEngine::setCachingEnabled(_cachingEnabled);
-    dfs->setCachingEnabled(_cachingEnabled);
+void IDS::setCachingEnabled(bool newValue) {
+    SearchEngine::setCachingEnabled(newValue);
+    dfs->setCachingEnabled(newValue);
 }
 
 /******************************************************************

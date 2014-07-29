@@ -463,7 +463,7 @@ protected:
     // in 'next'.
     void calcSuccessorState(State const& current,
                             int const& actionIndex,
-            State& next) const {
+                            State& next) const {
         for (size_t index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
             deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index),
                                                current,

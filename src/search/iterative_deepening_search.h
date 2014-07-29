@@ -37,17 +37,15 @@ public:
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
 
-    virtual void setStrictTerminationTimeout(
-            double _strictTerminationTimeout) {
-        strictTerminationTimeout = _strictTerminationTimeout;
+    virtual void setStrictTerminationTimeout(double newValue) {
+        strictTerminationTimeout = newValue;
     }
 
-    virtual void setTerminateWithReasonableAction(
-            bool _terminateWithReasonableAction) {
-        terminateWithReasonableAction = _terminateWithReasonableAction;
+    virtual void setTerminateWithReasonableAction(bool newValue) {
+        terminateWithReasonableAction = newValue;
     }
 
-    virtual void setCachingEnabled(bool _cachingEnabled);
+    virtual void setCachingEnabled(bool newValue);
 
     // Reset statistic variables
     void resetStats();

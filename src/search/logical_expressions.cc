@@ -136,8 +136,7 @@ vector<LogicalExpression*> LogicalExpression::createExpressions(string& desc) {
     return result;
 }
 
-pair<LogicalExpression*, LogicalExpression*>
-LogicalExpression::splitExpressionPair(string& desc) {
+LogicalExpressionPair LogicalExpression::splitExpressionPair(string& desc) {
     // Each pair must be in parentheses
     StringUtils::removeFirstAndLastCharacter(desc);
 

@@ -92,8 +92,8 @@ protected:
 
     // Initialization
     void initializeDecisionNodeChild(BFSNode* node,
-            unsigned int const& actionIndex,
-            double const& initialQValue);
+                                     unsigned int const& actionIndex,
+                                     double const& initialQValue);
 
 
     // Outcome selection
@@ -101,9 +101,9 @@ protected:
 
     // Backup function
     void backupDecisionNodeLeaf(BFSNode* node, double const& immReward,
-            double const& futureReward);
+                                double const& futureReward);
     void backupDecisionNode(BFSNode*, double const& immReward,
-            double const& futureReward);
+                            double const& futureReward);
     void backupChanceNode(BFSNode*, double const& futureReward);
 
     // Action selection
