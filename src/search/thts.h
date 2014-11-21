@@ -5,9 +5,9 @@
 #include "utils/timer.h"
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
-// abstract framework described in the ICAPS 2013 paper (Thomas Keller and Malte
-// Helmert: Trial-based Heuristic Tree Search for Finite Horizon MDPs). The
-// described ingredients can be implemented in the abstract functions
+// abstract framework described in the ICAPS 2013 paper by Thomas and Malte
+// (Trial-based Heuristic Tree Search for Finite Horizon MDPs). The described
+// ingredients can be implemented in the abstract functions
 
 // 1. int selectAction(SearchNode*): return the index of the selected action
 
@@ -76,11 +76,12 @@ public:
 
     // Start the search engine as main search engine
     bool estimateBestActions(State const& _rootState,
-            std::vector<int>& bestActions);
+                             std::vector<int>& bestActions);
 
     // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& /*_rootState*/, std::vector<int> const& /*actionsToExpand*/,
-            std::vector<double>& /*qValues*/) {
+    bool estimateQValues(State const& /*_rootState*/,
+                         std::vector<int> const& /*actionsToExpand*/,
+                         std::vector<double>& /*qValues*/) {
         assert(false);
         return false;
     }

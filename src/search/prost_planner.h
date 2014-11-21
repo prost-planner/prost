@@ -12,8 +12,7 @@ class ProstPlanner {
 public:
     enum TimeoutManagementMethod {
         NONE,
-        UNIFORM,
-        MANUAL
+        UNIFORM
     };
 
     ProstPlanner(std::string& plannerDesc);
@@ -76,6 +75,7 @@ private:
 
     int remainingTimeFactor;
 
+    // Parameter
     int ramLimit;
     int bitSize;
     int seed;

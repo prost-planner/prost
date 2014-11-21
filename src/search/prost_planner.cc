@@ -14,49 +14,6 @@
 
 using namespace std;
 
-int const FIRST_TIME_FACTOR[40] =  { 20, 12, 10,  8,  7,  6,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const SECOND_TIME_FACTOR[40] = { 12, 10,  9,  8,  7,  6,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const THIRD_TIME_FACTOR[40] =  { 10,  9,  8,  7,  6,  5,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const FOURTH_TIME_FACTOR[40] = { 10,  8,  7,  6,  6,  5,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const FIFTH_TIME_FACTOR[40] =   { 8,  7,  6,  6,  6,  5,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const DEFAULT_TIME_FACTOR[40] = { 7,  6,  6,  6,  6,  5,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  0 };
-
-int const LAST_TIME_FACTOR[40] =    { 7,  6,  6,  6,  6,  5,  5,  5,  5,  5,
-                                      5,  5,  5,  5,  5,  5,  4,  4,  4,  4,
-                                      4,  4,  4,  4,  4,  3,  3,  3,  3,  3,
-                                      3,  3,  2,  2,  2,  2,  2,  1,  1,  1 };
-
-int const FIRST_TIME_FACTOR_SUM = 182;
-int const SECOND_TIME_FACTOR_SUM = 171;
-int const THIRD_TIME_FACTOR_SUM = 164;
-int const FOURTH_TIME_FACTOR_SUM = 161;
-int const FIFTH_TIME_FACTOR_SUM = 157;
-int const DEFAULT_TIME_FACTOR_SUM = 155;
-int const LAST_TIME_FACTOR_SUM = 156;
-
 ProstPlanner::ProstPlanner(string& plannerDesc) :
     searchEngine(NULL),
     currentState(SearchEngine::initialState),
@@ -94,8 +51,6 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
         } else if (param == "-tm") {
             if(value == "UNI") {
                 setTimeoutManagementMethod(UNIFORM);
-            } else if(value == "MAN") {
-                setTimeoutManagementMethod(MANUAL);
             } else if(value == "NONE") {
                 setTimeoutManagementMethod(NONE);
             } else {
@@ -176,27 +131,6 @@ void ProstPlanner::initSession(int  _numberOfRounds, long /*totalTime*/) {
         break;
     case UNIFORM:
         remainingTimeFactor = numberOfRounds * SearchEngine::horizon;
-        break;
-    case MANUAL:
-        remainingTimeFactor = FIRST_TIME_FACTOR_SUM;
-        if(numberOfRounds >= 2) {
-            remainingTimeFactor += SECOND_TIME_FACTOR_SUM;
-        }
-        if(numberOfRounds >= 3) {
-            remainingTimeFactor += THIRD_TIME_FACTOR_SUM;
-        }
-        if(numberOfRounds >= 4) {
-            remainingTimeFactor += FOURTH_TIME_FACTOR_SUM;
-        }
-        if(numberOfRounds >= 5) {
-            remainingTimeFactor += FIFTH_TIME_FACTOR_SUM;
-        }
-        if(numberOfRounds >= 6) {
-            remainingTimeFactor += LAST_TIME_FACTOR_SUM;
-        }
-        if(numberOfRounds >= 6) {
-            remainingTimeFactor += ((numberOfRounds - 6) * DEFAULT_TIME_FACTOR_SUM);
-        }
         break;
     }
 }
@@ -296,7 +230,6 @@ void ProstPlanner::manageTimeouts(long const& remainingTime) {
         // We use a buffer of 3 seconds
         remainingTimeInSeconds -= 3.0;
     }
-    double timeFactor = 0.0;
     double timeForThisStep = 0.0;
 
     switch(tmMethod) {
@@ -306,28 +239,6 @@ void ProstPlanner::manageTimeouts(long const& remainingTime) {
     case UNIFORM:
         timeForThisStep = remainingTimeInSeconds / remainingTimeFactor;
         --remainingTimeFactor;
-        break;
-    case MANUAL:
-        if(currentRound == 0) {
-            timeFactor = (double)FIRST_TIME_FACTOR[currentStep];
-        } else if(currentRound == 1) {
-            timeFactor = (double)SECOND_TIME_FACTOR[currentStep];
-        } else if(currentRound == 2) {
-            timeFactor = (double)THIRD_TIME_FACTOR[currentStep];
-        } else if(currentRound == 3) {
-            timeFactor = (double)FOURTH_TIME_FACTOR[currentStep];
-        } else if(currentRound == 4) {
-            timeFactor = (double)FIFTH_TIME_FACTOR[currentStep];
-        } else if(currentRound == (numberOfRounds - 1)) {
-            timeFactor = (double)LAST_TIME_FACTOR[currentStep];
-        } else {
-            timeFactor = (double)DEFAULT_TIME_FACTOR[currentStep];
-        }
-        timeFactor /= ((double)remainingTimeFactor);
-
-        timeForThisStep = remainingTimeInSeconds * timeFactor;
-
-        remainingTimeFactor -= timeFactor;
         break;
     }
     cout << "Setting time for this decision to " << timeForThisStep << "s." << endl;

@@ -472,8 +472,9 @@ void SearchEngine::print(ostream& out) const {
     outStream.str("");
 }
 
-void SearchEngine::printStats(ostream& out, bool const& /*printRoundStats*/,
-        string indent) const {
+void SearchEngine::printStats(ostream& out,
+                              bool const& /*printRoundStats*/,
+                              string indent) const {
     out << indent << "Statistics of " << name << ":" << endl;
 }
 

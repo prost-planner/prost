@@ -4,6 +4,7 @@
 #include "evaluatables.h"
 
 #include "utils/math_utils.h"
+#include "utils/system_utils.h"
 #include "utils/timer.h"
 
 #include <iostream>
@@ -252,6 +253,8 @@ void Preprocessor::removeInapplicableActionFluents(bool const& updateActionState
         task->actionStates.insert(task->actionStates.end(), newActionStates.begin(), newActionStates.end());
 
         initializeActionStates();
+    } else {
+        assert(task->actionStates.empty());
     }
 }
 
@@ -265,11 +268,11 @@ void Preprocessor::prepareActions() {
     vector<ActionFluent*> finalActionFluents;
     map<ParametrizedVariable*, double> replacements;
 
-    if(task->primitiveStaticSACs.empty()) {
+    if (task->primitiveStaticSACs.empty()) {
         finalActionFluents = task->actionFluents;
     } else {
-        for(unsigned int index = 0; index < task->actionFluents.size(); ++index) {
-            if(task->primitiveStaticSACs.find(task->actionFluents[index]) == task->primitiveStaticSACs.end()) {
+        for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
+            if (task->primitiveStaticSACs.find(task->actionFluents[index]) == task->primitiveStaticSACs.end()) {
                 finalActionFluents.push_back(task->actionFluents[index]);
             } else {
                 replacements[task->actionFluents[index]] = 0.0;
@@ -280,18 +283,18 @@ void Preprocessor::prepareActions() {
         task->actionFluents = finalActionFluents;
 
         // Simplify all evaluatables by removing the unused action fluents from their formula
-        for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             task->CPFs[index]->simplify(replacements);
         }
 
         task->rewardCPF->simplify(replacements);
 
-        for(unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+        for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
             task->actionPreconds[index]->simplify(replacements);
             // TODO: What if this became static?
         }
 
-        for(unsigned int index = 0; index < task->staticSACs.size(); ++index) {
+        for (unsigned int index = 0; index < task->staticSACs.size(); ++index) {
             task->staticSACs[index]->simplify(replacements);
             // TODO: Check if this became a state invariant
         }
@@ -307,28 +310,20 @@ void Preprocessor::prepareActions() {
         task->actionFluents[index]->index = index;
     }
 
-    // Calculate all possible action combinations with up to
-    // numberOfConcurrentActions concurrent actions TODO: Make sure this stops
-    // also if an static SAC is violated that constrains the number of
-    // concurrently applicable actions. As is, if max-nondef-actions is not
-    // used, this will always produce the power set over all action fluents,
-    // which is potentially huge!)
-    list<vector<int> > actionCombinations;
-    calcPossiblyLegalActionStates(task->numberOfConcurrentActions, actionCombinations);
-
-    State current(task->CPFs);
+    // Calculate all action states with up to numberOfConcurrentActions
+    // concurrent actions TODO: Make sure this stops also if an static SAC is
+    // violated that constrains the number of concurrently applicable actions.
+    // Currently, if max-nondef-actions is not used, this will always produce
+    // the power set over all action fluents.
+    vector<ActionState> allActionStates;
+    calcAllActionStates(allActionStates);
 
     // Remove all illegal action combinations by checking the SACs that are
     // state independent
+    State current(task->CPFs);
     vector<ActionState> legalActionStates;
-    for (list<vector<int> >::iterator it = actionCombinations.begin(); it != actionCombinations.end(); ++it) {
-        vector<int>& tmp = *it;
 
-        ActionState actionState((int) task->actionFluents.size());
-        for (unsigned int i = 0; i < tmp.size(); ++i) {
-            actionState[tmp[i]] = 1;
-        }
-
+    for (ActionState const& actionState: allActionStates) {
         bool isLegal = true;
         for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
             double res = 0.0;
@@ -450,22 +445,37 @@ void Preprocessor::initializeActionStates() {
     }
 }
 
-void Preprocessor::calcPossiblyLegalActionStates(int actionsToSchedule,
-        list<vector<int> >& result,
-        vector<int> addTo) const {
-    int nextVal = 0;
-    result.push_back(addTo);
+void Preprocessor::calcAllActionStates(vector<ActionState>& result, int minElement, int scheduledActions) const {
+    if (result.empty()) {
+        result.push_back(ActionState((int) task->actionFluents.size()));
+    } else {
+        int lastIndex = result.size();
 
-    if (!addTo.empty()) {
-        nextVal = addTo[addTo.size() - 1] + 1;
+        for (unsigned int i = minElement; i < lastIndex; ++i) {
+            for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
+                if (!result[i][j]) {
+                    bool isExtension = true;
+                    for (unsigned int k = 0; k < j; ++k) {
+                        if (result[i][k]) {
+                            isExtension = false;
+                            break;
+                        }
+                    }
+
+                    if (isExtension) {
+                        ActionState copy(result[i]);
+                        copy[j] = 1;
+                        result.push_back(copy);
+                    }
+                }
+            }
+        }
+        minElement = lastIndex;
     }
 
-    for (unsigned int i = nextVal; i < task->actionFluents.size(); ++i) {
-        vector<int> copy = addTo;
-        copy.push_back(i);
-        if (actionsToSchedule > 0) {
-            calcPossiblyLegalActionStates(actionsToSchedule - 1, result, copy);
-        }
+    ++scheduledActions;
+    if (scheduledActions <= task->numberOfConcurrentActions) {
+        calcAllActionStates(result, minElement, scheduledActions);
     }
 }
 

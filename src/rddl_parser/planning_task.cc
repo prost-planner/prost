@@ -472,6 +472,7 @@ void PlanningTask::print(ostream& out) {
 
     out << endl << endl << "#####ACTION STATES#####" << endl;
     for (unsigned int index = 0; index < actionStates.size(); ++index) {
+        assert(index == actionStates[index].index);
         out << "## index" << endl;
         out << index << endl;
         out << "## state" << endl;
