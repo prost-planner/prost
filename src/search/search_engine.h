@@ -255,7 +255,7 @@ public:
     // Printer
     virtual void print(std::ostream& out) const;
     virtual void printStats(std::ostream& out, bool const& printRoundStats,
-            std::string indent = "") const;
+                            std::string indent = "") const;
 
     static void printDeadEndBDD() {
         bdd_printdot(cachedDeadEnds);

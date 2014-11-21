@@ -28,9 +28,10 @@ private:
     void removeInapplicableActionFluents(bool const& updateActionStates);
     void initializeActionStates();
 
-    void calcPossiblyLegalActionStates(
-            int actionsToSchedule, std::list<std::vector<int> >& result,
-            std::vector<int> addTo = std::vector<int>()) const;
+    void calcAllActionStates(std::vector<ActionState>& result,
+                             int minElement = 0,
+                             int scheduledActions = 0) const;
+
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
             ActionState const& actionState) const;
     bool sacContainsAdditionalPositiveActionFluent(
