@@ -104,25 +104,9 @@ void Preprocessor::prepareEvaluatables() {
     // and collect properties of reward
     task->rewardCPF->simplify(replacements);
 
-    // Sort CPFs for deterministic behaviour
+    // Sort CPFs
     sort(task->CPFs.begin(), task->CPFs.end(),
          ConditionalProbabilityFunction::TransitionFunctionSort());
-
-    // Distinguish deterministic and probabilistic CPFs
-    vector<ConditionalProbabilityFunction*> detCPFs;
-    vector<ConditionalProbabilityFunction*> probCPFs;
-    for (ConditionalProbabilityFunction*& cpf : task->CPFs) {
-        if (cpf->isProbabilistic()) {
-            probCPFs.push_back(cpf);
-        } else {
-            detCPFs.push_back(cpf);
-        }
-    }
-
-    // Rearrange the CPFs such that the deterministic ones come first
-    task->CPFs.clear();
-    task->CPFs.insert(task->CPFs.end(), detCPFs.begin(), detCPFs.end());
-    task->CPFs.insert(task->CPFs.end(), probCPFs.begin(), probCPFs.end());
 
     // We set the CPF indices as we have to evaluate formulas in the next step
     // to determine legal action combinations. The indices are still temporal,
@@ -592,11 +576,17 @@ void Preprocessor::finalizeEvaluatables() {
         }
     }
 
-    // Reset all indices and simplify cpfs by replacing all previously removed
-    // CPFS with their constant initial value.
+    // Simplify cpfs by replacing all previously removed CPFS with their
+    // constant initial value, then re-sort and re-set indices.
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        task->CPFs[index]->setIndex(index);
         task->CPFs[index]->simplify(replacements);
+    }
+
+    sort(task->CPFs.begin(), task->CPFs.end(),
+         ConditionalProbabilityFunction::TransitionFunctionSort());
+
+    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        task->CPFs[index]->setIndex(index);        
     }
 
     // Simplify rewardCPF

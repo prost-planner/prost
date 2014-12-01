@@ -138,7 +138,10 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     struct TransitionFunctionSort {
         bool operator()(ConditionalProbabilityFunction* const& lhs,
                         ConditionalProbabilityFunction* const& rhs) const {
-            return lhs->name < rhs->name;
+            if (lhs->isProb == rhs->isProb) {
+                return lhs->name < rhs->name;                
+            }
+            return rhs->isProb;
         }
     };
 
