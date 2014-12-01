@@ -314,8 +314,7 @@ void PlanningTask::print(ostream& out) {
     }
 
     out << endl << endl << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
-    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
-         ++index) {
+    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
         assert(CPFs[index]->head->index == index);
         assert(CPFs[index]->isProbabilistic());
         out << "## index" << endl;
