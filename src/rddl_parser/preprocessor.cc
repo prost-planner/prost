@@ -576,8 +576,8 @@ void Preprocessor::finalizeEvaluatables() {
         }
     }
 
-    // Simplify cpfs by replacing all previously removed CPFS with their
-    // constant initial value, then re-sort and re-set indices.
+    // Simplify CPFs by replacing all previously removed CPFs with their
+    // constant initial value, then sort again and reset indices.
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->simplify(replacements);
     }

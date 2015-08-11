@@ -44,8 +44,6 @@ bool MinimalLookaheadSearch::estimateQValues(State const& current,
                     // action to calculate the reward of the next state.
                     double reward2;
                     calcReward(next, 0, reward2);
-
-                    // We assign the 
                     qValues[actionIndex] = (reward + reward2) / 2.0;
                 }
             }
@@ -66,8 +64,6 @@ bool MinimalLookaheadSearch::estimateQValues(State const& current,
                     // Use any action to calculate the reward in the next state.
                     double reward2;
                     calcReward(next, 0, reward2);
-
-                    // We assign the 
                     qValues[actionIndex] = (reward + reward2) / 2.0;
                 }
             }
