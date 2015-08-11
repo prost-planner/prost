@@ -441,6 +441,7 @@ public:
     };
 
     void printPDState(std::ostream& out) const;
+    void printPDStateCompact(std::ostream& out) const;
 
 protected:
     std::vector<DiscretePD> probabilisticStateFluentsAsPD;

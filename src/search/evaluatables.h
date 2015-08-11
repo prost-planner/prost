@@ -141,8 +141,7 @@ public:
         Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula (deterministically) to a double
-    void evaluate(double& res, State const& current,
-                  ActionState const& actions) {
+    void evaluate(double& res, State const& current, ActionState const& actions) {
         switch (cachingType) {
         case NONE:
             formula->evaluate(res, current, actions);
@@ -206,8 +205,7 @@ public:
         Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula to a discrete probability distribution
-    void evaluate(DiscretePD& res, State const& current,
-                  ActionState const& actions) {
+    void evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
         assert(res.isUndefined());
 
         switch (cachingType) {

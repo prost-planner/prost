@@ -78,7 +78,7 @@ all: covclear release debug test_build test uncrustify
 release: $(TARGET_RELEASE)
 
 $(TARGET_RELEASE): $(OBJECTS_RELEASE)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_RELEASE) $(OBJECTS_RELEASE) -o $(TARGET_RELEASE) -lbdd
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_RELEASE) $(OBJECTS_RELEASE) -o $(TARGET_RELEASE)
 
 $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 	@mkdir -p $$(dirname $@)
@@ -89,7 +89,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 debug: $(TARGET_DEBUG) covclear uncrustify
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
-	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lbdd -lgcov
+	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lgcov
 
 $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 	@mkdir -p $$(dirname $@)
@@ -98,7 +98,7 @@ $(OBJECTS_DEBUG): .obj/%$(OBJECT_SUFFIX_DEBUG).o: %.cc
 ## Build rules for test target follow
 
 test_build:  $(TEST_MAIN).o $(GTEST_DIR)/gtest-all.o $(filter-out .obj/main.debug.o, $(OBJECTS_DEBUG)) $(TEST_OBJECTS)
-				$(CC) $(CCOPT) $(OPT) -o runTests  $^ -lbdd -lgcov
+				$(CC) $(CCOPT) $(OPT) -o runTests  $^ -lgcov
 
 $(TEST_MAIN).o: $(TEST_MAIN).cc 
 				$(CC) $(filter-out -Werror, $(CCOPT)) $(OPT) -c  $< -o $@

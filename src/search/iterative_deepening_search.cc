@@ -162,12 +162,6 @@ bool IDS::estimateQValues(State const& _rootState,
     }
     timer.reset();
 
-    if (_rootState.remainingSteps() > maxSearchDepth) {
-        maxSearchDepthForThisStep = maxSearchDepth;
-    } else {
-        maxSearchDepthForThisStep = _rootState.remainingSteps();
-    }
-
     HashMap::iterator it = rewardCache.find(_rootState);
 
     if (it != rewardCache.end()) {
@@ -177,6 +171,8 @@ bool IDS::estimateQValues(State const& _rootState,
             qValues[i] = it->second[i];
         }
     } else {
+        maxSearchDepthForThisStep = std::min(maxSearchDepth, _rootState.remainingSteps());
+
         currentState.setTo(_rootState);
         currentState.remainingSteps() = 1;
         do {
