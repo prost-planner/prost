@@ -24,8 +24,8 @@ DepthFirstSearch::DepthFirstSearch() :
 bool DepthFirstSearch::estimateQValues(State const& _rootState,
                                        vector<int> const& actionsToExpand,
                                        vector<double>& qValues) {
-    assert(_rootState.remainingSteps() > 0);
-    assert(_rootState.remainingSteps() <= maxSearchDepth);
+    assert(_rootState.stepsToGo() > 0);
+    assert(_rootState.stepsToGo() <= maxSearchDepth);
     assert(qValues.size() == SearchEngine::numberOfActions);
 
     for (unsigned int index = 0; index < qValues.size(); ++index) {
@@ -38,7 +38,7 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState,
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
                                    double& reward) {
-    State nxt(state.remainingSteps() - 1);
+    State nxt(state.stepsToGo() - 1);
     calcStateTransition(state, actionIndex, nxt, reward);
 
     // PlanningTask::printState(cout, nxt);
@@ -52,7 +52,7 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
     }
 
     // Check if we have reached a leaf
-    if (nxt.remainingSteps() == 1) {
+    if (nxt.stepsToGo() == 1) {
         calcOptimalFinalReward(nxt, rewardHelperVar);
         reward += rewardHelperVar;
         return;

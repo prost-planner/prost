@@ -338,7 +338,7 @@ protected:
                 for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         // This action is applicable
-                        PDState nxt(state.remainingSteps() - 1);
+                        PDState nxt(state.stepsToGo() - 1);
                         calcSuccessorState(state, actionIndex, nxt);
 
                         if (childStates.find(nxt) == childStates.end()) {

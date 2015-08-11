@@ -403,18 +403,18 @@ template <class SearchNode>
 void THTS<SearchNode>::initStep(State const& _rootState) {
     PDState rootState(_rootState);
     // Adjust maximal search depth and set root state
-    if (rootState.remainingSteps() > maxSearchDepth) {
-        ignoredSteps = rootState.remainingSteps() - maxSearchDepth;
+    if (rootState.stepsToGo() > maxSearchDepth) {
+        ignoredSteps = rootState.stepsToGo() - maxSearchDepth;
         maxSearchDepthForThisStep = maxSearchDepth;
         states[maxSearchDepthForThisStep].setTo(rootState);
-        states[maxSearchDepthForThisStep].remainingSteps() =
+        states[maxSearchDepthForThisStep].stepsToGo() =
             maxSearchDepthForThisStep;
     } else {
         ignoredSteps = 0;
-        maxSearchDepthForThisStep = rootState.remainingSteps();
+        maxSearchDepthForThisStep = rootState.stepsToGo();
         states[maxSearchDepthForThisStep].setTo(rootState);
     }
-    assert(states[maxSearchDepthForThisStep].remainingSteps() == maxSearchDepthForThisStep);
+    assert(states[maxSearchDepthForThisStep].stepsToGo() == maxSearchDepthForThisStep);
 
     stepsToGoInCurrentState = maxSearchDepthForThisStep;
     stepsToGoInNextState = maxSearchDepthForThisStep - 1;
@@ -464,7 +464,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
     assert(bestActions.empty());
 
     // Init round (if this is the first call in a round)
-    if (_rootState.remainingSteps() == SearchEngine::horizon) {
+    if (_rootState.stepsToGo() == SearchEngine::horizon) {
         initRound();
     }
 
@@ -483,7 +483,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
         outStream << std::endl << std::endl;
         bestActions.push_back(uniquePolicyOpIndex);
         currentRootNode = NULL;
-        printStats(outStream, (_rootState.remainingSteps() == 1));
+        printStats(outStream, (_rootState.stepsToGo() == 1));
         return true;
     }
 
@@ -517,17 +517,17 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
         // in this case) make sure that we keep the tree and simply follow the
         // optimal policy.
         firstSolvedFound = true;
-        accumulatedNumberOfRemainingStepsInFirstSolvedRootState += _rootState.remainingSteps();
+        accumulatedNumberOfRemainingStepsInFirstSolvedRootState += _rootState.stepsToGo();
     }
 
-    if (_rootState.remainingSteps() == SearchEngine::horizon) {
+    if (_rootState.stepsToGo() == SearchEngine::horizon) {
         accumulatedNumberOfTrialsInRootState += currentTrial;
         accumulatedNumberOfSearchNodesInRootState += lastUsedNodePoolIndex;
     }
 
     // Print statistics
     outStream << "Search time: " << timer << std::endl;
-    printStats(outStream, (_rootState.remainingSteps() == 1));
+    printStats(outStream, (_rootState.stepsToGo() == 1));
 
     return !bestActions.empty();
 }
