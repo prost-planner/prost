@@ -68,7 +68,7 @@ private:
 
     int currentRound;
     int currentStep;
-    int remainingSteps;
+    int stepsToGo;
     int numberOfRounds;
 
     bool cachingEnabled;
