@@ -9,12 +9,14 @@
 
 class MaxMCUCTNode { //Max Monte Carlo UCTNode
 public:
-    MaxMCUCTNode() :
+    MaxMCUCTNode(double const& _prob, int const& _remainingSteps) :
         children(),
         immediateReward(0.0),
+        prob(_prob),
+        remainingSteps(_remainingSteps),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
-        rewardLock(false) {}
+        solved(false) {}
 
     ~MaxMCUCTNode() {
         for (unsigned int i = 0; i < children.size(); ++i) {
@@ -24,14 +26,14 @@ public:
         }
     }
 
-    friend class MaxMCUCTSearch;
-
-    void reset() {
+    void reset(double const& _prob, int const& _remainingSteps) {
         children.clear();
         immediateReward = 0.0;
+        prob = _prob;
+        remainingSteps = _remainingSteps;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
-        rewardLock = false;
+        solved = false;
     }
 
     double getExpectedRewardEstimate() const {
@@ -46,14 +48,6 @@ public:
         return false;
     }
 
-    bool const& isARewardLock() const {
-        return rewardLock;
-    }
-
-    void setRewardLock(bool const& _rewardLock) {
-        rewardLock = _rewardLock;
-    }
-
     int const& getNumberOfVisits() const {
         return numberOfVisits;
     }
@@ -66,54 +60,32 @@ public:
 
     std::vector<MaxMCUCTNode*> children;
 
-private:
     double immediateReward;
+    double prob;
+    int remainingSteps;
+    
     double futureReward;
     int numberOfVisits;
 
-    bool rewardLock;
+    bool solved;
 };
 
 class MaxMCUCTSearch : public UCTBase<MaxMCUCTNode> {
 public:
     MaxMCUCTSearch() :
-        UCTBase<MaxMCUCTNode>("MaxMC-UCT"),
-        heuristicWeight(0.5) {}
-
-    // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value) {
-        if (param == "-hw") {
-            setHeuristicWeight(atof(value.c_str()));
-            return true;
-        }
-
-        return UCTBase<MaxMCUCTNode>::setValueFromString(param, value);
-    }
-
-    // Parameter setter
-    virtual void setHeuristicWeight(double _heuristicWeight) {
-        heuristicWeight = _heuristicWeight;
+        UCTBase<MaxMCUCTNode>("MaxMC-UCT") {
+        setHeuristicWeight(0.5);
     }
 
 protected:
-    // Initialization
-    void initializeDecisionNodeChild(MaxMCUCTNode* node,
-            unsigned int const& index,
-            double const& initialQValue);
-
     // Outcome selection
     MaxMCUCTNode* selectOutcome(MaxMCUCTNode* node, PDState& nextState,
-            int& varIndex);
+                                int const& varIndex, int const& lastProbVarIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& immReward,
-            double const& futReward);
-    void backupDecisionNode(MaxMCUCTNode* node, double const& immReward,
-            double const& futReward);
+    void backupDecisionNodeLeaf(MaxMCUCTNode* node, double const& futReward);
+    void backupDecisionNode(MaxMCUCTNode* node, double const& futReward);
     void backupChanceNode(MaxMCUCTNode* node, double const& futReward);
-
-    // Parameter
-    double heuristicWeight;
 };
 
 #endif

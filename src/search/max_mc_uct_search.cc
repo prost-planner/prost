@@ -3,38 +3,13 @@
 using namespace std;
 
 /******************************************************************
-                        Initialization
-******************************************************************/
-
-void MaxMCUCTSearch::initializeDecisionNodeChild(
-        MaxMCUCTNode* node, unsigned int const& actionIndex,
-        double const& initialQValue) {
-    node->children[actionIndex] = getSearchNode();
-    node->children[actionIndex]->futureReward = heuristicWeight *
-                                                (double)
-                                                remainingConsideredSteps() *
-                                                initialQValue;
-    node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
-
-    node->numberOfVisits += numberOfInitialVisits;
-    node->futureReward =
-        std::max(node->futureReward,
-                 node->children[actionIndex]->getExpectedRewardEstimate());
-
-    // cout << "initialized child ";
-    // SearchEngine::actionStates[actionIndex].printCompact(cout);
-    // cout << " with remaining steps " << remainingConsideredSteps() << " and initialQValue " << initialQValue << endl;
-    // node->children[actionIndex]->print(cout);
-    // cout << endl;
-}
-
-/******************************************************************
                          Outcome selection
 ******************************************************************/
 
 MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
                                             PDState& nextState,
-                                            int& varIndex) {
+                                            int const& varIndex,
+                                            int const& lastProbVarIndex) {
     if (node->children.empty()) {
         node->children.resize(
                 SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
@@ -44,8 +19,13 @@ MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
     int childIndex = (int)nextState.sample(varIndex);
 
     if (!node->children[childIndex]) {
-        node->children[childIndex] = getSearchNode();
+        if (varIndex == lastProbVarIndex) {
+            node->children[childIndex] = getDecisionNode(1.0);
+        } else {
+            node->children[childIndex] = getChanceNode(1.0);
+        }
     }
+
     return node->children[childIndex];
 }
 
@@ -54,9 +34,7 @@ MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
 ******************************************************************/
 
 void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
-                                            double const& immReward,
                                             double const& futReward) {
-    node->immediateReward = immReward;
     node->futureReward = futReward;
 
     ++node->numberOfVisits;
@@ -67,15 +45,10 @@ void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
 }
 
 void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
-                                        double const& immReward,
                                         double const& /*futReward*/) {
     assert(!node->children.empty());
 
-    node->immediateReward = immReward;
-
-    if (selectedActionIndex() != -1) {
-        ++node->numberOfVisits;
-    }
+    ++node->numberOfVisits;
 
     // Propagate values from best child
     node->futureReward = -numeric_limits<double>::max();

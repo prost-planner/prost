@@ -3,39 +3,13 @@
 using namespace std;
 
 /******************************************************************
-                     Initialization of Nodes
-******************************************************************/
-
-void DPUCTSearch::initializeDecisionNodeChild(DPUCTNode* node,
-                                              unsigned int const& actionIndex,
-                                              double const& initialQValue) {
-    node->children[actionIndex] = getDPUCTNode(1.0);
-    node->children[actionIndex]->futureReward = heuristicWeight *
-                                                (double)
-                                                remainingConsideredSteps() *
-                                                initialQValue;
-    node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
-
-    node->numberOfVisits += numberOfInitialVisits;
-    node->futureReward =
-        std::max(node->futureReward,
-                 node->children[actionIndex]->getExpectedRewardEstimate());
-
-    // cout << "initialized child ";
-    // SearchEngine::actionStates[actionIndex].printCompact(cout);
-    // cout << " with remaining steps " << remainingConsideredSteps() 
-    //      << " and initialQValue " << initialQValue << endl;
-    // node->children[actionIndex]->print(cout);
-    // cout << endl;
-}
-
-/******************************************************************
                          Outcome selection
 ******************************************************************/
 
 DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
                                       PDState& nextState,
-                                      int& varIndex) {
+                                      int const& varIndex,
+                                      int const& lastProbVarIndex) {
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
@@ -83,7 +57,11 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
     assert((childIndex >= 0) && childIndex < node->children.size());
 
     if (!node->children[childIndex]) {
-        node->children[childIndex] = getDPUCTNode(childProb);
+        if (varIndex == lastProbVarIndex) {
+            node->children[childIndex] = getDecisionNode(childProb);
+        } else {
+            node->children[childIndex] = getChanceNode(childProb);
+        }
     }
 
     assert(!node->children[childIndex]->isSolved());
@@ -97,11 +75,9 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
 ******************************************************************/
 
 void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
-                                         double const& immReward,
                                          double const& futReward) {
     node->children.clear();
 
-    node->immediateReward = immReward;
     node->futureReward = futReward;
     node->solved = true;
 
@@ -112,15 +88,10 @@ void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
 }
 
 void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
-                                     double const& immReward,
                                      double const& /*futReward*/) {
     assert(!node->children.empty());
 
-    node->immediateReward = immReward;
-
-    if (selectedActionIndex() != -1) {
-        ++node->numberOfVisits;
-    }
+    ++node->numberOfVisits;
 
     if (backupLock) {
         ++skippedBackups;
@@ -144,7 +115,7 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
     // If the future reward did not change we did not find a better node and
     // therefore do not need to update the rewards in preceding parents.
     if (!node->solved &&
-        (remainingConsideredSteps() > maxLockDepth) &&
+        (node->remainingSteps > maxLockDepth) &&
         MathUtils::doubleIsEqual(oldFutureReward, node->futureReward)) {
         backupLock = true;
     }

@@ -8,12 +8,14 @@
 
 class MCUCTNode { //Monte Carlo UCTNode
 public:
-    MCUCTNode() :
+    MCUCTNode(double const& _prob, int const& _remainingSteps) :
         children(),
         immediateReward(0.0),
+        prob(_prob),
+        remainingSteps(_remainingSteps),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
-        rewardLock(false) {}
+        solved(false) {}
 
     ~MCUCTNode() {
         for (unsigned int i = 0; i < children.size(); ++i) {
@@ -23,18 +25,18 @@ public:
         }
     }
 
-    friend class MCUCTSearch;
-
-    void reset() {
+    void reset(double const& _prob, int const& _remainingSteps) {
         children.clear();
         immediateReward = 0.0;
+        prob = _prob;
+        remainingSteps = _remainingSteps;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
-        rewardLock = false;
+        solved = false;
     }
 
     double getExpectedRewardEstimate() const {
-        return (immediateReward + futureReward) / (double) numberOfVisits;
+        return immediateReward + (futureReward / (double) numberOfVisits);
     }
 
     double getExpectedFutureRewardEstimate() const {
@@ -43,14 +45,6 @@ public:
 
     bool isSolved() const {
         return false;
-    }
-
-    bool const& isARewardLock() const {
-        return rewardLock;
-    }
-
-    void setRewardLock(bool const& _rewardLock) {
-        rewardLock = _rewardLock;
     }
 
     int const& getNumberOfVisits() const {
@@ -65,40 +59,35 @@ public:
 
     std::vector<MCUCTNode*> children;
 
-    // Tests accessing private members of this class
-    friend class UCTBaseTest;
-
-private:
     double immediateReward;
+    double prob;
+    int remainingSteps;
+     
     double futureReward;
-
     int numberOfVisits;
 
-    bool rewardLock;
+    bool solved;
 };
 
 class MCUCTSearch : public UCTBase<MCUCTNode> {
 public:
     MCUCTSearch() :
-        UCTBase<MCUCTNode>("MC-UCT") {}
+        UCTBase<MCUCTNode>("MC-UCT") {
+        setHeuristicWeight(5.0);
+    }
 
 protected:
-    // Initialization
-    void initializeDecisionNodeChild(MCUCTNode* node, unsigned int const& index,
-            double const& initialQValue);
-
     // Outcome selection
-    MCUCTNode* selectOutcome(MCUCTNode* node, PDState& nextState, int& varIndex);
+    MCUCTNode* selectOutcome(MCUCTNode* node, PDState& nextState,
+                             int const& varIndex, int const& lastProbVarIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(MCUCTNode* node, double const& immReward,
-            double const& futReward) {
+    void backupDecisionNodeLeaf(MCUCTNode* node, double const& futReward) {
         // This is only different from backupDecisionNode if we want to label
         // nodes as solved, which is not possible in MonteCarlo-UCT.
-        backupDecisionNode(node, immReward, futReward);
+        backupDecisionNode(node, futReward);
     }
-    void backupDecisionNode(MCUCTNode* node, double const& immReward,
-            double const& futReward);
+    void backupDecisionNode(MCUCTNode* node, double const& futReward);
     void backupChanceNode(MCUCTNode* node, double const& futReward);
 };
 

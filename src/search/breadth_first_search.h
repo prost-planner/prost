@@ -9,14 +9,14 @@
 
 class BFSNode {
 public:
-    BFSNode() :
+    BFSNode(double const& _prob, int const& _remainingSteps) :
         children(),
         immediateReward(0.0),
+        prob(_prob),
+        remainingSteps(_remainingSteps),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
-        prob(0.0),
-        solved(false),
-        rewardLock(false) {}
+        solved(false) {}
 
     ~BFSNode() {
         for (unsigned int i = 0; i < children.size(); ++i) {
@@ -26,16 +26,14 @@ public:
         }
     }
 
-    friend class BreadthFirstSearch;
-
-    void reset() {
+    void reset(double const& _prob, int const& _remainingSteps) {
         children.clear();
         immediateReward = 0.0;
+        prob = _prob;
+        remainingSteps = _remainingSteps;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
-        prob = 0.0;
         solved = false;
-        rewardLock = false;
     }
 
     double getExpectedRewardEstimate() const {
@@ -54,14 +52,6 @@ public:
         return solved;
     }
 
-    bool const& isARewardLock() const {
-        return rewardLock;
-    }
-
-    void setRewardLock(bool const& _rewardLock) {
-        rewardLock = _rewardLock;
-    }
-
     void print(std::ostream& out, std::string indent = "") const {
         if (solved) {
             out << indent << "SOLVED with: " << getExpectedRewardEstimate() <<
@@ -74,58 +64,37 @@ public:
 
     std::vector<BFSNode*> children;
 
-private:
     double immediateReward;
+    double prob;
+    int remainingSteps;
+    
     double futureReward;
     int numberOfVisits;
-    double prob;
+
     bool solved;
-    bool rewardLock;
 };
 
 class BreadthFirstSearch : public THTS<BFSNode> {
 public:
     BreadthFirstSearch() :
-        THTS<BFSNode>("Breadth-First-Search") {}
+        THTS<BFSNode>("Breadth-First-Search") {
+        setHeuristicWeight(1.0);
+    }
 
 protected:
-
-    // Initialization
-    void initializeDecisionNodeChild(BFSNode* node,
-                                     unsigned int const& actionIndex,
-                                     double const& initialQValue);
-
-
     // Outcome selection
-    BFSNode* selectOutcome(BFSNode*, PDState& nextState, int& varIndex);
+    BFSNode* selectOutcome(BFSNode*, PDState& nextState,
+                           int const& varIndex, int const& lastProbVarIndex);
 
     // Backup function
-    void backupDecisionNodeLeaf(BFSNode* node, double const& immReward,
-                                double const& futureReward);
-    void backupDecisionNode(BFSNode*, double const& immReward,
-                            double const& futureReward);
+    void backupDecisionNodeLeaf(BFSNode* node, double const& futureReward);
+    void backupDecisionNode(BFSNode*, double const& futureReward);
     void backupChanceNode(BFSNode*, double const& futureReward);
 
     // Action selection
     int selectAction(BFSNode* node);
 
-    // Memory Management
-    BFSNode* getRootNode() {
-        return getBFSNode(1.0);
-    }
-
-    BFSNode* getDummyNode() {
-        return getBFSNode(1.0);
-    }
-
 private:
-    // Memory management
-    BFSNode* getBFSNode(double const& _prob) {
-        BFSNode* res = THTS<BFSNode>::getSearchNode();
-        res->prob = _prob;
-        return res;
-    }
-
     // Vector for decision node children of equal quality
     std::vector<int> bestActionIndices;
 };
