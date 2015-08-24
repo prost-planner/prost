@@ -26,18 +26,6 @@ public:
     bool setValueFromString(std::string& param, std::string& value);
 
     // Parameter setter
-    virtual void setNumberOfInitialVisits(int _numberOfInitialVisits) {
-        numberOfInitialVisits = _numberOfInitialVisits;
-    }
-
-    virtual void setInitializer(SearchEngine* _initializer) {
-        if (dynamic_cast<UniformEvaluationSearch*>(_initializer)) {
-            numberOfInitialVisits = 0;
-        }
-
-        THTS<SearchNode>::setInitializer(_initializer);
-    }
-
     virtual void setMagicConstantScaleFactor(
             double _magicConstantScaleFactor) {
         magicConstantScaleFactor = _magicConstantScaleFactor;
@@ -62,7 +50,6 @@ protected:
     UCTBase(std::string _name) :
         THTS<SearchNode>(_name),
         explorationRateFunction(LOG),
-        numberOfInitialVisits(5),
         magicConstantScaleFactor(1.0),
         selectLeastVisitedActionInRoot(false) {}
 
@@ -93,7 +80,6 @@ protected:
     int highestNumVisits;
 
     // Parameter
-    int numberOfInitialVisits;
     double magicConstantScaleFactor;
 
     // Variable to enable uniform action selection at root node
@@ -109,9 +95,6 @@ bool UCTBase<SearchNode>::setValueFromString(std::string& param,
                                              std::string& value) {
     if (param == "-mcs") {
         setMagicConstantScaleFactor(atof(value.c_str()));
-        return true;
-    } else if (param == "-iv") {
-        setNumberOfInitialVisits(atoi(value.c_str()));
         return true;
     } else if (param == "-er") {
         setExplorationRateFunction(value);
