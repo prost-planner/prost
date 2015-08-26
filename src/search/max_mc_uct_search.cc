@@ -6,10 +6,10 @@ using namespace std;
                          Outcome selection
 ******************************************************************/
 
-MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
-                                            PDState& nextState,
-                                            int const& varIndex,
-                                            int const& lastProbVarIndex) {
+THTSSearchNode* MaxMCUCTSearch::selectOutcome(THTSSearchNode* node,
+                                              PDState& nextState,
+                                              int const& varIndex,
+                                              int const& lastProbVarIndex) {
     if (node->children.empty()) {
         node->children.resize(
                 SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
@@ -33,7 +33,7 @@ MaxMCUCTNode* MaxMCUCTSearch::selectOutcome(MaxMCUCTNode* node,
                           Backup functions
 ******************************************************************/
 
-void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
+void MaxMCUCTSearch::backupDecisionNodeLeaf(THTSSearchNode* node,
                                             double const& futReward) {
     node->futureReward = futReward;
 
@@ -44,7 +44,7 @@ void MaxMCUCTSearch::backupDecisionNodeLeaf(MaxMCUCTNode* node,
     // cout << endl;
 }
 
-void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
+void MaxMCUCTSearch::backupDecisionNode(THTSSearchNode* node,
                                         double const& /*futReward*/) {
     assert(!node->children.empty());
 
@@ -66,7 +66,7 @@ void MaxMCUCTSearch::backupDecisionNode(MaxMCUCTNode* node,
     // cout << endl;
 }
 
-void MaxMCUCTSearch::backupChanceNode(MaxMCUCTNode* node,
+void MaxMCUCTSearch::backupChanceNode(THTSSearchNode* node,
                                       double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 

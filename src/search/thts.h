@@ -50,6 +50,80 @@
 // 3. A function bool isSolved() const that returns a bool indicating if the
 // node has been labeled as solved
 
+// UPDATE (08/2015): Even though all classes now use the same search node class
+// (THTSSearchNode, see below), we keep this class templated for now since there
+// might be a reason to use an entirely different kind of search node. However,
+// it is also possible that inheritance from THTSSearchNode suffices all needs,
+// in which case we should use THTSSearchNode in the THTS class (rather than the
+// template SearchNode).
+
+class THTSSearchNode {
+public:
+    THTSSearchNode(double const& _prob, int const& _remainingSteps) :
+        children(),
+        immediateReward(0.0),
+        prob(_prob),
+        remainingSteps(_remainingSteps),
+        futureReward(-std::numeric_limits<double>::max()),
+        numberOfVisits(0),
+        solved(false) {}
+
+    ~THTSSearchNode() {
+        for (unsigned int i = 0; i < children.size(); ++i) {
+            if (children[i]) {
+                delete children[i];
+            }
+        }
+    }
+
+    void reset(double const& _prob, int const& _remainingSteps) {
+        children.clear();
+        immediateReward = 0.0;
+        prob = _prob;
+        remainingSteps = _remainingSteps;
+        futureReward = -std::numeric_limits<double>::max();
+        numberOfVisits = 0;
+        solved = false;
+    }
+
+    double getExpectedRewardEstimate() const {
+        return immediateReward + futureReward;
+    }
+
+    double getExpectedFutureRewardEstimate() const {
+        return futureReward;
+    }
+
+    int const& getNumberOfVisits() const {
+        return numberOfVisits;
+    }
+
+    bool isSolved() const {
+        return solved;
+    }
+
+    void print(std::ostream& out, std::string indent = "") const {
+        if (solved) {
+            out << indent << "SOLVED with: " << getExpectedRewardEstimate() <<
+            " (in " << numberOfVisits << " real visits)" << std::endl;
+        } else {
+            out << indent << getExpectedRewardEstimate() << " (in " <<
+            numberOfVisits << " real visits)" << std::endl;
+        }
+    }
+
+    std::vector<THTSSearchNode*> children;
+
+    double immediateReward;
+    double prob;
+    int remainingSteps;
+    
+    double futureReward;
+    int numberOfVisits;
+
+    bool solved;
+};
+
 template <class SearchNode>
 class THTS : public ProbabilisticSearchEngine {
 public:

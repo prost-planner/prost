@@ -6,10 +6,10 @@ using namespace std;
                          Outcome selection
 ******************************************************************/
 
-DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
-                                      PDState& nextState,
-                                      int const& varIndex,
-                                      int const& lastProbVarIndex) {
+THTSSearchNode* DPUCTSearch::selectOutcome(THTSSearchNode* node,
+                                           PDState& nextState,
+                                           int const& varIndex,
+                                           int const& lastProbVarIndex) {
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
@@ -74,7 +74,7 @@ DPUCTNode* DPUCTSearch::selectOutcome(DPUCTNode* node,
                           Backup Functions
 ******************************************************************/
 
-void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
+void DPUCTSearch::backupDecisionNodeLeaf(THTSSearchNode* node,
                                          double const& futReward) {
     node->children.clear();
 
@@ -87,7 +87,7 @@ void DPUCTSearch::backupDecisionNodeLeaf(DPUCTNode* node,
     // cout << endl;
 }
 
-void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
+void DPUCTSearch::backupDecisionNode(THTSSearchNode* node,
                                      double const& /*futReward*/) {
     assert(!node->children.empty());
 
@@ -125,7 +125,7 @@ void DPUCTSearch::backupDecisionNode(DPUCTNode* node,
     // cout << endl;
 }
 
-void DPUCTSearch::backupChanceNode(DPUCTNode* node,
+void DPUCTSearch::backupChanceNode(THTSSearchNode* node,
                                    double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
