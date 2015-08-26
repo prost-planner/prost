@@ -1,7 +1,7 @@
 LogicalExpression* LogicalExpression::simplify(Simplifications& /*replace*/) {
     print(cout);
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 /*****************************************************************
@@ -101,7 +101,7 @@ LogicalExpression* Disjunction::simplify(Simplifications& replace) {
 
 LogicalExpression* EqualsExpression::simplify(Simplifications& replace) {
     vector<LogicalExpression*> newExprs;
-    NumericConstant* constComp = NULL;
+    NumericConstant* constComp = nullptr;
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr = exprs[i]->simplify(replace);

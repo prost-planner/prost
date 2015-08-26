@@ -14,7 +14,7 @@ PlanningTask::PlanningTask() :
     numberOfConcurrentActions(numeric_limits<int>::max()),
     horizon(1),
     discountFactor(1.0),
-    rewardCPF(NULL),
+    rewardCPF(nullptr),
     rewardLockDetected(false),
     unreasonableActionDetected(false),
     unreasonableActionInDeterminizationDetected(false),
@@ -135,7 +135,7 @@ void PlanningTask::addParametrizedVariable(ParametrizedVariable* parent,
 StateFluent* PlanningTask::getStateFluent(string const& name) {
     if(stateFluentMap.find(name) == stateFluentMap.end()) {
         SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
-        return NULL;
+        return nullptr;
     }
     return stateFluentMap[name];
 }
@@ -143,7 +143,7 @@ StateFluent* PlanningTask::getStateFluent(string const& name) {
 ActionFluent* PlanningTask::getActionFluent(string const& name) {
     if(actionFluentMap.find(name) == actionFluentMap.end()) {
         SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
-        return NULL;
+        return nullptr;
     }
     return actionFluentMap[name];
 }
@@ -151,7 +151,7 @@ ActionFluent* PlanningTask::getActionFluent(string const& name) {
 NonFluent* PlanningTask::getNonFluent(string const& name) {
     if(nonFluentMap.find(name) == nonFluentMap.end()) {
         SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
-        return NULL;
+        return nullptr;
     }
     return nonFluentMap[name];
 }

@@ -24,7 +24,7 @@ IDS::IDS() :
     isLearning(false),
     timer(),
     time(0.0),
-    mls(NULL),
+    mls(nullptr),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
     strictTerminationTimeout(0.1),

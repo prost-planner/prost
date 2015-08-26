@@ -54,7 +54,7 @@ vector<ProbabilisticCPF*> SearchEngine::probabilisticCPFs;
 
 vector<DeterministicCPF*> SearchEngine::determinizedCPFs;
 
-RewardFunction* SearchEngine::rewardCPF = NULL;
+RewardFunction* SearchEngine::rewardCPF = nullptr;
 vector<DeterministicEvaluatable*> SearchEngine::actionPreconditions;
 
 bool SearchEngine::taskIsDeterministic = true;
@@ -105,7 +105,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         desc = "MaxMC-UCT -ndn 1" + desc;
     }
 
-    SearchEngine* result = NULL;
+    SearchEngine* result = nullptr;
 
     if (desc.find("MC-UCT") == 0) {
         desc = desc.substr(6, desc.size());

@@ -18,8 +18,7 @@ THTSSearchNode* DPUCTSearch::selectOutcome(THTSSearchNode* node,
 
     if (node->children.empty()) {
         node->children.resize(
-                SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-                NULL);
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
     } else {
         // Determine the sum of the probabilities of unsolved outcomes
         for (unsigned int i = 0; i < pd.size(); ++i) {

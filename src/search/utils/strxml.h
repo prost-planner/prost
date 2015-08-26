@@ -20,11 +20,11 @@ struct XMLNode {
     virtual ~XMLNode() {}
 
     virtual const XMLNode* getChild(int /*i*/) const {
-        return NULL;
+        return nullptr;
     }
 
     virtual const XMLNode* getChild(const std::string& /*name*/) const {
-        return NULL;
+        return nullptr;
     }
 
     virtual int size() const {
@@ -77,4 +77,4 @@ struct XMLParent : public XMLNode {
     node_vec children;
 };
 
-#endif /* _STRXML_H */
+#endif

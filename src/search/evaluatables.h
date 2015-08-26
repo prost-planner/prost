@@ -117,7 +117,7 @@ public:
 protected:
     Evaluatable(std::string _name, int _hashIndex) :
         name(_name),
-        formula(NULL),
+        formula(nullptr),
         hashIndex(_hashIndex),
         cachingType(NONE),
         kleeneCachingType(NONE) {}

@@ -862,7 +862,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
     }
 
     SystemUtils::abort("Error: Unsupported RDDL Formula: " + desc);
-    return NULL;
+    return nullptr;
 }
 
 ParameterList* RDDLParser::parseParameterList(string& desc) {
@@ -906,7 +906,7 @@ Parameter* RDDLParser::parseParameter(string& desc) {
     } else if (desc[0] == '?') {
         return new Parameter(desc);
     }
-    return NULL;
+    return nullptr;
 }
 
 bool RDDLParser::isNumericConstant(string& token) {

@@ -289,8 +289,8 @@ void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
         SearchEngine::stateFluents.push_back(sf);
 
         DeterministicCPF* cpf = new DeterministicCPF(hashIndex, sf);
-        parseCachingType(desc, NULL, cpf);
-        parseActionHashKeyMap(desc, NULL, cpf);
+        parseCachingType(desc, nullptr, cpf);
+        parseActionHashKeyMap(desc, nullptr, cpf);
 
         SearchEngine::deterministicCPFs.push_back(cpf);
         SearchEngine::allCPFs.push_back(cpf);
@@ -319,8 +319,8 @@ void Parser::parseRewardFunction(stringstream& desc) const {
     SearchEngine::rewardCPF =
         new RewardFunction(rewardFormula, hashIndex, minVal, maxVal, actionIndependent);
 
-    parseCachingType(desc, NULL, SearchEngine::rewardCPF);
-    parseActionHashKeyMap(desc, NULL, SearchEngine::rewardCPF);
+    parseCachingType(desc, nullptr, SearchEngine::rewardCPF);
+    parseActionHashKeyMap(desc, nullptr, SearchEngine::rewardCPF);
 }
 
 void Parser::parseActionPrecondition(stringstream& desc) const {
@@ -346,8 +346,8 @@ void Parser::parseActionPrecondition(stringstream& desc) const {
     assert(SearchEngine::actionPreconditions.size() == index);
     SearchEngine::actionPreconditions.push_back(precond);
 
-    parseCachingType(desc, NULL, precond);
-    parseActionHashKeyMap(desc, NULL, precond);
+    parseCachingType(desc, nullptr, precond);
+    parseActionHashKeyMap(desc, nullptr, precond);
 }
 
 void Parser::parseCachingType(stringstream& desc,

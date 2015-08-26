@@ -51,7 +51,7 @@ double SystemUtils::stopTime() {
 }
 
 bool SystemUtils::readFile(std::string& file, std::string& res,
-        std::string ignoreSign) {
+                           std::string ignoreSign) {
     std::ifstream ifs(file.c_str());
     if (!ifs) {
         return false;
@@ -112,7 +112,7 @@ int SystemUtils::getVirtualMemoryUsedByThis() {
     int res = -1;
     char line[128];
 
-    while (fgets(line, 128, file) != NULL) {
+    while (fgets(line, 128, file) != nullptr) {
         if (strncmp(line, "VmSize:", 7) == 0) {
             res = parseLine(line);
             break;
@@ -146,7 +146,7 @@ int SystemUtils::getRAMUsedByThis() {
     int res = -1;
     char line[128];
 
-    while (fgets(line, 128, file) != NULL) {
+    while (fgets(line, 128, file) != nullptr) {
         if (strncmp(line, "VmRSS:", 6) == 0) {
             res = parseLine(line);
             break;
@@ -168,7 +168,7 @@ void SystemUtils::initCPUMeasurementOfThis() {
 
     file = fopen("/proc/cpuinfo", "r");
     numProcessors = 0;
-    while (fgets(line, 128, file) != NULL) {
+    while (fgets(line, 128, file) != nullptr) {
         if (strncmp(line, "processor", 9) == 0) {
             numProcessors++;
         }

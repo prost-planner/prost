@@ -12,7 +12,7 @@ struct Evaluatable {
     Evaluatable(std::string _name, LogicalExpression* _formula) :
         name(_name),
         formula(_formula),
-        determinization(NULL),
+        determinization(nullptr),
         isProb(false),
         hasArithmeticFunction(false) {}
 
@@ -36,7 +36,7 @@ struct Evaluatable {
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // The determinized version of formula (this is NULL for all evaluatables
+    // The determinized version of formula (this is nullptr for all evaluatables
     // except probabilistic CPFs)
     LogicalExpression* determinization;
 
