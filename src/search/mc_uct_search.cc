@@ -6,14 +6,13 @@ using namespace std;
                          Outcome selection
 ******************************************************************/
 
-MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node, 
-                                      PDState& nextState,
-                                      int const& varIndex,
-                                      int const& lastProbVarIndex) {
+THTSSearchNode* MCUCTSearch::selectOutcome(THTSSearchNode* node, 
+                                           PDState& nextState,
+                                           int const& varIndex,
+                                           int const& lastProbVarIndex) {
     if (node->children.empty()) {
         node->children.resize(
-                SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-                NULL);
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), NULL);
     }
 
     int childIndex = (int)nextState.sample(varIndex);
@@ -33,18 +32,18 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node,
                           Backup functions
 ******************************************************************/
 
-void MCUCTSearch::backupDecisionNodeLeaf(MCUCTNode* node,
+void MCUCTSearch::backupDecisionNodeLeaf(THTSSearchNode* node,
                                          double const& futReward) {
     ++node->numberOfVisits;
 
     node->futureReward = futReward;
 }
 
-void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& /*futReward*/) {
+void MCUCTSearch::backupDecisionNode(THTSSearchNode* node, double const& /*futReward*/) {
     ++node->numberOfVisits;
 
     node->futureReward = -std::numeric_limits<double>::max();
-    for (MCUCTNode* child : node->children) {
+    for (THTSSearchNode* child : node->children) {
         if (child) {
             node->futureReward =
                 std::max(node->futureReward, child->getExpectedRewardEstimate());
@@ -52,7 +51,7 @@ void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& /*futReward*
     }
 }
 
-void MCUCTSearch::backupChanceNode(MCUCTNode* node, double const& futReward) {
+void MCUCTSearch::backupChanceNode(THTSSearchNode* node, double const& futReward) {
     ++node->numberOfVisits;
 
     node->futureReward = node->futureReward +
