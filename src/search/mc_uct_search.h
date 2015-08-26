@@ -36,11 +36,11 @@ public:
     }
 
     double getExpectedRewardEstimate() const {
-        return immediateReward + (futureReward / (double) numberOfVisits);
+        return immediateReward + futureReward;
     }
 
     double getExpectedFutureRewardEstimate() const {
-        return futureReward / (double) numberOfVisits;
+        return futureReward;
     }
 
     bool isSolved() const {
@@ -72,9 +72,9 @@ public:
 class MCUCTSearch : public UCTBase<MCUCTNode> {
 public:
     MCUCTSearch() :
-        UCTBase<MCUCTNode>("MC-UCT") {
-        setHeuristicWeight(5.0);
-    }
+        UCTBase<MCUCTNode>("MC-UCT"),
+        initialLearningRate(1.0),
+        learningRateDecay(1.0) {}
 
 protected:
     // Outcome selection
@@ -82,13 +82,12 @@ protected:
                              int const& varIndex, int const& lastProbVarIndex);
 
     // Backup functions
-    void backupDecisionNodeLeaf(MCUCTNode* node, double const& futReward) {
-        // This is only different from backupDecisionNode if we want to label
-        // nodes as solved, which is not possible in MonteCarlo-UCT.
-        backupDecisionNode(node, futReward);
-    }
+    void backupDecisionNodeLeaf(MCUCTNode* node, double const& futReward);
     void backupDecisionNode(MCUCTNode* node, double const& futReward);
     void backupChanceNode(MCUCTNode* node, double const& futReward);
+
+    double initialLearningRate;
+    double learningRateDecay;
 };
 
 #endif

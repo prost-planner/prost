@@ -33,19 +33,29 @@ MCUCTNode* MCUCTSearch::selectOutcome(MCUCTNode* node,
                           Backup functions
 ******************************************************************/
 
-void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& futReward) {
-    if (MathUtils::doubleIsMinusInfinity(node->futureReward)) {
-        node->futureReward = futReward;
-    } else {
-        node->futureReward += futReward;
-    }
-
+void MCUCTSearch::backupDecisionNodeLeaf(MCUCTNode* node,
+                                         double const& futReward) {
     ++node->numberOfVisits;
+
+    node->futureReward = futReward;
+}
+
+void MCUCTSearch::backupDecisionNode(MCUCTNode* node, double const& /*futReward*/) {
+    ++node->numberOfVisits;
+
+    node->futureReward = -std::numeric_limits<double>::max();
+    for (MCUCTNode* child : node->children) {
+        if (child) {
+            node->futureReward =
+                std::max(node->futureReward, child->getExpectedRewardEstimate());
+        }
+    }
 }
 
 void MCUCTSearch::backupChanceNode(MCUCTNode* node, double const& futReward) {
-    assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
-
-    node->futureReward += futReward;
     ++node->numberOfVisits;
+
+    node->futureReward = node->futureReward +
+        initialLearningRate * (futReward - node->futureReward) / 
+        (1.0 + (learningRateDecay * (double)node->numberOfVisits));
 }
