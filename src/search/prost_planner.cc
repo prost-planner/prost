@@ -15,7 +15,7 @@
 using namespace std;
 
 ProstPlanner::ProstPlanner(string& plannerDesc) :
-    searchEngine(NULL),
+    searchEngine(nullptr),
     currentState(SearchEngine::initialState),
     currentRound(-1),
     currentStep(-1),
@@ -25,7 +25,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc) :
     ramLimit(2097152),
     bitSize(sizeof(long) * 8),
     tmMethod(NONE) {
-    setSeed((int) time(NULL));
+    setSeed((int) time(nullptr));
 
     StringUtils::trim(plannerDesc);
     assert(plannerDesc[0] == '[' && plannerDesc[plannerDesc.size() - 1] == ']');

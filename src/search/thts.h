@@ -23,10 +23,7 @@
 
 // 4. void initializeDecisionNode(SearchNode*): implement *how* to use the
 // heuristic, not *which* heuristic to use (that is done on the command line
-// with the parameter "-i"). The baseline implementation is an action-value
-// initialization that calls void initializeDecisionNodeChild(SearchNode*,
-// unsigned int const&, double const&) for each child that is supposed to be
-// initialized.
+// with the parameter "-i").
 
 // 5a. void backupDecisionNodeLeaf(SearchNode*, double const&, double const&):
 // is called on leaf (not tip!) nodes.
@@ -193,7 +190,7 @@ public:
         // Resize the node pool and give it a "safety net" of 20000 nodes (this
         // is because the termination criterion is checked only at the root and
         // not in the middle of a trial)
-        nodePool.resize(maxNumberOfNodes + 20000, NULL);
+        nodePool.resize(maxNumberOfNodes + 20000, nullptr);
     }
 
     virtual void setSelectMostVisited(bool _selectMostVisited) {
@@ -220,15 +217,15 @@ protected:
         ProbabilisticSearchEngine(_name),
         backupLock(false),
         maxLockDepth(0),
-        currentRootNode(NULL),
-        chosenOutcome(NULL),
+        currentRootNode(nullptr),
+        chosenOutcome(nullptr),
         states(SearchEngine::horizon + 1),
         stepsToGoInCurrentState(SearchEngine::horizon),
         stepsToGoInNextState(SearchEngine::horizon - 1),
         appliedActionIndex(-1),
         trialReward(0.0),
         currentTrial(0),
-        initializer(NULL),
+        initializer(nullptr),
         initialQValues(SearchEngine::numberOfActions, 0.0),
         initializedDecisionNodes(0),
         lastUsedNodePoolIndex(0),
@@ -553,7 +550,7 @@ bool THTS<SearchNode>::estimateBestActions(State const& _rootState,
         SearchEngine::actionStates[uniquePolicyOpIndex].printCompact(outStream);
         outStream << std::endl << std::endl;
         bestActions.push_back(uniquePolicyOpIndex);
-        currentRootNode = NULL;
+        currentRootNode = nullptr;
         printStats(outStream, (_rootState.stepsToGo() == 1));
         return true;
     }
@@ -689,13 +686,14 @@ void THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         }
     }
 
-    // std::cout << std::endl << std::endl << "Current state is: " << std::endl;
-    // states[stepsToGoInCurrentState].printCompact(std::cout);
-
-    // Call initialization if necessary
+    // Initialize node if it wasn't visited before
     if (node->children.empty()) {
         initializeDecisionNode(node);
     }
+
+    // std::cout << std::endl << std::endl << "Current state is: " << std::endl;
+    // states[stepsToGoInCurrentState].printCompact(std::cout);
+    // std::cout << "Reward is " << node->immediateReward << std::endl;
 
     // Determine if we continue with this trial
     if (continueTrial(node)) {
@@ -759,9 +757,9 @@ void THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
 template <class SearchNode>
 bool THTS<SearchNode>::currentStateIsSolved(SearchNode* node) {
     if (stepsToGoInCurrentState == 1) {
-        // This node is a leaf (the last action is optimally calculated in the
-        // planning task)
-        
+        // This node is a leaf (there is still a last decision, though, but that
+        // is taken care of by calcOptimalFinalReward)
+
         calcOptimalFinalReward(states[1], trialReward);
         backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
@@ -826,7 +824,7 @@ void THTS<SearchNode>::visitDummyChanceNode(SearchNode* node) {
     State::calcStateHashKey(states[stepsToGoInNextState]);
 
     if(node->children.empty()) {
-        node->children.resize(1, NULL);
+        node->children.resize(1, nullptr);
         node->children[0] = getDecisionNode(1.0);
     }
     assert(node->children.size() == 1);
@@ -841,7 +839,7 @@ void THTS<SearchNode>::visitDummyChanceNode(SearchNode* node) {
 
 template <class SearchNode>
 void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
-    node->children.resize(SearchEngine::numberOfActions, NULL);
+    node->children.resize(SearchEngine::numberOfActions, nullptr);
 
     // Always backpropagate results up to newly initialized nodes
     if (maxLockDepth == maxSearchDepthForThisStep) {

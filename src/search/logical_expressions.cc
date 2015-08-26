@@ -112,7 +112,7 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
 
     cout << desc << endl;
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 vector<LogicalExpression*> LogicalExpression::createExpressions(string& desc) {

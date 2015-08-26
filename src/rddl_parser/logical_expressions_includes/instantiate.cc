@@ -2,7 +2,7 @@ LogicalExpression*
 LogicalExpression::instantiate(PlanningTask* /*task*/,
                                Instantiations& /*replace*/) {
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 /*****************************************************************
@@ -46,7 +46,7 @@ LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task,
         break;
     }
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 /*****************************************************************

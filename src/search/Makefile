@@ -79,7 +79,7 @@ CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
 
 default: release
 
-test: covclear test_build run_tests
+test: covclear test_build
 
 all: covclear release debug test_build test
 

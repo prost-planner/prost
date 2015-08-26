@@ -66,7 +66,7 @@ public:
 
 class Type {
 public:
-    Type(std::string _name, Type* _superType = NULL) :
+    Type(std::string _name, Type* _superType = nullptr) :
         name(_name), superType(_superType) {}
 
     std::string name;
@@ -91,7 +91,7 @@ public:
 
 class Parameter : public LogicalExpression {
 public:
-    Parameter(std::string _name, Type* _type = NULL) :
+    Parameter(std::string _name, Type* _type = nullptr) :
         name(_name), type(_type) {}
 
     std::string name;
