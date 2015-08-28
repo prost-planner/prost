@@ -79,8 +79,7 @@ public:
 protected:
     // Calculate the reward (since the reward must be deteriministic, this is
     // identical for probabilistic and deterministic search engines)
-    void calcReward(State const& current, int const& actionIndex,
-            double& reward) const {
+    void calcReward(State const& current, int const& actionIndex, double& reward) const {
         rewardCPF->evaluate(reward, current, actionStates[actionIndex]);
     }
 

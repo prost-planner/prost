@@ -2,11 +2,7 @@
 
 #include "prost_planner.h"
 
-#include "mc_uct_search.h"
-#include "max_mc_uct_search.h"
-#include "dp_uct_search.h"
-#include "breadth_first_search.h"
-
+#include "thts.h"
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
 #include "minimal_lookahead_search.h"
@@ -109,13 +105,27 @@ SearchEngine* SearchEngine::fromString(string& desc) {
 
     if (desc.find("MC-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        result = new MCUCTSearch();
+        THTS<THTSSearchNode>* mcUCT = new THTS<THTSSearchNode>("MC-UCT");
+        mcUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(mcUCT);
+        mcUCT->outcomeSelection = new MCOutcomeSelection<THTSSearchNode>(mcUCT);
+        mcUCT->backupFunction = new MCBackupFunction<THTSSearchNode>(mcUCT);
+        result = mcUCT;
     } else if (desc.find("MaxMC-UCT") == 0) {
         desc = desc.substr(9, desc.size());
-        result = new MaxMCUCTSearch();
+        THTS<THTSSearchNode>* maxMCUCT = new THTS<THTSSearchNode>("MaxMC-UCT");
+        maxMCUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(maxMCUCT);
+        maxMCUCT->outcomeSelection = new MCOutcomeSelection<THTSSearchNode>(maxMCUCT);
+        maxMCUCT->backupFunction = new MaxMCBackupFunction<THTSSearchNode>(maxMCUCT);
+        maxMCUCT->setHeuristicWeight(0.5);
+        result = maxMCUCT;
     } else if (desc.find("DP-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        result = new DPUCTSearch();
+        THTS<THTSSearchNode>* dpUCT = new THTS<THTSSearchNode>("DP-UCT");
+        dpUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(dpUCT);
+        dpUCT->outcomeSelection = new UnsolvedMCOutcomeSelection<THTSSearchNode>(dpUCT);
+        dpUCT->backupFunction = new PBBackupFunction<THTSSearchNode>(dpUCT);
+        dpUCT->setHeuristicWeight(0.5);
+        result = dpUCT;
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
@@ -127,7 +137,11 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         result = new DepthFirstSearch();
     } else if (desc.find("BFS") == 0) {
         desc = desc.substr(3, desc.size());
-        result = new BreadthFirstSearch();
+        THTS<THTSSearchNode>* bfs = new THTS<THTSSearchNode>("BFS");
+        bfs->actionSelection = new UCB1ActionSelection<THTSSearchNode>(bfs);
+        bfs->outcomeSelection = new UnsolvedMCOutcomeSelection<THTSSearchNode>(bfs);
+        bfs->backupFunction = new PBBackupFunction<THTSSearchNode>(bfs);
+        result = bfs;
     } else if (desc.find("Uniform") == 0) {
         desc = desc.substr(7, desc.size());
         result = new UniformEvaluationSearch();
