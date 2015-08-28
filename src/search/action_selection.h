@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-template<class SearchNode> class THTS;
+class THTS;
+class SearchNode;
 
-template <class SearchNode>
 class ActionSelection {
 public:
     // Set parameters from command line
@@ -40,14 +40,14 @@ public:
     virtual void printStats(std::ostream& /*out*/, std::string /*indent*/);
 
 protected:
-    ActionSelection<SearchNode>(THTS<SearchNode>* _thts) :
+    ActionSelection(THTS* _thts) :
         thts(_thts),
         selectLeastVisitedActionInRoot(false),
         maxVisitDiff(50),
         exploreInRoot(0),
         exploitInRoot(0) {}
 
-    THTS<SearchNode>* thts;
+    THTS* thts;
 
     // Vector for decision node children of equal quality
     std::vector<int> bestActionIndices;
@@ -63,20 +63,18 @@ protected:
     int exploitInRoot;
 };
 
-template <class SearchNode>
-class BFSActionSelection : public ActionSelection<SearchNode> {
+class BFSActionSelection : public ActionSelection {
 public:
-    BFSActionSelection(THTS<SearchNode>* _thts) :
-        ActionSelection<SearchNode>(_thts) {}
+    BFSActionSelection(THTS* _thts) :
+        ActionSelection(_thts) {}
 
     // Action selection
     void _selectAction(SearchNode* node) {
-        return this->selectLeastVisitedAction(node);
+        return selectLeastVisitedAction(node);
     }
 };
 
-template <class SearchNode>
-class UCB1ActionSelection : public ActionSelection<SearchNode> {
+class UCB1ActionSelection : public ActionSelection {
 public:
     // Possible types for the exploration-rate function
     enum ExplorationRate {
@@ -86,8 +84,8 @@ public:
         LNQUAD
     };
 
-    UCB1ActionSelection(THTS<SearchNode>* _thts) :
-        ActionSelection<SearchNode>(_thts),
+    UCB1ActionSelection(THTS* _thts) :
+        ActionSelection(_thts),
         explorationRate(LOG),
         magicConstantScaleFactor(1.0) {}
 

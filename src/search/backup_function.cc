@@ -10,9 +10,8 @@
                          Backup Function
 ******************************************************************/
 
-template <class SearchNode>
-void BackupFunction<SearchNode>::backupDecisionNodeLeaf(SearchNode* node,
-                                                        double const& futReward) {
+void BackupFunction::backupDecisionNodeLeaf(SearchNode* node,
+                                            double const& futReward) {
     ++node->numberOfVisits;
     node->futureReward = futReward;
     node->solved = useSolveLabeling;
@@ -22,8 +21,7 @@ void BackupFunction<SearchNode>::backupDecisionNodeLeaf(SearchNode* node,
     // std::cout << std::endl;
 }
 
-template <class SearchNode>
-void BackupFunction<SearchNode>::backupDecisionNode(SearchNode* node) {
+void BackupFunction::backupDecisionNode(SearchNode* node) {
     assert(!node->children.empty());
 
     ++node->numberOfVisits;
@@ -60,10 +58,9 @@ void BackupFunction<SearchNode>::backupDecisionNode(SearchNode* node) {
     // std::cout << std::endl;
 }
 
-template <class SearchNode>
-void BackupFunction<SearchNode>::printStats(std::ostream& out, std::string indent) {
+void BackupFunction::printStats(std::ostream& out, std::string indent) {
     if (useBackupLock) {
-        out << indent << "Skipped backups: " << this->skippedBackups << std::endl;
+        out << indent << "Skipped backups: " << skippedBackups << std::endl;
     }
 }
 
@@ -71,8 +68,7 @@ void BackupFunction<SearchNode>::printStats(std::ostream& out, std::string inden
                        Monte-Carlo Backups
 ******************************************************************/
 
-template <class SearchNode>
-bool MCBackupFunction<SearchNode>::setValueFromString(std::string& param, std::string& value) {
+bool MCBackupFunction::setValueFromString(std::string& param, std::string& value) {
     if (param == "-ilr") {
         setInitialLearningRate(atof(value.c_str()));
         return true;
@@ -83,9 +79,7 @@ bool MCBackupFunction<SearchNode>::setValueFromString(std::string& param, std::s
     return false;
 }
 
-template <class SearchNode>
-void MCBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
-                                                     double const& futReward) {
+void MCBackupFunction::backupChanceNode(SearchNode* node, double const& futReward) {
     ++node->numberOfVisits;
 
     node->futureReward = node->futureReward +
@@ -101,9 +95,7 @@ void MCBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
                    MaxMonte-Carlo Backups
 ******************************************************************/
 
-template <class SearchNode>
-void MaxMCBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
-                                                       double const& /*futReward*/) {
+void MaxMCBackupFunction::backupChanceNode(SearchNode* node, double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
@@ -130,14 +122,12 @@ void MaxMCBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
                       Partial Bellman Backups
 ******************************************************************/
 
-template <class SearchNode>
-void PBBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
-                                                    double const& /*futReward*/) {
+void PBBackupFunction::backupChanceNode(SearchNode* node, double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
-    if (this->thts->backupLock) {
-        ++this->skippedBackups;
+    if (thts->backupLock) {
+        ++skippedBackups;
         return;
     }
 
@@ -164,11 +154,4 @@ void PBBackupFunction<SearchNode>::backupChanceNode(SearchNode* node,
     // node->print(std::cout);
     // std::cout << std::endl;
 }
-
-
-// force compilation of required template classes
-template class MCBackupFunction<THTSSearchNode>;
-template class MaxMCBackupFunction<THTSSearchNode>;
-template class PBBackupFunction<THTSSearchNode>;
-
 

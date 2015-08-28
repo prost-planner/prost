@@ -3,9 +3,9 @@
 
 #include "states.h"
 
-template<typename SearchNode> class THTS;
+class THTS;
+class SearchNode;
 
-template <class SearchNode>
 class OutcomeSelection {
 public:
     // Set parameters from command line
@@ -26,17 +26,16 @@ public:
     virtual void printStats(std::ostream& /*out*/, std::string /*indent*/) {}
 
 protected:
-    OutcomeSelection<SearchNode>(THTS<SearchNode>* _thts) :
+    OutcomeSelection(THTS* _thts) :
         thts(_thts) {}
 
-    THTS<SearchNode>* thts;
+    THTS* thts;
 };
 
-template <class SearchNode>
-class MCOutcomeSelection : public OutcomeSelection<SearchNode> {
+class MCOutcomeSelection : public OutcomeSelection {
 public:
-    MCOutcomeSelection(THTS<SearchNode>* _thts) :
-        OutcomeSelection<SearchNode>(_thts) {}
+    MCOutcomeSelection(THTS* _thts) :
+        OutcomeSelection(_thts) {}
 
     virtual SearchNode* selectOutcome(SearchNode* node,
                                       PDState& nextState,
@@ -44,11 +43,10 @@ public:
                                       int const& lastProbVarIndex);
 };
 
-template <class SearchNode>
-class UnsolvedMCOutcomeSelection : public OutcomeSelection<SearchNode> {
+class UnsolvedMCOutcomeSelection : public OutcomeSelection {
 public:
-    UnsolvedMCOutcomeSelection(THTS<SearchNode>* _thts) :
-        OutcomeSelection<SearchNode>(_thts) {}
+    UnsolvedMCOutcomeSelection(THTS* _thts) :
+        OutcomeSelection(_thts) {}
 
     virtual SearchNode* selectOutcome(SearchNode* node,
                                       PDState& nextState,

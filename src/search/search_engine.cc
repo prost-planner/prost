@@ -105,25 +105,25 @@ SearchEngine* SearchEngine::fromString(string& desc) {
 
     if (desc.find("MC-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        THTS<THTSSearchNode>* mcUCT = new THTS<THTSSearchNode>("MC-UCT");
-        mcUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(mcUCT);
-        mcUCT->outcomeSelection = new MCOutcomeSelection<THTSSearchNode>(mcUCT);
-        mcUCT->backupFunction = new MCBackupFunction<THTSSearchNode>(mcUCT);
+        THTS* mcUCT = new THTS("MC-UCT");
+        mcUCT->actionSelection = new UCB1ActionSelection(mcUCT);
+        mcUCT->outcomeSelection = new MCOutcomeSelection(mcUCT);
+        mcUCT->backupFunction = new MCBackupFunction(mcUCT);
         result = mcUCT;
     } else if (desc.find("MaxMC-UCT") == 0) {
         desc = desc.substr(9, desc.size());
-        THTS<THTSSearchNode>* maxMCUCT = new THTS<THTSSearchNode>("MaxMC-UCT");
-        maxMCUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(maxMCUCT);
-        maxMCUCT->outcomeSelection = new MCOutcomeSelection<THTSSearchNode>(maxMCUCT);
-        maxMCUCT->backupFunction = new MaxMCBackupFunction<THTSSearchNode>(maxMCUCT);
+        THTS* maxMCUCT = new THTS("MaxMC-UCT");
+        maxMCUCT->actionSelection = new UCB1ActionSelection(maxMCUCT);
+        maxMCUCT->outcomeSelection = new MCOutcomeSelection(maxMCUCT);
+        maxMCUCT->backupFunction = new MaxMCBackupFunction(maxMCUCT);
         maxMCUCT->setHeuristicWeight(0.5);
         result = maxMCUCT;
     } else if (desc.find("DP-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        THTS<THTSSearchNode>* dpUCT = new THTS<THTSSearchNode>("DP-UCT");
-        dpUCT->actionSelection = new UCB1ActionSelection<THTSSearchNode>(dpUCT);
-        dpUCT->outcomeSelection = new UnsolvedMCOutcomeSelection<THTSSearchNode>(dpUCT);
-        dpUCT->backupFunction = new PBBackupFunction<THTSSearchNode>(dpUCT);
+        THTS* dpUCT = new THTS("DP-UCT");
+        dpUCT->actionSelection = new UCB1ActionSelection(dpUCT);
+        dpUCT->outcomeSelection = new UnsolvedMCOutcomeSelection(dpUCT);
+        dpUCT->backupFunction = new PBBackupFunction(dpUCT);
         dpUCT->setHeuristicWeight(0.5);
         result = dpUCT;
     } else if (desc.find("IDS") == 0) {
@@ -137,10 +137,10 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         result = new DepthFirstSearch();
     } else if (desc.find("BFS") == 0) {
         desc = desc.substr(3, desc.size());
-        THTS<THTSSearchNode>* bfs = new THTS<THTSSearchNode>("BFS");
-        bfs->actionSelection = new UCB1ActionSelection<THTSSearchNode>(bfs);
-        bfs->outcomeSelection = new UnsolvedMCOutcomeSelection<THTSSearchNode>(bfs);
-        bfs->backupFunction = new PBBackupFunction<THTSSearchNode>(bfs);
+        THTS* bfs = new THTS("BFS");
+        bfs->actionSelection = new UCB1ActionSelection(bfs);
+        bfs->outcomeSelection = new UnsolvedMCOutcomeSelection(bfs);
+        bfs->backupFunction = new PBBackupFunction(bfs);
         result = bfs;
     } else if (desc.find("Uniform") == 0) {
         desc = desc.substr(7, desc.size());
