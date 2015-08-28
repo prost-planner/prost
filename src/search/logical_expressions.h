@@ -8,14 +8,16 @@
 class NumericConstant;
 class StateFluent;
 class ConditionalProbabilityFunction;
+class LogicalExpression;
+
+typedef std::pair<LogicalExpression*, LogicalExpression*> LogicalExpressionPair;
 
 class LogicalExpression {
 public:
 
     static LogicalExpression* createFromString(std::string& desc);
     static std::vector<LogicalExpression*> createExpressions(std::string& desc);
-    static std::pair<LogicalExpression*, LogicalExpression*>
-        splitExpressionPair(std::string& desc);
+    static LogicalExpressionPair splitExpressionPair(std::string& desc);
 
     virtual ~LogicalExpression() {}
 

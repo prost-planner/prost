@@ -1,6 +1,6 @@
 LogicalExpression* LogicalExpression::determinizeMostLikely() {
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 /*****************************************************************

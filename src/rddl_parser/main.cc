@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     string problemFile = string(argv[2]);
     string targetDir = string(argv[3]);
 
-    double seed = time(NULL);
+    double seed = time(nullptr);
 
     // Read optinals
     for (unsigned int i = 4; i < argc; ++i) {

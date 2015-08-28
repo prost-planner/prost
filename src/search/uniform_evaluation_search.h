@@ -1,5 +1,5 @@
-#ifndef RANDOM_SEARCH_H
-#define RANDOM_SEARCH_H
+#ifndef UNIFORM_EVALUATION_SEARCH_H
+#define UNIFORM_EVALUATION_SEARCH_H
 
 #include "search_engine.h"
 

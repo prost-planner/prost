@@ -163,6 +163,9 @@ public:
     ActionState(int size) :
         state(size, 0), index(-1) {}
 
+    ActionState(ActionState const& other) :
+        state(other.state), index(other.index) {}
+
     // This is used to sort action states by the number of true fluents and the
     // position of the true fluents to ensure deterministic behaviour
     struct ActionStateSort {

@@ -3,7 +3,7 @@ LogicalExpression::replaceQuantifier(Instantiations& /*replace*/,
                                      Instantiator* /*inst*/) {
     print(cout);
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 /*****************************************************************

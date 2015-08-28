@@ -162,11 +162,11 @@ public:
         return probabilisticStateFluents[index];
     }
 
-    int const& remainingSteps() const {
+    int const& stepsToGo() const {
         return remSteps;
     }
 
-    int& remainingSteps() {
+    int& stepsToGo() {
         return remSteps;
     }
 
@@ -220,7 +220,7 @@ public:
                 hashValue = (hashValue ^ ((int)s.deterministicStateFluent(i))) * mult;
                 mult += 82520 + i + i;
             }
-            hashValue = (hashValue ^ ((int)s.remainingSteps())) * mult;
+            hashValue = (hashValue ^ ((int)s.stepsToGo())) * mult;
             hashValue += 97531;
             return hashValue;
         }
@@ -228,7 +228,7 @@ public:
 
     struct EqualWithRemSteps {
         bool operator()(State const& lhs, State const& rhs) const {
-            if (lhs.remainingSteps() != rhs.remainingSteps()) {
+            if (lhs.stepsToGo() != rhs.stepsToGo()) {
                 return false;
             }
 
@@ -441,6 +441,7 @@ public:
     };
 
     void printPDState(std::ostream& out) const;
+    void printPDStateCompact(std::ostream& out) const;
 
 protected:
     std::vector<DiscretePD> probabilisticStateFluentsAsPD;
