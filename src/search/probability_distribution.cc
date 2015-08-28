@@ -3,7 +3,7 @@
 using namespace std;
 
 bool DiscretePD::isWellDefined() const {
-    // Only use this funciton in assertions, it's quite inefficient!
+    // Only use this function in assertions, it's quite inefficient!
 
     // Each value must have a probability
     if (isUndefined() || (values.size() != probabilities.size())) {

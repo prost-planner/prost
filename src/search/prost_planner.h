@@ -12,8 +12,7 @@ class ProstPlanner {
 public:
     enum TimeoutManagementMethod {
         NONE,
-        UNIFORM,
-        MANUAL
+        UNIFORM
     };
 
     ProstPlanner(std::string& plannerDesc);
@@ -69,13 +68,14 @@ private:
 
     int currentRound;
     int currentStep;
-    int remainingSteps;
+    int stepsToGo;
     int numberOfRounds;
 
     bool cachingEnabled;
 
     int remainingTimeFactor;
 
+    // Parameter
     int ramLimit;
     int bitSize;
     int seed;

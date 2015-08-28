@@ -49,18 +49,30 @@ void State::print(ostream& out) const {
 }
 
 void PDState::printPDState(ostream& out) const {
-    for (unsigned int index = 0;
-         index < State::numberOfDeterministicStateFluents; ++index) {
+    for (unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
         out << SearchEngine::deterministicCPFs[index]->name << ": " <<
         deterministicStateFluents[index] << endl;
     }
 
-    for (unsigned int index = 0;
-         index < State::numberOfProbabilisticStateFluents; ++index) {
+    for (unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
         out << SearchEngine::probabilisticCPFs[index]->name << ": ";
         probabilisticStateFluentsAsPD[index].print(out);
     }
     out << "Remaining Steps: " << remSteps << endl;
+}
+
+void PDState::printPDStateCompact(ostream& out) const {
+    for (unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+        out << deterministicStateFluents[index] << " ";
+    }
+
+    for (unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+        out << "[ ";
+        for (unsigned int i = 0; i < probabilisticStateFluentsAsPD[index].values.size(); ++i) {
+            out << probabilisticStateFluentsAsPD[index].values[i] << ":" << probabilisticStateFluentsAsPD[index].probabilities[i] << " ";
+        }
+        out << "] ";
+    }
 }
 
 void KleeneState::print(ostream& out) const {

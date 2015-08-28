@@ -20,7 +20,7 @@ double Timer::operator()() const {
 
 inline double Timer::getCurrentTime() const {
     timeval tv;
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     return (double) tv.tv_sec + (double) tv.tv_usec / USEC_PER_SEC;
 }
 

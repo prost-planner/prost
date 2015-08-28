@@ -2,11 +2,7 @@
 
 #include "prost_planner.h"
 
-#include "mc_uct_search.h"
-#include "max_mc_uct_search.h"
-#include "dp_uct_search.h"
-#include "breadth_first_search.h"
-
+#include "thts.h"
 #include "iterative_deepening_search.h"
 #include "depth_first_search.h"
 #include "minimal_lookahead_search.h"
@@ -54,7 +50,7 @@ vector<ProbabilisticCPF*> SearchEngine::probabilisticCPFs;
 
 vector<DeterministicCPF*> SearchEngine::determinizedCPFs;
 
-RewardFunction* SearchEngine::rewardCPF = NULL;
+RewardFunction* SearchEngine::rewardCPF = nullptr;
 vector<DeterministicEvaluatable*> SearchEngine::actionPreconditions;
 
 bool SearchEngine::taskIsDeterministic = true;
@@ -105,17 +101,31 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         desc = "MaxMC-UCT -ndn 1" + desc;
     }
 
-    SearchEngine* result = NULL;
+    SearchEngine* result = nullptr;
 
     if (desc.find("MC-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        result = new MCUCTSearch();
+        THTS* mcUCT = new THTS("MC-UCT");
+        mcUCT->actionSelection = new UCB1ActionSelection(mcUCT);
+        mcUCT->outcomeSelection = new MCOutcomeSelection(mcUCT);
+        mcUCT->backupFunction = new MCBackupFunction(mcUCT);
+        result = mcUCT;
     } else if (desc.find("MaxMC-UCT") == 0) {
         desc = desc.substr(9, desc.size());
-        result = new MaxMCUCTSearch();
+        THTS* maxMCUCT = new THTS("MaxMC-UCT");
+        maxMCUCT->actionSelection = new UCB1ActionSelection(maxMCUCT);
+        maxMCUCT->outcomeSelection = new MCOutcomeSelection(maxMCUCT);
+        maxMCUCT->backupFunction = new MaxMCBackupFunction(maxMCUCT);
+        maxMCUCT->setHeuristicWeight(0.5);
+        result = maxMCUCT;
     } else if (desc.find("DP-UCT") == 0) {
         desc = desc.substr(6, desc.size());
-        result = new DPUCTSearch();
+        THTS* dpUCT = new THTS("DP-UCT");
+        dpUCT->actionSelection = new UCB1ActionSelection(dpUCT);
+        dpUCT->outcomeSelection = new UnsolvedMCOutcomeSelection(dpUCT);
+        dpUCT->backupFunction = new PBBackupFunction(dpUCT);
+        dpUCT->setHeuristicWeight(0.5);
+        result = dpUCT;
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
@@ -127,7 +137,11 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         result = new DepthFirstSearch();
     } else if (desc.find("BFS") == 0) {
         desc = desc.substr(3, desc.size());
-        result = new BreadthFirstSearch();
+        THTS* bfs = new THTS("BFS");
+        bfs->actionSelection = new UCB1ActionSelection(bfs);
+        bfs->outcomeSelection = new UnsolvedMCOutcomeSelection(bfs);
+        bfs->backupFunction = new PBBackupFunction(bfs);
+        result = bfs;
     } else if (desc.find("Uniform") == 0) {
         desc = desc.substr(7, desc.size());
         result = new UniformEvaluationSearch();
@@ -472,8 +486,9 @@ void SearchEngine::print(ostream& out) const {
     outStream.str("");
 }
 
-void SearchEngine::printStats(ostream& out, bool const& /*printRoundStats*/,
-        string indent) const {
+void SearchEngine::printStats(ostream& out,
+                              bool const& /*printRoundStats*/,
+                              string indent) const {
     out << indent << "Statistics of " << name << ":" << endl;
 }
 
