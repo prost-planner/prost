@@ -3,39 +3,28 @@
 
 #include "uniform_evaluation_search.h"
 #include "utils/timer.h"
+#include "action_selection.h"
+#include "outcome_selection.h"
+#include "backup_function.h"
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper "Trial-based Heuristic
 // Tree Search for Finite Horizon MDPs" (Keller & Helmert). The described
-// ingredients can be implemented in the abstract functions
+// ingredients are implemented in three classes (1-3) or as functions in the
+// THTS class (4-6)
 
-// 1. int selectAction(SearchNode*): return the index of the selected action
+// 1. ActionSelection
 
-// 2. SearchNode* selectOutcome(SearchNode*, PDSTate&, State&, int&): return the
-// node that corresponds to the selected outcome and ADDITIONALLY set the state
-// accordingly
+// 2. Outcome Selection
 
-// 3. bool continueTrial(SearchNode*): return false to start the backup phase,
-// and true otherwise. The baseline implementation of this checks if the number
-// of previously unvisited decision nodes that was encountered in this trial is
-// equal to a parameter that is set to the horizon by default (i.e., if nothing
-// is changed all trials only finish in goal states)
+// 3. BackupFunction
 
-// 4. void initializeDecisionNode(SearchNode*): implement *how* to use the
-// heuristic, not *which* heuristic to use (that is done on the command line
-// with the parameter "-i").
+// 4. continueTrial()
 
-// 5a. void backupDecisionNodeLeaf(SearchNode*, double const&, double const&):
-// is called on leaf (not tip!) nodes.
+// 5. initializeDecisionNode()
 
-// 5b. backupDecisionNode(SearchNode*, double const&, double const&): is called
-// to backup non-leaf decision nodes
+// 6. recommendAction()
 
-// 5c. backupChanceNode(SearchNode*, double const&): is called to backup chance
-// nodes
-
-// 6. recommendAction(vector<int>&): is called to derive the decision which
-// action is actually executed
 
 // SearchNode must be a class with the following public functions and members:
 
@@ -206,17 +195,40 @@ public:
         currentRootNode = node;
     }
 
+    // Getter methods for classes that implement ingredients
+    SearchNode* getRootNode();
+    SearchNode* getDecisionNode(double const& _prob);
+    SearchNode* getChanceNode(double const& _prob);
+
+    SearchNode const* getCurrentRootNode() const {
+        return currentRootNode;
+    }
+
+    // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
+    // dp_uct would always backup the old future reward
+    bool backupLock;
+
+    // Backup lock won't apply at and beyond this depth.
+    int maxLockDepth;
+
+    // Ingredients that are implemented externally
+    ActionSelection<SearchNode>* actionSelection;
+    OutcomeSelection<SearchNode>* outcomeSelection;
+    BackupFunction<SearchNode>* backupFunction;
+
     // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out,
                             bool const& printRoundStats,
                             std::string indent = "") const;
 
-protected:
     THTS<SearchNode>(std::string _name) :
         ProbabilisticSearchEngine(_name),
         backupLock(false),
         maxLockDepth(0),
+        actionSelection(nullptr),
+        outcomeSelection(nullptr),
+        backupFunction(nullptr),
         currentRootNode(nullptr),
         chosenOutcome(nullptr),
         states(SearchEngine::horizon + 1),
@@ -240,12 +252,12 @@ protected:
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
         firstSolvedFound(false),
         accumulatedNumberOfTrialsInRootState(0),
-        accumulatedNumberOfSearchNodesInRootState(0),
-        skippedBackups(0) {
+        accumulatedNumberOfSearchNodesInRootState(0) {
         setMaxNumberOfNodes(24000000);
         setTimeout(1.0);
     }
 
+protected:
     // Main search functions
     void visitDecisionNode(SearchNode* node);
     void visitChanceNode(SearchNode* node);
@@ -257,13 +269,6 @@ protected:
     void initTrial();
     void initTrialStep();
 
-    // Action selection
-    virtual int selectAction(SearchNode* node) = 0;
-
-    // Outcome selection
-    virtual SearchNode* selectOutcome(SearchNode* node, PDState& nextState,
-                                      int const& varIndex, int const& lastProbVarIndex) = 0;
-
     // Trial length determinization
     virtual bool continueTrial(SearchNode* /*node*/) {
         return initializedDecisionNodes < numberOfNewDecisionNodesPerTrial;
@@ -271,14 +276,6 @@ protected:
 
     // Initialization of nodes
     virtual void initializeDecisionNode(SearchNode* node);
-
-    // Backup functions
-    virtual void backupDecisionNodeLeaf(SearchNode* node,
-                                        double const& futReward) = 0;
-    virtual void backupDecisionNode(SearchNode* node,
-                                    double const& accReward) = 0;
-    virtual void backupChanceNode(SearchNode* node,
-                                  double const& accReward) = 0;
 
     // Recommendation function
     virtual void recommendAction(std::vector<int>& bestActions);
@@ -293,22 +290,6 @@ protected:
     // Determine if the termination criterion is fullfilled or if we
     // want another trial
     bool moreTrials();
-
-    // Memory management
-    SearchNode* getRootNode();
-    SearchNode* getDecisionNode(double const& _prob);
-    SearchNode* getChanceNode(double const& _prob);
-
-    SearchNode const* getCurrentRootNode() const {
-        return currentRootNode;
-    }
-
-    // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
-    // dp_uct would always backup the old future reward
-    bool backupLock;
-
-    // Backup lock won't apply at and beyond this depth.
-    int maxLockDepth;
 
 private:
     // Search nodes used in trials
@@ -377,8 +358,6 @@ protected:
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;
-    // Statistic variable to count skipped backups.
-    size_t skippedBackups;
 
     // Tests which access private members
     friend class THTSTest;
@@ -391,6 +370,12 @@ protected:
 template <class SearchNode>
 bool THTS<SearchNode>::setValueFromString(std::string& param,
                                           std::string& value) {
+    if (actionSelection->setValueFromString(param, value) ||
+        outcomeSelection->setValueFromString(param, value) ||
+        backupFunction->setValueFromString(param, value)) {
+        return true;
+    }
+
     if (param == "-T") {
         if (value == "TIME") {
             setTerminationMethod(THTS<SearchNode>::TIME);
@@ -465,6 +450,10 @@ void THTS<SearchNode>::learn() {
 template <class SearchNode>
 void THTS<SearchNode>::initRound() {
     firstSolvedFound = false;
+
+    actionSelection->initRound();
+    outcomeSelection->initRound();
+    backupFunction->initRound();
 }
 
 template <class SearchNode>
@@ -511,6 +500,11 @@ inline void THTS<SearchNode>::initTrial() {
     trialReward = 0.0;
     backupLock = false;
     maxLockDepth = stepsToGoInCurrentState;
+
+    // Init trial in ingredients
+    actionSelection->initTrial();
+    outcomeSelection->initTrial();
+    backupFunction->initTrial();
 }
 
 template <class SearchNode>
@@ -698,7 +692,7 @@ void THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
     // Determine if we continue with this trial
     if (continueTrial(node)) {
         // Select the action that is simulated
-        appliedActionIndex = selectAction(node);
+        appliedActionIndex = actionSelection->selectAction(node);
         assert(node->children[appliedActionIndex]);
         assert(!node->children[appliedActionIndex]->isSolved());
 
@@ -734,7 +728,7 @@ void THTS<SearchNode>::visitDecisionNode(SearchNode* node) {
         }
 
         // Backup this node
-        backupDecisionNode(node, trialReward);
+        backupFunction->backupDecisionNode(node);
         trialReward += node->immediateReward;
 
         // If the backup function labeled the node as solved, we store the
@@ -761,18 +755,16 @@ bool THTS<SearchNode>::currentStateIsSolved(SearchNode* node) {
         // is taken care of by calcOptimalFinalReward)
 
         calcOptimalFinalReward(states[1], trialReward);
-        backupDecisionNodeLeaf(node, trialReward);
+        backupFunction->backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
 
         return true;
     } else if (ProbabilisticSearchEngine::stateValueCache.find(states[stepsToGoInCurrentState]) !=
                ProbabilisticSearchEngine::stateValueCache.end()) {
         // This state has already been solved before
-
-        node->children.clear();
         trialReward =
             ProbabilisticSearchEngine::stateValueCache[states[stepsToGoInCurrentState]];
-        backupDecisionNodeLeaf(node, trialReward);
+        backupFunction->backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
 
         ++cacheHits;
@@ -783,7 +775,7 @@ bool THTS<SearchNode>::currentStateIsSolved(SearchNode* node) {
         
         calcReward(states[stepsToGoInCurrentState], 0, trialReward);
         trialReward *= stepsToGoInCurrentState;
-        backupDecisionNodeLeaf(node, trialReward);
+        backupFunction->backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
 
         if (cachingEnabled) {
@@ -803,8 +795,8 @@ void THTS<SearchNode>::visitChanceNode(SearchNode* node) {
         ++chanceNodeVarIndex;
     }
 
-    chosenOutcome = selectOutcome(node, states[stepsToGoInNextState],
-                                  chanceNodeVarIndex, lastProbabilisticVarIndex);
+    chosenOutcome = outcomeSelection->selectOutcome(
+        node, states[stepsToGoInNextState], chanceNodeVarIndex, lastProbabilisticVarIndex);
     
     if (chanceNodeVarIndex == lastProbabilisticVarIndex) {
         State::calcStateFluentHashKeys(states[stepsToGoInNextState]);
@@ -815,7 +807,7 @@ void THTS<SearchNode>::visitChanceNode(SearchNode* node) {
         ++chanceNodeVarIndex;
         visitChanceNode(chosenOutcome);
     }
-    backupChanceNode(node, trialReward);
+    backupFunction->backupChanceNode(node, trialReward);
 }
 
 template <class SearchNode>
@@ -830,7 +822,7 @@ void THTS<SearchNode>::visitDummyChanceNode(SearchNode* node) {
     assert(node->children.size() == 1);
 
     visitDecisionNode(node->children[0]);
-    backupChanceNode(node, trialReward);
+    backupFunction->backupChanceNode(node, trialReward);
 }
 
 /******************************************************************
@@ -866,8 +858,13 @@ void THTS<SearchNode>::initializeDecisionNode(SearchNode* node) {
             node->numberOfVisits += numberOfInitialVisits;
             node->futureReward =
                 std::max(node->futureReward, node->children[index]->futureReward);
+
+            // std::cout << "Initialized child ";
+            // SearchEngine::actionStates[i].printCompact(std::cout);
+            // node->children[i]->print(std::cout);
         }
     }
+    // std::cout << std::endl;
 
     if (node != currentRootNode) {
         ++initializedDecisionNodes;
@@ -1001,7 +998,9 @@ void THTS<SearchNode>::printStats(std::ostream& out,
         out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex <<
         std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
-        out << indent << "Skipped backups: " << skippedBackups << std::endl;
+        actionSelection->printStats(out, indent);
+        outcomeSelection->printStats(out, indent);
+        backupFunction->printStats(out, indent);
     }
     if (initializer) {
         out << "Initialization: " << std::endl;
