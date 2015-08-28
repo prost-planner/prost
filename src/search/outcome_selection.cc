@@ -2,9 +2,10 @@
 
 #include "thts.h"
 
-template <class SearchNode>
-SearchNode* MCOutcomeSelection<SearchNode>::selectOutcome(
-        SearchNode* node, PDState& nextState, int const& varIndex, int const& lastProbVarIndex) {
+SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
+                                              PDState& nextState,
+                                              int const& varIndex,
+                                              int const& lastProbVarIndex) {
 
     if (node->children.empty()) {
         node->children.resize(
@@ -15,17 +16,16 @@ SearchNode* MCOutcomeSelection<SearchNode>::selectOutcome(
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = this->thts->getDecisionNode(1.0);
+            node->children[childIndex] = thts->getDecisionNode(1.0);
         } else {
-            node->children[childIndex] = this->thts->getChanceNode(1.0);
+            node->children[childIndex] = thts->getChanceNode(1.0);
         }
     }
 
     return node->children[childIndex];
 }
 
-template <class SearchNode>
-SearchNode* UnsolvedMCOutcomeSelection<SearchNode>::selectOutcome(
+SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         SearchNode* node, PDState& nextState, int const& varIndex, int const& lastProbVarIndex) {
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
@@ -41,7 +41,7 @@ SearchNode* UnsolvedMCOutcomeSelection<SearchNode>::selectOutcome(
         for (unsigned int i = 0; i < pd.size(); ++i) {
             childIndex = pd.values[i];
             if (node->children[childIndex] &&
-                node->children[childIndex]->isSolved()) {
+                node->children[childIndex]->solved) {
                 probSum -= pd.probabilities[i];
             }
         }
@@ -60,7 +60,7 @@ SearchNode* UnsolvedMCOutcomeSelection<SearchNode>::selectOutcome(
     for (unsigned int i = 0; i < pd.size(); ++i) {
         childIndex = pd.values[i];
         if (!node->children[childIndex] ||
-            !node->children[childIndex]->isSolved()) {
+            !node->children[childIndex]->solved) {
             probSum += pd.probabilities[i];
             if (MathUtils::doubleIsSmaller(randNum, probSum)) {
                 childProb = pd.probabilities[i];
@@ -75,18 +75,15 @@ SearchNode* UnsolvedMCOutcomeSelection<SearchNode>::selectOutcome(
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = this->thts->getDecisionNode(childProb);
+            node->children[childIndex] = thts->getDecisionNode(childProb);
         } else {
-            node->children[childIndex] = this->thts->getChanceNode(childProb);
+            node->children[childIndex] = thts->getChanceNode(childProb);
         }
     }
 
-    assert(!node->children[childIndex]->isSolved());
+    assert(!node->children[childIndex]->solved);
 
     nextState.probabilisticStateFluent(varIndex) = childIndex;
     return node->children[childIndex];
 }
 
-// force compilation of required template classes
-template class MCOutcomeSelection<THTSSearchNode>;
-template class UnsolvedMCOutcomeSelection<THTSSearchNode>;

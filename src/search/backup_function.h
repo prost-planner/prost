@@ -3,13 +3,13 @@
 
 #include <string>
 
-template<class SearchNode> class THTS;
+class THTS;
+class SearchNode;
 
 /******************************************************************
                          Backup Function
 ******************************************************************/
 
-template <class SearchNode>
 class BackupFunction {
 public:
     // Set parameters from command line
@@ -29,14 +29,14 @@ public:
     virtual void printStats(std::ostream& out, std::string indent);
 
 protected:
-    BackupFunction<SearchNode>(THTS<SearchNode>* _thts,
-                               bool _useSolveLabeling = false,
-                               bool _useBackupLock = false) :
+    BackupFunction(THTS* _thts,
+                   bool _useSolveLabeling = false,
+                   bool _useBackupLock = false) :
         thts(_thts),
         useSolveLabeling(_useSolveLabeling),
         useBackupLock(_useBackupLock) {}
 
-    THTS<SearchNode>* thts;
+    THTS* thts;
     bool useSolveLabeling;
     bool useBackupLock;
 
@@ -48,11 +48,10 @@ protected:
                        Monte-Carlo Backups
 ******************************************************************/
 
-template <class SearchNode>
-class MCBackupFunction : public BackupFunction<SearchNode> {
+class MCBackupFunction : public BackupFunction {
 public:
-    MCBackupFunction<SearchNode>(THTS<SearchNode>* _thts) :
-        BackupFunction<SearchNode>(_thts),
+    MCBackupFunction(THTS* _thts) :
+        BackupFunction(_thts),
         initialLearningRate(1.0),
         learningRateDecay(1.0) {}
 
@@ -80,11 +79,10 @@ private:
                    MaxMonte-Carlo Backups
 ******************************************************************/
 
-template <class SearchNode>
-class MaxMCBackupFunction : public BackupFunction<SearchNode> {
+class MaxMCBackupFunction : public BackupFunction {
 public:
-    MaxMCBackupFunction<SearchNode>(THTS<SearchNode>* _thts) :
-        BackupFunction<SearchNode>(_thts) {}
+    MaxMCBackupFunction(THTS* _thts) :
+        BackupFunction(_thts) {}
 
     // Backup functions
     virtual void backupChanceNode(SearchNode* node, double const& futReward);
@@ -94,11 +92,10 @@ public:
                       Partial Bellman Backups
 ******************************************************************/
 
-template <class SearchNode>
-class PBBackupFunction : public BackupFunction<SearchNode> {
+class PBBackupFunction : public BackupFunction {
 public:
-    PBBackupFunction<SearchNode>(THTS<SearchNode>* _thts) :
-    BackupFunction<SearchNode>(_thts, true, true) {}
+    PBBackupFunction(THTS* _thts) :
+    BackupFunction(_thts, true, true) {}
 
     // Backup functions
     virtual void backupChanceNode(SearchNode* node, double const& futReward);
