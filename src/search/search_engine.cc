@@ -88,44 +88,46 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     StringUtils::removeFirstAndLastCharacter(desc);
     StringUtils::trim(desc);
 
-    // Check if a shortcut description has been used. TODO: Implement
-    // this in a clean and extendible way!
+    // Check if a shortcut description has been used
     if (desc.find("IPPC2011") == 0) {
+        // This is the configuration that was used at IPPC 2011
+
         desc = desc.substr(8, desc.size());
-        desc = "MC-UCT -sd 15 -i [IDS -sd 15]" + desc;
+        desc = "THTS -act [UCB1] -out [MC] -backup [MC] -ndn H -iv 5 -hw 1.0 -sd 15 -i [IDS -sd 15]" + desc;
+    } else if (desc.find("IPPC2014") == 0) {
+        // This is the configuration that was used at IPPC 2014 (without
+        // consideration of the MDP-ESP problem that is described in our AAAI
+        // 2015 paper, so it can be used for planner comparison)
+
+        desc = desc.substr(8, desc.size());
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB]" + desc;
     } else if (desc.find("UCTStar") == 0) {
+        // This is the UCT* algorithm as described in our ICAPS 2013 paper
+ 
         desc = desc.substr(7, desc.size());
-        desc = "DP-UCT -ndn 1 -iv 1" + desc;
-    } else if (desc.find("MaxMC-UCTStar") == 0) {
-        desc = desc.substr(13, desc.size());
-        desc = "MaxMC-UCT -ndn 1" + desc;
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB]" + desc;
+    } else if (desc.find("DP-UCT") == 0) {
+        // This is the DP-UCT algorithm as described in our ICAPS 2013 paper
+
+        desc = desc.substr(6, desc.size());
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H" + desc;
+    } else if (desc.find("MaxUCT") == 0) {
+        // This is the MaxUCT algorithm as described in our ICAPS 2013 paper
+
+        desc = desc.substr(6, desc.size());
+        desc = "THTS -act [UCB1] -out [MC] -backup [MaxMC] -ndn H" + desc;
+    } else if (desc.find("BFS") == 0) {
+        // This is a THTS version of breadth first search
+
+        desc = desc.substr(3, desc.size());
+        desc = "THTS -act [BFS] -out [UMC] -backup [PB]" + desc;
     }
 
     SearchEngine* result = nullptr;
 
-    if (desc.find("MC-UCT") == 0) {
-        desc = desc.substr(6, desc.size());
-        THTS* mcUCT = new THTS("MC-UCT");
-        mcUCT->actionSelection = new UCB1ActionSelection(mcUCT);
-        mcUCT->outcomeSelection = new MCOutcomeSelection(mcUCT);
-        mcUCT->backupFunction = new MCBackupFunction(mcUCT);
-        result = mcUCT;
-    } else if (desc.find("MaxMC-UCT") == 0) {
-        desc = desc.substr(9, desc.size());
-        THTS* maxMCUCT = new THTS("MaxMC-UCT");
-        maxMCUCT->actionSelection = new UCB1ActionSelection(maxMCUCT);
-        maxMCUCT->outcomeSelection = new MCOutcomeSelection(maxMCUCT);
-        maxMCUCT->backupFunction = new MaxMCBackupFunction(maxMCUCT);
-        maxMCUCT->setHeuristicWeight(0.5);
-        result = maxMCUCT;
-    } else if (desc.find("DP-UCT") == 0) {
-        desc = desc.substr(6, desc.size());
-        THTS* dpUCT = new THTS("DP-UCT");
-        dpUCT->actionSelection = new UCB1ActionSelection(dpUCT);
-        dpUCT->outcomeSelection = new UnsolvedMCOutcomeSelection(dpUCT);
-        dpUCT->backupFunction = new PBBackupFunction(dpUCT);
-        dpUCT->setHeuristicWeight(0.5);
-        result = dpUCT;
+    if (desc.find("THTS") == 0) {
+        desc = desc.substr(4, desc.size());
+        result = new THTS("THTS");
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
@@ -135,13 +137,6 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     } else if (desc.find("DFS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new DepthFirstSearch();
-    } else if (desc.find("BFS") == 0) {
-        desc = desc.substr(3, desc.size());
-        THTS* bfs = new THTS("BFS");
-        bfs->actionSelection = new UCB1ActionSelection(bfs);
-        bfs->outcomeSelection = new UnsolvedMCOutcomeSelection(bfs);
-        bfs->backupFunction = new PBBackupFunction(bfs);
-        result = bfs;
     } else if (desc.find("Uniform") == 0) {
         desc = desc.substr(7, desc.size());
         result = new UniformEvaluationSearch();

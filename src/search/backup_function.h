@@ -12,6 +12,9 @@ class SearchNode;
 
 class BackupFunction {
 public:
+    // Create an backup function component
+    static BackupFunction* fromString(std::string& desc, THTS* thts);
+    
     // Set parameters from command line
     virtual bool setValueFromString(std::string& /*param*/, std::string& /*value*/) {
         return false;

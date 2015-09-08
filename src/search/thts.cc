@@ -1,10 +1,33 @@
 #include "thts.h"
 
+#include "utils/system_utils.h"
+
 /******************************************************************
                      Search Engine Creation
 ******************************************************************/
 
 bool THTS::setValueFromString(std::string& param, std::string& value) {
+    // Check if this parameter encodes an ingredient
+    if (param == "-act") {
+        setActionSelection(ActionSelection::fromString(value, this));
+
+        return true;
+    } else if (param == "-out") {
+        setOutcomeSelection(OutcomeSelection::fromString(value, this));
+
+        return true;
+    } else if (param == "-backup") {
+        setBackupFunction(BackupFunction::fromString(value, this));
+
+        return true;
+    }
+
+    // The ingredients must have been specified first
+    if (!actionSelection || !outcomeSelection || !backupFunction) {
+        SystemUtils::abort("Action selection, outcome selection and backup function must be defined first in a THTS search engine!");   
+    }
+
+    // Check if this is a parameter of an ingredient
     if (actionSelection->setValueFromString(param, value) ||
         outcomeSelection->setValueFromString(param, value) ||
         backupFunction->setValueFromString(param, value)) {
@@ -34,7 +57,11 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
         setNumberOfInitialVisits(atoi(value.c_str()));
         return true;
     } else if (param == "-ndn") {
-        setNumberOfNewDecisionNodesPerTrial(atoi(value.c_str()));
+        if (value == "H") {
+            setNumberOfNewDecisionNodesPerTrial(SearchEngine::horizon);
+        } else {
+            setNumberOfNewDecisionNodesPerTrial(atoi(value.c_str()));
+        }
         return true;
     } else if (param == "-mnn") {
         setMaxNumberOfNodes(atoi(value.c_str()));
@@ -43,8 +70,8 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
         setSelectMostVisited(atoi(value.c_str()));
         return true;
     } else if (param == "-hw") {
-      setHeuristicWeight(atof(value.c_str()));
-      return true;
+        setHeuristicWeight(atof(value.c_str()));
+        return true;
     }
 
     return SearchEngine::setValueFromString(param, value);

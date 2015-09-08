@@ -3,8 +3,56 @@
 #include "thts.h"
 
 #include "utils/math_utils.h"
+#include "utils/system_utils.h"
+#include "utils/string_utils.h"
 
 #include <iostream>
+
+/******************************************************************
+                     Backup Function Creation
+******************************************************************/
+
+BackupFunction* BackupFunction::fromString(std::string& desc, THTS* thts) {
+    StringUtils::trim(desc);
+    assert(desc[0] == '[' && desc[desc.size() - 1] == ']');
+    StringUtils::removeFirstAndLastCharacter(desc);
+    StringUtils::trim(desc);
+
+    BackupFunction* result = nullptr;
+
+    if (desc.find("MC") == 0) {
+        desc = desc.substr(2, desc.size());
+
+        result = new MCBackupFunction(thts);
+    } else if (desc.find("MaxMC") == 0) {
+        desc = desc.substr(5, desc.size());
+
+        result = new MaxMCBackupFunction(thts);
+    } else if (desc.find("PB") == 0) {
+        desc = desc.substr(2, desc.size());
+
+        result = new PBBackupFunction(thts);
+    } else {
+        SystemUtils::abort("Unknown Backup Function: " + desc);
+    }
+
+    assert(result);
+    StringUtils::trim(desc);
+
+    while (!desc.empty()) {
+        std::string param;
+        std::string value;
+        StringUtils::nextParamValuePair(desc, param, value);
+
+        if (!result->setValueFromString(param, value)) {
+            SystemUtils::abort(
+                    "Unused parameter value pair: " + param + " / " + value);
+        }
+    }
+
+    return result;
+}
+
 
 /******************************************************************
                          Backup Function

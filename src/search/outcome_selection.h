@@ -8,6 +8,9 @@ class SearchNode;
 
 class OutcomeSelection {
 public:
+    // Create an outcome selection component
+    static OutcomeSelection* fromString(std::string& desc, THTS* thts);
+    
     // Set parameters from command line
     virtual bool setValueFromString(std::string& /*param*/, std::string& /*value*/) {
         return false;

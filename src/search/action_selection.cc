@@ -6,6 +6,48 @@
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
+#include "utils/string_utils.h"
+
+/******************************************************************
+                     Action Selection Creation
+******************************************************************/
+
+ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
+    StringUtils::trim(desc);
+    assert(desc[0] == '[' && desc[desc.size() - 1] == ']');
+    StringUtils::removeFirstAndLastCharacter(desc);
+    StringUtils::trim(desc);
+
+    ActionSelection* result = nullptr;
+
+    if (desc.find("BFS") == 0) {
+        desc = desc.substr(3, desc.size());
+
+        result = new BFSActionSelection(thts);
+    } else if (desc.find("UCB1") == 0) {
+        desc = desc.substr(4, desc.size());
+
+        result = new UCB1ActionSelection(thts);
+    } else {
+        SystemUtils::abort("Unknown Action Selection: " + desc);
+    }
+
+    assert(result);
+    StringUtils::trim(desc);
+
+    while (!desc.empty()) {
+        std::string param;
+        std::string value;
+        StringUtils::nextParamValuePair(desc, param, value);
+
+        if (!result->setValueFromString(param, value)) {
+            SystemUtils::abort(
+                    "Unused parameter value pair: " + param + " / " + value);
+        }
+    }
+
+    return result;
+}
 
 /******************************************************************
                           ActionSelection
@@ -73,7 +115,7 @@ inline void ActionSelection::selectGreedyAction(SearchNode* node) {
     }
 }
 
-inline void ActionSelection::selectLeastVisitedAction(SearchNode* node) {
+void ActionSelection::selectLeastVisitedAction(SearchNode* node) {
     int leastVisits = std::numeric_limits<int>::max();
 
     for (unsigned int childIndex = 0;  childIndex < node->children.size(); ++childIndex) {
