@@ -2,6 +2,54 @@
 
 #include "thts.h"
 
+#include "utils/system_utils.h"
+#include "utils/string_utils.h"
+
+/******************************************************************
+                  Outcome Selection Creation
+******************************************************************/
+
+OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
+    StringUtils::trim(desc);
+    assert(desc[0] == '[' && desc[desc.size() - 1] == ']');
+    StringUtils::removeFirstAndLastCharacter(desc);
+    StringUtils::trim(desc);
+
+    OutcomeSelection* result = nullptr;
+
+    if (desc.find("MC") == 0) {
+        desc = desc.substr(2, desc.size());
+
+        result = new MCOutcomeSelection(thts);
+    } else if (desc.find("UMC") == 0) {
+        desc = desc.substr(3, desc.size());
+
+        result = new UnsolvedMCOutcomeSelection(thts);
+    } else {
+        SystemUtils::abort("Unknown Outcome Selection: " + desc);
+    }
+
+    assert(result);
+    StringUtils::trim(desc);
+
+    while (!desc.empty()) {
+        std::string param;
+        std::string value;
+        StringUtils::nextParamValuePair(desc, param, value);
+
+        if (!result->setValueFromString(param, value)) {
+            SystemUtils::abort(
+                    "Unused parameter value pair: " + param + " / " + value);
+        }
+    }
+
+    return result;
+}
+
+/******************************************************************
+                        MC Outcome Selection
+******************************************************************/
+
 SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
                                               PDState& nextState,
                                               int const& varIndex,
@@ -24,6 +72,10 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
 
     return node->children[childIndex];
 }
+
+/******************************************************************
+             MC Outcome Selection with Solve Labeling
+******************************************************************/
 
 SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         SearchNode* node, PDState& nextState, int const& varIndex, int const& lastProbVarIndex) {
