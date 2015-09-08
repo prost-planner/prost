@@ -25,6 +25,7 @@ public:
 *****************************************************************/
 
     virtual ~SearchEngine() {}
+
     // Create a SearchEngine
     static SearchEngine* fromString(std::string& desc);
 

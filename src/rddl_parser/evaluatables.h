@@ -36,7 +36,7 @@ struct Evaluatable {
     // The formula that is evaluatable
     LogicalExpression* formula;
 
-    // The determinized version of formula (this is nullptr for all evaluatables
+    // The determinized version of formula
     // except probabilistic CPFs)
     LogicalExpression* determinization;
 

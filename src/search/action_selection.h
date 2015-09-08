@@ -9,6 +9,9 @@ class SearchNode;
 
 class ActionSelection {
 public:
+    // Create an action selection component
+    static ActionSelection* fromString(std::string& desc, THTS* thts);
+
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
@@ -69,7 +72,7 @@ public:
         ActionSelection(_thts) {}
 
     // Action selection
-    void _selectAction(SearchNode* node) {
+    virtual void _selectAction(SearchNode* node) {
         return selectLeastVisitedAction(node);
     }
 };
@@ -102,7 +105,7 @@ public:
     }
 
     // Action selection
-    void _selectAction(SearchNode* node);
+    virtual void _selectAction(SearchNode* node);
 
 protected:
     // Parameter

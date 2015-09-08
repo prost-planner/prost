@@ -113,6 +113,18 @@ public:
     }
 
     // Parameter setter
+    virtual void setActionSelection(ActionSelection* _actionSelection) {
+        actionSelection = _actionSelection;
+    }
+
+    virtual void setOutcomeSelection(OutcomeSelection* _outcomeSelection) {
+        outcomeSelection = _outcomeSelection;
+    }
+
+    virtual void setBackupFunction(BackupFunction* _backupFunction) {
+        backupFunction = _backupFunction;
+    }
+    
     virtual void setMaxSearchDepth(int _maxSearchDepth) {
         SearchEngine::setMaxSearchDepth(_maxSearchDepth);
 
@@ -183,11 +195,6 @@ public:
     // Backup lock won't apply at and beyond this depth.
     int maxLockDepth;
 
-    // Ingredients that are implemented externally
-    ActionSelection* actionSelection;
-    OutcomeSelection* outcomeSelection;
-    BackupFunction* backupFunction;
-
     // Printer
     virtual void print(std::ostream& out);
     virtual void printStats(std::ostream& out,
@@ -215,10 +222,10 @@ public:
         lastUsedNodePoolIndex(0),
         terminationMethod(THTS::TIME),
         maxNumberOfTrials(0),
-        numberOfInitialVisits(5),
-        numberOfNewDecisionNodesPerTrial(SearchEngine::horizon + 1),
+        numberOfInitialVisits(1),
+        numberOfNewDecisionNodesPerTrial(1),
         selectMostVisited(false),
-        heuristicWeight(1.0),
+        heuristicWeight(0.5),
         numberOfRuns(0),
         cacheHits(0),
         accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
@@ -264,6 +271,11 @@ protected:
     bool moreTrials();
 
 private:
+    // Ingredients that are implemented externally
+    ActionSelection* actionSelection;
+    OutcomeSelection* outcomeSelection;
+    BackupFunction* backupFunction;
+
     // Search nodes used in trials
     SearchNode* currentRootNode;
     SearchNode* chosenOutcome;
