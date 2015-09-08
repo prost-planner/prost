@@ -11,377 +11,271 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./prost <rddl-parser-output> [PROST <options>]" << endl <<
-    endl;
+    cout << "Usage: ./prost <rddl-parser-output> [PROST <options>]" << endl << endl;
 
-    cout << "/*************************************************************" <<
-    endl
+    cout << "**************************************************************" << endl
          << "                     PROST Planner Options" << endl
-         << "*************************************************************/" <<
-    endl;
-
-    cout <<
-    "Originally, the PROST planner has been the planning system that won IPPC 2011. It has been extended step by step and is now a framework that implements several Trial-based Heuristic Tree Search Algorithms including UCT, DP-UCT and UCT* as described by Keller and Helmert (2013)."
-         << endl <<
-    "We aim to develop a system where components (i.e., search engines) can be mixed and matched at will. Therefore, option values of search engines in the following are either primitive or they can be a search engine themselves. Note that by far not each cmbination has been tested."
-         << endl << endl;
+         << "**************************************************************" << endl;
 
     cout << "  -s <double>" << endl;
     cout << "    Specifies the seed." << endl;
-    cout << "    Default: time(null)" << endl << endl;
+    cout << "    Default: time(nullptr)" << endl << endl;
 
     cout << "  -ram <int>" << endl;
-    cout << "    Specifies the RAM limit (in KB) used to disable caching." <<
-    endl;
-    cout << "    Default: 2621440 (i.e. 2.5 GB)" << endl << endl;
+    cout << "    Specifies the RAM limit (in KB) used to disable caching." << endl;
+    cout << "    Default: 2097152 (i.e. 2 GB)" << endl << endl;
 
     cout << "  -bit <32 | 64>" << endl;
-    cout <<
-    "    Specifies the system's bit size. Should not be set by hand." << endl;
+    cout << "    Specifies the system's bit size, and detects it by default automatically." << endl;
     cout << "    Default: sizeof(long)*8" << endl << endl;
 
     cout << "  -se <SearchEngine>" << endl;
     cout << "    Specifies the used main search engine." << endl;
-    cout << "    Default: n/a, this MUST be specified." << endl << endl << endl;
+    cout << "    MANDATORY." << endl << endl << endl;
 
 
-    cout << "/*************************************************************" <<
-    endl
-         << "                            MC-UCT" << endl
-         << "*************************************************************/" <<
-    endl;
 
-    cout <<
-    "An MC-UCT search engine is equivalent to the algorithm described by Kocsis and Szepesvari (2006), and is implemented in terms of the Trial-based Heuristic Tree Search framework. It can be created as [MC-UCT <options>] with the following options:"
-         << endl << endl;
+    
+
+    cout << "*********************************************************************" << endl
+         << "                         Search Engines" << endl
+         << "*********************************************************************" << endl << endl;
+
+
+    cout << "************** Iterative Deepening Search ****************" << endl;
+
+    cout << "An IDS search engine is equivalent to the search engine that is described by Keller and Eyerich (2012) as their initialization method. It is created by [IDS <options>] with the following options:" << endl << endl;
+
 
     cout << "  -uc <0|1>" << endl;
-    cout <<
-    "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used."
-         << endl;
+    cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
     cout << "    Default: 1" << endl << endl;
-
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used."
-         << endl;
-    cout << "    Default: PROB" << endl << endl;
 
     cout << "  -sd <int>" << endl;
     cout << "    Specifies the considered horizon." << endl;
     cout << "    Default: Horizon of the task" << endl << endl;
 
-    cout << "  -T <TIME | TRIALS | TIME_AND_TRIALS>" << endl;
-    cout <<
-    "    Specifies the termination criterion of trials, which can be based on a timeout (TIME), the number of trials (TRIALS) or on both, whichever comes first (TIME_AND_TRIALS). If one of the latter two is used, you MUST set the maximum number of trials."
-         << endl;
-    cout << "    Default:TIME" << endl;
-
     cout << "  -t <double>" << endl;
-    cout << "    Specifies the timeout limit in seconds." << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << "  -r <int>" << endl;
-    cout <<
-    "    Specifies the maximal number of trials. This must be set if used as the default is 0."
-         << endl;
-    cout << "    Default: 0" << endl << endl;
-
-    cout << "  -ndn <int>" << endl;
-    cout <<
-    "    Specifies the number of previously unvisited decision nodes that is expanded before the trial length is sufficient."
-         << endl;
-    cout <<
-    "    Default: Horizon of task (i.e., the trial length is only sufficient in states with no remaining steps."
-         << endl << endl;
-
-    cout << "  -mcs <double>" << endl;
-    cout <<
-    "    Specifies the magic constant scale factor (called C_p in the UCT paper of Kocsis and Szepesvari)."
-         << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << " -er <LOG | SQRT | LIN | E.SQRT>" << endl;
-    cout <<
-    "    Specified the exploration function which should be used, to compute the nominator of the"
-    "UCT formula." << endl;
-    cout << "    Default: LOG" << endl << endl;
-
-    cout << " -iv <int>" << endl;
-    cout <<
-    "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization."
-         << endl;
-    cout << "    Default: 5" << endl << endl;
-
-    cout << "  -i <SearchEngine>" << endl;
-    cout <<
-    "    Specifies the search engine that is used for initialization." << endl;
-    cout << "    Default: n/a, this MUST be specified." << endl << endl << endl;
-
-    cout << "/*************************************************************" <<
-    endl
-         << "                          MaxMC-UCT" << endl
-         << "*************************************************************/" <<
-    endl;
-
-    cout <<
-    "An MaxMC-UCT search engine is equivalent to the algorithm described by Keller and Helmert(2013), and is implemented in terms of the Trial-based Heuristic Tree Search framework. It can be created as [MaxMC-UCT <options>] with the following options:"
-         << endl << endl;
-
-    cout << "  -uc <0|1>" << endl;
-    cout <<
-    "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used."
-         << endl;
-    cout << "    Default: 1" << endl << endl;
-
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used."
-         << endl;
-    cout << "    Default: PROB" << endl << endl;
-
-    cout << "  -sd <int>" << endl;
-    cout << "    Specifies the considered horizon." << endl;
-    cout << "    Default: Horizon of the task" << endl << endl;
-
-    cout << "  -T <TIME | TRIALS | TIME_AND_TRIALS>" << endl;
-    cout <<
-    "    Specifies the termination criterion of trials, which can be based on a timeout (TIME), the number of trials (TRIALS) or on both, whichever comes first (TIME_AND_TRIALS). If one of the latter two is used, you MUST set the maximum number of trials."
-         << endl;
-    cout << "    Default:TIME" << endl << endl;
-
-    cout << "  -t <double>" << endl;
-    cout << "    Specifies the timeout limit in seconds." << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << "  -r <int>" << endl;
-    cout <<
-    "    Specifies the maximal number of trials. This must be set if used as the default is 0."
-         << endl;
-    cout << "    Default: 0" << endl << endl;
-
-    cout << "  -ndn <int>" << endl;
-    cout <<
-    "    Specifies the number of previously unvisited decision nodes that is expanded before the trial length is sufficient."
-         << endl;
-    cout <<
-    "    Default: Horizon of task (i.e., the trial length is only sufficient in states with no remaining steps."
-         << endl << endl;
-
-    cout << "  -mcs <double>" << endl;
-    cout <<
-    "    Specifies the magic constant scale factor (called C_p in the UCT paper of Kocsis and Szepesvari)."
-         << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << " -iv <int>" << endl;
-    cout <<
-    "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization."
-         << endl;
-    cout << "    Default: 5" << endl << endl;
-
-    cout << " -hw <double>" << endl;
-    cout <<
-    "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust."
-         << endl;
-    cout << "    Default: 0.5" << endl << endl;
-
-    cout << "  -i <SearchEngine>" << endl;
-    cout <<
-    "    Specifies the search engine that is used for initialization." << endl;
-    cout << "    Default: n/a, this MUST be specified." << endl << endl << endl;
-
-    cout << "/*************************************************************" <<
-    endl
-         << "                            DP-UCT" << endl
-         << "*************************************************************/" <<
-    endl;
-
-    cout <<
-    "An DP-UCT search engine is equivalent to the algorithm described by Keller and Helmert(2013), and is implemented in terms of the Trial-based Heuristic Tree Search framework. It can be created as [DP-UCT <options>] with the following options:"
-         << endl << endl;
-
-    cout << "  -uc <0|1>" << endl;
-    cout <<
-    "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used."
-         << endl;
-    cout << "    Default: 1" << endl << endl;
-
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used."
-         << endl;
-    cout << "    Default: PROB" << endl << endl;
-
-    cout << "  -sd <int>" << endl;
-    cout << "    Specifies the considered horizon." << endl;
-    cout << "    Default: Horizon of the task" << endl << endl;
-
-    cout << "  -T <TIME | TRIALS | TIME_AND_TRIALS>" << endl;
-    cout <<
-    "    Specifies the termination criterion of trials, which can be based on a timeout (TIME), the number of trials (TRIALS) or on both, whichever comes first (TIME_AND_TRIALS). If one of the latter two is used, you MUST set the maximum number of trials."
-         << endl;
-    cout << "    Default:TIME" << endl << endl;
-
-    cout << "  -t <double>" << endl;
-    cout << "    Specifies the timeout limit in seconds." << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << "  -r <int>" << endl;
-    cout <<
-    "    Specifies the maximal number of trials. This must be set if used as the default is 0."
-         << endl;
-    cout << "    Default: 0" << endl << endl;
-
-    cout << "  -ndn <int>" << endl;
-    cout <<
-    "    Specifies the number of previously unvisited decision nodes that is expanded before the trial length is sufficient."
-         << endl;
-    cout <<
-    "    Default: Horizon of task (i.e., the trial length is only sufficient in states with no remaining steps."
-         << endl << endl;
-
-    cout << "  -mcs <double>" << endl;
-    cout <<
-    "    Specifies the magic constant scale factor (called C_p in the UCT paper of Kocsis and Szepesvari)."
-         << endl;
-    cout << "    Default: 1.0" << endl << endl;
-
-    cout << " -iv <int>" << endl;
-    cout <<
-    "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization."
-         << endl;
-    cout << "    Default: 5" << endl << endl;
-
-    cout << " -hw <double>" << endl;
-    cout <<
-    "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust."
-         << endl;
-    cout << "    Default: 0.5" << endl << endl;
-
-    cout << "  -i <SearchEngine>" << endl;
-    cout <<
-    "    Specifies the search engine that is used for initialization." << endl;
-    cout << "    Default: n/a, this MUST be specified." << endl << endl << endl;
-
-    cout << "/*************************************************************" <<
-    endl
-         << "                  Iterative Deepening Search" << endl
-         << "*************************************************************/" <<
-    endl;
-
-    cout <<
-    "An IDS search engine is equivalent to the search engine that is described by Keller and Eyerich (2012) as their initialization method. It can be created as [IDS <options>] with the following options:"
-         << endl << endl;
-
-    cout << "  -uc <0|1>" << endl;
-    cout <<
-    "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used."
-         << endl;
-    cout << "    Default: 1" << endl << endl;
-
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used."
-         << endl;
-    cout << "    Default: MLD" << endl << endl;
-
-    cout << "  -sd <int>" << endl;
-    cout << "    Specifies the considered horizon." << endl;
-    cout << "    Default: Learned based on timeout and strict timeout." <<
-    endl << endl;
-
-    cout << "  -t <double>" << endl;
-    cout <<
-    "    Specifies the timeout limit in seconds that we try to achieve in the worst case during learning."
-         << endl;
+    cout << "    Specifies the timeout limit in seconds that we try to achieve in the worst case during learning." << endl;
     cout << "    Default: 0.005" << endl << endl;
 
     cout << "  -st <double>" << endl;
-    cout <<
-    "    Specifies the strict timeout limit in seconds. If any iteration during learning is beyond this, we immediately rule out any iteration depth equal to the current or higher."
-         << endl;
+    cout << "    Specifies the strict timeout limit in seconds. If any iteration during learning is beyond this, we immediately rule out any iteration depth equal to the current or higher." << endl;
     cout << "    Default: 0.1" << endl << endl;
 
     cout << "  -tra <0|1>" << endl;
-    cout <<
-    "    Specifies if IDS terminates if an action is found that is better than others (i.e., if the result is informative)."
-         << endl;
+    cout << "    Specifies if IDS terminates if an action is found that is better than others (i.e., if the result is informative)." << endl;
     cout << "    Default: 1" << endl << endl;
 
     cout << "  -minsd <int>" << endl;
-    cout <<
-    "    Specifies the minimal search depth we expect from learning. If learning determines a lower search depth than this, it is set to 0 instead."
-         << endl;
+    cout << "    Specifies the minimal search depth we expect from learning. If learning determines a lower search depth than this, it is set to 0 instead." << endl;
     cout << "    Default: 2" << endl << endl << endl;
 
-    cout << "/*************************************************************" <<
-    endl
-         << "                      Depth First Search" << endl
-         << "*************************************************************/" <<
-    endl;
+    
+    
+    cout << "**************** Depth First Search **********************" << endl;
 
-    cout <<
-    "A DFS search engine is a depth first search engine that has only been tested as part of IDS. It can be created as [DFS <options>] with the following options:"
+    cout << "A DFS search engine is a depth first search engine that has only been tested as part of IDS. It is created by [DFS <options>] with the following options:"
          << endl << endl;
 
     cout << "  -uc <0|1>" << endl;
-    cout <<
-    "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used."
-         << endl;
+    cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
     cout << "    Default: 1" << endl << endl;
 
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used."
-         << endl;
-    cout << "    Default: MLD" << endl << endl << endl;
+    
+    
+    cout << "***************** Uniform Evaluation Search **************" << endl;
 
-    cout << "/*************************************************************" <<
-    endl
-         << "                   Uniform Evaluation Search" << endl
-         << "*************************************************************/" <<
-    endl;
-
-    cout <<
-    "Uniform Evaluation Search evaluates each action identical. It can be created as [Uniform <options>] with the following options:"
+    cout << "Uniform Evaluation Search evaluates each action identical. It is created by [Uniform <options>] with the following options:"
          << endl << endl;
-
-    cout << "  -task <PROB | MLD>" << endl;
-    cout <<
-    "    Specifies if the probabilistic task (PROB) or the most likely determinized (MLD) is used. If you run this standalone (as a random search engine), use PROB, otherwise, use DET (to achieve correct pruning behaviour)."
-         << endl;
-    cout << "    Default: MLD" << endl << endl;
 
     cout << "  -val <double | INFTY>" << endl;
-    cout <<
-    "    Specifies the estimate assigned to each action. If this is INFTY, it is set to the maximal reward of the task and is thus a (very simple) admissible initialization."
-         << endl << endl << endl;
+    cout << "    Specifies the estimate assigned to each action. If this is INFTY, it is set to the maximal reward of the task and ican thereby be used as a (very simple) admissible initialization." << endl << endl << endl;
 
-    cout << "/*************************************************************" <<
-    endl
-         << "                         Abbreviations" << endl
-         << "*************************************************************/" <<
-    endl;
+    
+    
+    cout << "***************** Minimal Lookahead Search **************" << endl;
 
-    cout <<
-    "There are also some short cuts to quickly use search engines that have been used quite often:"
-         << endl << endl;
-    cout << "  [IPPC2011] := [MC-UCT -sd 15 -i [IDS -sd 15]]" << endl;
-    cout <<
-    "    This corresponds to the planner that has been used for IPPC 2011 (except that all bugfixes are considered and that the timemanagement framework that had been used is not part of this."
-         << endl << endl;
+    cout << "Minimal Lookahead Search performs the minimal possible, informative lookahead in the given task. It is created by [MLS <options>] with the following options:"<< endl << endl;
 
-    cout << "  [UCTStar <options>] := [DP-UCT -ndn 1 -iv 1 <options>]" << endl;
-    cout <<
-    "    This corresponds to the algorithms that has described as UCT* by Keller and Helmert (2013). To obtain the planner from that paper, use -i [IDS] as single further option."
-         << endl << endl;
+cout << "  -uc <0|1>" << endl;
+    cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
+    cout << "    Default: 1" << endl << endl;
+    
 
-    cout <<
-    "  [MaxMC-UCTStar <options>] := [MaxMC-UCT -ndn 1 -iv 1 <options>]" << endl;
-    cout <<
-    "    This is the equivalent to UCT* with MaxMC-UCT as the base algorithm."
-         << endl << endl;
+    
+    cout << "************************** THTS **************************" << endl;
+
+    cout << "THTS is the framework that is described in our ICAPS 2013 paper (Trial-based Heuristic Tree Search for Finite Horizon MDPs) and in my PhD thesis. A THTS algorithm is specified in terms of six ingredients: action selection, outcome selection, backup function, trial length, initialization, and recommendation function. The first three are specified with an object of the corresponding type, and the latter three are described with parameters of THTS. It is created by [THTS <options>] with the following options:" << endl << endl;
+
+    cout << "  -act <ActionSelection>" << endl;
+    cout << "    Specifies the used action selection (available options are given below)." << endl;
+    cout << "    MANDATORY." << endl << endl;
+
+    cout << "  -out <OutcomeSelection>" << endl;
+    cout << "    Specifies the used outcome selection(available options are given below)." << endl;
+    cout << "    MANDATORY." << endl << endl;
+
+    cout << "  -backup <BackupFunction>" << endl;
+    cout << "    Specifies the used backup function(available options are given below)." << endl;
+    cout << "       MaxMC: Like MC, except that decision nodes are updated by maximization over all actions." << endl;
+    cout << "          PB: Partial Bellman backups." << endl;
+    cout << "    MANDATORY." << endl << endl;
+
+    cout << "  -uc <0|1>" << endl;
+    cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
+    cout << "    Default: 1" << endl << endl;
+
+    cout << "  -mnn <int>" << endl;
+    cout << "    Specifies the maximal number of search nodes that is used by the THTS algorithm." << endl;
+    cout << "    Default: 24000000" << endl << endl;
+
+    cout << "  -sd <int>" << endl;
+    cout << "    Specifies the considered horizon." << endl;
+    cout << "    Default: Horizon of the task" << endl << endl;
+
+    cout << "  -T <TIME | TRIALS | TIME_AND_TRIALS>" << endl;
+    cout << "    Specifies the termination criterion of trials, which can be based on a timeout (TIME), the number of trials (TRIALS) or on both, whichever comes first (TIME_AND_TRIALS). If one of the latter two is used, you MUST set the maximum number of trials." << endl;
+    cout << "    Default:TIME" << endl;
+
+    cout << "  -t <double>" << endl;
+    cout << "    Specifies the timeout limit in seconds (if TIME of TIME_AND_TRIALS is the termination criterion)." << endl;
+    cout << "    Default: 1.0" << endl << endl;
+
+    cout << "  -r <int>" << endl;
+    cout << "    Specifies the maximal number of trials (if TRIALS is the termination criterion)." << endl;
+    cout << "    Default: 0" << endl << endl;
+
+    cout << "  -ndn <int|H>" << endl;
+    cout << "    This is the parameter that describes the trial length ingredient. It specifies the number of previously unvisited decision nodes that is expanded before the trial length is considered sufficient." << endl;
+    cout << "    Default: Horizon of task." << endl << endl;
+
+    cout << "  -i <SearchEngine>" << endl;
+    cout << "    This is the (main) parameter that describes the initialization ingredient by specification of the search engine that is used for initialization." << endl;
+    cout << "    MANDATORY." << endl << endl << endl;
+
+    cout << "  -iv <int>" << endl;
+    cout << "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization." << endl;
+    cout << "    Default: 1" << endl << endl;
+
+    cout << "  -hw <double>" << endl;
+    cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
+    cout << "    Default: 1.0" << endl << endl;
+
+    cout << "  -mv <0|1>" << endl;
+    cout << "    This is the parameter that describes the recommendation function: if this is set to 0, the action with the highest action-value estimate is executed, and otherwise the one that has been visited most often." << endl;
+    cout << "    Default: 0" << endl << endl;
+
+
+
+
+
+    cout << "********************************************************************" << endl
+         << "                           Action Selections" << endl
+         << "********************************************************************" << endl << endl;
+
+
+    cout << "************************** UCB1 **************************" << endl;
+    
+    cout << "UCB1 is the action selection that is described by Auer, Ceas-Bianchi & Fischer (2002) in the context of Multi-armed Bandit Problems. It is created by [THTS <options>] with the following options:" << endl;
+
+    cout << "  -lvar <0|1>" << endl;
+    cout << "    Specifies if the least visited action is selected in the root node." << endl;
+    cout << "    Default: 0" << endl << endl;
+
+    cout << "  -mvd <int>" << endl;
+    cout << "    Specifies the factor of the number of visited between the most and least selected action (the least visited is selected if the factor gets higher than this)." << endl;
+    cout << "    Default: 50" << endl << endl;
+    
+    cout << "  -mcs <double>" << endl;
+    cout << "    Specifies the magic constant scale factor (called C_p in the UCT paper of Kocsis and Szepesvari)." << endl;
+    cout << "    Default: 1.0" << endl << endl;
+
+    cout << " -er <LOG | SQRT | LIN | LNQUAD>" << endl;
+    cout << "    Specifies the exploration function that is used to compute the nominator of the UCB1 formula." << endl;
+    cout << "    Default: LOG" << endl << endl;
+
+
+    
+    cout << "************************** BFS ***************************" << endl;
+    
+    cout << " BFS selects one of the actions among the least selected ones uniformly at random. It is created by [BFS] and has no options." << endl << endl;
+
+
+    
+
+    
+    cout << "********************************************************************" << endl
+         << "                         Outcome Selections" << endl
+         << "********************************************************************" << endl << endl;
+
+
+    cout << "*************************** MC ***************************" << endl;
+
+    cout << "Monte-Carlo outcome selection samples each outcome according to its probability. It is created by [MC] and has no options." << endl << endl;
+
+
+
+    cout << "*************************** UMC **************************" << endl;
+
+    cout << "Monte-Carlo outcome selection that only considers actions that are not labeled as solved. It is created by [UMC] and has no options." << endl << endl;
+
+
+
+    
+
+    cout << "********************************************************************" << endl
+         << "                           Backup Functions" << endl
+         << "********************************************************************" << endl << endl;
+
+    cout << "*************************** MC ***************************" << endl;
+
+    cout << "In the Monte-Carlo backup function, each visited node is updated by extending the current estimate such that it reflects the average over all samples. It is created by [MC] with the following options:" << endl;
+
+    cout << "  -ilr <double>" << endl;
+    cout << "    Specifies the initial learning rate (compare, for instance, with the reinforcmenet learning book by Sutton & Barto)." << endl;
+    cout << "    Default: 1.0" << endl << endl;
+
+    cout << "  -lrd <double>" << endl;
+    cout << "    Specifies the learning rate decay (compare, for instance, with the reinforcmenet learning book by Sutton & Barto)." << endl;
+    cout << "    Default: 1.0" << endl << endl;
+
+
+    
+    cout << "************************** MaxMC **************************" << endl;
+
+    cout << "The MaxMonte-Carlo backup function is just like MC, except that decision nodes are updated by maximization over all actions. It is created by [MaxMC] and has no options." << endl << endl;
+
+
+    cout << "/*************************** PB ***************************" << endl;
+
+    cout << "The PB backup function is ja partial variant of the Bellman backup function that can be applied even if some chance node successors of a decision node are not yet explicated.  It is created by [PB] and has no options." << endl << endl;
+
+
+
+    
+    cout << "********************************************************************" << endl
+         << "                             Abbreviations" << endl
+         << "********************************************************************" << endl;
+
+    cout << "There are also some shortcuts for popular search engines:" << endl << endl;
+    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [MC] -backup [MC] -ndn H -iv 5 -hw 1.0 -sd 15 -i [IDS -sd 15]]" << endl;
+    cout << "    The PROST configuration that won IPPC 2011." << endl << endl;
+
+    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [UMC] -backup [PB] -hw 0.5]" << endl;
+    cout << "    The PROST configuration that won IPPC 2014." << endl << endl;
+
+    cout << "  [UCTStar <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] <options>]" << endl;
+    cout << "    The algorithm that has been introduced as UCT* in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+
+    cout <<  "  [DP-UCT <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H <options>]" << endl;
+    cout << "    The algorithm that has been introduced as DP-UCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+
+    cout <<  "  [MaxUCT <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H <options>]" << endl;
+    cout << "    The algorithm that has been introduced as MaxUCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+
+    cout <<  "  [BFS <options>] := [THTS -act [BFS] -out [UMC] -backup [PB] <options>]" << endl;
+    cout << "    A breadth-first search algorithm in the THTS framework." << endl << endl;
 }
 
 int main(int argc, char** argv) {
