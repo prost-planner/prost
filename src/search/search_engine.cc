@@ -100,7 +100,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // 2015 paper, so it can be used for planner comparison)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [UMC] -backup [PB]" + desc;
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -hw 0.5" + desc;
     } else if (desc.find("UCTStar") == 0) {
         // This is the UCT* algorithm as described in our ICAPS 2013 paper
  
@@ -226,11 +226,10 @@ bool SearchEngine::estimateStateValue(State const& _rootState,
             Reward Lock Detection (including BDD Stuff)
 ******************************************************************/
 
-// Currently, we only consider goals and dead ends (i.e., reward locks
-// with min or max reward). This makes sense on the IPPC 2011 domains,
-// yet we might want to change it in the future so keep an eye on it.
-// Nevertheless, isARewardLock is sound as is (and incomplete
-// independently from this decision).
+// Currently, we only consider goals and dead ends (i.e., reward locks with min
+// or max reward). This makes sense on the IPPC 2011 domains, yet we might want
+// to change it in the future so keep an eye on it. Nevertheless, isARewardLock
+// is sound as is (and incomplete independently from this decision).
 bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
     if (!useRewardLockDetection) {
         return false;
@@ -275,12 +274,11 @@ bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
 }
 
 bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
-    // TODO: We do currently not care about action applicability.
-    // Nevertheless, the results remain sound, as we only check too
-    // many actions (it might be the case that we think some state is
-    // not a dead end even though it is. This is because the action
-    // that would make us leave the dead end is actually
-    // inapplicable).
+    // TODO: We do currently not care about action applicability. Nevertheless,
+    // the results remain sound, as we only check too many actions (it might be
+    // the case that we think some state is not a dead end even though it is.
+    // This is because the action that would make us leave the dead end is
+    // actually inapplicable).
 
     // Apply noop
     KleeneState mergedSuccs;
