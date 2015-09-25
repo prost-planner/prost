@@ -146,8 +146,6 @@ clean:
 	rm -f ../test/search/*.o
 	rm -f ../test/search/*.obj
 	rm -f ../test/gtest/*.o
-	find . -name "*.crusty" -type f -delete
-	find ../test/search -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG) runTests
