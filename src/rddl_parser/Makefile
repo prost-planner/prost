@@ -69,9 +69,9 @@ CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
 
 default: release
 
-test: covclear test_build run_tests uncrustify
+test: covclear test_build run_tests
 
-all: covclear release debug test_build test uncrustify
+all: covclear release debug test_build test
 
 ## Build rules for the release target follow.
 
@@ -86,7 +86,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 
 ## Build rules for the debug target follow.
 
-debug: $(TARGET_DEBUG) covclear uncrustify
+debug: $(TARGET_DEBUG) covclear
 
 $(TARGET_DEBUG): $(OBJECTS_DEBUG)
 	$(CC) $(LINKOPT) $(OPT) $(LINKOPT_DEBUG) $(OBJECTS_DEBUG) -o $(TARGET_DEBUG) -lgcov
@@ -117,20 +117,6 @@ $(GTEST_DIR)/gtest-all.o : $(GTEST_DIR)/gtest.h $(GTEST_DIR)/gtest-all.cc
 run_tests: 
 	./runTests
 
-## codestyle checks
-
-uncrustify: 
-	@echo "Files violating codestyle convention:"
-	@hg uncrustify *
-	@hg uncrustify ../test/*
-	@echo "Use 'hg uncrustify --diff <filename>' to show modifications uncrustify will apply."
-	@echo "Use 'hg uncrustify --modify <filename>' to automatically modify a file."	
-	@echo "Use 'make uncrustifyAll' to modify all files without creating backups."
-
-uncrustifyAll:
-	@hg uncrustify --modify --no-backup *
-	@hg uncrustify --modify --no-backup ../test/*
-
 # Creates code coverage html files.
 coverage:
 	@rm -rf ../../coverage/rddl_parser
@@ -152,8 +138,6 @@ clean:
 	rm -f ../test/rddl_parser/*.o
 	rm -f ../test/rddl_parser/*.obj
 	rm -f ../test/gtest/*.o
-	find . -name "*.crusty" -type f -delete
-	find ../test/rddl_parser -name "*.crusty" -type f -delete
 
 distclean: clean
 	rm -f $(TARGET_RELEASE) $(TARGET_DEBUG) runTests

@@ -16,28 +16,18 @@ July 27, 2014.
 ===[ Prerequisites ]===
 
 Libraries: Boost (libboost),  BuDDy (http://sourceforge.net/projects/buddy/)
-For Development only: uncrustify 
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
 give an error on running the PROST solver. 
-
-Uncrustify:
-After installing uncrustify (e.g. via apt-get install uncrustify) add the
-following lines to your .hgrc:
-
-[extensions]
-uncrustify = FULL_PATH_TO_PROST/scripts/uncrustify.py
-
-where FULL_PATH_TO is the absolute path to your prost directory
 
 ===[ Compiling the PROST planner ]===
 
 The planner can be compiled simply by going into the source directory
 and running make. 
 
-Running make debug will compile the debug version, as well as the codestyle 
-script uncrustify. Running make test will build the unit tests and execute them.
+Running make debug will compile the debug version, and running make test will
+build the unit tests and execute them.
 
 ===[ Running PROST ]===
 

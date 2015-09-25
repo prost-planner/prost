@@ -345,6 +345,9 @@ protected:
 
     // Tests which access private members
     friend class THTSTest;
+    friend class BFSTestSearch;
+    friend class MCUCTTestSearch;
+    friend class UCTBaseTestSearch;
 };
 
 #endif
