@@ -342,10 +342,11 @@ void Multiplication::calculateDomainAsInterval(Domains const& domains,
         double max = -numeric_limits<double>::max();
         exprs[i]->calculateDomainAsInterval(domains, action, min, max);
         // We could alternatively evaluate the signs of the individual values
-        minRes = std::min(std::min(minRes*min, minRes*max),
+        double helper = std::min(std::min(minRes*min, minRes*max),
                            std::min(maxRes*min, maxRes*max));
         maxRes = std::max(std::max(minRes*min, minRes*max),
                            std::max(maxRes*min, maxRes*max));
+        minRes=helper;
     }
 }
 
