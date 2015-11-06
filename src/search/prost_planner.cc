@@ -82,8 +82,7 @@ void ProstPlanner::init() {
     cout << "learning..." << endl;
     searchEngine->learn();
 
-    if (ProbabilisticSearchEngine::useRewardLockDetection &&
-        ProbabilisticSearchEngine::useBDDCaching) {
+    if (searchEngine->usesBDDs()) {
         // TODO: These numbers are rather random. Since I know only little on
         // what they actually mean, it'd be nice to re-adjust these.
         bdd_init(5000000, 20000);

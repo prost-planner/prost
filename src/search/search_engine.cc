@@ -61,11 +61,9 @@ int SearchEngine::numberOfActions = -1;
 SearchEngine::FinalRewardCalculationMethod SearchEngine::finalRewardCalculationMethod = NOOP;
 vector<int> SearchEngine::candidatesForOptimalFinalAction;
 
-
 bool SearchEngine::cacheApplicableActions = true;
-bool SearchEngine::useRewardLockDetection = true;
+bool SearchEngine::rewardLockDetected = true;
 int SearchEngine::goalTestActionIndex = -1;
-bool SearchEngine::useBDDCaching = true;
 bdd SearchEngine::cachedDeadEnds = bddfalse;
 bdd SearchEngine::cachedGoals = bddfalse;
 
@@ -169,7 +167,13 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     } else if (param == "-t") {
         setTimeout(atof(value.c_str()));
         return true;
-    } 
+    } else if( param == "-rld") {
+        setUseRewardLockDetection(atoi(value.c_str()));
+        return true;
+    } else if( param == "-crl") {
+        setCacheRewardLocks(atoi(value.c_str()));
+        return true;
+    }
 
     return false;
 }
@@ -243,7 +247,7 @@ bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
 
     if (MathUtils::doubleIsEqual(rewardCPF->getMinVal(), reward)) {
         // Check if current is known to be a dead end
-        if (useBDDCaching && BDDIncludes(cachedDeadEnds, current)) {
+        if (cacheRewardLocks && BDDIncludes(cachedDeadEnds, current)) {
             return true;
         }
 
@@ -256,7 +260,7 @@ bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
         return checkDeadEnd(currentInKleene);
     } else if (MathUtils::doubleIsEqual(rewardCPF->getMaxVal(), reward)) {
         // Check if current is known to be a goal
-        if (useBDDCaching && BDDIncludes(cachedGoals, current)) {
+        if (cacheRewardLocks && BDDIncludes(cachedGoals, current)) {
             return true;
         }
 
@@ -315,7 +319,7 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
     // Check if nothing changed, otherwise continue dead end check
     if ((mergedSuccs == state) || checkDeadEnd(mergedSuccs)) {
-        if (useBDDCaching) {
+        if (cacheRewardLocks) {
             cachedDeadEnds |= stateToBDD(state);
         }
         return true;
@@ -347,7 +351,7 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
 
     // Check if nothing changed, otherwise continue goal check
     if ((succ == state) || checkGoal(succ)) {
-        if (useBDDCaching) {
+        if (cacheRewardLocks) {
             cachedGoals |= stateToBDD(state);
         }
         return true;
@@ -580,15 +584,15 @@ void SearchEngine::printTask(ostream& out) {
     out << "Hashing of KleeneStates is " <<
     (KleeneState::stateHashingPossible ? "" : "not ") << "possible." << endl;
 
-    if (useRewardLockDetection) {
+    if (rewardLockDetected) {
         if (goalTestActionIndex >= 0) {
             out <<
-            "Reward lock detection is enabled for goals and dead ends." << endl;
+            "Both a goal and a dead end were found in the training phase." << endl;
         } else {
-            out << "Reward lock detection is enabled for dead ends." << endl;
+            out << "A dead end but no goal was found in the training phase." << endl;
         }
     } else {
-        out << "Reward lock detection is disabled." << endl;
+        out << "No reward locks detected in the training phase." << endl;
     }
 
     if (ProbabilisticSearchEngine::hasUnreasonableActions &&

@@ -79,8 +79,8 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
             desc >> SearchEngine::candidatesForOptimalFinalAction[i];
         }
     }
-    desc >> SearchEngine::useRewardLockDetection;
-    if (SearchEngine::useRewardLockDetection) {
+    desc >> SearchEngine::rewardLockDetected;
+    if (SearchEngine::rewardLockDetected) {
         SearchEngine::goalTestActionIndex = 0;
     } else {
         SearchEngine::goalTestActionIndex = -1;
