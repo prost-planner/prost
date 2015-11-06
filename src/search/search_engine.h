@@ -46,10 +46,24 @@ public:
         timeout = _timeout;
     }
 
+    virtual void setUseRewardLockDetection(bool _useRewardLockDetection) {
+        useRewardLockDetection = _useRewardLockDetection;
+    }
+
+    virtual void setCacheRewardLocks(bool _cacheRewardLocks) {
+        cacheRewardLocks = _cacheRewardLocks;
+    }
+
+    bool usesBDDs() const {
+        return useRewardLockDetection && cacheRewardLocks;
+    }
+
 protected:
     SearchEngine(std::string _name) :
         name(_name),
         cachingEnabled(true),
+        useRewardLockDetection(SearchEngine::rewardLockDetected),
+        cacheRewardLocks(true),
         maxSearchDepth(horizon),
         timeout(1.0) {}
 
@@ -215,15 +229,11 @@ public:
     // Is true if applicable actions should be cached
     static bool cacheApplicableActions;
 
-    // Is true if reward lock detection is used
-    static bool useRewardLockDetection;
+    // Is true if a reward lock was detected in the training phase
+    static bool rewardLockDetected;
 
     // The index of this action is used to check if a state is a goal
     static int goalTestActionIndex;
-
-    // Should be a parameter (TODO!) that is used to decide if reward locks are
-    // cached
-    static bool useBDDCaching;
 
     // The BDDs where dead ends and goals are cached
     static bdd cachedDeadEnds;
@@ -238,6 +248,8 @@ protected:
 
     // Parameter
     bool cachingEnabled;
+    bool useRewardLockDetection;
+    bool cacheRewardLocks;
     int maxSearchDepth;
     double timeout;
 

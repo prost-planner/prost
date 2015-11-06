@@ -118,13 +118,19 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "  -backup <BackupFunction>" << endl;
     cout << "    Specifies the used backup function(available options are given below)." << endl;
-    cout << "       MaxMC: Like MC, except that decision nodes are updated by maximization over all actions." << endl;
-    cout << "          PB: Partial Bellman backups." << endl;
     cout << "    MANDATORY." << endl << endl;
 
     cout << "  -uc <0|1>" << endl;
     cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
     cout << "    Default: 1" << endl << endl;
+
+    cout << "  -rld <0|1>" << endl;
+    cout << "    Specifies if reward lock detection is used." << endl;
+    cout << "    Default: As learned approximately in the training phase." << endl << endl;
+
+    cout << "  -crl <0|1>" << endl;
+    cout << "    Specifies if reward lock caching with BDDs as described in our ICAPS 2013 paper is used. If reward lock detection is not used, this parameter has no influence on the planner." << endl;
+    cout << "    Default: 1." << endl << endl;
 
     cout << "  -mnn <int>" << endl;
     cout << "    Specifies the maximal number of search nodes that is used by the THTS algorithm." << endl;
@@ -136,7 +142,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "  -T <TIME | TRIALS | TIME_AND_TRIALS>" << endl;
     cout << "    Specifies the termination criterion of trials, which can be based on a timeout (TIME), the number of trials (TRIALS) or on both, whichever comes first (TIME_AND_TRIALS). If one of the latter two is used, you MUST set the maximum number of trials." << endl;
-    cout << "    Default:TIME" << endl;
+    cout << "    Default:TIME" << endl << endl;
 
     cout << "  -t <double>" << endl;
     cout << "    Specifies the timeout limit in seconds (if TIME of TIME_AND_TRIALS is the termination criterion)." << endl;
@@ -177,7 +183,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "************************** UCB1 **************************" << endl;
     
-    cout << "UCB1 is the action selection that is described by Auer, Ceas-Bianchi & Fischer (2002) in the context of Multi-armed Bandit Problems. It is created by [THTS <options>] with the following options:" << endl;
+    cout << "UCB1 is the action selection that is described by Auer, Ceas-Bianchi & Fischer (2002) in the context of Multi-armed Bandit Problems. It is also the action selection method that is used in UCT (Kocsis & Szepesvari, 2006). It is created by [THTS <options>] with the following options:" << endl;
 
     cout << "  -lvar <0|1>" << endl;
     cout << "    Specifies if the least visited action is selected in the root node." << endl;
