@@ -180,7 +180,7 @@ public:
         return stateFluentHashKeys[index];
     }
 
-    struct CompareIgnoringRemainingSteps {
+    struct CompareIgnoringStepsToGo {
         bool operator()(State const& lhs, State const& rhs) const {
             if ((lhs.hashKey >= 0) && (rhs.hashKey >= 0)) {
                 return lhs.hashKey < rhs.hashKey;

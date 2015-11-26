@@ -512,7 +512,7 @@ protected:
             }
         } else {
             if (hasUnreasonableActions) {
-                std::map<State, int, State::CompareIgnoringRemainingSteps> childStates;
+                std::map<State, int, State::CompareIgnoringStepsToGo> childStates;
 
                 for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {

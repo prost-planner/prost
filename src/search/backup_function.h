@@ -21,7 +21,9 @@ public:
     }
 
     virtual void initRound() {}
-    virtual void initTrial() {}
+    virtual void initTrial() {
+        lockBackup = false;
+    }
 
     // Backup functions
     virtual void backupDecisionNodeLeaf(SearchNode* node, double const& futReward);
@@ -40,6 +42,11 @@ protected:
         useBackupLock(_useBackupLock) {}
 
     THTS* thts;
+
+    // If this is true, no further nodes a rebacked up in this trial
+    bool lockBackup;
+
+    // Parameter
     bool useSolveLabeling;
     bool useBackupLock;
 
