@@ -13,7 +13,7 @@ benchmark="ippc-all"
 # "athlon.q" and "athlon_core.q". The former value configures the use
 # of a whole cpu, while the latter option configures the use of a
 # single cpu core.
-queue = "meta_core.q"
+queue = "all.q@ase*"
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
@@ -26,24 +26,31 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev115"
+revision = "rev144"
 
 configs = [
-    "[MC-UCT -i [IDS]]",
     "[IPPC2011]",
-    "[DP-UCT -i [IDS]]",    
+    "[IPPC2014]",
+
     "[UCTStar -i [IDS]]",
-    "[MaxMC-UCT -i [IDS]]"
+    "[UCTStar -i [MLS]]",
+    "[UCTStar -i [Uniform]]",
+    "[UCTStar -i [RandomWalk]]",
 
-    #"[MC-UCT -i [Uniform]]",
-    #"[MC-UCT -sd 15 -i [Uniform]]",
-    #"[DP-UCT -i [Uniform]]",    
-    #"[UCTStar -i [Uniform]]",
-    #"[MaxMC-UCT -i [Uniform]]",
+    "[DP-UCT -i [IDS]]",
+    "[DP-UCT -i [MLS]]",
+    "[DP-UCT -i [Uniform]]",
+    "[DP-UCT -i [RandomWalk]]",
 
-    #"[BFS -i [IDS]]",
-    #"[IDS]",
-    #"[Uniform]",
+    "[MC-UCT -i [IDS]]",
+    "[MC-UCT -i [MLS]]",
+    "[MC-UCT -i [Uniform]]",
+    "[MC-UCT -i [RandomWalk]]",
+
+    "[MaxUCT -i [IDS]]",
+    "[MaxUCT -i [MLS]]",
+    "[MaxUCT -i [Uniform]]",
+    "[MaxUCT -i [RandomWalk]]",
 ]
 
 host = "localhost"
