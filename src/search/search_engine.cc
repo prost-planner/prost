@@ -7,6 +7,7 @@
 #include "depth_first_search.h"
 #include "minimal_lookahead_search.h"
 #include "uniform_evaluation_search.h"
+#include "random_walk.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
@@ -88,7 +89,9 @@ SearchEngine* SearchEngine::fromString(string& desc) {
 
     // Check if a shortcut description has been used
     if (desc.find("IPPC2011") == 0) {
-        // This is the configuration that was used at IPPC 2011
+        // This is the configuration that was used at IPPC 2011 (all bugfixes
+        // and code improvements that have been implemented since then are
+        // contained, though)
 
         desc = desc.substr(8, desc.size());
         desc = "THTS -act [UCB1] -out [MC] -backup [MC] -ndn H -iv 5 -hw 1.0 -sd 15 -i [IDS -sd 15]" + desc;
@@ -98,7 +101,16 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // 2015 paper, so it can be used for planner comparison)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -hw 0.5" + desc;
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -i [IDS] -hw 0.5" + desc;
+    } else if (desc.find("MC-UCT") == 0) {
+        // This is an implementation of the UCT algorithm as described by Kocsis
+        // & Szepesvari (2006) within the THTS framework. It differs in that is
+        // uses a heuristic (instead of a random walk initialization) and that
+        // the tip node that is encountered in a trial is expanded entirely
+        // (instead of adding only a single child to the tree)
+ 
+        desc = desc.substr(6, desc.size());
+        desc = "THTS -act [UCB1] -out [MC] -backup [MC]" + desc;
     } else if (desc.find("UCTStar") == 0) {
         // This is the UCT* algorithm as described in our ICAPS 2013 paper
  
@@ -129,15 +141,18 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     } else if (desc.find("IDS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
-    } else if (desc.find("MLS") == 0) {
-        desc = desc.substr(3, desc.size());
-        result = new MinimalLookaheadSearch();
     } else if (desc.find("DFS") == 0) {
         desc = desc.substr(3, desc.size());
         result = new DepthFirstSearch();
+    } else if (desc.find("MLS") == 0) {
+        desc = desc.substr(3, desc.size());
+        result = new MinimalLookaheadSearch();
     } else if (desc.find("Uniform") == 0) {
         desc = desc.substr(7, desc.size());
         result = new UniformEvaluationSearch();
+    } else if (desc.find("RandomWalk") == 0) {
+        desc = desc.substr(10, desc.size());
+        result = new RandomWalk();
     } else {
         SystemUtils::abort("Unknown Search Engine: " + desc);
     }

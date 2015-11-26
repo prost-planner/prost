@@ -9,6 +9,7 @@ HEADERS = parser.h \
 	  iterative_deepening_search.h \
 	  minimal_lookahead_search.h \
 	  uniform_evaluation_search.h \
+	  random_walk.h \
 	  ippc_client.h \
 	  states.h \
 	  evaluatables.h \

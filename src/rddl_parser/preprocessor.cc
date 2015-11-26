@@ -773,17 +773,14 @@ void Preprocessor::prepareStateHashKeys() {
     long nextHashKeyBase = 1;
 
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        task->stateHashKeys.push_back(vector<long>(task->CPFs[index]->
-                        getDomainSize()));
-        for (unsigned int valueIndex = 0;
-             valueIndex < task->CPFs[index]->getDomainSize(); ++valueIndex) {
-            task->stateHashKeys[index][valueIndex] =
-                (valueIndex * nextHashKeyBase);
+        ConditionalProbabilityFunction* cpf = task->CPFs[index];
+        task->stateHashKeys.push_back(vector<long>(cpf->getDomainSize()));
+        for (unsigned int valueIndex = 0; valueIndex < cpf->getDomainSize(); ++valueIndex) {
+            task->stateHashKeys[index][valueIndex] = (valueIndex * nextHashKeyBase);
         }
 
-        if (!task->CPFs[index]->hasFiniteDomain() ||
-            !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                    task->CPFs[index]->getDomainSize())) {
+        if (!cpf->hasFiniteDomain() ||
+            !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, cpf->getDomainSize())) {
             stateHashingPossible = false;
             break;
         }
@@ -990,22 +987,20 @@ void Preprocessor::calculateMinAndMaxReward() const {
     double maxVal = -numeric_limits<double>::max();
     if (task->rewardCPF->cachingType != "VECTOR") {
         // If the reward cannot be cached in vectors, we have not precomputed it
-        // and must approximate the domain with the same function that is used
-        // for the CPFs. Otherwise, we use the non-approximated values from the
-        // precomputation further above.
+        // for all relevant fact combinations and approximate the domain by
+        // using interval arithmetic. Otherwise, we use the min and max values
+        // from the precomputation further above.
 
         vector<set<double> > domains(task->CPFs.size());
         for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             domains[index] = task->CPFs[index]->domain;
         }
 
-        for (unsigned int actionIndex = 0;
-             actionIndex < task->actionStates.size(); ++actionIndex) {
+        for (ActionState const& action : task->actionStates) {
             double min = numeric_limits<double>::max();
             double max = -numeric_limits<double>::max();
             task->rewardCPF->formula->calculateDomainAsInterval(
-                    domains, task->actionStates[actionIndex],
-                    min, max);
+                domains, action, min, max);
             if (MathUtils::doubleIsSmaller(min, minVal)) {
                 minVal = min;
             }
