@@ -74,7 +74,7 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
 
     ++node->numberOfVisits;
 
-    if (thts->backupLock) {
+    if (lockBackup) {
         ++skippedBackups;
         return;
     }
@@ -95,12 +95,12 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
     // If the future reward did not change we did not find a better node and
     // therefore do not need to update the rewards in preceding parents.
     if (!node->solved &&
-        (node->remainingSteps > thts->maxLockDepth) &&
+        (node->stepsToGo > thts->getTipNodeOfTrial()->stepsToGo) &&
         MathUtils::doubleIsEqual(oldFutureReward, node->futureReward)) {
-        thts->backupLock = useBackupLock;
+        lockBackup = useBackupLock;
     }
 
-    // std::cout << "updated dec node with " << node->remainingSteps 
+    // std::cout << "updated dec node with " << node->stepsToGo 
     //           << " steps-to-go and immediate reward " << node->immediateReward << std::endl;
     // node->print(std::cout);
     // std::cout << std::endl;
@@ -174,7 +174,7 @@ void PBBackupFunction::backupChanceNode(SearchNode* node, double const& /*futRew
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
-    if (thts->backupLock) {
+    if (lockBackup) {
         ++skippedBackups;
         return;
     }

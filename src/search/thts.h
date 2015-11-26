@@ -10,8 +10,8 @@
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper "Trial-based Heuristic
 // Tree Search for Finite Horizon MDPs" (Keller & Helmert). The described
-// ingredients are implemented in three classes (1-3) or as functions in the
-// THTS class (4-6)
+// ingredients are implemented in four classes (1-4) or as functions in the
+// THTS class (5-6)
 
 // 1. ActionSelection
 
@@ -19,18 +19,18 @@
 
 // 3. BackupFunction
 
-// 4. continueTrial()
+// 4. Initializer
 
-// 5. initializeDecisionNode()
+// 5. continueTrial()
 
 // 6. recommendAction()
 
 struct SearchNode {
-    SearchNode(double const& _prob, int const& _remainingSteps) :
+    SearchNode(double const& _prob, int const& _stepsToGo) :
         children(),
         immediateReward(0.0),
         prob(_prob),
-        remainingSteps(_remainingSteps),
+        stepsToGo(_stepsToGo),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
         solved(false) {}
@@ -43,11 +43,11 @@ struct SearchNode {
         }
     }
 
-    void reset(double const& _prob, int const& _remainingSteps) {
+    void reset(double const& _prob, int const& _stepsToGo) {
         children.clear();
         immediateReward = 0.0;
         prob = _prob;
-        remainingSteps = _remainingSteps;
+        stepsToGo = _stepsToGo;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
         solved = false;
@@ -75,7 +75,7 @@ struct SearchNode {
 
     double immediateReward;
     double prob;
-    int remainingSteps;
+    int stepsToGo;
     
     double futureReward;
     int numberOfVisits;
@@ -188,12 +188,9 @@ public:
         return currentRootNode;
     }
 
-    // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
-    // dp_uct would always backup the old future reward
-    bool backupLock;
-
-    // Backup lock won't apply at and beyond this depth.
-    int maxLockDepth;
+    SearchNode const* getTipNodeOfTrial() const {
+        return tipNodeOfTrial;
+    }
 
     // Printer
     virtual void print(std::ostream& out);
@@ -203,13 +200,12 @@ public:
 
     THTS(std::string _name) :
         ProbabilisticSearchEngine(_name),
-        backupLock(false),
-        maxLockDepth(0),
         actionSelection(nullptr),
         outcomeSelection(nullptr),
         backupFunction(nullptr),
         currentRootNode(nullptr),
         chosenOutcome(nullptr),
+        tipNodeOfTrial(nullptr),
         states(SearchEngine::horizon + 1),
         stepsToGoInCurrentState(SearchEngine::horizon),
         stepsToGoInNextState(SearchEngine::horizon - 1),
@@ -228,7 +224,7 @@ public:
         heuristicWeight(0.5),
         numberOfRuns(0),
         cacheHits(0),
-        accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
         firstSolvedFound(false),
         accumulatedNumberOfTrialsInRootState(0),
         accumulatedNumberOfSearchNodesInRootState(0) {
@@ -279,6 +275,10 @@ private:
     // Search nodes used in trials
     SearchNode* currentRootNode;
     SearchNode* chosenOutcome;
+
+    // The tip node of a trial is the first node that is encountered that
+    // requires initialization of a child
+    SearchNode* tipNodeOfTrial;
 
     // States used in trials
     std::vector<PDState> states;
@@ -338,7 +338,7 @@ protected:
     // Statistics
     int numberOfRuns;
     int cacheHits;
-    int accumulatedNumberOfRemainingStepsInFirstSolvedRootState;
+    int accumulatedNumberOfStepsToGoInFirstSolvedRootState;
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;

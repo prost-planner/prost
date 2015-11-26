@@ -26,7 +26,7 @@ bool RandomWalk::setValueFromString(std::string& param,
 bool RandomWalk::estimateQValues(State const& _rootState,
                                  std::vector<int> const& actionsToExpand,
                                  std::vector<double>& qValues) {
-    assert(current.stepsToGo() > 0);
+    assert(_rootState.stepsToGo() > 0);
     PDState current(_rootState);
     for (unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
         if (actionsToExpand[actionIndex] == actionIndex) {

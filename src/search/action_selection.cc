@@ -72,7 +72,7 @@ int ActionSelection::selectAction(SearchNode* node) {
         _selectAction(node);
     }
 
-    if ((thts->getCurrentRootNode()->remainingSteps == SearchEngine::horizon) && (node == thts->getCurrentRootNode())) {
+    if ((thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) && (node == thts->getCurrentRootNode())) {
         int selectedIndex = bestActionIndices[std::rand() % bestActionIndices.size()];
         double bestValue = node->children[selectedIndex]->getExpectedRewardEstimate();
 
@@ -265,7 +265,7 @@ bool UCB1ActionSelection::setValueFromString(std::string& param, std::string& va
 ******************************************************************/
 
 void ActionSelection::printStats(std::ostream& out, std::string indent) {
-    if (thts->getCurrentRootNode()->remainingSteps == SearchEngine::horizon) {
+    if (thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) {
         out << indent << "Action Selection:" << std::endl;
         out << indent << "Exploitation in Root: " << exploitInRoot << std::endl;
         out << indent << "Exploration in Root: " << exploreInRoot << std::endl;

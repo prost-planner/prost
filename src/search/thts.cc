@@ -155,8 +155,7 @@ inline void THTS::initTrial() {
     // Reset trial dependent variables
     initializedDecisionNodes = 0;
     trialReward = 0.0;
-    backupLock = false;
-    maxLockDepth = stepsToGoInCurrentState;
+    tipNodeOfTrial = nullptr;
 
     // Init trial in ingredients
     actionSelection->initTrial();
@@ -233,7 +232,7 @@ bool THTS::estimateBestActions(State const& _rootState,
         // in this case) make sure that we keep the tree and simply follow the
         // optimal policy.
         firstSolvedFound = true;
-        accumulatedNumberOfRemainingStepsInFirstSolvedRootState += _rootState.stepsToGo();
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState += _rootState.stepsToGo();
     }
 
     if (_rootState.stepsToGo() == SearchEngine::horizon) {
@@ -388,9 +387,9 @@ void THTS::visitDecisionNode(SearchNode* node) {
         // else in the tree in the future
         if (node->solved) {
             if (cachingEnabled &&
-                ProbabilisticSearchEngine::stateValueCache.find(states[node->remainingSteps]) ==
+                ProbabilisticSearchEngine::stateValueCache.find(states[node->stepsToGo]) ==
                 ProbabilisticSearchEngine::stateValueCache.end()) {
-                ProbabilisticSearchEngine::stateValueCache[states[node->remainingSteps]] =
+                ProbabilisticSearchEngine::stateValueCache[states[node->stepsToGo]] =
                     node->getExpectedFutureRewardEstimate();
             }
         }
@@ -482,8 +481,8 @@ void THTS::initializeDecisionNode(SearchNode* node) {
     node->children.resize(SearchEngine::numberOfActions, nullptr);
 
     // Always backpropagate results up to newly initialized nodes
-    if (maxLockDepth == maxSearchDepthForThisStep) {
-        maxLockDepth = stepsToGoInCurrentState;
+    if (!tipNodeOfTrial) {
+        tipNodeOfTrial = node;
     }
 
     // std::cout << "initializing state: " << std::endl;
@@ -667,7 +666,7 @@ void THTS::printStats(std::ostream& out,
         out << std::endl << indent << "ROUND FINISHED" << std::endl;
         out << indent <<
         "Accumulated number of remaining steps in first solved root state: " <<
-        accumulatedNumberOfRemainingStepsInFirstSolvedRootState << std::endl;
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState << std::endl;
         out << indent << "Accumulated number of trials in root state: " <<
         accumulatedNumberOfTrialsInRootState << std::endl;
         out << indent <<
