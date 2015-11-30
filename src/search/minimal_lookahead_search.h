@@ -14,7 +14,7 @@ public:
                          std::vector<int> const& actionsToExpand,
                          std::vector<double>& qValues);
 
-    // Printer
+    // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
                     std::string indent = "") const;
 

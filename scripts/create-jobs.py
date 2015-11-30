@@ -26,31 +26,31 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev144"
+revision = "rev147"
 
 configs = [
     "[IPPC2011]",
     "[IPPC2014]",
 
-    "[UCTStar -i [IDS]]",
-    "[UCTStar -i [MLS]]",
-    "[UCTStar -i [Uniform]]",
-    "[UCTStar -i [RandomWalk]]",
+    "[UCTStar -init [Expand -h [IDS]]]",
+    "[UCTStar -init [Expand -h [MLS]]]",
+    "[UCTStar -init [Expand -h [Uniform]]]",
+    "[UCTStar -init [Expand -h [RandomWalk]]]",
 
-    "[DP-UCT -i [IDS]]",
-    "[DP-UCT -i [MLS]]",
-    "[DP-UCT -i [Uniform]]",
-    "[DP-UCT -i [RandomWalk]]",
+    "[DP-UCT -init [Expand -h [IDS]]]",
+    "[DP-UCT -init [Expand -h [MLS]]]",
+    "[DP-UCT -init [Expand -h [Uniform]]]",
+    "[DP-UCT -init [Expand -h [RandomWalk]]]",
 
-    "[MC-UCT -i [IDS]]",
-    "[MC-UCT -i [MLS]]",
-    "[MC-UCT -i [Uniform]]",
-    "[MC-UCT -i [RandomWalk]]",
+    "[MC-UCT -init [Expand -h [IDS]]]",
+    "[MC-UCT -init [Expand -h [MLS]]]",
+    "[MC-UCT -init [Expand -h [Uniform]]]",
+    "[MC-UCT -init [Expand -h [RandomWalk]]]",
 
-    "[MaxUCT -i [IDS]]",
-    "[MaxUCT -i [MLS]]",
-    "[MaxUCT -i [Uniform]]",
-    "[MaxUCT -i [RandomWalk]]",
+    "[MaxUCT -init [Expand -h [IDS]]]",
+    "[MaxUCT -init [Expand -h [MLS]]]",
+    "[MaxUCT -init [Expand -h [Uniform]]]",
+    "[MaxUCT -init [Expand -h [RandomWalk]]]",
 ]
 
 host = "localhost"

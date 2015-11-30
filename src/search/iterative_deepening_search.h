@@ -50,7 +50,7 @@ public:
     // Reset statistic variables
     void resetStats();
 
-    // Printer
+    // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
                     std::string indent = "") const;
 
