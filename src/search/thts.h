@@ -1,11 +1,14 @@
 #ifndef THTS_H
 #define THTS_H
 
-#include "uniform_evaluation_search.h"
+#include "search_engine.h"
+
 #include "utils/timer.h"
-#include "action_selection.h"
-#include "outcome_selection.h"
-#include "backup_function.h"
+
+class ActionSelection;
+class OutcomeSelection;
+class BackupFunction;
+class Initializer;
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper "Trial-based Heuristic
@@ -91,6 +94,37 @@ public:
         TIME_AND_NUMBER_OF_TRIALS //stop after timeout sec or maxNumberOfTrials trials, whichever comes first
     };
 
+    THTS(std::string _name) :
+        ProbabilisticSearchEngine(_name),
+        actionSelection(nullptr),
+        outcomeSelection(nullptr),
+        backupFunction(nullptr),
+        initializer(nullptr),
+        currentRootNode(nullptr),
+        chosenOutcome(nullptr),
+        tipNodeOfTrial(nullptr),
+        states(SearchEngine::horizon + 1),
+        stepsToGoInCurrentState(SearchEngine::horizon),
+        stepsToGoInNextState(SearchEngine::horizon - 1),
+        appliedActionIndex(-1),
+        trialReward(0.0),
+        currentTrial(0),
+        initializedDecisionNodes(0),
+        lastUsedNodePoolIndex(0),
+        terminationMethod(THTS::TIME),
+        maxNumberOfTrials(0),
+        numberOfNewDecisionNodesPerTrial(1),
+        selectMostVisited(false),
+        numberOfRuns(0),
+        cacheHits(0),
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
+        firstSolvedFound(false),
+        accumulatedNumberOfTrialsInRootState(0),
+        accumulatedNumberOfSearchNodesInRootState(0) {
+        setMaxNumberOfNodes(24000000);
+        setTimeout(1.0);
+    }
+
     // Parameter setter
     virtual bool setValueFromString(std::string& param, std::string& value);
 
@@ -125,14 +159,7 @@ public:
         backupFunction = _backupFunction;
     }
     
-    virtual void setMaxSearchDepth(int _maxSearchDepth) {
-        SearchEngine::setMaxSearchDepth(_maxSearchDepth);
-
-        if (initializer) {
-            initializer->setMaxSearchDepth(_maxSearchDepth);
-        }
-    }
-
+    virtual void setMaxSearchDepth(int _maxSearchDepth);
     virtual void setTerminationMethod(
             THTS::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
@@ -142,15 +169,9 @@ public:
         maxNumberOfTrials = _maxNumberOfTrials;
     }
 
-    virtual void setInitializer(SearchEngine* _initializer) {
-        if (initializer) {
-            delete initializer;
-        }
+    virtual void setInitializer(Initializer* _initializer) {
+        assert(!initializer);
         initializer = _initializer;
-    }
-
-    virtual void setNumberOfInitialVisits(int _numberOfInitialVisits) {
-        numberOfInitialVisits = _numberOfInitialVisits;
     }
 
     virtual void setNumberOfNewDecisionNodesPerTrial(
@@ -168,10 +189,6 @@ public:
 
     virtual void setSelectMostVisited(bool _selectMostVisited) {
         selectMostVisited = _selectMostVisited;
-    }
-
-    virtual void setHeuristicWeight(double _heuristicWeight) {
-        heuristicWeight = _heuristicWeight;
     }
 
     // Used only for testing
@@ -192,45 +209,13 @@ public:
         return tipNodeOfTrial;
     }
 
-    // Printer
-    virtual void print(std::ostream& out);
+    // Print
     virtual void printStats(std::ostream& out,
                             bool const& printRoundStats,
-                            std::string indent = "") const;
+                            std::string indent = "") const override;
 
-    THTS(std::string _name) :
-        ProbabilisticSearchEngine(_name),
-        actionSelection(nullptr),
-        outcomeSelection(nullptr),
-        backupFunction(nullptr),
-        currentRootNode(nullptr),
-        chosenOutcome(nullptr),
-        tipNodeOfTrial(nullptr),
-        states(SearchEngine::horizon + 1),
-        stepsToGoInCurrentState(SearchEngine::horizon),
-        stepsToGoInNextState(SearchEngine::horizon - 1),
-        appliedActionIndex(-1),
-        trialReward(0.0),
-        currentTrial(0),
-        initializer(nullptr),
-        initialQValues(SearchEngine::numberOfActions, 0.0),
-        initializedDecisionNodes(0),
-        lastUsedNodePoolIndex(0),
-        terminationMethod(THTS::TIME),
-        maxNumberOfTrials(0),
-        numberOfInitialVisits(1),
-        numberOfNewDecisionNodesPerTrial(1),
-        selectMostVisited(false),
-        heuristicWeight(0.5),
-        numberOfRuns(0),
-        cacheHits(0),
-        accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
-        firstSolvedFound(false),
-        accumulatedNumberOfTrialsInRootState(0),
-        accumulatedNumberOfSearchNodesInRootState(0) {
-        setMaxNumberOfNodes(24000000);
-        setTimeout(1.0);
-    }
+    // Stream for nicer (and better timed) printing
+    mutable std::stringstream outStream;
 
 protected:
     // Main search functions
@@ -248,9 +233,6 @@ protected:
     virtual bool continueTrial(SearchNode* /*node*/) {
         return initializedDecisionNodes < numberOfNewDecisionNodesPerTrial;
     }
-
-    // Initialization of nodes
-    virtual void initializeDecisionNode(SearchNode* node);
 
     // Recommendation function
     virtual void recommendAction(std::vector<int>& bestActions);
@@ -271,6 +253,7 @@ private:
     ActionSelection* actionSelection;
     OutcomeSelection* outcomeSelection;
     BackupFunction* backupFunction;
+    Initializer* initializer;
 
     // Search nodes used in trials
     SearchNode* currentRootNode;
@@ -309,11 +292,6 @@ private:
     // Index of the last variable with non-deterministic outcome in the current transition
     int lastProbabilisticVarIndex;
 
-    // Search engine that estimates Q-values for initialization of
-    // decison node children
-    SearchEngine* initializer;
-    std::vector<double> initialQValues;
-
     // Counter for number of initialized decision nodes in the current
     // trial
     int initializedDecisionNodes;
@@ -329,11 +307,9 @@ protected:
     // Parameter
     THTS::TerminationMethod terminationMethod;
     int maxNumberOfTrials;
-    int numberOfInitialVisits;
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
     bool selectMostVisited;
-    double heuristicWeight;
 
     // Statistics
     int numberOfRuns;

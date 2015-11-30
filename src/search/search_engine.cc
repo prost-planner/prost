@@ -94,14 +94,14 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // contained, though)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [MC] -backup [MC] -ndn H -iv 5 -hw 1.0 -sd 15 -i [IDS -sd 15]" + desc;
+        desc = "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd 15] -iv 5 -hw 1.0] -ndn H -sd 15" + desc;
     } else if (desc.find("IPPC2014") == 0) {
         // This is the configuration that was used at IPPC 2014 (without
         // consideration of the MDP-ESP problem that is described in our AAAI
         // 2015 paper, so it can be used for planner comparison)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -i [IDS] -hw 0.5" + desc;
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS] -hw 0.5]" + desc;
     } else if (desc.find("MC-UCT") == 0) {
         // This is an implementation of the UCT algorithm as described by Kocsis
         // & Szepesvari (2006) within the THTS framework. It differs in that is
@@ -490,13 +490,8 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
 
 
 /******************************************************************
-                   Statistics and Printers
+                   Statistics and Prints
 ******************************************************************/
-
-void SearchEngine::print(ostream& out) const {
-    out << outStream.str() << endl;
-    outStream.str("");
-}
 
 void SearchEngine::printStats(ostream& out,
                               bool const& /*printRoundStats*/,

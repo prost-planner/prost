@@ -80,6 +80,9 @@ void ProstPlanner::setSeed(int _seed) {
 void ProstPlanner::init() {
     Timer t;
     cout << "learning..." << endl;
+
+    cout.precision(6);
+
     searchEngine->learn();
 
     if (searchEngine->usesBDDs()) {
@@ -97,6 +100,8 @@ void ProstPlanner::init() {
 
     cout << "Final task: " << endl;
     SearchEngine::printTask(cout);
+
+    cout.precision(6);
 }
 
 vector<string> ProstPlanner::plan() {
@@ -250,7 +255,7 @@ void ProstPlanner::finishStep(double const& immediateReward) {
 
     immediateRewards[currentRound][currentStep] = immediateReward;
 
-    searchEngine->print(cout);
+    // searchEngine->print(cout);
 
     cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
     // cout << "Buckets in probabilistic state value cache: " << ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;

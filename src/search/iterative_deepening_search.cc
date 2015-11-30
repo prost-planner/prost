@@ -251,7 +251,7 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
 }
 
 /******************************************************************
-                   Statistics and Printers
+                   Statistics and Prints
 ******************************************************************/
 
 void IDS::resetStats() {

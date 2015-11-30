@@ -87,6 +87,20 @@ public:
             std::vector<int> const& actionsToExpand,
             std::vector<double>& qValues) = 0;
 
+    // Methods for action applicability and pruning
+    virtual std::vector<int> getApplicableActions(State const& state) const = 0;
+
+    std::vector<int> getIndicesOfApplicableActions(State const& state) const {
+        std::vector<int> applicableActions = getApplicableActions(state);
+        std::vector<int> result;
+        for (size_t index = 0; index < applicableActions.size(); ++index) {
+            if (applicableActions[index] == index) {
+                result.push_back(index);
+            }
+        }
+        return result;
+    }
+
 /*****************************************************************
                     Calculation of reward
 *****************************************************************/
@@ -130,9 +144,6 @@ private:
 *****************************************************************/
 
 protected:
-    // Methods for action applicability and pruning
-    virtual std::vector<int> getApplicableActions(State const& state) const = 0;
-
     bool actionIsApplicable(ActionState const& action,
             State const& current) const {
         double res = 0.0;
@@ -253,9 +264,6 @@ protected:
     int maxSearchDepth;
     double timeout;
 
-    // Stream for nicer (and better timed) printing
-    mutable std::stringstream outStream;
-
 /*****************************************************************
                        Printing and statistics
 *****************************************************************/
@@ -264,8 +272,7 @@ public:
     // Reset statistic variables
     virtual void resetStats() {}
 
-    // Printer
-    virtual void print(std::ostream& out) const;
+    // Print
     virtual void printStats(std::ostream& out, bool const& printRoundStats,
                             std::string indent = "") const;
 
@@ -277,7 +284,7 @@ public:
         bdd_printdot(cachedGoals);
     }
 
-    // Printer task
+    // Print task
     static void printTask(std::ostream& out);
     static void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval);
     static void printDeterministicCPFInDetail(std::ostream& out,
@@ -306,24 +313,6 @@ public:
 
     // Cache for applicable reasonable actions
     static ActionHashMap applicableActionsCache;
-
-protected:
-/*****************************************************************
-                Calculation of state transition
-*****************************************************************/
-
-    // Apply action 'actionIndex' to 'current', resulting in 'next'
-    void calcSuccessorState(State const& current,
-                            int const& actionIndex,
-                            PDState& next) const {
-        for (int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
-            deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index), current, actionStates[actionIndex]);
-        }
-
-        for (int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
-            probabilisticCPFs[index]->evaluate(next.probabilisticStateFluentAsPD(index), current, actionStates[actionIndex]);
-        }
-    }
 
 /*****************************************************************
              Calculation of applicable actions
@@ -384,16 +373,22 @@ protected:
         return res;
     }
 
-    std::vector<int> getIndicesOfApplicableActions(State const& state) const {
-        std::vector<int> applicableActions = getApplicableActions(state);
-        std::vector<int> result;
-        for (size_t actionIndex = 0; actionIndex < applicableActions.size();
-             ++actionIndex) {
-            if (applicableActions[actionIndex] == actionIndex) {
-                result.push_back(actionIndex);
-            }
+protected:
+/*****************************************************************
+                Calculation of state transition
+*****************************************************************/
+
+    // Apply action 'actionIndex' to 'current', resulting in 'next'
+    void calcSuccessorState(State const& current,
+                            int const& actionIndex,
+                            PDState& next) const {
+        for (int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+            deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index), current, actionStates[actionIndex]);
         }
-        return result;
+
+        for (int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+            probabilisticCPFs[index]->evaluate(next.probabilisticStateFluentAsPD(index), current, actionStates[actionIndex]);
+        }
     }
 
 /*****************************************************************
@@ -549,18 +544,6 @@ protected:
             }
         }
         return res;
-    }
-
-    std::vector<int> getIndicesOfApplicableActions(State const& state) const {
-        std::vector<int> applicableActions = getApplicableActions(state);
-        std::vector<int> result;
-        for (size_t actionIndex = 0; actionIndex < applicableActions.size();
-             ++actionIndex) {
-            if (applicableActions[actionIndex] == actionIndex) {
-                result.push_back(actionIndex);
-            }
-        }
-        return result;
     }
 };
 

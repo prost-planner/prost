@@ -71,6 +71,7 @@ void BackupFunction::backupDecisionNodeLeaf(SearchNode* node,
 
 void BackupFunction::backupDecisionNode(SearchNode* node) {
     assert(!node->children.empty());
+    assert(thts->getTipNodeOfTrial());
 
     ++node->numberOfVisits;
 
