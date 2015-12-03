@@ -105,6 +105,7 @@ void THTS::initRound() {
     actionSelection->initRound();
     outcomeSelection->initRound();
     backupFunction->initRound();
+    initializer->initRound();
 }
 
 void THTS::initStep(State const& _rootState) {
@@ -153,6 +154,7 @@ inline void THTS::initTrial() {
     actionSelection->initTrial();
     outcomeSelection->initTrial();
     backupFunction->initTrial();
+    initializer->initTrial();
 }
 
 inline void THTS::initTrialStep() {
@@ -166,7 +168,7 @@ inline void THTS::initTrialStep() {
 ******************************************************************/
 
 bool THTS::estimateBestActions(State const& _rootState,
-                                           std::vector<int>& bestActions) {
+                               std::vector<int>& bestActions) {
     timer.reset();
 
     assert(bestActions.empty());

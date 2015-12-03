@@ -16,15 +16,21 @@ class DepthFirstSearch : public DeterministicSearchEngine {
 public:
     DepthFirstSearch();
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState,
+    // Start the search engine to estimate the Q-value of a single action
+    bool estimateQValue(State const& state, int actionIndex,
+                        double& qValue) override;
+    
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    bool estimateQValues(State const& state,
                          std::vector<int> const& actionsToExpand,
-                         std::vector<double>& qValues);
+                         std::vector<double>& qValues) override;
 
 private:
     // Returns the reward that can be achieved if the action with
     // index actionIndex is applied to State state
-    void applyAction(State const& state, int const& actionIndex, double& reward);
+    void applyAction(State const& state, int const& actionIndex,
+                     double& reward);
 
     // Expands State state and calculates the reward that can be
     // achieved by applying any action in that state

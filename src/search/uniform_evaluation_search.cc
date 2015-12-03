@@ -15,7 +15,7 @@ UniformEvaluationSearch::UniformEvaluationSearch() :
 bool UniformEvaluationSearch::setValueFromString(string& param,
         string& value) {
     if (param == "-val") {
-        if (value == "INFTY") {
+        if (value == "MAX") {
             setInitialValue(SearchEngine::rewardCPF->getMaxVal());
         } else {
             setInitialValue(atof(value.c_str()));
@@ -30,19 +30,20 @@ bool UniformEvaluationSearch::setValueFromString(string& param,
                        Main Search Functions
 ******************************************************************/
 
-bool UniformEvaluationSearch::estimateBestActions(State const& _rootState,
-        std::vector<int>& bestActions) {
+bool UniformEvaluationSearch::estimateBestActions(
+        State const& _rootState, std::vector<int>& bestActions) {
+    // All applicable actions are equally good
     bestActions = getIndicesOfApplicableActions(_rootState);
     return true;
 }
 
-bool UniformEvaluationSearch::estimateQValues(
-        State const& /*_rootState*/, vector<int> const& actionsToExpand,
-        vector<double>& qValues) {
-    for (unsigned int actionIndex = 0; actionIndex < qValues.size();
-         ++actionIndex) {
-        if (actionsToExpand[actionIndex] == actionIndex) {
-            qValues[actionIndex] = initialValue;
+bool UniformEvaluationSearch::estimateQValues(State const& /*state*/,
+                                              vector<int> const& actionsToExpand,
+                                              vector<double>& qValues) {
+    // Assign the initial value to all applicable actions
+    for (unsigned int index = 0; index < qValues.size(); ++index) {
+        if (actionsToExpand[index] == index) {
+            qValues[index] = initialValue;
         }
     }
     return true;

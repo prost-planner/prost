@@ -13,10 +13,15 @@ public:
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState,
+    // Start the search engine to estimate the Q-value of a single action
+    bool estimateQValue(State const& state, int actionIndex,
+                        double& qValue) override;    
+
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    bool estimateQValues(State const& state,
                          std::vector<int> const& actionsToExpand,
-                         std::vector<double>& qValues);
+                         std::vector<double>& qValues) override;
 
     // Parameter Setter
     virtual void setNumberOfIterations(int _numberOfIterations) {

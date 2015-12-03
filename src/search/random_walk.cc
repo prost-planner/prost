@@ -23,15 +23,24 @@ bool RandomWalk::setValueFromString(std::string& param,
                        Main Search Functions
 ******************************************************************/
 
-bool RandomWalk::estimateQValues(State const& _rootState,
+bool RandomWalk::estimateQValue(State const& state, int actionIndex,
+                                double& qValue) {
+    assert(state.stepsToGo() > 0);
+    PDState current(state);
+    performRandomWalks(current, actionIndex, qValue);
+    qValue /= (double)state.stepsToGo();
+    return true;
+}
+
+bool RandomWalk::estimateQValues(State const& state,
                                  std::vector<int> const& actionsToExpand,
                                  std::vector<double>& qValues) {
     assert(_rootState.stepsToGo() > 0);
-    PDState current(_rootState);
-    for (unsigned int actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
-        if (actionsToExpand[actionIndex] == actionIndex) {
-            performRandomWalks(current, actionIndex, qValues[actionIndex]);
-            qValues[actionIndex] /= (double)_rootState.stepsToGo();
+    PDState current(state);
+    for (size_t index = 0; index < qValues.size(); ++index) {
+        if (actionsToExpand[index] == index) {
+            performRandomWalks(current, index, qValues[index]);
+            qValues[index] /= (double)state.stepsToGo();
         }
     }
     return true;
@@ -49,10 +58,13 @@ void RandomWalk::performRandomWalks(PDState const& root, int firstActionIndex,
         result += reward;
 
         while (current.stepsToGo() > 0) {
-            std::vector<int> applicableActions = getIndicesOfApplicableActions(current);
+            std::vector<int> applicableActions =
+                getIndicesOfApplicableActions(current);
             next.reset(current.stepsToGo() - 1);
 
-            sampleSuccessorState(current, applicableActions[std::rand() % applicableActions.size()], next, reward);
+            int actIndex = std::rand() % applicableActions.size();
+            sampleSuccessorState(current, applicableActions[actIndex],
+                                 next, reward);
             result += reward;
             current = next;
         }

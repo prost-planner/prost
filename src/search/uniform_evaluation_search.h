@@ -16,18 +16,27 @@ public:
 
     // Start the search engine to calculate best actions
     bool estimateBestActions(State const& _rootState,
-            std::vector<int>& bestActions);
+                             std::vector<int>& bestActions);
 
     // Start the search engine for state value estimation
-    bool estimateStateValue(State const& /*_rootState*/, double& stateValue) {
+    bool estimateStateValue(State const& /*_rootState*/,
+                            double& stateValue) {
         stateValue = initialValue;
         return true;
     }
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState,
-            std::vector<int> const& actionsToExpand,
-            std::vector<double>& qValues);
+    // Start the search engine to estimate the Q-value of a single action
+    bool estimateQValue(State const& /*state*/, int /*actionIndex*/,
+                        double& qValue) override {
+        qValue = initialValue;
+        return true;
+    }
+
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    bool estimateQValues(State const& state,
+                         std::vector<int> const& actionsToExpand,
+                         std::vector<double>& qValues) override;
 
     // Parameter setter
     virtual void setInitialValue(double const& _initialValue) {
