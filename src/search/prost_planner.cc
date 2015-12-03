@@ -257,7 +257,7 @@ void ProstPlanner::finishStep(double const& immediateReward) {
 
     // searchEngine->print(cout);
 
-    cout << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
+    cout << endl << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
     // cout << "Buckets in probabilistic state value cache: " << ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;
     // cout << "Buckets in deterministic state value cache: " << DeterministicSearchEngine::stateValueCache.bucket_count() << endl;
     // cout << "Buckets in probabilistic applicable actions cache: " << ProbabilisticSearchEngine::applicableActionsCache.bucket_count() << endl;

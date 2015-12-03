@@ -148,29 +148,18 @@ void IDS::learn() {
 bool IDS::estimateQValues(State const& _rootState,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
-    if(mls) {
-        HashMap::iterator it = rewardCache.find(_rootState);
-        if (it != rewardCache.end()) {
-            ++cacheHits;
-            assert(qValues.size() == it->second.size());
-            for (size_t i = 0; i < qValues.size(); ++i) {
-                qValues[i] = it->second[i];
-            }
-            return true;
-        }      
-        return mls->estimateQValues(_rootState, actionsToExpand, qValues);
-    }
-    timer.reset();
-
     HashMap::iterator it = rewardCache.find(_rootState);
-
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
         for (size_t i = 0; i < qValues.size(); ++i) {
             qValues[i] = it->second[i];
         }
+    } else if (mls) {
+        return mls->estimateQValues(_rootState, actionsToExpand, qValues);
     } else {
+        timer.reset();
+
         maxSearchDepthForThisStep = std::min(maxSearchDepth, _rootState.stepsToGo());
 
         currentState.setTo(_rootState);
