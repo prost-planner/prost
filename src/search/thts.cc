@@ -326,8 +326,8 @@ void THTS::visitDecisionNode(SearchNode* node) {
         }
     }
 
-    // Initialize node if it wasn't visited before
-    if (!initializer->isInitialized(node)) {
+    // Initialize node if necessary
+    if (!node->fullyInitialized) {
         if (!tipNodeOfTrial) {
             tipNodeOfTrial = node;
         }

@@ -111,10 +111,6 @@ void Initializer::printStats(std::ostream& out,
                         ExpandNodeInitializer
 ******************************************************************/
 
-bool ExpandNodeInitializer::isInitialized(SearchNode* node) {
-    return !node->children.empty();
-}
-
 void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
     node->children.resize(SearchEngine::numberOfActions, nullptr);
 
@@ -123,7 +119,8 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
 
     std::vector<int> actionsToExpand = thts->getApplicableActions(current);
 
-    std::vector<double> initialQValues(SearchEngine::numberOfActions, 0.0);
+    std::vector<double> initialQValues(SearchEngine::numberOfActions,
+                                       -std::numeric_limits<double>::max());
     heuristic->estimateQValues(current, actionsToExpand, initialQValues);
 
     for (unsigned int index = 0; index < node->children.size(); ++index) {
@@ -143,5 +140,7 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
         }
     }
     // std::cout << std::endl;
+
+    node->fullyInitialized = true;
 }
 

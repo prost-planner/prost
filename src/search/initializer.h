@@ -42,10 +42,7 @@ public:
                             bool const& printRoundStats,
                             std::string indent = "") const;
 
-    // This is true if node has already been initialized
-    virtual bool isInitialized(SearchNode* node) = 0;
-
-    // This is called if isInitialized
+    // Initialize (or continue to initialize) node
     virtual void initialize(SearchNode* node, State const& current) = 0;
 
 protected:
@@ -70,9 +67,8 @@ protected:
 class ExpandNodeInitializer : public Initializer {
 public:
     ExpandNodeInitializer(THTS* _thts) :
-        Initializer(_thts, "Expand") {}
+        Initializer(_thts, "ExpandNode") {}
 
-    virtual bool isInitialized(SearchNode* node) override;
     virtual void initialize(SearchNode* node, State const& current) override;
 };
 
