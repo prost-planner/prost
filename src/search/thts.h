@@ -36,6 +36,7 @@ struct SearchNode {
         stepsToGo(_stepsToGo),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
+        fullyInitialized(false),
         solved(false) {}
 
     ~SearchNode() {
@@ -53,6 +54,7 @@ struct SearchNode {
         stepsToGo = _stepsToGo;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
+        fullyInitialized = false;
         solved = false;
     }
 
@@ -83,6 +85,7 @@ struct SearchNode {
     double futureReward;
     int numberOfVisits;
 
+    bool fullyInitialized;
     bool solved;
 };
 
