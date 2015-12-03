@@ -21,7 +21,16 @@ DepthFirstSearch::DepthFirstSearch() :
                        Main Search Functions
 ******************************************************************/
 
-bool DepthFirstSearch::estimateQValues(State const& _rootState,
+bool DepthFirstSearch::estimateQValue(State const& state, int actionIndex,
+                                      double& qValue) {
+    assert(state.stepsToGo() > 0);
+    assert(state.stepsToGo() <= maxSearchDepth);
+
+    applyAction(state, actionIndex, qValue);
+    return true;
+}
+
+bool DepthFirstSearch::estimateQValues(State const& state,
                                        vector<int> const& actionsToExpand,
                                        vector<double>& qValues) {
     assert(_rootState.stepsToGo() > 0);
@@ -30,7 +39,7 @@ bool DepthFirstSearch::estimateQValues(State const& _rootState,
 
     for (unsigned int index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {
-            applyAction(_rootState, index, qValues[index]);
+            applyAction(state, index, qValues[index]);
         }
     }
     return true;

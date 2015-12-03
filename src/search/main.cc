@@ -89,8 +89,8 @@ void printUsage() {
     cout << "Uniform Evaluation Search evaluates each action identical. It is created by [Uniform <options>] with the following options:"
          << endl << endl;
 
-    cout << "  -val <double | INFTY>" << endl;
-    cout << "    Specifies the estimate assigned to each action. If this is INFTY, it is set to the maximal reward of the task and ican thereby be used as a (very simple) admissible initialization." << endl << endl << endl;
+    cout << "  -val <double | MAX>" << endl;
+    cout << "    Specifies the estimate assigned to each action. If this is MAX, it is set to the maximal reward of the task and can thereby be used as a (very simple) admissible initialization." << endl << endl << endl;
 
     
     

@@ -7,9 +7,6 @@
 
 #include "evaluatables.h"
 
-#include <unordered_map>
-#include <sstream>
-#include <vector>
 #include <fdd.h>
 
 class SearchEngine {
@@ -76,16 +73,22 @@ public:
 
     // Start the search engine to calculate best actions
     virtual bool estimateBestActions(State const& _rootState,
-            std::vector<int>& bestActions);
+                                     std::vector<int>& bestActions);
 
     // Start the search engine for state value estimation
-    virtual bool estimateStateValue(State const& _rootState, double& stateValue);
+    virtual bool estimateStateValue(State const& _rootState,
+                                    double& stateValue);
+    
+    // Start the search engine to estimate the Q-value of a single action
+    virtual bool estimateQValue(State const& state,
+                                int actionIndex,
+                                double& qValue) = 0;
 
-    // Start the search engine for Q-value estimation (this is not pure virtual
-    // to allow the creation of search engines for stuff like learning)
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
     virtual bool estimateQValues(State const& _rootState,
-            std::vector<int> const& actionsToExpand,
-            std::vector<double>& qValues) = 0;
+                                 std::vector<int> const& actionsToExpand,
+                                 std::vector<double>& qValues) = 0;
 
     // Methods for action applicability and pruning
     virtual std::vector<int> getApplicableActions(State const& state) const = 0;
@@ -108,7 +111,8 @@ public:
 protected:
     // Calculate the reward (since the reward must be deteriministic, this is
     // identical for probabilistic and deterministic search engines)
-    void calcReward(State const& current, int const& actionIndex, double& reward) const {
+    void calcReward(State const& current, int const& actionIndex,
+                    double& reward) const {
         rewardCPF->evaluate(reward, current, actionStates[actionIndex]);
     }
 
@@ -135,9 +139,9 @@ protected:
 private:
     // Methods to calculate the final reward
     void calcOptimalFinalRewardWithFirstApplicableAction(State const& current,
-            double& reward) const;
+                                                         double& reward) const;
     void calcOptimalFinalRewardAsBestOfCandidateSet(State const& current,
-            double& reward) const;
+                                                    double& reward) const;
 
 /*****************************************************************
              Calculation of applicable actions
@@ -145,11 +149,10 @@ private:
 
 protected:
     bool actionIsApplicable(ActionState const& action,
-            State const& current) const {
+                            State const& current) const {
         double res = 0.0;
-        for (size_t precondIndex = 0; precondIndex < action.actionPreconditions.size(); ++precondIndex) {
-            action.actionPreconditions[precondIndex]->evaluate(
-                    res, current, action);
+        for (DeterministicEvaluatable* precond : action.actionPreconditions) {
+            precond->evaluate(res, current, action);
             if (MathUtils::doubleIsEqual(res, 0.0)) {
                 return false;
             }
@@ -250,8 +253,11 @@ public:
     static bdd cachedDeadEnds;
     static bdd cachedGoals;
 
-    typedef std::unordered_map<State, double, State::HashWithRemSteps, State::EqualWithRemSteps> StateValueHashMap;
-    typedef std::unordered_map<State, std::vector<int>, State::HashWithoutRemSteps, State::EqualWithoutRemSteps> ActionHashMap;
+    typedef std::unordered_map<State, double, State::HashWithRemSteps,
+                               State::EqualWithRemSteps> StateValueHashMap;
+    typedef std::unordered_map<State, std::vector<int>,
+                               State::HashWithoutRemSteps,
+                               State::EqualWithoutRemSteps> ActionHashMap;
 
 protected:
     // Used for debug output only
@@ -336,31 +342,31 @@ public:
             if (hasUnreasonableActions) {
                 std::map<PDState, int, PDState::PDStateCompare> childStates;
 
-                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
-                    if (actionIsApplicable(actionStates[actionIndex], state)) {
+                for (size_t index = 0; index < numberOfActions; ++index) {
+                    if (actionIsApplicable(actionStates[index], state)) {
                         // This action is applicable
                         PDState nxt(state.stepsToGo() - 1);
-                        calcSuccessorState(state, actionIndex, nxt);
+                        calcSuccessorState(state, index, nxt);
 
                         if (childStates.find(nxt) == childStates.end()) {
                             // This action is reasonable
-                            childStates[nxt] = actionIndex;
-                            res[actionIndex] = actionIndex;
+                            childStates[nxt] = index;
+                            res[index] = index;
                         } else {
                             // This action is not reasonable
-                            res[actionIndex] = childStates[nxt];
+                            res[index] = childStates[nxt];
                         }
                     } else {
                         // This action is not appicable
-                        res[actionIndex] = -1;
+                        res[index] = -1;
                     }
                 }
             } else {
-                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
-                    if (actionIsApplicable(actionStates[actionIndex], state)) {
-                        res[actionIndex] = actionIndex;
+                for (size_t index = 0; index < numberOfActions; ++index) {
+                    if (actionIsApplicable(actionStates[index], state)) {
+                        res[index] = index;
                     } else {
-                        res[actionIndex] = -1;
+                        res[index] = -1;
                     }
                 }
             }

@@ -145,10 +145,51 @@ void IDS::learn() {
                        Main Search Functions
 ******************************************************************/
 
-bool IDS::estimateQValues(State const& _rootState,
+bool IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
+    HashMap::iterator it = rewardCache.find(state);
+    if (it != rewardCache.end() &&
+        !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
+        ++cacheHits;
+        qValue = it->second[actionIndex];
+    }  else if(mls) {     
+        return mls->estimateQValue(state, actionIndex, qValue);
+    } else {
+        timer.reset();
+
+        maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
+
+        currentState.setTo(state);
+        currentState.stepsToGo() = 1;
+        do {
+            ++currentState.stepsToGo();
+            dfs->estimateQValue(currentState, actionIndex, qValue);
+        }  while (moreIterations());
+
+        qValue /= ((double) currentState.stepsToGo());
+
+        // TODO: Currently, we cache every result, but we should only do so if
+        // the result was achieved with a reasonable action, with a timeout or
+        // on a state with sufficient depth
+        if (cachingEnabled) {
+            if (it == rewardCache.end()) {
+                rewardCache[currentState] =
+                    vector<double>(SearchEngine::numberOfActions,
+                                   -std::numeric_limits<double>::max());
+            }
+            rewardCache[currentState][actionIndex] = qValue;
+        }
+
+        accumulatedSearchDepth += currentState.stepsToGo();
+        ++numberOfRuns;
+    }
+
+    return true;
+}
+
+bool IDS::estimateQValues(State const& state,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
-    HashMap::iterator it = rewardCache.find(_rootState);
+    HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
@@ -156,13 +197,13 @@ bool IDS::estimateQValues(State const& _rootState,
             qValues[i] = it->second[i];
         }
     } else if (mls) {
-        return mls->estimateQValues(_rootState, actionsToExpand, qValues);
+        return mls->estimateQValues(state, actionsToExpand, qValues);
     } else {
         timer.reset();
 
-        maxSearchDepthForThisStep = std::min(maxSearchDepth, _rootState.stepsToGo());
+        maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
 
-        currentState.setTo(_rootState);
+        currentState.setTo(state);
         currentState.stepsToGo() = 1;
         do {
             ++currentState.stepsToGo();
@@ -187,6 +228,10 @@ bool IDS::estimateQValues(State const& _rootState,
     }
 
     return true;
+}
+
+bool IDS::moreIterations() {
+    return currentState.stepsToGo() < maxSearchDepthForThisStep;
 }
 
 bool IDS::moreIterations(vector<int> const& actionsToExpand,

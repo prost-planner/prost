@@ -23,6 +23,9 @@ public:
     // This is called when caching is disabled because memory becomes sparse.
     virtual void disableCaching();
 
+    virtual void initRound() {}
+    virtual void initTrial() {}
+
     // Parameter setter
     virtual void setHeuristic(SearchEngine* _heuristic);
 
