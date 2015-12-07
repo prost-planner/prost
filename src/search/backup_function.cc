@@ -87,9 +87,13 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
     node->solved = useSolveLabeling;
     for (SearchNode* child : node->children) {
         if (child) {
-            node->solved &= child->solved;
-            node->futureReward =
-                std::max(node->futureReward, child->getExpectedRewardEstimate());
+            if (child->initialized) {
+                node->solved &= child->solved;
+                node->futureReward =
+                    std::max(node->futureReward, child->getExpectedRewardEstimate());
+            } else {
+                node->solved = false;
+            }
         }
     }
 

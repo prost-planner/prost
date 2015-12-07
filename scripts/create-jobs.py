@@ -15,6 +15,10 @@ benchmark="ippc-all"
 # single cpu core.
 queue = "all.q@ase*"
 
+# defines the priority of the task. Possible values are [-1023,0], but the
+# maximum of 0 should only be used for very urgent jobs.
+priority = -100
+
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
 # to 30 minutes. If timout is set to None, then there is no timeout.
@@ -26,7 +30,7 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev147"
+revision = "rev150"
 
 configs = [
     "[IPPC2011]",
@@ -51,6 +55,26 @@ configs = [
     "[MaxUCT -init [Expand -h [MLS]]]",
     "[MaxUCT -init [Expand -h [Uniform]]]",
     "[MaxUCT -init [Expand -h [RandomWalk]]]",
+
+    "[UCTStar -init [Single -h [IDS]]]",
+    "[UCTStar -init [Single -h [MLS]]]",
+    "[UCTStar -init [Single -h [Uniform]]]",
+    "[UCTStar -init [Single -h [RandomWalk]]]",
+
+    "[DP-UCT -init [Single -h [IDS]]]",
+    "[DP-UCT -init [Single -h [MLS]]]",
+    "[DP-UCT -init [Single -h [Uniform]]]",
+    "[DP-UCT -init [Single -h [RandomWalk]]]",
+
+    "[MC-UCT -init [Single -h [IDS]]]",
+    "[MC-UCT -init [Single -h [MLS]]]",
+    "[MC-UCT -init [Single -h [Uniform]]]",
+    "[MC-UCT -init [Single -h [RandomWalk]]]",
+
+    "[MaxUCT -init [Single -h [IDS]]]",
+    "[MaxUCT -init [Single -h [MLS]]]",
+    "[MaxUCT -init [Single -h [Uniform]]]",
+    "[MaxUCT -init [Single -h [RandomWalk]]]",
 ]
 
 host = "localhost"
@@ -82,10 +106,11 @@ def create_tasks(filename, instances):
 
 
     template = Template(file='job.tmpl',
-                        searchList=[{'tasks'   : tasks,
-                                     'queue'   : queue,
-                                     'timeout' : timeout,
-                                     'memout'  : memout}])    
+                        searchList=[{'tasks'    : tasks,
+                                     'queue'    : queue,
+                                     'timeout'  : timeout,
+                                     'memout'   : memout,
+                                     'priority' : priority}])    
     f = file(filename, 'w')
     f.write(str(template))
     f.close()

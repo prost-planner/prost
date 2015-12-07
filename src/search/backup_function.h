@@ -52,6 +52,9 @@ protected:
 
     // Statistics
     int skippedBackups;
+
+    // Tests which access private members
+    friend class BFSTestSearch;    
 };
 
 /******************************************************************

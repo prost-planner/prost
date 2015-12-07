@@ -35,7 +35,7 @@ bool RandomWalk::estimateQValue(State const& state, int actionIndex,
 bool RandomWalk::estimateQValues(State const& state,
                                  std::vector<int> const& actionsToExpand,
                                  std::vector<double>& qValues) {
-    assert(_rootState.stepsToGo() > 0);
+    assert(state.stepsToGo() > 0);
     PDState current(state);
     for (size_t index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {

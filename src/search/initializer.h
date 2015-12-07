@@ -75,4 +75,12 @@ public:
     virtual void initialize(SearchNode* node, State const& current) override;
 };
 
+class SingleChildInitializer : public Initializer {
+public:
+    SingleChildInitializer(THTS* _thts) :
+        Initializer(_thts, "SingleChild") {}
+
+    virtual void initialize(SearchNode* node, State const& current) override;
+};
+
 #endif
