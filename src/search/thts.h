@@ -38,7 +38,7 @@ struct SearchNode {
         stepsToGo(_stepsToGo),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
-        fullyInitialized(false),
+        initialized(false),
         solved(false) {}
 
     ~SearchNode() {
@@ -56,7 +56,7 @@ struct SearchNode {
         stepsToGo = _stepsToGo;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
-        fullyInitialized = false;
+        initialized = false;
         solved = false;
     }
 
@@ -87,7 +87,13 @@ struct SearchNode {
     double futureReward;
     int numberOfVisits;
 
-    bool fullyInitialized;
+    // This is used in two ways: in decision nodes, it is true if all children
+    // are initialized; and in chance nodes that represent an action (i.e., in
+    // children of decision nodes), it is true if an initial value has been
+    // assigned to the node.
+    bool initialized;
+
+    // A node is solved if futureReward is equal to the true future reward
     bool solved;
 };
 

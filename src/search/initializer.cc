@@ -21,6 +21,9 @@ Initializer* Initializer::fromString(std::string& desc, THTS* thts) {
     if (desc.find("Expand") == 0) {
         desc = desc.substr(6, desc.size());
         result = new ExpandNodeInitializer(thts);
+    } else if (desc.find("Single") == 0) {
+        desc = desc.substr(6, desc.size());
+        result = new SingleChildInitializer(thts);
     } else {
         SystemUtils::abort("Unknown Initializer: " + desc);
     }
@@ -112,23 +115,25 @@ void Initializer::printStats(std::ostream& out,
 ******************************************************************/
 
 void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
-    node->children.resize(SearchEngine::numberOfActions, nullptr);
-
     // std::cout << "initializing state: " << std::endl;
     // current.print(std::cout);
 
-    std::vector<int> actionsToExpand = thts->getApplicableActions(current);
+    assert(node->children.empty());
+    node->children.resize(SearchEngine::numberOfActions, nullptr);
 
+    std::vector<int> actionsToExpand = thts->getApplicableActions(current);
     std::vector<double> initialQValues(SearchEngine::numberOfActions,
                                        -std::numeric_limits<double>::max());
     heuristic->estimateQValues(current, actionsToExpand, initialQValues);
 
+    double multiplier = heuristicWeight * (double)current.stepsToGo();
     for (unsigned int index = 0; index < node->children.size(); ++index) {
         if (actionsToExpand[index] == index) {
             node->children[index] = thts->getChanceNode(1.0);
             node->children[index]->futureReward =
-                heuristicWeight * (double)current.stepsToGo() * initialQValues[index];
+                multiplier * initialQValues[index];
             node->children[index]->numberOfVisits = numberOfInitialVisits;
+            node->children[index]->initialized = true;
 
             node->numberOfVisits += numberOfInitialVisits;
             node->futureReward =
@@ -141,6 +146,60 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
     }
     // std::cout << std::endl;
 
-    node->fullyInitialized = true;
+    node->initialized = true;
 }
 
+/******************************************************************
+                        ExpandNodeInitializer
+******************************************************************/
+
+void SingleChildInitializer::initialize(SearchNode* node, State const& current) {
+    // std::cout << "initializing state: " << std::endl;
+    // current.print(std::cout);
+
+    std::vector<int> candidates;
+
+    if (node->children.empty()) {
+        node->children.resize(SearchEngine::numberOfActions, nullptr);
+
+        std::vector<int> actionsToExpand = thts->getApplicableActions(current);
+        for (unsigned int index = 0; index < node->children.size(); ++index) {
+            if (actionsToExpand[index] == index) {
+                node->children[index] = thts->getChanceNode(1.0);
+                candidates.push_back(index);
+            }
+        }
+    } else {
+        for (unsigned int index = 0; index < node->children.size(); ++index) {
+            if (node->children[index] &&
+                MathUtils::doubleIsMinusInfinity(
+                    node->children[index]->futureReward)) {
+                candidates.push_back(index);
+            }
+        }
+    }
+
+    assert(!candidates.empty());
+    int actionIndex = candidates[rand() % candidates.size()];
+
+    double initialQValue = 0.0;
+    heuristic->estimateQValue(current, actionIndex, initialQValue);
+
+    node->children[actionIndex]->futureReward =
+        heuristicWeight * (double)current.stepsToGo() * initialQValue;
+    node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
+    node->children[actionIndex]->initialized = true;
+    node->numberOfVisits += numberOfInitialVisits;
+
+    // TODO: Careful, this behaves differently with ExpandAll than it does with
+    // SingleChild. As is, it only makes sense in combination with PB backups!
+    node->futureReward =
+        std::max(node->futureReward, node->children[actionIndex]->futureReward);
+
+    node->initialized = (candidates.size() == 1);
+
+    // std::cout << "Initialized child ";
+    // SearchEngine::actionStates[actionIndex].printCompact(std::cout);
+    // node->children[actionIndex]->print(std::cout);
+    // std::cout << std::endl;
+}

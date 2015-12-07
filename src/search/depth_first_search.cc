@@ -33,8 +33,8 @@ bool DepthFirstSearch::estimateQValue(State const& state, int actionIndex,
 bool DepthFirstSearch::estimateQValues(State const& state,
                                        vector<int> const& actionsToExpand,
                                        vector<double>& qValues) {
-    assert(_rootState.stepsToGo() > 0);
-    assert(_rootState.stepsToGo() <= maxSearchDepth);
+    assert(state.stepsToGo() > 0);
+    assert(state.stepsToGo() <= maxSearchDepth);
     assert(qValues.size() == SearchEngine::numberOfActions);
 
     for (unsigned int index = 0; index < qValues.size(); ++index) {

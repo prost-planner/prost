@@ -329,7 +329,7 @@ void THTS::visitDecisionNode(SearchNode* node) {
     }
 
     // Initialize node if necessary
-    if (!node->fullyInitialized) {
+    if (!node->initialized) {
         if (!tipNodeOfTrial) {
             tipNodeOfTrial = node;
         }

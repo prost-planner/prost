@@ -60,7 +60,8 @@ int ActionSelection::selectAction(SearchNode* node) {
         selectGreedyAction(node);
     }
 
-    if (selectLeastVisitedActionInRoot && (node == thts->getCurrentRootNode()) && bestActionIndices.empty()) {
+    if (selectLeastVisitedActionInRoot &&
+        (node == thts->getCurrentRootNode()) && bestActionIndices.empty()) {
        selectLeastVisitedAction(node);
     }
 
@@ -72,38 +73,34 @@ int ActionSelection::selectAction(SearchNode* node) {
         _selectAction(node);
     }
 
-    if ((thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) && (node == thts->getCurrentRootNode())) {
-        int selectedIndex = bestActionIndices[std::rand() % bestActionIndices.size()];
-        double bestValue = node->children[selectedIndex]->getExpectedRewardEstimate();
+    assert(!bestActionIndices.empty());    
+    int selectedIndex =
+        bestActionIndices[std::rand() % bestActionIndices.size()];
 
-        for (unsigned int childIndex = 0;  childIndex < node->children.size(); ++childIndex) {
-            if (node->children[childIndex] && MathUtils::doubleIsGreater(node->children[childIndex]->getExpectedRewardEstimate(), bestValue)) {
+    if ((thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) &&
+        (node == thts->getCurrentRootNode())) {
+        double bestValue =
+            node->children[selectedIndex]->getExpectedRewardEstimate();
+
+        for (SearchNode* child : node->children) {
+            if (child &&
+                MathUtils::doubleIsGreater(child->getExpectedRewardEstimate(),
+                                           bestValue)) {
                 ++exploreInRoot;
                 return selectedIndex;
             }
         }
         ++exploitInRoot;
-        return selectedIndex;
     }
 
-    // std::cout << "selecting action from among: ";
-    // for(unsigned int i = 0; i < bestActionIndices.size(); ++i) {
-    //     std::cout << bestActionIndices[i] << " ";
-    // }
-    // std::cout << std::endl;
-
-    // int rnd = std::rand();
-    // std::cout << "rand num is " << rnd << std::endl;
-
-    assert(!bestActionIndices.empty());
-    return bestActionIndices[std::rand() % bestActionIndices.size()];
+    return selectedIndex;
 }
 
 inline void ActionSelection::selectGreedyAction(SearchNode* node) {
     double bestValue = -std::numeric_limits<double>::max();
 
     for (unsigned int childIndex = 0;  childIndex < node->children.size(); ++childIndex) {
-        if (node->children[childIndex]) {
+        if (node->children[childIndex] && node->children[childIndex]->initialized) {
             if (MathUtils::doubleIsGreater(node->children[childIndex]->getExpectedRewardEstimate(), bestValue)) {
                 bestActionIndices.clear();
                 bestActionIndices.push_back(childIndex);
@@ -119,7 +116,8 @@ void ActionSelection::selectLeastVisitedAction(SearchNode* node) {
     int leastVisits = std::numeric_limits<int>::max();
 
     for (unsigned int childIndex = 0;  childIndex < node->children.size(); ++childIndex) {
-        if(node->children[childIndex] && !node->children[childIndex]->solved) {
+        if(node->children[childIndex] && node->children[childIndex]->initialized &&
+           !node->children[childIndex]->solved) {
             if (node->children[childIndex]->numberOfVisits < leastVisits) {
                 leastVisits = node->children[childIndex]->numberOfVisits;
                 bestActionIndices.clear();
@@ -133,7 +131,8 @@ void ActionSelection::selectLeastVisitedAction(SearchNode* node) {
 
 inline void ActionSelection::selectRandomAction(SearchNode* node) {
     for (unsigned int childIndex = 0;  childIndex < node->children.size(); ++childIndex) {
-        if (node->children[childIndex] && !node->children[childIndex]->solved) {
+        if (node->children[childIndex] && node->children[childIndex]->initialized &&
+            !node->children[childIndex]->solved) {
             bestActionIndices.push_back(childIndex);
         }
     }
@@ -144,7 +143,8 @@ inline void ActionSelection::selectActionBasedOnVisitDifference(SearchNode* node
     int highestNumVisits = 0;
 
     for (unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
-        if (node->children[childIndex] && !node->children[childIndex]->solved) {
+        if (node->children[childIndex] && node->children[childIndex]->initialized &&
+            !node->children[childIndex]->solved) {
             if (node->children[childIndex]->numberOfVisits < smallestNumVisits) {
                 bestActionIndices.clear();
                 bestActionIndices.push_back(childIndex);
@@ -202,7 +202,7 @@ void UCB1ActionSelection::_selectAction(SearchNode* node) {
     }
 
     for (unsigned int childIndex = 0; childIndex < node->children.size(); ++childIndex) {
-        if (node->children[childIndex] &&
+        if (node->children[childIndex] && node->children[childIndex]->initialized &&
             !node->children[childIndex]->solved) {
             double visitPart = magicConstant * 
                 std::sqrt(parentVisitPart / (double)node->children[childIndex]->numberOfVisits);
