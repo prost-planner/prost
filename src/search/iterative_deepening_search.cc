@@ -23,7 +23,6 @@ IDS::IDS() :
     currentState(State()),
     isLearning(false),
     timer(),
-    time(0.0),
     mls(nullptr),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
@@ -231,12 +230,32 @@ bool IDS::estimateQValues(State const& state,
 }
 
 bool IDS::moreIterations() {
+    double time = timer();
+
+    // 1. If caching was disabled, we check if the strict timeout is violated to
+    // readjust the maximal search depth
+    if (ramLimitReached &&
+        MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
+        if (currentState.stepsToGo() == 1) {
+            mls = new MinimalLookaheadSearch();
+            cout << name << ": Timeout violated (" << time
+                 << "s) on minimal search depth. Replacing this with MLS." << endl;
+        } else {
+            cout << name << ": Timeout violated (" << time
+                 << "s). Setting max search depth to "
+                 << (currentState.stepsToGo() - 1) << "!" << endl;
+            setMaxSearchDepth(currentState.stepsToGo() - 1);
+        }
+        return false;
+    }
+
+    // 2. Check if we have reached the max search depth for this step
     return currentState.stepsToGo() < maxSearchDepthForThisStep;
 }
 
 bool IDS::moreIterations(vector<int> const& actionsToExpand,
                          vector<double>& qValues) {
-    time = timer();
+    double time = timer();
 
     // If we are learning, we apply different termination criteria
     if (isLearning) {

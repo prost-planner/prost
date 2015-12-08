@@ -125,7 +125,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // This is the MaxUCT algorithm as described in our ICAPS 2013 paper
 
         desc = desc.substr(6, desc.size());
-        desc = "THTS -act [UCB1] -out [MC] -backup [MaxMC] -ndn H" + desc;
+        desc = "THTS -act [UCB1] -out [MC] -backup [MaxMC]" + desc;
     } else if (desc.find("BFS") == 0) {
         // This is a THTS version of breadth first search
 

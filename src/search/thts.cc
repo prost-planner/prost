@@ -30,18 +30,6 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
         return true;
     } 
 
-    // The ingredients must have been specified first
-    if (!actionSelection || !outcomeSelection || !backupFunction || !initializer) {
-        SystemUtils::abort("Action selection, outcome selection, backup function, and initializer must be defined first in a THTS search engine!");   
-    }
-
-    // Check if this is a parameter of an ingredient
-    if (actionSelection->setValueFromString(param, value) ||
-        outcomeSelection->setValueFromString(param, value) ||
-        backupFunction->setValueFromString(param, value)) {
-        return true;
-    }
-
     if (param == "-T") {
         if (value == "TIME") {
             setTerminationMethod(THTS::TIME);
@@ -88,6 +76,14 @@ void THTS::disableCaching() {
 }
 
 void THTS::learn() {
+    // All ingredients must have been specified
+    if (!actionSelection || !outcomeSelection ||
+        !backupFunction || !initializer) {
+        SystemUtils::abort("Action selection, outcome selection, backup "
+                           "function, and initializer must be defined in a THTS"
+                           " search engine!");   
+    }
+
     std::cout << name << ": learning..." << std::endl;
     if (initializer) {
         initializer->learn();

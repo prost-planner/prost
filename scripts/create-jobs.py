@@ -17,7 +17,7 @@ queue = "all.q@ase*"
 
 # defines the priority of the task. Possible values are [-1023,0], but the
 # maximum of 0 should only be used for very urgent jobs.
-priority = -100
+priority = 0
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
@@ -30,7 +30,7 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev150"
+revision = "rev152"
 
 configs = [
     "[IPPC2011]",
