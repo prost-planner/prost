@@ -78,9 +78,9 @@ protected:
     bool isLearning;
     std::vector<std::vector<double> > elapsedTime;
 
-    // Timer related variables
+    // The timer that is used to make sure that computation doesn't take too
+    // much time
     Timer timer;
-    double time;
 
     // The depth first search engine
     DepthFirstSearch* dfs;
