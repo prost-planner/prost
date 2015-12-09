@@ -21,19 +21,26 @@ DepthFirstSearch::DepthFirstSearch() :
                        Main Search Functions
 ******************************************************************/
 
-bool DepthFirstSearch::estimateQValues(State const& _rootState,
+void DepthFirstSearch::estimateQValue(State const& state, int actionIndex,
+                                      double& qValue) {
+    assert(state.stepsToGo() > 0);
+    assert(state.stepsToGo() <= maxSearchDepth);
+
+    applyAction(state, actionIndex, qValue);
+}
+
+void DepthFirstSearch::estimateQValues(State const& state,
                                        vector<int> const& actionsToExpand,
                                        vector<double>& qValues) {
-    assert(_rootState.stepsToGo() > 0);
-    assert(_rootState.stepsToGo() <= maxSearchDepth);
+    assert(state.stepsToGo() > 0);
+    assert(state.stepsToGo() <= maxSearchDepth);
     assert(qValues.size() == SearchEngine::numberOfActions);
 
     for (unsigned int index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {
-            applyAction(_rootState, index, qValues[index]);
+            applyAction(state, index, qValues[index]);
         }
     }
-    return true;
 }
 
 void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
@@ -79,10 +86,7 @@ void DepthFirstSearch::expandState(State const& state, double& result) {
         if (actionsToExpand[index] == index) {
             double tmp = 0.0;
             applyAction(state, index, tmp);
-
-            if (MathUtils::doubleIsGreater(tmp, result)) {
-                result = tmp;
-            }
+            result = std::max(result, tmp);
         }
     }
 
