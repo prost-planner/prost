@@ -15,19 +15,20 @@ public:
     bool setValueFromString(std::string& param, std::string& value);
 
     // Start the search engine to calculate best actions
-    bool estimateBestActions(State const& _rootState,
-            std::vector<int>& bestActions);
+    void estimateBestActions(State const& _rootState,
+                             std::vector<int>& bestActions) override;
 
-    // Start the search engine for state value estimation
-    bool estimateStateValue(State const& /*_rootState*/, double& stateValue) {
-        stateValue = initialValue;
-        return true;
+    // Start the search engine to estimate the Q-value of a single action
+    void estimateQValue(State const& /*state*/, int /*actionIndex*/,
+                        double& qValue) override {
+        qValue = initialValue;
     }
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState,
-            std::vector<int> const& actionsToExpand,
-            std::vector<double>& qValues);
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    void estimateQValues(State const& state,
+                         std::vector<int> const& actionsToExpand,
+                         std::vector<double>& qValues) override;
 
     // Parameter setter
     virtual void setInitialValue(double const& _initialValue) {

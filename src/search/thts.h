@@ -1,17 +1,22 @@
 #ifndef THTS_H
 #define THTS_H
 
-#include "uniform_evaluation_search.h"
+#include "search_engine.h"
+
 #include "utils/timer.h"
-#include "action_selection.h"
-#include "outcome_selection.h"
-#include "backup_function.h"
+
+#include <sstream>
+
+class ActionSelection;
+class OutcomeSelection;
+class BackupFunction;
+class Initializer;
 
 // THTS, Trial-based Heuristic Tree Search, is the implementation of the
 // abstract framework described in the ICAPS 2013 paper "Trial-based Heuristic
 // Tree Search for Finite Horizon MDPs" (Keller & Helmert). The described
-// ingredients are implemented in three classes (1-3) or as functions in the
-// THTS class (4-6)
+// ingredients are implemented in four classes (1-4) or as functions in the
+// THTS class (5-6)
 
 // 1. ActionSelection
 
@@ -19,20 +24,21 @@
 
 // 3. BackupFunction
 
-// 4. continueTrial()
+// 4. Initializer
 
-// 5. initializeDecisionNode()
+// 5. continueTrial()
 
 // 6. recommendAction()
 
 struct SearchNode {
-    SearchNode(double const& _prob, int const& _remainingSteps) :
+    SearchNode(double const& _prob, int const& _stepsToGo) :
         children(),
         immediateReward(0.0),
         prob(_prob),
-        remainingSteps(_remainingSteps),
+        stepsToGo(_stepsToGo),
         futureReward(-std::numeric_limits<double>::max()),
         numberOfVisits(0),
+        initialized(false),
         solved(false) {}
 
     ~SearchNode() {
@@ -43,13 +49,14 @@ struct SearchNode {
         }
     }
 
-    void reset(double const& _prob, int const& _remainingSteps) {
+    void reset(double const& _prob, int const& _stepsToGo) {
         children.clear();
         immediateReward = 0.0;
         prob = _prob;
-        remainingSteps = _remainingSteps;
+        stepsToGo = _stepsToGo;
         futureReward = -std::numeric_limits<double>::max();
         numberOfVisits = 0;
+        initialized = false;
         solved = false;
     }
 
@@ -75,11 +82,18 @@ struct SearchNode {
 
     double immediateReward;
     double prob;
-    int remainingSteps;
+    int stepsToGo;
     
     double futureReward;
     int numberOfVisits;
 
+    // This is used in two ways: in decision nodes, it is true if all children
+    // are initialized; and in chance nodes that represent an action (i.e., in
+    // children of decision nodes), it is true if an initial value has been
+    // assigned to the node.
+    bool initialized;
+
+    // A node is solved if futureReward is equal to the true future reward
     bool solved;
 };
 
@@ -91,6 +105,37 @@ public:
         TIME_AND_NUMBER_OF_TRIALS //stop after timeout sec or maxNumberOfTrials trials, whichever comes first
     };
 
+    THTS(std::string _name) :
+        ProbabilisticSearchEngine(_name),
+        actionSelection(nullptr),
+        outcomeSelection(nullptr),
+        backupFunction(nullptr),
+        initializer(nullptr),
+        currentRootNode(nullptr),
+        chosenOutcome(nullptr),
+        tipNodeOfTrial(nullptr),
+        states(SearchEngine::horizon + 1),
+        stepsToGoInCurrentState(SearchEngine::horizon),
+        stepsToGoInNextState(SearchEngine::horizon - 1),
+        appliedActionIndex(-1),
+        trialReward(0.0),
+        currentTrial(0),
+        initializedDecisionNodes(0),
+        lastUsedNodePoolIndex(0),
+        terminationMethod(THTS::TIME),
+        maxNumberOfTrials(0),
+        numberOfNewDecisionNodesPerTrial(1),
+        selectMostVisited(false),
+        numberOfRuns(0),
+        cacheHits(0),
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
+        firstSolvedFound(false),
+        accumulatedNumberOfTrialsInRootState(0),
+        accumulatedNumberOfSearchNodesInRootState(0) {
+        setMaxNumberOfNodes(24000000);
+        setTimeout(1.0);
+    }
+
     // Parameter setter
     virtual bool setValueFromString(std::string& param, std::string& value);
 
@@ -101,15 +146,21 @@ public:
     virtual void learn();
 
     // Start the search engine as main search engine
-    bool estimateBestActions(State const& _rootState,
-                             std::vector<int>& bestActions);
+    void estimateBestActions(State const& _rootState,
+                             std::vector<int>& bestActions) override;
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& /*_rootState*/,
-                         std::vector<int> const& /*actionsToExpand*/,
-                         std::vector<double>& /*qValues*/) {
+    // Start the search engine to estimate the Q-value of a single action
+    void estimateQValue(State const& /*state*/, int /*actionIndex*/,
+                        double& /*qValue*/) override {
         assert(false);
-        return false;
+    }
+    
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    void estimateQValues(State const& /*state*/,
+                         std::vector<int> const& /*actionsToExpand*/,
+                         std::vector<double>& /*qValues*/) override {
+        assert(false);
     }
 
     // Parameter setter
@@ -125,14 +176,7 @@ public:
         backupFunction = _backupFunction;
     }
     
-    virtual void setMaxSearchDepth(int _maxSearchDepth) {
-        SearchEngine::setMaxSearchDepth(_maxSearchDepth);
-
-        if (initializer) {
-            initializer->setMaxSearchDepth(_maxSearchDepth);
-        }
-    }
-
+    virtual void setMaxSearchDepth(int _maxSearchDepth);
     virtual void setTerminationMethod(
             THTS::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
@@ -142,15 +186,9 @@ public:
         maxNumberOfTrials = _maxNumberOfTrials;
     }
 
-    virtual void setInitializer(SearchEngine* _initializer) {
-        if (initializer) {
-            delete initializer;
-        }
+    virtual void setInitializer(Initializer* _initializer) {
+        assert(!initializer);
         initializer = _initializer;
-    }
-
-    virtual void setNumberOfInitialVisits(int _numberOfInitialVisits) {
-        numberOfInitialVisits = _numberOfInitialVisits;
     }
 
     virtual void setNumberOfNewDecisionNodesPerTrial(
@@ -170,10 +208,6 @@ public:
         selectMostVisited = _selectMostVisited;
     }
 
-    virtual void setHeuristicWeight(double _heuristicWeight) {
-        heuristicWeight = _heuristicWeight;
-    }
-
     // Used only for testing
     void setCurrentRootNode(SearchNode* node) {
         currentRootNode = node;
@@ -188,53 +222,17 @@ public:
         return currentRootNode;
     }
 
-    // Locks backup-phase, i.e. only updates visits, but not Qvalues, e.g.
-    // dp_uct would always backup the old future reward
-    bool backupLock;
+    SearchNode const* getTipNodeOfTrial() const {
+        return tipNodeOfTrial;
+    }
 
-    // Backup lock won't apply at and beyond this depth.
-    int maxLockDepth;
-
-    // Printer
-    virtual void print(std::ostream& out);
+    // Print
     virtual void printStats(std::ostream& out,
                             bool const& printRoundStats,
-                            std::string indent = "") const;
+                            std::string indent = "") const override;
 
-    THTS(std::string _name) :
-        ProbabilisticSearchEngine(_name),
-        backupLock(false),
-        maxLockDepth(0),
-        actionSelection(nullptr),
-        outcomeSelection(nullptr),
-        backupFunction(nullptr),
-        currentRootNode(nullptr),
-        chosenOutcome(nullptr),
-        states(SearchEngine::horizon + 1),
-        stepsToGoInCurrentState(SearchEngine::horizon),
-        stepsToGoInNextState(SearchEngine::horizon - 1),
-        appliedActionIndex(-1),
-        trialReward(0.0),
-        currentTrial(0),
-        initializer(nullptr),
-        initialQValues(SearchEngine::numberOfActions, 0.0),
-        initializedDecisionNodes(0),
-        lastUsedNodePoolIndex(0),
-        terminationMethod(THTS::TIME),
-        maxNumberOfTrials(0),
-        numberOfInitialVisits(1),
-        numberOfNewDecisionNodesPerTrial(1),
-        selectMostVisited(false),
-        heuristicWeight(0.5),
-        numberOfRuns(0),
-        cacheHits(0),
-        accumulatedNumberOfRemainingStepsInFirstSolvedRootState(0),
-        firstSolvedFound(false),
-        accumulatedNumberOfTrialsInRootState(0),
-        accumulatedNumberOfSearchNodesInRootState(0) {
-        setMaxNumberOfNodes(24000000);
-        setTimeout(1.0);
-    }
+    // Stream for nicer (and better timed) printing
+    mutable std::stringstream outStream;
 
 protected:
     // Main search functions
@@ -252,9 +250,6 @@ protected:
     virtual bool continueTrial(SearchNode* /*node*/) {
         return initializedDecisionNodes < numberOfNewDecisionNodesPerTrial;
     }
-
-    // Initialization of nodes
-    virtual void initializeDecisionNode(SearchNode* node);
 
     // Recommendation function
     virtual void recommendAction(std::vector<int>& bestActions);
@@ -275,10 +270,15 @@ private:
     ActionSelection* actionSelection;
     OutcomeSelection* outcomeSelection;
     BackupFunction* backupFunction;
+    Initializer* initializer;
 
     // Search nodes used in trials
     SearchNode* currentRootNode;
     SearchNode* chosenOutcome;
+
+    // The tip node of a trial is the first node that is encountered that
+    // requires initialization of a child
+    SearchNode* tipNodeOfTrial;
 
     // States used in trials
     std::vector<PDState> states;
@@ -309,11 +309,6 @@ private:
     // Index of the last variable with non-deterministic outcome in the current transition
     int lastProbabilisticVarIndex;
 
-    // Search engine that estimates Q-values for initialization of
-    // decison node children
-    SearchEngine* initializer;
-    std::vector<double> initialQValues;
-
     // Counter for number of initialized decision nodes in the current
     // trial
     int initializedDecisionNodes;
@@ -329,16 +324,14 @@ protected:
     // Parameter
     THTS::TerminationMethod terminationMethod;
     int maxNumberOfTrials;
-    int numberOfInitialVisits;
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
     bool selectMostVisited;
-    double heuristicWeight;
 
     // Statistics
     int numberOfRuns;
     int cacheHits;
-    int accumulatedNumberOfRemainingStepsInFirstSolvedRootState;
+    int accumulatedNumberOfStepsToGoInFirstSolvedRootState;
     bool firstSolvedFound;
     int accumulatedNumberOfTrialsInRootState;
     int accumulatedNumberOfSearchNodesInRootState;

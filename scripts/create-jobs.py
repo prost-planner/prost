@@ -13,7 +13,11 @@ benchmark="ippc-all"
 # "athlon.q" and "athlon_core.q". The former value configures the use
 # of a whole cpu, while the latter option configures the use of a
 # single cpu core.
-queue = "meta_core.q"
+queue = "all.q@ase*"
+
+# defines the priority of the task. Possible values are [-1023,0], but the
+# maximum of 0 should only be used for very urgent jobs.
+priority = 0
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:00" sets the timeout
@@ -26,24 +30,51 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev115"
+revision = "rev153"
 
 configs = [
-    "[MC-UCT -i [IDS]]",
     "[IPPC2011]",
-    "[DP-UCT -i [IDS]]",    
-    "[UCTStar -i [IDS]]",
-    "[MaxMC-UCT -i [IDS]]"
+    "[IPPC2014]",
 
-    #"[MC-UCT -i [Uniform]]",
-    #"[MC-UCT -sd 15 -i [Uniform]]",
-    #"[DP-UCT -i [Uniform]]",    
-    #"[UCTStar -i [Uniform]]",
-    #"[MaxMC-UCT -i [Uniform]]",
+    "[UCTStar -init [Expand -h [IDS]]]",
+    "[UCTStar -init [Expand -h [MLS]]]",
+    "[UCTStar -init [Expand -h [Uniform]]]",
+    "[UCTStar -init [Expand -h [RandomWalk]]]",
 
-    #"[BFS -i [IDS]]",
-    #"[IDS]",
-    #"[Uniform]",
+    "[DP-UCT -init [Expand -h [IDS]]]",
+    "[DP-UCT -init [Expand -h [MLS]]]",
+    "[DP-UCT -init [Expand -h [Uniform]]]",
+    "[DP-UCT -init [Expand -h [RandomWalk]]]",
+
+    "[UCT -init [Expand -h [IDS]]]",
+    "[UCT -init [Expand -h [MLS]]]",
+    "[UCT -init [Expand -h [Uniform]]]",
+    "[UCT -init [Expand -h [RandomWalk]]]",
+
+    "[MaxUCT -init [Expand -h [IDS]]]",
+    "[MaxUCT -init [Expand -h [MLS]]]",
+    "[MaxUCT -init [Expand -h [Uniform]]]",
+    "[MaxUCT -init [Expand -h [RandomWalk]]]",
+
+    "[UCTStar -init [Single -h [IDS]]]",
+    "[UCTStar -init [Single -h [MLS]]]",
+    "[UCTStar -init [Single -h [Uniform]]]",
+    "[UCTStar -init [Single -h [RandomWalk]]]",
+
+    "[DP-UCT -init [Single -h [IDS]]]",
+    "[DP-UCT -init [Single -h [MLS]]]",
+    "[DP-UCT -init [Single -h [Uniform]]]",
+    "[DP-UCT -init [Single -h [RandomWalk]]]",
+
+    "[UCT -init [Single -h [IDS]]]",
+    "[UCT -init [Single -h [MLS]]]",
+    "[UCT -init [Single -h [Uniform]]]",
+    "[UCT -init [Single -h [RandomWalk]]]",
+
+    "[MaxUCT -init [Single -h [IDS]]]",
+    "[MaxUCT -init [Single -h [MLS]]]",
+    "[MaxUCT -init [Single -h [Uniform]]]",
+    "[MaxUCT -init [Single -h [RandomWalk]]]",
 ]
 
 host = "localhost"
@@ -75,10 +106,11 @@ def create_tasks(filename, instances):
 
 
     template = Template(file='job.tmpl',
-                        searchList=[{'tasks'   : tasks,
-                                     'queue'   : queue,
-                                     'timeout' : timeout,
-                                     'memout'  : memout}])    
+                        searchList=[{'tasks'    : tasks,
+                                     'queue'    : queue,
+                                     'timeout'  : timeout,
+                                     'memout'   : memout,
+                                     'priority' : priority}])    
     f = file(filename, 'w')
     f.write(str(template))
     f.close()

@@ -5,10 +5,12 @@ HEADERS = parser.h \
 	  action_selection.h \
 	  outcome_selection.h \
 	  backup_function.h \
+	  initializer.h \
 	  depth_first_search.h \
 	  iterative_deepening_search.h \
 	  minimal_lookahead_search.h \
 	  uniform_evaluation_search.h \
+	  random_walk.h \
 	  ippc_client.h \
 	  states.h \
 	  evaluatables.h \

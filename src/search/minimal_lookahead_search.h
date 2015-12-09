@@ -9,12 +9,17 @@ class MinimalLookaheadSearch : public DeterministicSearchEngine {
 public:
     MinimalLookaheadSearch();
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& current,
-                         std::vector<int> const& actionsToExpand,
-                         std::vector<double>& qValues);
+    // Start the search engine to estimate the Q-value of a single action
+    void estimateQValue(State const& state, int actionIndex,
+                        double& qValue) override;    
 
-    // Printer
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    void estimateQValues(State const& state,
+                         std::vector<int> const& actionsToExpand,
+                         std::vector<double>& qValues) override;
+
+    // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
                     std::string indent = "") const;
 

@@ -29,10 +29,15 @@ public:
     // set.
     void learn();
 
-    // Start the search engine for Q-value estimation
-    bool estimateQValues(State const& _rootState,
+    // Start the search engine to estimate the Q-value of a single action
+    void estimateQValue(State const& state, int actionIndex,
+                        double& qValue) override;
+    
+    // Start the search engine to estimate the Q-values of all applicable
+    // actions
+    void estimateQValues(State const& state,
                          std::vector<int> const& actionsToExpand,
-                         std::vector<double>& qValues);
+                         std::vector<double>& qValues) override;
 
     // Parameter setter
     void setMaxSearchDepth(int _maxSearchDepth);
@@ -50,7 +55,7 @@ public:
     // Reset statistic variables
     void resetStats();
 
-    // Printer
+    // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
                     std::string indent = "") const;
 
@@ -64,6 +69,7 @@ protected:
     // Decides whether more iterations are possible and reasonable
     bool moreIterations(std::vector<int> const& actionsToExpand,
                         std::vector<double>& qValues);
+    inline bool moreIterations();
 
     // The state that is given iteratively to the DFS engine
     State currentState;
@@ -72,9 +78,9 @@ protected:
     bool isLearning;
     std::vector<std::vector<double> > elapsedTime;
 
-    // Timer related variables
+    // The timer that is used to make sure that computation doesn't take too
+    // much time
     Timer timer;
-    double time;
 
     // The depth first search engine
     DepthFirstSearch* dfs;

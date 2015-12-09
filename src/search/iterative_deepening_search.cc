@@ -23,7 +23,6 @@ IDS::IDS() :
     currentState(State()),
     isLearning(false),
     timer(),
-    time(0.0),
     mls(nullptr),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
@@ -145,44 +144,72 @@ void IDS::learn() {
                        Main Search Functions
 ******************************************************************/
 
-bool IDS::estimateQValues(State const& _rootState,
+void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
+    HashMap::iterator it = rewardCache.find(state);
+    if (it != rewardCache.end() &&
+        !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
+        ++cacheHits;
+        qValue = it->second[actionIndex];
+    }  else if(mls) {     
+        mls->estimateQValue(state, actionIndex, qValue);
+    } else {
+        timer.reset();
+
+        maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
+
+        currentState.setTo(state);
+        currentState.stepsToGo() = 1;
+        do {
+            ++currentState.stepsToGo();
+            dfs->estimateQValue(currentState, actionIndex, qValue);
+        }  while (moreIterations());
+
+        qValue /= ((double) currentState.stepsToGo());
+
+        // TODO: Currently, we cache every result, but we should only do so if
+        // the result was achieved with a reasonable action, with a timeout or
+        // on a state with sufficient depth
+        if (cachingEnabled) {
+            if (it == rewardCache.end()) {
+                rewardCache[currentState] =
+                    vector<double>(SearchEngine::numberOfActions,
+                                   -std::numeric_limits<double>::max());
+            }
+            rewardCache[currentState][actionIndex] = qValue;
+        }
+
+        accumulatedSearchDepth += currentState.stepsToGo();
+        ++numberOfRuns;
+    }
+}
+
+void IDS::estimateQValues(State const& state,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
-    if(mls) {
-        HashMap::iterator it = rewardCache.find(_rootState);
-        if (it != rewardCache.end()) {
-            ++cacheHits;
-            assert(qValues.size() == it->second.size());
-            for (size_t i = 0; i < qValues.size(); ++i) {
-                qValues[i] = it->second[i];
-            }
-            return true;
-        }      
-        return mls->estimateQValues(_rootState, actionsToExpand, qValues);
-    }
-    timer.reset();
-
-    HashMap::iterator it = rewardCache.find(_rootState);
-
+    HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
-        for (size_t i = 0; i < qValues.size(); ++i) {
-            qValues[i] = it->second[i];
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            qValues[index] = it->second[index];
         }
+    } else if (mls) {
+        mls->estimateQValues(state, actionsToExpand, qValues);
     } else {
-        maxSearchDepthForThisStep = std::min(maxSearchDepth, _rootState.stepsToGo());
+        timer.reset();
 
-        currentState.setTo(_rootState);
+        maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
+
+        currentState.setTo(state);
         currentState.stepsToGo() = 1;
         do {
             ++currentState.stepsToGo();
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
         }  while (moreIterations(actionsToExpand, qValues));
 
-        for (size_t actInd = 0; actInd < qValues.size(); ++actInd) {
-            if (actionsToExpand[actInd] == actInd) {
-                qValues[actInd] /= ((double) currentState.stepsToGo());
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            if (actionsToExpand[index] == index) {
+                qValues[index] /= ((double) currentState.stepsToGo());
             }
         }
 
@@ -196,15 +223,37 @@ bool IDS::estimateQValues(State const& _rootState,
         accumulatedSearchDepth += currentState.stepsToGo();
         ++numberOfRuns;
     }
+}
 
-    return true;
+bool IDS::moreIterations() {
+    double time = timer();
+
+    // 1. If caching was disabled, we check if the strict timeout is violated to
+    // readjust the maximal search depth
+    if (ramLimitReached &&
+        MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
+        if (currentState.stepsToGo() == 1) {
+            mls = new MinimalLookaheadSearch();
+            cout << name << ": Timeout violated (" << time
+                 << "s) on minimal search depth. Replacing this with MLS." << endl;
+        } else {
+            cout << name << ": Timeout violated (" << time
+                 << "s). Setting max search depth to "
+                 << (currentState.stepsToGo() - 1) << "!" << endl;
+            setMaxSearchDepth(currentState.stepsToGo() - 1);
+        }
+        return false;
+    }
+
+    // 2. Check if we have reached the max search depth for this step
+    return currentState.stepsToGo() < maxSearchDepthForThisStep;
 }
 
 bool IDS::moreIterations(vector<int> const& actionsToExpand,
                          vector<double>& qValues) {
-    time = timer();
+    double time = timer();
 
-    // If we are learning, we apply different termination criteria
+    // 0. If we are learning, we apply different termination criteria
     if (isLearning) {
         elapsedTime[currentState.stepsToGo()].push_back(time);
 
@@ -238,9 +287,9 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
     if (terminateWithReasonableAction &&
         actionStates[0].scheduledActionFluents.empty() &&
         (actionsToExpand[0] == 0)) {
-        for (size_t actInd = 1; actInd < qValues.size(); ++actInd) {
-            if ((actionsToExpand[actInd] == actInd) &&
-                MathUtils::doubleIsGreater(qValues[actInd], qValues[0])) {
+        for (size_t index = 1; index < qValues.size(); ++index) {
+            if ((actionsToExpand[index] == index) &&
+                MathUtils::doubleIsGreater(qValues[index], qValues[0])) {
                 return false;
             }
         }
@@ -251,7 +300,7 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
 }
 
 /******************************************************************
-                   Statistics and Printers
+                   Statistics and Prints
 ******************************************************************/
 
 void IDS::resetStats() {

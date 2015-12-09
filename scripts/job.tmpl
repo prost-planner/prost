@@ -30,6 +30,9 @@
 ## the number of tasks is this job file
 #$ -t 1-#echo len($tasks)
 #####################################################################
+## the priority of this job. 
+#$ -p $priority
+#####################################################################
 
 #for task_id,task in zip(range(1, len($tasks)+1),$tasks) 
 if [ $task_id -eq \$SGE_TASK_ID ]; then
