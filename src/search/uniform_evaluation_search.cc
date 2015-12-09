@@ -36,13 +36,13 @@ void UniformEvaluationSearch::estimateBestActions(
     bestActions = getIndicesOfApplicableActions(_rootState);
 }
 
-void UniformEvaluationSearch::estimateQValues(State const& /*state*/,
+void UniformEvaluationSearch::estimateQValues(State const& state,
                                               vector<int> const& actionsToExpand,
                                               vector<double>& qValues) {
     // Assign the initial value to all applicable actions
     for (unsigned int index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {
-            qValues[index] = initialValue;
+            qValues[index] = initialValue * (double)state.stepsToGo();
         }
     }
 }

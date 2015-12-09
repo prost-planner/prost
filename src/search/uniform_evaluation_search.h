@@ -12,16 +12,16 @@ public:
     UniformEvaluationSearch();
 
     // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // Start the search engine to calculate best actions
     void estimateBestActions(State const& _rootState,
                              std::vector<int>& bestActions) override;
 
     // Start the search engine to estimate the Q-value of a single action
-    void estimateQValue(State const& /*state*/, int /*actionIndex*/,
+    void estimateQValue(State const& state, int /*actionIndex*/,
                         double& qValue) override {
-        qValue = initialValue;
+        qValue = initialValue * (double)state.stepsToGo();
     }
 
     // Start the search engine to estimate the Q-values of all applicable

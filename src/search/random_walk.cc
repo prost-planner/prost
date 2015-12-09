@@ -28,7 +28,6 @@ void RandomWalk::estimateQValue(State const& state, int actionIndex,
     assert(state.stepsToGo() > 0);
     PDState current(state);
     performRandomWalks(current, actionIndex, qValue);
-    qValue /= (double)state.stepsToGo();
 }
 
 void RandomWalk::estimateQValues(State const& state,
@@ -39,7 +38,6 @@ void RandomWalk::estimateQValues(State const& state,
     for (size_t index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {
             performRandomWalks(current, index, qValues[index]);
-            qValues[index] /= (double)state.stepsToGo();
         }
     }
 }

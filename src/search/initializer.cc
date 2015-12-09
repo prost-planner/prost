@@ -126,12 +126,11 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
                                        -std::numeric_limits<double>::max());
     heuristic->estimateQValues(current, actionsToExpand, initialQValues);
 
-    double multiplier = heuristicWeight * (double)current.stepsToGo();
     for (unsigned int index = 0; index < node->children.size(); ++index) {
         if (actionsToExpand[index] == index) {
             node->children[index] = thts->getChanceNode(1.0);
             node->children[index]->futureReward =
-                multiplier * initialQValues[index];
+                heuristicWeight * initialQValues[index];
             node->children[index]->numberOfVisits = numberOfInitialVisits;
             node->children[index]->initialized = true;
 
@@ -185,14 +184,10 @@ void SingleChildInitializer::initialize(SearchNode* node, State const& current) 
     double initialQValue = 0.0;
     heuristic->estimateQValue(current, actionIndex, initialQValue);
 
-    node->children[actionIndex]->futureReward =
-        heuristicWeight * (double)current.stepsToGo() * initialQValue;
+    node->children[actionIndex]->futureReward = heuristicWeight * initialQValue;
     node->children[actionIndex]->numberOfVisits = numberOfInitialVisits;
     node->children[actionIndex]->initialized = true;
     node->numberOfVisits += numberOfInitialVisits;
-
-    // TODO: Careful, this behaves differently with ExpandAll than it does with
-    // SingleChild. As is, it only makes sense in combination with PB backups!
     node->futureReward =
         std::max(node->futureReward, node->children[actionIndex]->futureReward);
 

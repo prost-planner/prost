@@ -21,7 +21,7 @@ void MinimalLookaheadSearch::estimateQValue(State const& state,
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
-        qValue = it->second[actionIndex];
+        qValue = it->second[actionIndex] * (double)state.stepsToGo();;
     } else {
         // Apply the action to state
         calcReward(state, actionIndex, qValue);
@@ -49,8 +49,9 @@ void MinimalLookaheadSearch::estimateQValue(State const& state,
             }
             rewardCache[state][actionIndex] = qValue;
         }
-        ++numberOfRuns;
+        qValue *= (double)state.stepsToGo();
 
+        ++numberOfRuns;
     }
 }
 
@@ -62,8 +63,12 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
-        for (size_t i = 0; i < qValues.size(); ++i) {
-            qValues[i] = it->second[i];
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            if (actionsToExpand[index] == index) {
+                qValues[index] = it->second[index] * (double)state.stepsToGo();
+            } else {
+                qValues[index] = -std::numeric_limits<double>::max();
+            }
         }
     } else {
         if(rewardCPF->isActionIndependent()) {
@@ -74,18 +79,18 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
             double reward = 0.0;
             calcReward(state, 0, reward);
 
-            for(size_t actionIndex = 0; actionIndex < actionsToExpand.size(); ++actionIndex) {
-                if(actionsToExpand[actionIndex] == actionIndex) {
-                    // Calculate the successor state given this action is applied
-                    // (i.e., the action matters here!)
+            for(size_t index = 0; index < actionsToExpand.size(); ++index) {
+                if(actionsToExpand[index] == index) {
+                    // Calculate the successor state given this action is
+                    // applied (i.e., the action matters here!)
                     State next;
-                    calcSuccessorState(state, actionIndex, next);
+                    calcSuccessorState(state, index, next);
 
-                    // Now that we have the successor state, we can (again) use any
-                    // action to calculate the reward of the next state.
+                    // Now that we have the successor state, we can (again) use
+                    // any action to calculate the reward of the next state.
                     double reward2;
                     calcReward(next, 0, reward2);
-                    qValues[actionIndex] = (reward + reward2) / 2.0;
+                    qValues[index] = (reward + reward2) / 2.0;
                 }
             }
         } else if(actionStates[0].scheduledActionFluents.empty() &&
@@ -96,23 +101,23 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
             // while the positive effect of the action is not. Since noop is
             // always applicable in this task, we apply in the next state to
             // account for those positive effects.
-            for(size_t actionIndex = 0; actionIndex < actionsToExpand.size(); ++actionIndex) {
-                if(actionsToExpand[actionIndex] == actionIndex) {
+            for(size_t index = 0; index < actionsToExpand.size(); ++index) {
+                if(actionsToExpand[index] == index) {
                     State next;
                     double reward;
-                    calcStateTransition(state, actionIndex, next, reward);
+                    calcStateTransition(state, index, next, reward);
 
                     // Use noop to calculate the reward in the next state.
                     double reward2;
                     calcReward(next, 0, reward2);
-                    qValues[actionIndex] = (reward + reward2) / 2.0;
+                    qValues[index] = (reward + reward2) / 2.0;
                 }
             }
         } else {
             // Apply all actions to state
-            for(size_t actionIndex = 0; actionIndex < actionsToExpand.size(); ++actionIndex) {
-                if(actionsToExpand[actionIndex] == actionIndex) {
-                    calcReward(state, actionIndex, qValues[actionIndex]);
+            for(size_t index = 0; index < actionsToExpand.size(); ++index) {
+                if(actionsToExpand[index] == index) {
+                    calcReward(state, index, qValues[index]);
                 }
             }
         }
@@ -120,13 +125,20 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
         if (cachingEnabled) {
             rewardCache[state] = qValues;
         }
-        ++numberOfRuns;
 
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            if (actionsToExpand[index] == index) {
+                qValues[index] *= (double)state.stepsToGo();
+            }
+        }
+
+        ++numberOfRuns;
     }
 }
 
 void MinimalLookaheadSearch::printStats(ostream& out,
-                                        bool const& /*printRoundStats*/, 
+                                        bool const& /*printRoundStats*/,
                                         string indent) const {
-    out << indent << "Cache hits: " << cacheHits << " (in " << numberOfRuns << " runs)" << endl;
+    out << indent << "Cache hits: " << cacheHits << " (in "
+        << numberOfRuns << " runs)" << endl;
 }

@@ -149,7 +149,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
-        qValue = it->second[actionIndex];
+        qValue = it->second[actionIndex] * (double)state.stepsToGo();
     }  else if(mls) {     
         mls->estimateQValue(state, actionIndex, qValue);
     } else {
@@ -177,6 +177,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
             }
             rewardCache[currentState][actionIndex] = qValue;
         }
+        qValue *= (double)state.stepsToGo();
 
         accumulatedSearchDepth += currentState.stepsToGo();
         ++numberOfRuns;
@@ -191,7 +192,11 @@ void IDS::estimateQValues(State const& state,
         ++cacheHits;
         assert(qValues.size() == it->second.size());
         for (size_t index = 0; index < qValues.size(); ++index) {
-            qValues[index] = it->second[index];
+            if (actionsToExpand[index] == index) {
+                qValues[index] = it->second[index] * (double)state.stepsToGo();
+            } else {
+                qValues[index] = -std::numeric_limits<double>::max();
+            }
         }
     } else if (mls) {
         mls->estimateQValues(state, actionsToExpand, qValues);
@@ -207,17 +212,26 @@ void IDS::estimateQValues(State const& state,
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
         }  while (moreIterations(actionsToExpand, qValues));
 
-        for (size_t index = 0; index < qValues.size(); ++index) {
-            if (actionsToExpand[index] == index) {
-                qValues[index] /= ((double) currentState.stepsToGo());
-            }
-        }
-
+        double multiplier =
+            (double)state.stepsToGo() / (double)currentState.stepsToGo();
         // TODO: Currently, we cache every result, but we should only do so if
         // the result was achieved with a reasonable action, with a timeout or
         // on a state with sufficient depth
         if (cachingEnabled) {
             rewardCache[currentState] = qValues;
+            for (size_t index = 0; index < qValues.size(); ++index) {
+                if (actionsToExpand[index] == index) {
+                    qValues[index] *= multiplier;
+                    rewardCache[currentState][index] /=
+                        (double)currentState.stepsToGo();
+                }
+            }
+        } else {
+            for (size_t index = 0; index < qValues.size(); ++index) {
+                if (actionsToExpand[index] == index) {
+                    qValues[index] *= multiplier;
+                }
+            }
         }
 
         accumulatedSearchDepth += currentState.stepsToGo();

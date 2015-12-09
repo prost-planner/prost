@@ -12,13 +12,19 @@ class SearchNode;
 
 class BackupFunction {
 public:
-    // Create an backup function component
+    // Create a backup function component
     static BackupFunction* fromString(std::string& desc, THTS* thts);
     
     // Set parameters from command line
     virtual bool setValueFromString(std::string& /*param*/, std::string& /*value*/) {
         return false;
     }
+
+    // Learns parameter values from a random training set.
+    virtual void learn() {}
+
+    // This is called when caching is disabled because memory becomes sparse.
+    virtual void disableCaching() {}
 
     virtual void initRound() {}
     virtual void initTrial() {
@@ -81,7 +87,7 @@ public:
     }
 
     // Backup functions
-    virtual void backupChanceNode(SearchNode* node, double const& futReward);
+    void backupChanceNode(SearchNode* node, double const& futReward) override;
 
 private:
     double initialLearningRate;
@@ -98,7 +104,7 @@ public:
         BackupFunction(_thts) {}
 
     // Backup functions
-    virtual void backupChanceNode(SearchNode* node, double const& futReward);
+    void backupChanceNode(SearchNode* node, double const& futReward) override;
 };
 
 /******************************************************************
@@ -111,7 +117,7 @@ public:
     BackupFunction(_thts, true, true) {}
 
     // Backup functions
-    virtual void backupChanceNode(SearchNode* node, double const& futReward);
+    void backupChanceNode(SearchNode* node, double const& futReward) override;
 };
 
 #endif
