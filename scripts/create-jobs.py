@@ -30,7 +30,7 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev152"
+revision = "rev153"
 
 configs = [
     "[IPPC2011]",
@@ -46,10 +46,10 @@ configs = [
     "[DP-UCT -init [Expand -h [Uniform]]]",
     "[DP-UCT -init [Expand -h [RandomWalk]]]",
 
-    "[MC-UCT -init [Expand -h [IDS]]]",
-    "[MC-UCT -init [Expand -h [MLS]]]",
-    "[MC-UCT -init [Expand -h [Uniform]]]",
-    "[MC-UCT -init [Expand -h [RandomWalk]]]",
+    "[UCT -init [Expand -h [IDS]]]",
+    "[UCT -init [Expand -h [MLS]]]",
+    "[UCT -init [Expand -h [Uniform]]]",
+    "[UCT -init [Expand -h [RandomWalk]]]",
 
     "[MaxUCT -init [Expand -h [IDS]]]",
     "[MaxUCT -init [Expand -h [MLS]]]",
@@ -66,10 +66,10 @@ configs = [
     "[DP-UCT -init [Single -h [Uniform]]]",
     "[DP-UCT -init [Single -h [RandomWalk]]]",
 
-    "[MC-UCT -init [Single -h [IDS]]]",
-    "[MC-UCT -init [Single -h [MLS]]]",
-    "[MC-UCT -init [Single -h [Uniform]]]",
-    "[MC-UCT -init [Single -h [RandomWalk]]]",
+    "[UCT -init [Single -h [IDS]]]",
+    "[UCT -init [Single -h [MLS]]]",
+    "[UCT -init [Single -h [Uniform]]]",
+    "[UCT -init [Single -h [RandomWalk]]]",
 
     "[MaxUCT -init [Single -h [IDS]]]",
     "[MaxUCT -init [Single -h [MLS]]]",

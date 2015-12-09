@@ -87,47 +87,54 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     StringUtils::removeFirstAndLastCharacter(desc);
     StringUtils::trim(desc);
 
+    // Determines which search engine identifier is used
+    auto isConfig = [&] (string const& config) {
+        return (desc.find(config + " ") == 0) || (desc.compare(config) == 0);
+    };
+
     // Check if a shortcut description has been used
-    if (desc.find("IPPC2011") == 0) {
+    if (isConfig("IPPC2011")) {
         // This is the configuration that was used at IPPC 2011 (all bugfixes
         // and code improvements that have been implemented since then are
         // contained, though)
 
         desc = desc.substr(8, desc.size());
         desc = "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd 15] -iv 5 -hw 1.0] -ndn H -sd 15" + desc;
-    } else if (desc.find("IPPC2014") == 0) {
+    } else if (isConfig("IPPC2014")) {
         // This is the configuration that was used at IPPC 2014 (without
         // consideration of the MDP-ESP problem that is described in our AAAI
         // 2015 paper, so it can be used for planner comparison)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS] -hw 0.5]" + desc;
-    } else if (desc.find("MC-UCT") == 0) {
+        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]]" + desc;
+    } else if (isConfig("UCT")) {
         // This is an implementation of the UCT algorithm as described by Kocsis
-        // & Szepesvari (2006) within the THTS framework. It differs in that is
-        // uses a heuristic (instead of a random walk initialization) and that
-        // the tip node that is encountered in a trial is expanded entirely
-        // (instead of adding only a single child to the tree)
+        // & Szepesvari (2006) within the THTS framework. To obtain the most
+        // common UCT variant, combine it with -init [Single -h [RandomWalk]].
  
-        desc = desc.substr(6, desc.size());
+        desc = desc.substr(3, desc.size());
         desc = "THTS -act [UCB1] -out [MC] -backup [MC]" + desc;
-    } else if (desc.find("UCTStar") == 0) {
+    } else if (isConfig("UCTStar")) {
         // This is the UCT* algorithm as described in our ICAPS 2013 paper
  
         desc = desc.substr(7, desc.size());
         desc = "THTS -act [UCB1] -out [UMC] -backup [PB]" + desc;
-    } else if (desc.find("DP-UCT") == 0) {
+    } else if (isConfig("DP-UCT")) {
         // This is the DP-UCT algorithm as described in our ICAPS 2013 paper
 
         desc = desc.substr(6, desc.size());
         desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H" + desc;
-    } else if (desc.find("MaxUCT") == 0) {
-        // This is the MaxUCT algorithm as described in our ICAPS 2013 paper
+    } else if (isConfig("MaxUCT")) {
+        // This is the MaxUCT algorithm as described in our ICAPS 2013 paper,
+        // with the exception that the trial length does not default to
+        // expanding complete paths to a terminal node (use -ndn H for that
+        // behaviour)
 
         desc = desc.substr(6, desc.size());
         desc = "THTS -act [UCB1] -out [MC] -backup [MaxMC]" + desc;
-    } else if (desc.find("BFS") == 0) {
-        // This is a THTS version of breadth first search
+    } else if (isConfig("BFS")) {
+        // This is a THTS algorithm that selects actions like breadth first
+        // search and that samples outcomes according to their probability
 
         desc = desc.substr(3, desc.size());
         desc = "THTS -act [BFS] -out [UMC] -backup [PB]" + desc;
@@ -135,22 +142,22 @@ SearchEngine* SearchEngine::fromString(string& desc) {
 
     SearchEngine* result = nullptr;
 
-    if (desc.find("THTS") == 0) {
+    if (isConfig("THTS")) {
         desc = desc.substr(4, desc.size());
         result = new THTS("THTS");
-    } else if (desc.find("IDS") == 0) {
+    } else if (isConfig("IDS")) {
         desc = desc.substr(3, desc.size());
         result = new IDS();
-    } else if (desc.find("DFS") == 0) {
+    } else if (isConfig("DFS")) {
         desc = desc.substr(3, desc.size());
         result = new DepthFirstSearch();
-    } else if (desc.find("MLS") == 0) {
+    } else if (isConfig("MLS")) {
         desc = desc.substr(3, desc.size());
         result = new MinimalLookaheadSearch();
-    } else if (desc.find("Uniform") == 0) {
+    } else if (isConfig("Uniform")) {
         desc = desc.substr(7, desc.size());
         result = new UniformEvaluationSearch();
-    } else if (desc.find("RandomWalk") == 0) {
+    } else if (isConfig("RandomWalk")) {
         desc = desc.substr(10, desc.size());
         result = new RandomWalk();
     } else {
