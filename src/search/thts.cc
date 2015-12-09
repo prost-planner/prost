@@ -28,7 +28,7 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
     } else if (param == "-init") {
         setInitializer(Initializer::fromString(value, this));
         return true;
-    } 
+    }
 
     if (param == "-T") {
         if (value == "TIME") {
@@ -69,9 +69,10 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
 ******************************************************************/
 
 void THTS::disableCaching() {
-    if (initializer) {
-        initializer->disableCaching();
-    }
+    actionSelection->disableCaching();
+    outcomeSelection->disableCaching();
+    backupFunction->disableCaching();
+    initializer->disableCaching();
     SearchEngine::disableCaching();
 }
 
@@ -85,9 +86,10 @@ void THTS::learn() {
     }
 
     std::cout << name << ": learning..." << std::endl;
-    if (initializer) {
-        initializer->learn();
-    }
+    actionSelection->learn();
+    outcomeSelection->learn();
+    backupFunction->learn();
+    initializer->learn();
     std::cout << name << ": ...finished" << std::endl;
 }
 

@@ -137,13 +137,13 @@ public:
     }
 
     // Parameter setter
-    virtual bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // Disables caching because memory becomes sparse.
-    void disableCaching();
+    void disableCaching() override;
 
     // Learns parameter values from a random training set.
-    virtual void learn();
+    void learn() override;
 
     // Start the search engine as main search engine
     void estimateBestActions(State const& _rootState,

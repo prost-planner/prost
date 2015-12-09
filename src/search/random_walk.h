@@ -11,7 +11,7 @@ public:
     RandomWalk();
 
     // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,

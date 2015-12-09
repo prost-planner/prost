@@ -20,14 +20,14 @@ public:
     IDS();
 
     // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // This is called when caching is disabled because memory becomes sparse.
-    void disableCaching();
+    void disableCaching() override;
 
     // This is called initially to learn parameter values from a random training
     // set.
-    void learn();
+    void learn() override;
 
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
@@ -88,7 +88,7 @@ protected:
     // The minimal lookahead search engine that is used if initialization with
     // this is too costly. TODO: In the future, we should change bool
     // estimateBestAction to SearchEngine* estimateBestAction and return another
-    // search engine if this wants to be replaces
+    // search engine if this wants to be replaced
     MinimalLookaheadSearch* mls;
 
     // The number of remaining steps for this step

@@ -11,7 +11,7 @@ class SearchNode;
 
 class Initializer {
 public:
-    // Create an Initializer
+    // Create an initializer component
     static Initializer* fromString(std::string& desc, THTS* thts);
 
     // Set parameters from command line
@@ -72,7 +72,7 @@ public:
     ExpandNodeInitializer(THTS* _thts) :
         Initializer(_thts, "ExpandNode") {}
 
-    virtual void initialize(SearchNode* node, State const& current) override;
+    void initialize(SearchNode* node, State const& current) override;
 };
 
 class SingleChildInitializer : public Initializer {
@@ -80,7 +80,7 @@ public:
     SingleChildInitializer(THTS* _thts) :
         Initializer(_thts, "SingleChild") {}
 
-    virtual void initialize(SearchNode* node, State const& current) override;
+    void initialize(SearchNode* node, State const& current) override;
 };
 
 #endif
