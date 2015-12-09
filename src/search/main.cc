@@ -120,6 +120,10 @@ cout << "  -uc <0|1>" << endl;
     cout << "    Specifies the used backup function(available options are given below)." << endl;
     cout << "    MANDATORY." << endl << endl;
 
+    cout << "  -init <Initializer>" << endl;
+    cout << "    Specifies the used initializer(available options are given below)." << endl;
+    cout << "    MANDATORY." << endl << endl;
+
     cout << "  -uc <0|1>" << endl;
     cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
     cout << "    Default: 1" << endl << endl;
@@ -155,18 +159,6 @@ cout << "  -uc <0|1>" << endl;
     cout << "  -ndn <int|H>" << endl;
     cout << "    This is the parameter that describes the trial length ingredient. It specifies the number of previously unvisited decision nodes that is expanded before the trial length is considered sufficient." << endl;
     cout << "    Default: Horizon of task." << endl << endl;
-
-    cout << "  -i <SearchEngine>" << endl;
-    cout << "    This is the (main) parameter that describes the initialization ingredient by specification of the search engine that is used for initialization." << endl;
-    cout << "    MANDATORY." << endl << endl << endl;
-
-    cout << "  -iv <int>" << endl;
-    cout << "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization." << endl;
-    cout << "    Default: 1" << endl << endl;
-
-    cout << "  -hw <double>" << endl;
-    cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
-    cout << "    Default: 1.0" << endl << endl;
 
     cout << "  -mv <0|1>" << endl;
     cout << "    This is the parameter that describes the recommendation function: if this is set to 0, the action with the highest action-value estimate is executed, and otherwise the one that has been visited most often." << endl;
@@ -208,9 +200,9 @@ cout << "  -uc <0|1>" << endl;
     cout << " BFS selects one of the actions among the least selected ones uniformly at random. It is created by [BFS] and has no options." << endl << endl;
 
 
-    
 
-    
+
+
     cout << "********************************************************************" << endl
          << "                         Outcome Selections" << endl
          << "********************************************************************" << endl << endl;
@@ -228,11 +220,12 @@ cout << "  -uc <0|1>" << endl;
 
 
 
-    
+
 
     cout << "********************************************************************" << endl
          << "                           Backup Functions" << endl
          << "********************************************************************" << endl << endl;
+
 
     cout << "*************************** MC ***************************" << endl;
 
@@ -247,10 +240,11 @@ cout << "  -uc <0|1>" << endl;
     cout << "    Default: 1.0" << endl << endl;
 
 
-    
+
     cout << "************************** MaxMC **************************" << endl;
 
     cout << "The MaxMonte-Carlo backup function is just like MC, except that decision nodes are updated by maximization over all actions. It is created by [MaxMC] and has no options." << endl << endl;
+
 
 
     cout << "/*************************** PB ***************************" << endl;
@@ -259,26 +253,73 @@ cout << "  -uc <0|1>" << endl;
 
 
 
-    
+
+
+    cout << "********************************************************************" << endl
+         << "                           Initializers" << endl
+         << "********************************************************************" << endl << endl;
+
+
+    cout << "*********************** Expand Node **********************" << endl;
+
+    cout << "The Expand Node initializer expands the current decision node by creating and intializing a child node for each applicable action. It is created by [Expand] with the following options:" << endl;
+
+    cout << "  -h <SearchEngine>" << endl;
+    cout << "    This is the search engine that is used to compute the heuristic values that are used for initialization." << endl;
+    cout << "    MANDATORY." << endl << endl << endl;
+
+    cout << "  -iv <int>" << endl;
+    cout << "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization." << endl;
+    cout << "    Default: 1" << endl << endl;
+
+    cout << "  -hw <double>" << endl;
+    cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
+    cout << "    Default: 0.5" << endl << endl;
+
+
+
+    cout << "*********************** Single Child **********************" << endl;
+
+    cout << "The Single Child initializer selects a single, uninitialized child of the current decision node at random and initializes it. It is created by [Single] with the following options:" << endl;
+
+    cout << "  -h <SearchEngine>" << endl;
+    cout << "    This is the search engine that is used to compute the heuristic values that are used for initialization." << endl;
+    cout << "    MANDATORY." << endl << endl << endl;
+
+    cout << "  -iv <int>" << endl;
+    cout << "    Specifies the number of initial visits that is considered. The higher this is, the higher is the weight given to the initialization." << endl;
+    cout << "    Default: 1" << endl << endl;
+
+    cout << "  -hw <double>" << endl;
+    cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
+    cout << "    Default: 0.5" << endl << endl;
+
+
+
+
+
     cout << "********************************************************************" << endl
          << "                             Abbreviations" << endl
          << "********************************************************************" << endl;
 
     cout << "There are also some shortcuts for popular search engines:" << endl << endl;
-    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [MC] -backup [MC] -ndn H -iv 5 -hw 1.0 -sd 15 -i [IDS -sd 15]]" << endl;
+    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd 15] -iv 5 -hw 1.0] -ndn H -sd 15]" << endl;
     cout << "    The PROST configuration that won IPPC 2011." << endl << endl;
 
-    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [UMC] -backup [PB] -hw 0.5]" << endl;
+    cout << "  [IPPC2014] := [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]]]" << endl;
     cout << "    The PROST configuration that won IPPC 2014." << endl << endl;
 
     cout << "  [UCTStar <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] <options>]" << endl;
-    cout << "    The algorithm that has been introduced as UCT* in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+    cout << "    The algorithm that has been introduced as UCT* in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use '-init [Expand -h [IDS]]' as additional option." << endl << endl;
 
     cout <<  "  [DP-UCT <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H <options>]" << endl;
-    cout << "    The algorithm that has been introduced as DP-UCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+    cout << "    The algorithm that has been introduced as DP-UCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use '-init [Expand -h [IDS]]' as additional option." << endl << endl;
 
-    cout <<  "  [MaxUCT <options>] := [THTS -act [UCB1] -out [UMC] -backup [PB] -ndn H <options>]" << endl;
-    cout << "    The algorithm that has been introduced as MaxUCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use -i [IDS] additionally." << endl << endl;
+    cout <<  "  [MaxUCT <options>] := [THTS -act [UCB1] -out [MC] -backup [PB] <options>]" << endl;
+    cout << "    The algorithm that has been introduced as MaxUCT in Keller and Helmert (ICAPS 2013). To obtain the configuration that has been used for the described experiment, use '-init [Expand -h [IDS]]' and '-ndn H' as additional options." << endl << endl;
+
+    cout <<  "  [UCT <options>] := [THTS -act [UCB1] -out [MC] -backup [MC] <options>]" << endl;
+    cout << "    The famous UCT algorithm of Kocsis and Szepesvari (ECML 2006). To obtain the most common UCT variant that performs a random walk as default policy, use '-init [Single -h [RandomWalk]]' as additional option." << endl << endl;
 
     cout <<  "  [BFS <options>] := [THTS -act [BFS] -out [UMC] -backup [PB] <options>]" << endl;
     cout << "    A breadth-first search algorithm in the THTS framework." << endl << endl;
