@@ -204,48 +204,38 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
                        Main Search Functions
 ******************************************************************/
 
-bool SearchEngine::estimateBestActions(State const& _rootState,
+void SearchEngine::estimateBestActions(State const& _rootState,
                                        std::vector<int>& bestActions) {
     vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
-    if (!estimateQValues(_rootState, actionsToExpand, qValues)) {
-        return false;
-    }
-
+    estimateQValues(_rootState, actionsToExpand, qValues);
     double stateValue = -numeric_limits<double>::max();
-    for (size_t actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
-        if (actionsToExpand[actionIndex] == actionIndex) {
-            if (MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
-                stateValue = qValues[actionIndex];
+    for (size_t index = 0; index < qValues.size(); ++index) {
+        if (actionsToExpand[index] == index) {
+            if (MathUtils::doubleIsGreater(qValues[index], stateValue)) {
+                stateValue = qValues[index];
                 bestActions.clear();
-                bestActions.push_back(actionIndex);
-            } else if (MathUtils::doubleIsEqual(qValues[actionIndex],
-                               stateValue)) {
-                bestActions.push_back(actionIndex);
+                bestActions.push_back(index);
+            } else if (MathUtils::doubleIsEqual(qValues[index], stateValue)) {
+                bestActions.push_back(index);
             }
         }
     }
-    return true;
 }
 
-bool SearchEngine::estimateStateValue(State const& _rootState,
+void SearchEngine::estimateStateValue(State const& _rootState,
                                       double& stateValue) {
     vector<double> qValues(numberOfActions);
     vector<int> actionsToExpand = getApplicableActions(_rootState);
 
-    if (!estimateQValues(_rootState, actionsToExpand, qValues)) {
-        return false;
-    }
-
+    estimateQValues(_rootState, actionsToExpand, qValues);
     stateValue = -numeric_limits<double>::max();
-    for (size_t actionIndex = 0; actionIndex < qValues.size(); ++actionIndex) {
-        if ((actionsToExpand[actionIndex] == actionIndex) &&
-            MathUtils::doubleIsGreater(qValues[actionIndex], stateValue)) {
-            stateValue = qValues[actionIndex];
+    for (size_t index = 0; index < qValues.size(); ++index) {
+        if (actionsToExpand[index] == index) {
+            stateValue = std::max(stateValue, qValues[index]);
         }
     }
-    return true;
 }
 
 /******************************************************************
@@ -318,12 +308,12 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
         return false;
     }
 
-    for (size_t actionIndex = 1; actionIndex < numberOfActions; ++actionIndex) {
+    for (size_t index = 1; index < numberOfActions; ++index) {
         reward.clear();
-        // Apply action actionIndex
+        // Apply action index
         KleeneState succ;
-        calcKleeneSuccessor(state, actionIndex, succ);
-        calcKleeneReward(state, actionIndex, reward);
+        calcKleeneSuccessor(state, index, succ);
+        calcKleeneReward(state, index, reward);
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
@@ -425,9 +415,9 @@ void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
 
     // If no action fluent occurs in the reward, the reward is the same for all
     // applicable actions, so we only need to find an applicable action
-    for (size_t actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-        if (applicableActions[actionIndex] == actionIndex) {
-            return calcReward(current, actionIndex, reward);
+    for (size_t index = 0; index < applicableActions.size(); ++index) {
+        if (applicableActions[index] == index) {
+            return calcReward(current, index, reward);
         }
     }
     assert(false);
@@ -441,14 +431,10 @@ void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(State const& curre
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
 
-    for (size_t candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
-        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
-        if (applicableActions[actionIndex] == actionIndex) {
-            calcReward(current, actionIndex, tmpReward);
-
-            if (MathUtils::doubleIsGreater(tmpReward, reward)) {
-                reward = tmpReward;
-            }
+    for (int index : candidatesForOptimalFinalAction) {
+        if (applicableActions[index] == index) {
+            calcReward(current, index, tmpReward);
+            reward = std::max(reward, tmpReward);
         }
     }
 }
@@ -464,9 +450,9 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     if (finalRewardCalculationMethod == FIRST_APPLICABLE) {
         // If no action fluent occurs in the reward, all rewards are the
         // same and we only need to find an applicable action
-        for (size_t actionIndex = 0; actionIndex < applicableActions.size(); ++actionIndex) {
-            if (applicableActions[actionIndex] == actionIndex) {
-                return actionIndex;
+        for (size_t index = 0; index < applicableActions.size(); ++index) {
+            if (applicableActions[index] == index) {
+                return index;
             }
         }
         assert(false);
@@ -480,14 +466,13 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     double tmpReward = 0.0;
     int optimalFinalActionIndex = -1;
 
-    for (size_t candidateIndex = 0; candidateIndex < candidatesForOptimalFinalAction.size(); ++candidateIndex) {
-        int& actionIndex = candidatesForOptimalFinalAction[candidateIndex];
-        if (applicableActions[actionIndex] == actionIndex) {
-            calcReward(current, actionIndex, tmpReward);
+    for (int index : candidatesForOptimalFinalAction) {
+        if (applicableActions[index] == index) {
+            calcReward(current, index, tmpReward);
 
             if (MathUtils::doubleIsGreater(tmpReward, reward)) {
                 reward = tmpReward;
-                optimalFinalActionIndex = actionIndex;
+                optimalFinalActionIndex = index;
             }
         }
     }

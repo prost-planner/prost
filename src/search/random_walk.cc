@@ -23,16 +23,15 @@ bool RandomWalk::setValueFromString(std::string& param,
                        Main Search Functions
 ******************************************************************/
 
-bool RandomWalk::estimateQValue(State const& state, int actionIndex,
+void RandomWalk::estimateQValue(State const& state, int actionIndex,
                                 double& qValue) {
     assert(state.stepsToGo() > 0);
     PDState current(state);
     performRandomWalks(current, actionIndex, qValue);
     qValue /= (double)state.stepsToGo();
-    return true;
 }
 
-bool RandomWalk::estimateQValues(State const& state,
+void RandomWalk::estimateQValues(State const& state,
                                  std::vector<int> const& actionsToExpand,
                                  std::vector<double>& qValues) {
     assert(state.stepsToGo() > 0);
@@ -43,7 +42,6 @@ bool RandomWalk::estimateQValues(State const& state,
             qValues[index] /= (double)state.stepsToGo();
         }
     }
-    return true;
 }
 
 void RandomWalk::performRandomWalks(PDState const& root, int firstActionIndex,

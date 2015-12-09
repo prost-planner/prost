@@ -30,14 +30,13 @@ bool UniformEvaluationSearch::setValueFromString(string& param,
                        Main Search Functions
 ******************************************************************/
 
-bool UniformEvaluationSearch::estimateBestActions(
+void UniformEvaluationSearch::estimateBestActions(
         State const& _rootState, std::vector<int>& bestActions) {
     // All applicable actions are equally good
     bestActions = getIndicesOfApplicableActions(_rootState);
-    return true;
 }
 
-bool UniformEvaluationSearch::estimateQValues(State const& /*state*/,
+void UniformEvaluationSearch::estimateQValues(State const& /*state*/,
                                               vector<int> const& actionsToExpand,
                                               vector<double>& qValues) {
     // Assign the initial value to all applicable actions
@@ -46,5 +45,4 @@ bool UniformEvaluationSearch::estimateQValues(State const& /*state*/,
             qValues[index] = initialValue;
         }
     }
-    return true;
 }

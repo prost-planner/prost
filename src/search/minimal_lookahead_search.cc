@@ -13,7 +13,7 @@ MinimalLookaheadSearch::MinimalLookaheadSearch() :
     }
 }
 
-bool MinimalLookaheadSearch::estimateQValue(State const& state,
+void MinimalLookaheadSearch::estimateQValue(State const& state,
                                             int actionIndex,
                                             double& qValue) {
     HashMap::iterator it = rewardCache.find(state);
@@ -52,10 +52,9 @@ bool MinimalLookaheadSearch::estimateQValue(State const& state,
         ++numberOfRuns;
 
     }
-    return true;
 }
 
-bool MinimalLookaheadSearch::estimateQValues(State const& state,
+void MinimalLookaheadSearch::estimateQValues(State const& state,
                                              vector<int> const& actionsToExpand,
                                              vector<double>& qValues) {
     HashMap::iterator it = rewardCache.find(state);
@@ -124,7 +123,6 @@ bool MinimalLookaheadSearch::estimateQValues(State const& state,
         ++numberOfRuns;
 
     }
-    return true;
 }
 
 void MinimalLookaheadSearch::printStats(ostream& out,

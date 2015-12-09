@@ -144,14 +144,14 @@ void IDS::learn() {
                        Main Search Functions
 ******************************************************************/
 
-bool IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
+void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
         qValue = it->second[actionIndex];
     }  else if(mls) {     
-        return mls->estimateQValue(state, actionIndex, qValue);
+        mls->estimateQValue(state, actionIndex, qValue);
     } else {
         timer.reset();
 
@@ -181,22 +181,20 @@ bool IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         accumulatedSearchDepth += currentState.stepsToGo();
         ++numberOfRuns;
     }
-
-    return true;
 }
 
-bool IDS::estimateQValues(State const& state,
+void IDS::estimateQValues(State const& state,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end()) {
         ++cacheHits;
         assert(qValues.size() == it->second.size());
-        for (size_t i = 0; i < qValues.size(); ++i) {
-            qValues[i] = it->second[i];
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            qValues[index] = it->second[index];
         }
     } else if (mls) {
-        return mls->estimateQValues(state, actionsToExpand, qValues);
+        mls->estimateQValues(state, actionsToExpand, qValues);
     } else {
         timer.reset();
 
@@ -209,9 +207,9 @@ bool IDS::estimateQValues(State const& state,
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
         }  while (moreIterations(actionsToExpand, qValues));
 
-        for (size_t actInd = 0; actInd < qValues.size(); ++actInd) {
-            if (actionsToExpand[actInd] == actInd) {
-                qValues[actInd] /= ((double) currentState.stepsToGo());
+        for (size_t index = 0; index < qValues.size(); ++index) {
+            if (actionsToExpand[index] == index) {
+                qValues[index] /= ((double) currentState.stepsToGo());
             }
         }
 
@@ -225,8 +223,6 @@ bool IDS::estimateQValues(State const& state,
         accumulatedSearchDepth += currentState.stepsToGo();
         ++numberOfRuns;
     }
-
-    return true;
 }
 
 bool IDS::moreIterations() {
@@ -257,7 +253,7 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
                          vector<double>& qValues) {
     double time = timer();
 
-    // If we are learning, we apply different termination criteria
+    // 0. If we are learning, we apply different termination criteria
     if (isLearning) {
         elapsedTime[currentState.stepsToGo()].push_back(time);
 
@@ -291,9 +287,9 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
     if (terminateWithReasonableAction &&
         actionStates[0].scheduledActionFluents.empty() &&
         (actionsToExpand[0] == 0)) {
-        for (size_t actInd = 1; actInd < qValues.size(); ++actInd) {
-            if ((actionsToExpand[actInd] == actInd) &&
-                MathUtils::doubleIsGreater(qValues[actInd], qValues[0])) {
+        for (size_t index = 1; index < qValues.size(); ++index) {
+            if ((actionsToExpand[index] == index) &&
+                MathUtils::doubleIsGreater(qValues[index], qValues[0])) {
                 return false;
             }
         }
