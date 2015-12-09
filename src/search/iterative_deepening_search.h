@@ -30,12 +30,12 @@ public:
     void learn();
 
     // Start the search engine to estimate the Q-value of a single action
-    bool estimateQValue(State const& state, int actionIndex,
+    void estimateQValue(State const& state, int actionIndex,
                         double& qValue) override;
     
     // Start the search engine to estimate the Q-values of all applicable
     // actions
-    bool estimateQValues(State const& state,
+    void estimateQValues(State const& state,
                          std::vector<int> const& actionsToExpand,
                          std::vector<double>& qValues) override;
 

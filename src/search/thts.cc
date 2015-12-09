@@ -163,7 +163,7 @@ inline void THTS::initTrialStep() {
                        Main Search Functions
 ******************************************************************/
 
-bool THTS::estimateBestActions(State const& _rootState,
+void THTS::estimateBestActions(State const& _rootState,
                                std::vector<int>& bestActions) {
     timer.reset();
 
@@ -190,7 +190,7 @@ bool THTS::estimateBestActions(State const& _rootState,
         bestActions.push_back(uniquePolicyOpIndex);
         currentRootNode = nullptr;
         printStats(std::cout, (_rootState.stepsToGo() == 1));
-        return true;
+        return;
     }
 
     // Start the main loop that starts trials until some termination criterion
@@ -212,6 +212,7 @@ bool THTS::estimateBestActions(State const& _rootState,
     }
 
     recommendAction(bestActions);
+    assert(!bestActions.empty());
 
     // Update statistics
     ++numberOfRuns;
@@ -233,8 +234,6 @@ bool THTS::estimateBestActions(State const& _rootState,
     // Print statistics
     std::cout << "Search time: " << timer << std::endl;
     printStats(std::cout, (_rootState.stepsToGo() == 1));
-
-    return !bestActions.empty();
 }
 
 void THTS::recommendAction(std::vector<int>& bestActions) {

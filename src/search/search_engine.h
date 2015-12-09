@@ -1,9 +1,15 @@
 #ifndef SEARCH_ENGINE_H
 #define SEARCH_ENGINE_H
 
-// This is the abstract interface all search engines are based on. It
-// only implements a basic method to estimate best actions by calling
-// estimateQValues, and defines a couple of member variables.
+// This is the abstract interface all search engines are based on. It implements
+// a basic method to estimate best actions and state values by calling the pure
+// virtual function estimateQValues. Furthermore, it provides all the methods
+// that are necessary to compute state transitions (e.g., applicable actions,
+// rewards, successor states) and provides support for concepts that are common
+// among all search engines like caching or learning. There are also two derived
+// classes in this file: ProbabilisticSearchEngine and
+// DeterministicSearchEngine. These implement the state transition functions
+// correspondingly.
 
 #include "evaluatables.h"
 
@@ -72,21 +78,21 @@ public:
     virtual void learn() {}
 
     // Start the search engine to calculate best actions
-    virtual bool estimateBestActions(State const& _rootState,
+    virtual void estimateBestActions(State const& _rootState,
                                      std::vector<int>& bestActions);
 
     // Start the search engine for state value estimation
-    virtual bool estimateStateValue(State const& _rootState,
+    virtual void estimateStateValue(State const& _rootState,
                                     double& stateValue);
     
     // Start the search engine to estimate the Q-value of a single action
-    virtual bool estimateQValue(State const& state,
+    virtual void estimateQValue(State const& state,
                                 int actionIndex,
                                 double& qValue) = 0;
 
     // Start the search engine to estimate the Q-values of all applicable
     // actions
-    virtual bool estimateQValues(State const& _rootState,
+    virtual void estimateQValues(State const& _rootState,
                                  std::vector<int> const& actionsToExpand,
                                  std::vector<double>& qValues) = 0;
 
