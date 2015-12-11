@@ -2,7 +2,6 @@
 
 #include "prost_planner.h"
 #include "depth_first_search.h"
-#include "minimal_lookahead_search.h"
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
@@ -20,10 +19,8 @@ IDS::HashMap IDS::rewardCache;
 
 IDS::IDS() :
     DeterministicSearchEngine("IDS"),
-    currentState(State()),
     isLearning(false),
     timer(),
-    mls(nullptr),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
     strictTerminationTimeout(0.1),
@@ -127,15 +124,12 @@ void IDS::learn() {
                 break;
             }
         }
-
-        setMaxSearchDepth(maxSearchDepth);
-        cout << name << ": Setting max search depth to "
-             << maxSearchDepth << "!" << endl;
     } else {
-        mls = new MinimalLookaheadSearch();
-
-        cout << "Replacing this with a MLS." << endl;
+        maxSearchDepth = 1;
     }
+    setMaxSearchDepth(maxSearchDepth);
+    cout << name << ": Setting max search depth to " << maxSearchDepth << "!"
+         << endl;
     resetStats();
     cout << name << ": ...finished" << endl;
 }
@@ -150,19 +144,17 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
         qValue = it->second[actionIndex] * (double)state.stepsToGo();
-    }  else if(mls) {     
-        mls->estimateQValue(state, actionIndex, qValue);
-    } else {
+    }  else {
         timer.reset();
 
         maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
 
-        currentState.setTo(state);
+        State currentState(state);
         currentState.stepsToGo() = 1;
         do {
             ++currentState.stepsToGo();
             dfs->estimateQValue(currentState, actionIndex, qValue);
-        }  while (moreIterations());
+        }  while (moreIterations(currentState.stepsToGo()));
 
         qValue /= ((double) currentState.stepsToGo());
 
@@ -198,19 +190,18 @@ void IDS::estimateQValues(State const& state,
                 qValues[index] = -std::numeric_limits<double>::max();
             }
         }
-    } else if (mls) {
-        mls->estimateQValues(state, actionsToExpand, qValues);
     } else {
         timer.reset();
 
         maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
 
-        currentState.setTo(state);
+        State currentState(state);
         currentState.stepsToGo() = 1;
         do {
             ++currentState.stepsToGo();
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
-        }  while (moreIterations(actionsToExpand, qValues));
+        }  while (moreIterations(currentState.stepsToGo(), actionsToExpand,
+                                 qValues));
 
         double multiplier =
             (double)state.stepsToGo() / (double)currentState.stepsToGo();
@@ -239,59 +230,60 @@ void IDS::estimateQValues(State const& state,
     }
 }
 
-bool IDS::moreIterations() {
+bool IDS::moreIterations(int const& stepsToGo) {
     double time = timer();
 
     // 1. If caching was disabled, we check if the strict timeout is violated to
     // readjust the maximal search depth
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-        if (currentState.stepsToGo() == 1) {
-            mls = new MinimalLookaheadSearch();
+        if (stepsToGo == 1) {
             cout << name << ": Timeout violated (" << time
-                 << "s) on minimal search depth. Replacing this with MLS." << endl;
+                 << "s) on minimal search depth. "
+                 << " Cannot decrease max search depth anymore." << endl;
         } else {
             cout << name << ": Timeout violated (" << time
                  << "s). Setting max search depth to "
-                 << (currentState.stepsToGo() - 1) << "!" << endl;
-            setMaxSearchDepth(currentState.stepsToGo() - 1);
+                 << (stepsToGo - 1) << "!" << endl;
+            setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
     }
 
     // 2. Check if we have reached the max search depth for this step
-    return currentState.stepsToGo() < maxSearchDepthForThisStep;
+    return stepsToGo < maxSearchDepthForThisStep;
 }
 
-bool IDS::moreIterations(vector<int> const& actionsToExpand,
+bool IDS::moreIterations(int const& stepsToGo,
+                         vector<int> const& actionsToExpand,
                          vector<double>& qValues) {
     double time = timer();
 
     // 0. If we are learning, we apply different termination criteria
     if (isLearning) {
-        elapsedTime[currentState.stepsToGo()].push_back(time);
+        elapsedTime[stepsToGo].push_back(time);
 
         if (MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-            elapsedTime.resize(currentState.stepsToGo());
-            maxSearchDepth = std::max(currentState.stepsToGo() - 1, 1);
+            elapsedTime.resize(stepsToGo);
+            maxSearchDepth = std::max(stepsToGo - 1, 1);
             return false;
         }
-        return currentState.stepsToGo() < maxSearchDepthForThisStep;
+        return stepsToGo < maxSearchDepthForThisStep;
     }
 
     // 1. If caching was disabled, we check if the strict timeout is violated to
     // readjust the maximal search depth
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-        if (currentState.stepsToGo() == 1) {
-            mls = new MinimalLookaheadSearch();
+        if (stepsToGo == 1) {
             cout << name << ": Timeout violated (" << time
-                 << "s) on minimal search depth. Replacing this with MLS." << endl;
+                 << "s) on minimal search depth. "
+                 << " Cannot decrease max search depth anymore." << endl;
         } else {
             cout << name << ": Timeout violated (" << time
                  << "s). Setting max search depth to "
-                 << (currentState.stepsToGo() - 1) << "!" << endl;
-            setMaxSearchDepth(currentState.stepsToGo() - 1);
+                 << (stepsToGo - 1) << "!" << endl;
+            setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
     }
@@ -310,7 +302,7 @@ bool IDS::moreIterations(vector<int> const& actionsToExpand,
     }
 
     // 3. Check if we have reached the max search depth for this step
-    return currentState.stepsToGo() < maxSearchDepthForThisStep;
+    return stepsToGo < maxSearchDepthForThisStep;
 }
 
 /******************************************************************
