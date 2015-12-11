@@ -12,6 +12,8 @@ class SearchNode;
 
 class BackupFunction {
 public:
+    virtual ~BackupFunction() {}
+
     // Create a backup function component
     static BackupFunction* fromString(std::string& desc, THTS* thts);
     
@@ -20,10 +22,10 @@ public:
         return false;
     }
 
-    // Learns parameter values from a random training set.
+    // Learns parameter values from a random training set
     virtual void learn() {}
 
-    // This is called when caching is disabled because memory becomes sparse.
+    // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}
 
     virtual void initRound() {}

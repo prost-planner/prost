@@ -9,6 +9,8 @@ class SearchNode;
 
 class ActionSelection {
 public:
+    virtual ~ActionSelection() {}
+
     // Create an action selection component
     static ActionSelection* fromString(std::string& desc, THTS* thts);
 
@@ -24,10 +26,10 @@ public:
         maxVisitDiff = _maxVisitDiff;
     }
 
-    // Learns parameter values from a random training set.
+    // Learns parameter values from a random training set
     virtual void learn() {}
 
-    // This is called when caching is disabled because memory becomes sparse.
+    // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}
 
     virtual void initRound() {

@@ -35,7 +35,7 @@ void printUsage() {
 
 
 
-    
+
 
     cout << "*********************************************************************" << endl
          << "                         Search Engines" << endl
@@ -71,8 +71,7 @@ void printUsage() {
     cout << "    Specifies the minimal search depth we expect from learning. If learning determines a lower search depth than this, it is set to 0 instead." << endl;
     cout << "    Default: 2" << endl << endl << endl;
 
-    
-    
+
     cout << "**************** Depth First Search **********************" << endl;
 
     cout << "A DFS search engine is a depth first search engine that has only been tested as part of IDS. It is created by [DFS <options>] with the following options:"
@@ -82,8 +81,7 @@ void printUsage() {
     cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
     cout << "    Default: 1" << endl << endl;
 
-    
-    
+
     cout << "***************** Uniform Evaluation Search **************" << endl;
 
     cout << "Uniform Evaluation Search evaluates each action identical. It is created by [Uniform <options>] with the following options:"
@@ -92,8 +90,7 @@ void printUsage() {
     cout << "  -val <double | MAX>" << endl;
     cout << "    Specifies the estimate assigned to each action. If this is MAX, it is set to the maximal reward of the task and can thereby be used as a (very simple) admissible initialization." << endl << endl << endl;
 
-    
-    
+
     cout << "***************** Minimal Lookahead Search **************" << endl;
 
     cout << "Minimal Lookahead Search performs the minimal possible, informative lookahead in the given task. It is created by [MLS <options>] with the following options:"<< endl << endl;
@@ -110,19 +107,23 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "  -act <ActionSelection>" << endl;
     cout << "    Specifies the used action selection (available options are given below)." << endl;
-    cout << "    MANDATORY." << endl << endl;
+    cout << "    MANDATORY" << endl << endl;
 
     cout << "  -out <OutcomeSelection>" << endl;
-    cout << "    Specifies the used outcome selection(available options are given below)." << endl;
-    cout << "    MANDATORY." << endl << endl;
+    cout << "    Specifies the used outcome selection (available options are given below)." << endl;
+    cout << "    MANDATORY" << endl << endl;
 
     cout << "  -backup <BackupFunction>" << endl;
-    cout << "    Specifies the used backup function(available options are given below)." << endl;
-    cout << "    MANDATORY." << endl << endl;
+    cout << "    Specifies the used backup function (available options are given below)." << endl;
+    cout << "    MANDATORY" << endl << endl;
 
     cout << "  -init <Initializer>" << endl;
-    cout << "    Specifies the used initializer(available options are given below)." << endl;
-    cout << "    MANDATORY." << endl << endl;
+    cout << "    Specifies the used initializer (available options are given below)." << endl;
+    cout << "    MANDATORY" << endl << endl;
+
+    cout << "  -rec <RecommendationFunction>" << endl;
+    cout << "    Specifies the used recommendation function (available options are given below)." << endl;
+    cout << "    Default: [EBA]" << endl << endl;
 
     cout << "  -uc <0|1>" << endl;
     cout << "    Specifies if caching is used. If this is switched on, we keep track of the memory and stop caching once a critical amount of memory is used." << endl;
@@ -130,13 +131,13 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "  -rld <0|1>" << endl;
     cout << "    Specifies if reward lock detection is used." << endl;
-    cout << "    Default: As learned approximately in the training phase." << endl << endl;
+    cout << "    Default: As learned approximately in the training phase" << endl << endl;
 
     cout << "  -crl <0|1>" << endl;
     cout << "    Specifies if reward lock caching with BDDs as described in our ICAPS 2013 paper is used. If reward lock detection is not used, this parameter has no influence on the planner." << endl;
-    cout << "    Default: 1." << endl << endl;
+    cout << "    Default: 1" << endl << endl;
 
-    cout << "  -mnn <int>" << endl;
+    cout << "  -node-limit <int>" << endl;
     cout << "    Specifies the maximal number of search nodes that is used by the THTS algorithm." << endl;
     cout << "    Default: 24000000" << endl << endl;
 
@@ -158,7 +159,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "  -ndn <int|H>" << endl;
     cout << "    This is the parameter that describes the trial length ingredient. It specifies the number of previously unvisited decision nodes that is expanded before the trial length is considered sufficient." << endl;
-    cout << "    Default: Horizon of task." << endl << endl;
+    cout << "    Default: Horizon of task" << endl << endl;
 
     cout << "  -mv <0|1>" << endl;
     cout << "    This is the parameter that describes the recommendation function: if this is set to 0, the action with the highest action-value estimate is executed, and otherwise the one that has been visited most often." << endl;
@@ -175,7 +176,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "************************** UCB1 **************************" << endl;
     
-    cout << "UCB1 is the action selection that is described by Auer, Ceas-Bianchi & Fischer (2002) in the context of Multi-armed Bandit Problems. It is also the action selection method that is used in UCT (Kocsis & Szepesvari, 2006). It is created by [THTS <options>] with the following options:" << endl;
+    cout << "UCB1 is the action selection that is described by Auer, Ceas-Bianchi & Fischer (2002) in the context of Multi-armed Bandit Problems. It is also the action selection method that is used in UCT (Kocsis & Szepesvari, 2006). It is created by [UCB1 <options>] with the following options:" << endl;
 
     cout << "  -lvar <0|1>" << endl;
     cout << "    Specifies if the least visited action is selected in the root node." << endl;
@@ -194,7 +195,6 @@ cout << "  -uc <0|1>" << endl;
     cout << "    Default: LOG" << endl << endl;
 
 
-    
     cout << "************************** BFS ***************************" << endl;
     
     cout << " BFS selects one of the actions among the least selected ones uniformly at random. It is created by [BFS] and has no options." << endl << endl;
@@ -213,7 +213,6 @@ cout << "  -uc <0|1>" << endl;
     cout << "Monte-Carlo outcome selection samples each outcome according to its probability. It is created by [MC] and has no options." << endl << endl;
 
 
-
     cout << "*************************** UMC **************************" << endl;
 
     cout << "Monte-Carlo outcome selection that only considers actions that are not labeled as solved. It is created by [UMC] and has no options." << endl << endl;
@@ -229,7 +228,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "*************************** MC ***************************" << endl;
 
-    cout << "In the Monte-Carlo backup function, each visited node is updated by extending the current estimate such that it reflects the average over all samples. It is created by [MC] with the following options:" << endl;
+    cout << "In the Monte-Carlo backup function, each visited node is updated by extending the current estimate such that it reflects the average over all samples. It is created by [MC <options>] with the following options:" << endl;
 
     cout << "  -ilr <double>" << endl;
     cout << "    Specifies the initial learning rate (compare, for instance, with the reinforcmenet learning book by Sutton & Barto)." << endl;
@@ -240,16 +239,14 @@ cout << "  -uc <0|1>" << endl;
     cout << "    Default: 1.0" << endl << endl;
 
 
-
     cout << "************************** MaxMC **************************" << endl;
 
     cout << "The MaxMonte-Carlo backup function is just like MC, except that decision nodes are updated by maximization over all actions. It is created by [MaxMC] and has no options." << endl << endl;
 
 
-
     cout << "/*************************** PB ***************************" << endl;
 
-    cout << "The PB backup function is ja partial variant of the Bellman backup function that can be applied even if some chance node successors of a decision node are not yet explicated.  It is created by [PB] and has no options." << endl << endl;
+    cout << "The PB backup function is a partial variant of the Bellman backup function that can be applied even if some chance node successors of a decision node are not yet explicated.  It is created by [PB] and has no options." << endl << endl;
 
 
 
@@ -262,7 +259,7 @@ cout << "  -uc <0|1>" << endl;
 
     cout << "*********************** Expand Node **********************" << endl;
 
-    cout << "The Expand Node initializer expands the current decision node by creating and intializing a child node for each applicable action. It is created by [Expand] with the following options:" << endl;
+    cout << "The Expand Node initializer expands the current decision node by creating and intializing a child node for each applicable action. It is created by [Expand <options>] with the following options:" << endl;
 
     cout << "  -h <SearchEngine>" << endl;
     cout << "    This is the search engine that is used to compute the heuristic values that are used for initialization." << endl;
@@ -275,7 +272,6 @@ cout << "  -uc <0|1>" << endl;
     cout << "  -hw <double>" << endl;
     cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
     cout << "    Default: 0.5" << endl << endl;
-
 
 
     cout << "*********************** Single Child **********************" << endl;
@@ -294,6 +290,23 @@ cout << "  -uc <0|1>" << endl;
     cout << "    Specifies the factor applied to the heuristic initialization. The higher, the more is the trust in the heuristic. If lower than 1.0, immediate rewards that have actually been encountered (and not just estimated) are given a higher trust." << endl;
     cout << "    Default: 0.5" << endl << endl;
 
+
+
+
+
+    cout << "********************************************************************" << endl
+         << "                     Recommendation Functions" << endl
+         << "********************************************************************" << endl << endl;
+
+
+    cout << "*********************** Expected Best Arm **********************" << endl;
+
+    cout << "The Expected Best Arm recommendation function recommends the action with the highest action-value estimate. It is created by [EBA] and has no options." << endl;
+
+
+    cout << "*********************** Most Played Arm **********************" << endl;
+
+    cout << "The Most Played Arm recommendation function recommends the action that has been selected most often in the root node during simulation. It is created by [MPA] and has no options." << endl;
 
 
 

@@ -64,9 +64,9 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->getDecisionNode(1.0);
+            node->children[childIndex] = thts->createDecisionNode(1.0);
         } else {
-            node->children[childIndex] = thts->getChanceNode(1.0);
+            node->children[childIndex] = thts->createChanceNode(1.0);
         }
     }
 
@@ -127,9 +127,9 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->getDecisionNode(childProb);
+            node->children[childIndex] = thts->createDecisionNode(childProb);
         } else {
-            node->children[childIndex] = thts->getChanceNode(childProb);
+            node->children[childIndex] = thts->createChanceNode(childProb);
         }
     }
 

@@ -5,7 +5,7 @@
 #include <algorithm>
 
 void StringUtils::replaceAll(std::string& s, char const& searchFor,
-        char const& replaceBy) {
+                             char const& replaceBy) {
     std::replace(s.begin(), s.end(), searchFor, replaceBy);
 }
 
@@ -30,7 +30,7 @@ void StringUtils::trim(std::string& s) {
 }
 
 void StringUtils::replace(std::string& s, std::string& searchFor,
-        std::string& replaceBy) {
+                          std::string& replaceBy) {
     if (s.compare(searchFor) == 0) {
         s = replaceBy;
     }
@@ -115,7 +115,7 @@ void StringUtils::firstLetterToUpper(std::string& s) {
 }
 
 void StringUtils::embraceSubstringWithWhitespaces(std::string& s,
-        std::string substr) {
+                                                  std::string substr) {
     std::stringstream tmp;
     size_t index = -1;
     while ((index = s.find(substr, index + 1)) != std::string::npos) {
@@ -160,7 +160,7 @@ void StringUtils::removeFirstAndLastCharacter(std::string& s) {
 }
 
 void StringUtils::deleteCommentFromLine(std::string& line,
-        std::string commentSign) {
+                                        std::string commentSign) {
     size_t index;
     if ((index = line.find(commentSign)) != std::string::npos) {
         line.resize(index);
@@ -168,7 +168,7 @@ void StringUtils::deleteCommentFromLine(std::string& line,
 }
 
 void StringUtils::tokenize(std::string const& s,
-        std::vector<std::string>& res) {
+                           std::vector<std::string>& res) {
     int openParens = 0;
     std::stringstream tmp;
     for (size_t pos = 0; pos < s.length(); ++pos) {
@@ -188,7 +188,7 @@ void StringUtils::tokenize(std::string const& s,
 }
 
 void StringUtils::split(std::string const& s, std::vector<std::string>& res,
-        std::string const& delim) {
+                        std::string const& delim) {
     std::stringstream tmp;
     for (unsigned int i = 0; i < s.length(); i++) {
         if ((s.substr(i, delim.size()).compare(delim) == 0)) {
@@ -220,7 +220,7 @@ void StringUtils::tabString(std::string& s, int tabs) {
 }
 
 void StringUtils::nextParamValuePair(std::string& desc, std::string& param,
-        std::string& value) {
+                                     std::string& value) {
     std::stringstream tmp;
     StringUtils::trim(desc);
     assert(desc[0] == '-');
