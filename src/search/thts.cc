@@ -4,12 +4,45 @@
 #include "outcome_selection.h"
 #include "backup_function.h"
 #include "initializer.h"
+#include "recommendation_function.h"
 
 #include "utils/system_utils.h"
 
 /******************************************************************
                      Search Engine Creation
 ******************************************************************/
+
+THTS::THTS(std::string _name) :
+    ProbabilisticSearchEngine(_name),
+    actionSelection(nullptr),
+    outcomeSelection(nullptr),
+    backupFunction(nullptr),
+    initializer(nullptr),
+    recommendationFunction(nullptr),
+    currentRootNode(nullptr),
+    chosenOutcome(nullptr),
+    tipNodeOfTrial(nullptr),
+    states(SearchEngine::horizon + 1),
+    stepsToGoInCurrentState(SearchEngine::horizon),
+    stepsToGoInNextState(SearchEngine::horizon - 1),
+    appliedActionIndex(-1),
+    trialReward(0.0),
+    currentTrial(0),
+    initializedDecisionNodes(0),
+    lastUsedNodePoolIndex(0),
+    terminationMethod(THTS::TIME),
+    maxNumberOfTrials(0),
+    numberOfNewDecisionNodesPerTrial(1),
+    numberOfRuns(0),
+    cacheHits(0),
+    accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
+    firstSolvedFound(false),
+    accumulatedNumberOfTrialsInRootState(0),
+    accumulatedNumberOfSearchNodesInRootState(0) {
+    setMaxNumberOfNodes(24000000);
+    setTimeout(1.0);
+    setRecommendationFunction(new ExpectedBestArmRecommendation(this));
+}
 
 bool THTS::setValueFromString(std::string& param, std::string& value) {
     // Check if this parameter encodes an ingredient
@@ -27,6 +60,9 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
         return true;
     } else if (param == "-init") {
         setInitializer(Initializer::fromString(value, this));
+        return true;
+    } else if (param == "-rec") {
+        setRecommendationFunction(RecommendationFunction::fromString(value, this));
         return true;
     }
 
@@ -53,15 +89,47 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
             setNumberOfNewDecisionNodesPerTrial(atoi(value.c_str()));
         }
         return true;
-    } else if (param == "-mnn") {
+    } else if (param == "-node-limit") {
         setMaxNumberOfNodes(atoi(value.c_str()));
-        return true;
-    } else if (param == "-mv") {
-        setSelectMostVisited(atoi(value.c_str()));
         return true;
     }
 
     return SearchEngine::setValueFromString(param, value);
+}
+
+void THTS::setActionSelection(ActionSelection* _actionSelection) {
+    if (actionSelection) {
+        delete actionSelection;
+    }
+    actionSelection = _actionSelection;
+}
+
+void THTS::setOutcomeSelection(OutcomeSelection* _outcomeSelection) {
+    if (outcomeSelection) {
+        delete outcomeSelection;
+    }
+    outcomeSelection = _outcomeSelection;
+}
+
+void THTS::setBackupFunction(BackupFunction* _backupFunction) {
+    if (backupFunction) {
+        delete backupFunction;
+    }
+    backupFunction = _backupFunction;
+}
+
+void THTS::setInitializer(Initializer* _initializer) {
+    if (initializer) {
+        delete initializer;
+    }
+    initializer = _initializer;
+}
+
+void THTS::setRecommendationFunction(RecommendationFunction* _recommendationFunction) {
+    if (recommendationFunction) {
+        delete recommendationFunction;
+    }
+    recommendationFunction = _recommendationFunction;
 }
 
 /******************************************************************
@@ -73,16 +141,17 @@ void THTS::disableCaching() {
     outcomeSelection->disableCaching();
     backupFunction->disableCaching();
     initializer->disableCaching();
+    recommendationFunction->disableCaching();
     SearchEngine::disableCaching();
 }
 
 void THTS::learn() {
     // All ingredients must have been specified
-    if (!actionSelection || !outcomeSelection ||
-        !backupFunction || !initializer) {
+    if (!actionSelection || !outcomeSelection || !backupFunction ||
+        !initializer || !recommendationFunction) {
         SystemUtils::abort("Action selection, outcome selection, backup "
-                           "function, and initializer must be defined in a THTS"
-                           " search engine!");   
+                           "function, initializer, and recommendation function "
+                           "must be defined in a THTS search engine!");   
     }
 
     std::cout << name << ": learning..." << std::endl;
@@ -90,6 +159,7 @@ void THTS::learn() {
     outcomeSelection->learn();
     backupFunction->learn();
     initializer->learn();
+    recommendationFunction->learn();
     std::cout << name << ": ...finished" << std::endl;
 }
 
@@ -104,23 +174,23 @@ void THTS::initRound() {
     outcomeSelection->initRound();
     backupFunction->initRound();
     initializer->initRound();
+    recommendationFunction->initRound();
 }
 
 void THTS::initStep(State const& _rootState) {
     PDState rootState(_rootState);
     // Adjust maximal search depth and set root state
     if (rootState.stepsToGo() > maxSearchDepth) {
-        ignoredSteps = rootState.stepsToGo() - maxSearchDepth;
         maxSearchDepthForThisStep = maxSearchDepth;
         states[maxSearchDepthForThisStep].setTo(rootState);
         states[maxSearchDepthForThisStep].stepsToGo() =
             maxSearchDepthForThisStep;
     } else {
-        ignoredSteps = 0;
         maxSearchDepthForThisStep = rootState.stepsToGo();
         states[maxSearchDepthForThisStep].setTo(rootState);
     }
-    assert(states[maxSearchDepthForThisStep].stepsToGo() == maxSearchDepthForThisStep);
+    assert(states[maxSearchDepthForThisStep].stepsToGo() ==
+           maxSearchDepthForThisStep);
 
     stepsToGoInCurrentState = maxSearchDepthForThisStep;
     stepsToGoInNextState = maxSearchDepthForThisStep - 1;
@@ -131,7 +201,7 @@ void THTS::initStep(State const& _rootState) {
     cacheHits = 0;
 
     // Reset search nodes and create root node
-    currentRootNode = getRootNode();
+    currentRootNode = createRootNode();
 
     std::cout << name << ": Maximal search depth set to "
               << maxSearchDepthForThisStep << std::endl << std::endl;
@@ -167,9 +237,9 @@ inline void THTS::initTrialStep() {
 
 void THTS::estimateBestActions(State const& _rootState,
                                std::vector<int>& bestActions) {
-    timer.reset();
-
     assert(bestActions.empty());
+
+    timer.reset();
 
     // Init round (if this is the first call in a round)
     if (_rootState.stepsToGo() == SearchEngine::horizon) {
@@ -213,7 +283,7 @@ void THTS::estimateBestActions(State const& _rootState,
         // assert(currentTrial != 100);
     }
 
-    recommendAction(bestActions);
+    recommendationFunction->recommend(currentRootNode, bestActions);
     assert(!bestActions.empty());
 
     // Update statistics
@@ -236,41 +306,6 @@ void THTS::estimateBestActions(State const& _rootState,
     // Print statistics
     std::cout << "Search time: " << timer << std::endl;
     printStats(std::cout, (_rootState.stepsToGo() == 1));
-}
-
-void THTS::recommendAction(std::vector<int>& bestActions) {
-    double stateValue = -std::numeric_limits<double>::max();
-
-    std::vector<SearchNode*> const& actNodes = currentRootNode->children;
-    bool solvedChildExists = false;
-    for (SearchNode* const& actNode : actNodes) {
-        if (actNode && actNode->solved) {
-            solvedChildExists = true;
-            break;
-        }
-    }
-
-    // Write best action indices to the result vector
-    for (unsigned int actInd = 0; actInd < actNodes.size(); ++actInd) {
-        if (actNodes[actInd]) {
-            double reward = 0.0;
-            if (selectMostVisited && !solvedChildExists) {
-                // We use the number of visits as reward, which is OK if this is
-                // the toplevel search engine but not if this is used as
-                // initializer!
-                reward = actNodes[actInd]->numberOfVisits;
-            } else {
-                reward = actNodes[actInd]->getExpectedRewardEstimate();
-            }
-            if (MathUtils::doubleIsGreater(reward, stateValue)) {
-                stateValue = reward;
-                bestActions.clear();
-                bestActions.push_back(actInd);
-            } else if (MathUtils::doubleIsEqual(reward, stateValue)) {
-                bestActions.push_back(actInd);
-            }
-        }
-    }
 }
 
 bool THTS::moreTrials() {
@@ -467,7 +502,7 @@ void THTS::visitDummyChanceNode(SearchNode* node) {
 
     if(node->children.empty()) {
         node->children.resize(1, nullptr);
-        node->children[0] = getDecisionNode(1.0);
+        node->children[0] = createDecisionNode(1.0);
     }
     assert(node->children.size() == 1);
 
@@ -516,7 +551,7 @@ int THTS::getUniquePolicy() {
                         Memory management
 ******************************************************************/
 
-SearchNode* THTS::getRootNode() {
+SearchNode* THTS::createRootNode() {
     for (SearchNode* node : nodePool) {
         if (node) {
             if(!node->children.empty()) {
@@ -542,7 +577,7 @@ SearchNode* THTS::getRootNode() {
     return res;
 }
 
-SearchNode* THTS::getDecisionNode(double const& prob) {
+SearchNode* THTS::createDecisionNode(double const& prob) {
     assert(lastUsedNodePoolIndex < nodePool.size());
 
     SearchNode* res = nodePool[lastUsedNodePoolIndex];
@@ -559,7 +594,7 @@ SearchNode* THTS::getDecisionNode(double const& prob) {
     return res;
 }
 
-SearchNode* THTS::getChanceNode(double const& prob) {
+SearchNode* THTS::createChanceNode(double const& prob) {
     assert(lastUsedNodePoolIndex < nodePool.size());
 
     SearchNode* res = nodePool[lastUsedNodePoolIndex];

@@ -8,6 +8,8 @@ class SearchNode;
 
 class OutcomeSelection {
 public:
+    virtual ~OutcomeSelection() {}
+
     // Create an outcome selection component
     static OutcomeSelection* fromString(std::string& desc, THTS* thts);
     
@@ -16,10 +18,10 @@ public:
         return false;
     }
 
-    // Learn parameter values from a random training set.
+    // Learn parameter values from a random training set
     virtual void learn() {}
 
-    // This is called when caching is disabled because memory becomes sparse.
+    // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}
 
     virtual void initRound() {}

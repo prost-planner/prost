@@ -11,16 +11,18 @@ class SearchNode;
 
 class Initializer {
 public:
+    virtual ~Initializer();
+
     // Create an initializer component
     static Initializer* fromString(std::string& desc, THTS* thts);
 
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    // Learns parameter values from a random training set.
+    // Learns parameter values from a random training set
     virtual void learn();
 
-    // This is called when caching is disabled because memory becomes sparse.
+    // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching();
 
     virtual void initRound() {}
@@ -55,8 +57,6 @@ protected:
         heuristic(nullptr),
         heuristicWeight(0.5),
         numberOfInitialVisits(1) {}
-
-    ~Initializer();
 
     THTS* thts;
     std::string name;
