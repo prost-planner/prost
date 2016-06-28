@@ -38,5 +38,5 @@ if __name__ == "__main__":
     os.system("rm -rf " + sys.argv[1] + "/prost")
     os.system("mkdir " + sys.argv[1] + "/prost")
     for inst in instances:
-        os.system("../src/rddl_parser/rddl-parser " + sys.argv[1] + "/rddl_prefix/" + instances[inst] + " " + sys.argv[1] + "/rddl_prefix/" + inst + " " + sys.argv[1] + "/prost/ -s 1")
+        os.system("../src/rddl_prefix_parser/rddl-parser " + sys.argv[1] + "/rddl_prefix/" + instances[inst] + " " + sys.argv[1] + "/rddl_prefix/" + inst + " " + sys.argv[1] + "/prost/ -s 1")
 

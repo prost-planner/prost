@@ -35,7 +35,7 @@ DEPEND = g++ -MM -std=c++0x
 ## Test related
 GTEST_DIR = ../test/gtest
 TEST_MAIN = ../test/testMain
-TEST_BINARIES = $(basename $(wildcard ../test/rddl_parser/*Test.cc))
+TEST_BINARIES = $(basename $(wildcard ../test/rddl_prefix_parser/*Test.cc))
 TEST_OBJECTS = $(addsuffix .o, $(TEST_BINARIES)) 
 
 ## CCOPT, LINKOPT are options for compiler and linker that are used
@@ -119,24 +119,24 @@ run_tests:
 
 # Creates code coverage html files.
 coverage:
-	@rm -rf ../../coverage/rddl_parser
+	@rm -rf ../../coverage/rddl_prefix_parser
 	@mkdir -p ../../coverage
-	@mkdir ../../coverage/rddl_parser
-	@../../scripts/gcovr -r . -b -o ../../coverage/rddl_parser/branch_coverage
-	@../../scripts/gcovr -r . --html --html-details -o ../../coverage/rddl_parser/coverage.html
-	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/rddl_parser/coverage.html to view code coverage" 
-	@echo "Open <PROST_DIRECTORY>/coverage/rddl_parser/branch_coverage to view branch coverage"
+	@mkdir ../../coverage/rddl_prefix_parser
+	@../../scripts/gcovr -r . -b -o ../../coverage/rddl_prefix_parser/branch_coverage
+	@../../scripts/gcovr -r . --html --html-details -o ../../coverage/rddl_prefix_parser/coverage.html
+	@echo "Coverage files created. Open <PROST_DIRECTORY>/coverage/rddl_prefix_parser/coverage.html to view code coverage" 
+	@echo "Open <PROST_DIRECTORY>/coverage/rddl_prefix_parser/branch_coverage to view branch coverage"
 
 # Deletes code coverage gcda files.
 covclear:
 		find .obj/ -name '*.gcda' | xargs rm -f
 clean:
 	rm -rf .obj
-	rm -rf ../../coverage/rddl_parser
+	rm -rf ../../coverage/rddl_prefix_parser
 	rm -f *~ utils/*~ logical_expressions_includes/*~
 	rm -f Makefile.depend
-	rm -f ../test/rddl_parser/*.o
-	rm -f ../test/rddl_parser/*.obj
+	rm -f ../test/rddl_prefix_parser/*.o
+	rm -f ../test/rddl_prefix_parser/*.obj
 	rm -f ../test/gtest/*.o
 
 distclean: clean
