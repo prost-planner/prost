@@ -7,7 +7,7 @@
 #include <cassert>
 
 #include "probability_distribution.h"
-#include "../utils/math_utils.h"
+#include "utils/math_utils.h"
 
 class ActionFluent;
 class ActionPrecondition;
@@ -24,12 +24,12 @@ struct State {
     State(int stateSize) :
         state(stateSize, 0.0) {}
 
-    double& operator[](unsigned const& index) {
+    double& operator[](int const& index) {
         assert(index < state.size());
         return state[index];
     }
 
-    double const& operator[](unsigned const& index) const {
+    double const& operator[](int const& index) const {
         assert(index < state.size());
         return state[index];
     }
@@ -63,12 +63,12 @@ struct PDState {
     PDState(int stateSize) :
         state(stateSize, DiscretePD()) {}
 
-    DiscretePD& operator[](unsigned const& index) {
+    DiscretePD& operator[](int const& index) {
         assert(index < state.size());
         return state[index];
     }
 
-    DiscretePD const& operator[](unsigned const& index) const {
+    DiscretePD const& operator[](int const& index) const {
         assert(index < state.size());
         return state[index];
     }
@@ -106,12 +106,12 @@ public:
         }
     }
 
-    std::set<double>& operator[](unsigned const& index) {
+    std::set<double>& operator[](int const& index) {
         assert(index < state.size());
         return state[index];
     }
 
-    std::set<double> const& operator[](unsigned const& index) const {
+    std::set<double> const& operator[](int const& index) const {
         assert(index < state.size());
         return state[index];
     }

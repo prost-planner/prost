@@ -13,8 +13,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include "planning_task.h"
-#include "../utils/system_utils.h"
-#include "../utils/timer.h"
+#include "utils/system_utils.h"
+#include "utils/timer.h"
 #include "domain.h"
 #include "non_fluents.h"
 #include "instance.h"

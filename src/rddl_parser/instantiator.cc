@@ -3,7 +3,7 @@
 #include "planning_task.h"
 #include "evaluatables.h"
 
-#include "../utils/timer.h"
+#include "utils/timer.h"
 
 using namespace std;
 
@@ -46,6 +46,7 @@ void Instantiator::instantiateCPFs() {
          it != task->CPFDefinitions.end(); ++it) {
         instantiateCPF(it->first, it->second);
     }
+
     // Instantiate rewardCPF
     map<string, Object*> quantifierReplacements;
     task->rewardCPF->formula =
@@ -60,8 +61,6 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
     map<string, Object*> quantifierReplacements;
     formula = formula->replaceQuantifier(quantifierReplacements, this);
 
-    // std::cout << "**CPF: " << head->variableName << std::endl;
-
     vector<StateFluent*> instantiatedVars = task->getStateFluentsOfSchema(head);
     for (unsigned int i = 0; i < instantiatedVars.size(); ++i) {
         assert(head->params.size() == instantiatedVars[i]->params.size());
@@ -73,11 +72,6 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
             assert(obj);
             replacements[head->params[j]->name] = obj;
         }
-
-        // std::cout << "\t## Replacements" << std::endl;
-        // for (std::map<string, Object*>::iterator it = replacements.begin(); it != replacements.end(); it++)
-        //     std::cout << "\t\t" << it->first << " for " << it->second->name << std::endl;
-
         LogicalExpression* instantiatedFormula =
             formula->instantiate(task, replacements);
 
@@ -103,8 +97,7 @@ void Instantiator::instantiateParams(vector<Parameter*> params,
     assert(indexToProcess < params.size());
 
     int nextIndex = indexToProcess + 1;
-    // std::cout << "Instantiate parameter " << params[indexToProcess]->name << " of type " << params[indexToProcess]->type->name << " with " << params[indexToProcess]->type->objects.size() << " objects." << std::endl;
-    // std::cout << "Instantiate parameter " << params[indexToProcess]->name << std::endl;
+
     assert(params[indexToProcess]->type);
     vector<Object*>& objs = params[indexToProcess]->type->objects;
 

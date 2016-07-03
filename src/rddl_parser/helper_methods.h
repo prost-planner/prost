@@ -9,7 +9,6 @@
 #define HELPER_METHODS_H
 
 #include "logical_expressions.h"
-#include "../utils/system_utils.h"
 #include "domain.h"
 
 extern std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables

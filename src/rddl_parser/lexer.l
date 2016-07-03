@@ -16,11 +16,11 @@
 #include <cstdlib>
 #include <vector>
 
-#include "parser_classes/logical_expressions.h"
-#include "parser_classes/rddl_block.h"
-#include "parser_classes/domain.h"
-#include "parser_classes/non_fluents.h"
-#include "parser_classes/instance.h"
+#include "logical_expressions.h"
+#include "rddl_block.h"
+#include "domain.h"
+#include "non_fluents.h"
+#include "instance.h"
 
 void lex_error(char c)
 {

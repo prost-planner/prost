@@ -2,9 +2,9 @@
 
 #include "evaluatables.h"
 
-#include "../utils/string_utils.h"
-#include "../utils/math_utils.h"
-#include "../utils/system_utils.h"
+#include "utils/string_utils.h"
+#include "utils/math_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
@@ -42,12 +42,10 @@ void PlanningTask::addType(string const& name, string const& superType) {
 
     if (superType.empty()) {
         types[name] = new Type(name);
-        // std::cout << "Added type - " << name << std::endl;
     } else if (types.find(superType) == types.end()) {
         SystemUtils::abort("Error: Supertype not found: " + superType);
     } else {
         types[name] = new Type(name, types[superType]);
-        // std::cout << "Added type - " << name << " : " << types[name]->name << std::endl;
     }
 }
 
@@ -61,8 +59,6 @@ void PlanningTask::addObject(string const& typeName,
         SystemUtils::abort(
             "Error: Object name " + objectName + " is ambiguous.");
     }
-
-    // std::cout << "Added object - " << typeName << " : " << objectName << std::endl;
 
     objects[objectName] = new Object(objectName, types[typeName]);
 }
