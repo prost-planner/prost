@@ -8,7 +8,7 @@
 #include <map>
 #include <iostream>
 
-#include "../utils/math_utils.h"
+#include "utils/math_utils.h"
 
 class DiscretePD {
 public:

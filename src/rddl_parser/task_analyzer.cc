@@ -3,8 +3,8 @@
 #include "planning_task.h"
 #include "evaluatables.h"
 
-#include "../utils/timer.h"
-#include "../utils/system_utils.h"
+#include "utils/timer.h"
+#include "utils/system_utils.h"
 
 #include <cstdlib>
 #include <iostream>

@@ -3,15 +3,15 @@
 #include "planning_task.h"
 #include "evaluatables.h"
 
-#include "../utils/math_utils.h"
-#include "../utils/system_utils.h"
-#include "../utils/timer.h"
+#include "utils/math_utils.h"
+#include "utils/system_utils.h"
+#include "utils/timer.h"
 
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 
-#include "../utils/timer.h"
+#include "utils/timer.h"
 
 using namespace std;
 

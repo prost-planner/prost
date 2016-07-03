@@ -139,7 +139,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
         bool operator()(ConditionalProbabilityFunction* const& lhs,
                         ConditionalProbabilityFunction* const& rhs) const {
             if (lhs->isProb == rhs->isProb) {
-                return lhs->name < rhs->name;                
+                return lhs->name < rhs->name;
             }
             return rhs->isProb;
         }

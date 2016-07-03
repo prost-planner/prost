@@ -58,7 +58,6 @@ void Quantifier::getReplacements(vector<string>& parameterNames,
         parameterNames.push_back(paramList->params[i]->name);
         Parameter* param =
             new Parameter(paramList->params[i]->name, paramList->types[i]);
-            // std::cout << "paramList->params[i]->name: " << paramList->params[i]->name << std::endl;
         parameterTypes.push_back(param);
     }
     inst->instantiateParams(parameterTypes, replace);

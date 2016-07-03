@@ -12,17 +12,9 @@ LogicalExpression::instantiate(PlanningTask* /*task*/,
 LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task,
                                                      Instantiations& replace) {
     vector<Object*> newParams;
-
-    // std::cout << "replace" << std::endl;
-    // for(std::map<std::string, Object*>::iterator it = replace.begin(); it != replace.end(); it++) {
-    //     std::cout << "\t" << it->first << ", " << it->second->name << std::endl;
-    // }
-    // std::cout << params.size() <<  std::endl;
-
     for (unsigned int i = 0; i < params.size(); ++i) {
         Object* param = dynamic_cast<Object*>(params[i]);
         if (!param) {
-            // std::cout << "name " << params[i]->name << std::endl;
             assert(replace.find(params[i]->name) != replace.end());
             param = replace[params[i]->name];
         }

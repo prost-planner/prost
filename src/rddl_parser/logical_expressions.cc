@@ -9,9 +9,9 @@
 #include "planning_task.h"
 #include "probability_distribution.h"
 
-#include "../utils/string_utils.h"
-#include "../utils/math_utils.h"
-#include "../utils/system_utils.h"
+#include "utils/string_utils.h"
+#include "utils/math_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
@@ -74,7 +74,6 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
     variableType(source.variableType),
     valueType(source.valueType),
     initialValue(_initialValue) {
-    // std::cout << "Trying to instantiate parametrized variable: " << source.variableName << " with param size: " << source.params.size() << "; given parameters size: " << _params.size() << std::endl;
     assert(params.size() == source.params.size());
     for (unsigned int i = 0; i < params.size(); ++i) {
         if (!params[i]->type) {
@@ -107,15 +106,15 @@ bool Type::isSubtypeOf(Type* const& other) const {
     return false;
 }
 
-#include "../logical_expressions_includes/instantiate.cc"
-#include "../logical_expressions_includes/replace_quantifier.cc"
-#include "../logical_expressions_includes/simplify.cc"
-#include "../logical_expressions_includes/determinization.cc"
-#include "../logical_expressions_includes/collect_initial_info.cc"
-#include "../logical_expressions_includes/classify_action_fluents.cc"
-#include "../logical_expressions_includes/calculate_domain.cc"
-#include "../logical_expressions_includes/calculate_domain_as_interval.cc"
-#include "../logical_expressions_includes/evaluate.cc"
-#include "../logical_expressions_includes/evaluate_to_pd.cc"
-#include "../logical_expressions_includes/evaluate_to_kleene.cc"
-#include "../logical_expressions_includes/print.cc"
+#include "logical_expressions_includes/instantiate.cc"
+#include "logical_expressions_includes/replace_quantifier.cc"
+#include "logical_expressions_includes/simplify.cc"
+#include "logical_expressions_includes/determinization.cc"
+#include "logical_expressions_includes/collect_initial_info.cc"
+#include "logical_expressions_includes/classify_action_fluents.cc"
+#include "logical_expressions_includes/calculate_domain.cc"
+#include "logical_expressions_includes/calculate_domain_as_interval.cc"
+#include "logical_expressions_includes/evaluate.cc"
+#include "logical_expressions_includes/evaluate_to_pd.cc"
+#include "logical_expressions_includes/evaluate_to_kleene.cc"
+#include "logical_expressions_includes/print.cc"

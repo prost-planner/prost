@@ -123,7 +123,7 @@ void Preprocessor::prepareEvaluatables() {
         task->SACs[index] = task->SACs[index]->simplify(replacements);
 
         // Split conjunctions into their elements
-        
+
         Conjunction* conj = dynamic_cast<Conjunction*>(task->SACs[index]);
         if(conj) {
             preconds.insert(preconds.end(), conj->exprs.begin(), conj->exprs.end());
@@ -164,7 +164,7 @@ void Preprocessor::prepareEvaluatables() {
                 } else {
                     task->staticSACs.push_back(sac);
                 }
-            } else {            
+            } else {
                 // An SAC that only contains action fluents is used to
                 // statically forbid action combinations.
                 task->staticSACs.push_back(sac);
@@ -245,7 +245,7 @@ void Preprocessor::removeInapplicableActionFluents(bool const& updateActionState
 void Preprocessor::prepareActions() {
     // Remove action fluents that are never reasonable
     removeInapplicableActionFluents(false);
-    
+
     // Check if there are action fluents that can never be set to a nondefault
     // value due to a primitive static SAC (i.e., an action precondition of the
     // form ~a).
@@ -334,7 +334,7 @@ void Preprocessor::prepareActions() {
         }
     }
 
-    // Assign new indices    
+    // Assign new indices
     int newIndex = 0;
     for(unsigned int i = 0; i < usedFluents.state.size(); ++i) {
         if(usedFluents[i]) {
@@ -586,7 +586,7 @@ void Preprocessor::finalizeEvaluatables() {
          ConditionalProbabilityFunction::TransitionFunctionSort());
 
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        task->CPFs[index]->setIndex(index);        
+        task->CPFs[index]->setIndex(index);
     }
 
     // Simplify rewardCPF

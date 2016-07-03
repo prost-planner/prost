@@ -7,6 +7,8 @@
 
 #include "helper_methods.h"
 
+#include "utils/system_utils.h"
+
 // This method is used to get the value of parametrized variable
 // Parametrized variable is stored with its definition in pVarDefinition and the
 // values of parameters used in the particular call of parametrized variable are stored in pVarExpression

@@ -1,20 +1,20 @@
-HEADERS = parser_classes/rddl_block.h \
-	  parser_classes/instantiator.h \
-	  parser_classes/preprocessor.h \
-	  parser_classes/task_analyzer.h \
-	  parser_classes/planning_task.h \
-	  parser_classes/evaluatables.h \
-	  parser_classes/logical_expressions.h \
-	  parser_classes/states.h \
-	  parser_classes/probability_distribution.h \
+HEADERS = rddl_block.h \
+	  instantiator.h \
+	  preprocessor.h \
+	  task_analyzer.h \
+	  planning_task.h \
+	  evaluatables.h \
+	  logical_expressions.h \
+	  states.h \
+	  probability_distribution.h \
+	  domain.h \
+	  non_fluents.h \
+	  instance.h \
+	  helper_methods.h \
 	  utils/timer.h \
 	  utils/string_utils.h \
 	  utils/system_utils.h \
 	  utils/math_utils.h \
-	  parser_classes/domain.h \
-	  parser_classes/non_fluents.h \
-	  parser_classes/instance.h \
-	  parser_classes/helper_methods.h \
 
 SOURCES = $(HEADERS:%.h=%.cc)
 
@@ -188,4 +188,3 @@ endif
 endif
 
 .PHONY: default all release debug test_build test clean distclean
-
