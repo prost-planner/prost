@@ -1,12 +1,6 @@
-/**
-    non_fluents.h: classes needed for definition of non fluents section from rddl file
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #ifndef NONFLUENTS_H
 #define NONFLUENTS_H
+
 #include <string>
 #include <vector>
 #include <set>

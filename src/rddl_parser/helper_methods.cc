@@ -1,10 +1,3 @@
-/**
-    helper_methods.cc: helper methods implementations
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #include "helper_methods.h"
 
 #include "utils/system_utils.h"

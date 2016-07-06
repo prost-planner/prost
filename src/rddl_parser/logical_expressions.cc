@@ -1,8 +1,3 @@
-
-/**
-    @author Thomas Keller <tho.keller@unibas.ch>
-*/
-
 #include "logical_expressions.h"
 
 #include "instantiator.h"

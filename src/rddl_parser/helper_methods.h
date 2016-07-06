@@ -1,10 +1,3 @@
-/**
-    helper_methods.h:
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #ifndef HELPER_METHODS_H
 #define HELPER_METHODS_H
 
