@@ -1,12 +1,6 @@
-/**
-    instance.h: classes needed for definition of instance section from rddl file 
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #ifndef INSTANCE_H
 #define INSTANCE_H
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -35,7 +29,5 @@ private:
     int horizon;
     double discount;
 };
-
-
 
 #endif

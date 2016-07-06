@@ -1,10 +1,3 @@
-/**
-    domain.cc: implementation of methods from domain.h
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #include "domain.h"
 
 // CaseDefine

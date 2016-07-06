@@ -1,12 +1,6 @@
-/**
-    domain.h: classes that are used for definition of domain section in rddl file
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #ifndef DOMAIN_H
 #define DOMAIN_H
+
 #include <string>
 #include <vector>
 #include <set>

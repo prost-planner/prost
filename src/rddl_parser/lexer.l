@@ -1,11 +1,3 @@
-/**
-    lexer.l: lexical analisys of input files.
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
-
 %option noyywrap
 %option yylineno
 %option noinput

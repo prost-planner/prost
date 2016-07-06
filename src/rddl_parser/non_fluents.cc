@@ -1,10 +1,3 @@
-/**
-    non_fluents.cc: implementation of methods from non_fluents.h
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #include "non_fluents.h"
 
 // PvariablesInstanceDefine

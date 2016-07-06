@@ -1,10 +1,3 @@
-/**
-    rddl_block.h: classes needed for definition and implementation of RDDL program which defined in 2 files (domain and instance file)
-
-    @author Đorđe Relić <dorde.relic@unibas.ch>
-    @version 1.0 06/2016
-*/
-
 #ifndef RDDL_BLOCK_H
 #define RDDL_BLOCK_H
 
