@@ -1,8 +1,14 @@
 #ifndef HELPER_METHODS_H
 #define HELPER_METHODS_H
 
-#include "logical_expressions.h"
-#include "domain.h"
+#include <string>
+#include <map>
+
+class PvarDefinition;
+class PvarExpression;
+class Object;
+class Type;
+class ParametrizedVariable;
 
 extern std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
 extern std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions

@@ -13,10 +13,7 @@ extern int yylex(); // Lexic analisys function
 extern FILE* yyin; // Exter file, used for reading code from file
 
 #include "logical_expressions.h"
-#include "rddl_block.h"
-#include "domain.h"
-#include "non_fluents.h"
-#include "instance.h"
+#include "rddl.h"
 #include "utils/system_utils.h"
 
 #include "helper_methods.h" /*Hack*/

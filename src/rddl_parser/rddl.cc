@@ -1,15 +1,34 @@
-#include "rddl_block.h"
+#include "rddl.h"
+
+#include <iostream>
+#include <fstream>
+
+#include "planning_task.h"
+#include "logical_expressions.h"
+
+#include "instantiator.h"
+#include "preprocessor.h"
+#include "task_analyzer.h"
+
+#include "utils/timer.h"
+#include "utils/system_utils.h"
 
 
-RDDLBlock::~RDDLBlock() {}
-
-std::string RDDLBlock::getDomainName() {
-    return domainName;
+CpfDefinition::~CpfDefinition() {
+    delete pVarExpression;
+    delete logicalExpression;
 }
 
-std::string RDDLBlock::getNonFluentsName() {
-    return nonFluentsName;
+std::string Domain::validRequirement(std::string req) {
+    if (validRequirements.find(req) == validRequirements.end()) {
+        std::cerr << "Error! Invalid requirement: " << req << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    return req;
 }
+
+RDDLBlock::RDDLBlock()
+    : task(new PlanningTask()) {}
 
 void addTypeSection(RDDLBlock *rddlBlock, Domain* domain) {
     if (domain->getDomainTypes() == NULL)

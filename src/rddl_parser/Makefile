@@ -1,4 +1,4 @@
-HEADERS = rddl_block.h \
+HEADERS = rddl.h \
 	  instantiator.h \
 	  preprocessor.h \
 	  task_analyzer.h \
@@ -7,9 +7,6 @@ HEADERS = rddl_block.h \
 	  logical_expressions.h \
 	  states.h \
 	  probability_distribution.h \
-	  domain.h \
-	  non_fluents.h \
-	  instance.h \
 	  helper_methods.h \
 	  utils/timer.h \
 	  utils/string_utils.h \
