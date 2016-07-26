@@ -9,10 +9,7 @@
 #include <vector>
 
 #include "logical_expressions.h"
-#include "rddl_block.h"
-#include "domain.h"
-#include "non_fluents.h"
-#include "instance.h"
+#include "rddl.h"
 
 void lex_error(char c)
 {

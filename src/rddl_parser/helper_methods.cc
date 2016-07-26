@@ -1,5 +1,8 @@
 #include "helper_methods.h"
 
+#include "rddl.h"
+#include "logical_expressions.h"
+
 #include "utils/system_utils.h"
 
 // This method is used to get the value of parametrized variable
