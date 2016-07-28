@@ -13,15 +13,15 @@
 
 void lex_error(char c)
 {
-	std::cerr << "\033[1;31mLexical ERROR! \033[0m Unknown char " << c << std::endl;
-	exit(EXIT_FAILURE);
+    std::cerr << "\033[1;31mLexical ERROR! \033[0m Unknown char " << c << std::endl;
+    exit(EXIT_FAILURE);
 }
 
 void yyerror (std::string message)
 {
     extern int yylineno;
-	std::cerr << "\033[1;31mERROR! \033[0m Unknown token: " << yytext << " at line " << yylineno << ": "  << message << std::endl;
-	exit(EXIT_FAILURE);
+    std::cerr << "\033[1;31mERROR! \033[0m Unknown token: " << yytext << " at line " << yylineno << ": "  << message << std::endl;
+    exit(EXIT_FAILURE);
 }
 
 #include "parser.tab.hh"
@@ -33,17 +33,17 @@ ALPHA [A-Za-z]
 WHITE_SPACE_CHAR [\r\n\t\b ]
 
 %%
-\<=												        { return lessOrEqual_token; }
->=												        { return greaterOrEqual_token; }
-==												        { return equal_token; }
-\<=>											        { return equivalent_token;}
-=>												        { return imply_token;}
-~=												        { return nonEqual_token; }
+\<=                                                     { return lessOrEqual_token; }
+>=                                                      { return greaterOrEqual_token; }
+==                                                      { return equal_token; }
+\<=>                                                    { return equivalent_token;}
+=>                                                      { return imply_token;}
+~=                                                      { return nonEqual_token; }
 !=                                                      { return nonEqual_token; }
 [+\-*/();:~\^\|=<>{}\]\[?,\$&_]                         { return *yytext; }
-true											        { yylval.str = new std::string(yytext); return true_token;  }
-false											        { yylval.str = new std::string(yytext); return false_token; }
-domain										            { return domain_token; }
+true                                                    { yylval.str = new std::string(yytext); return true_token;  }
+false                                                   { yylval.str = new std::string(yytext); return false_token; }
+domain                                                  { return domain_token; }
 instance                                                { return instance_token; }
 objects                                                 { return objects_token; }
 horizon                                                 { return horizon_token; }
@@ -55,11 +55,11 @@ action-preconditions                                    { return action_precondi
 state-invariants                                        { return state_invariants_token; }
 max-nondef-actions                                      { return max_nondef_actions_token; }
 terminate-when                                          { return terminate_when_token; }
-types											        { return types_token; }
-pvariables								                { return pvariables_token; }
-cpfs											        { return cpfs_token; }
+types                                                   { return types_token; }
+pvariables                                              { return pvariables_token; }
+cpfs                                                    { return cpfs_token; }
 cdfs                                                    { return cdfs_token; }
-reward										            { return reward_token; }
+reward                                                  { return reward_token; }
 bool                                                    { yylval.str = new std::string(yytext); return bool_token; }
 int                                                     { yylval.str = new std::string(yytext); return integer_token; }
 real                                                    { yylval.str = new std::string(yytext); return real_token; }
@@ -99,12 +99,12 @@ Weibull                                                 { return weibull_token; 
 Gama                                                    { return gama_token; }
 Multinomial                                             { return multinomial_token; }
 Dirichelt                                               { return dirichlet_token; }
-{WHITE_SPACE_CHAR}+ 			                        { /* Ignoring white spaces.*/}
-{DIGIT}*\.{DIGIT}+ 				                        { yylval.d = atof(yytext); return doubleNum_token;}
-{DIGIT}+ 									            { yylval.i = atoi(yytext); return intNum_token;}
+{WHITE_SPACE_CHAR}+                                     { /* Ignoring white spaces.*/}
+{DIGIT}*\.{DIGIT}+                                      { yylval.d = atof(yytext); return doubleNum_token;}
+{DIGIT}+                                                { yylval.i = atoi(yytext); return intNum_token;}
 {ALPHA}(({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT}))?(')?   { yylval.str = new std::string(yytext); return id_token; }
 "?"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return var_token; }
 "@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { return enum_token; }
 \/\/[^\r\n]*                                            { /* Ignore comments. */}
-. 												        { lex_error(*yytext); }
+.                                                       { lex_error(*yytext); }
 %%

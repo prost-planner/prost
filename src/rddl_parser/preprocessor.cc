@@ -149,7 +149,7 @@ void Preprocessor::prepareEvaluatables() {
                 sac->index = task->actionPreconds.size();
                 task->actionPreconds.push_back(sac);
             }
-    	} else {
+        } else {
             Negation* neg = dynamic_cast<Negation*>(sac->formula);
             if(neg) {
                 ActionFluent* act = dynamic_cast<ActionFluent*>(neg->expr);

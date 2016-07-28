@@ -4,9 +4,21 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <map>
 
 class LogicalExpression;
 class PlanningTask;
+
+class PvarDefinition;
+class PvarExpression;
+class Object;
+class Type;
+class ParametrizedVariable;
+
+extern std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
+extern std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
+extern std::map<std::string, Object*> objectMap; // Map for storing defined objects
+extern std::map<std::string, Type*> typeMap; // Map for storing defined types
 
 /*****************************************************************
                             Non Fluents
@@ -20,7 +32,7 @@ public:
     ~PvariablesInstanceDefine() {
         delete lConstList;
     }
-    
+
     std::string getName() {
         return name;
     }
@@ -45,14 +57,14 @@ public:
     ~ObjectDefine() {
         delete objectNames;
     }
-    
+
     std::string getTypeName() {
          return typeName;
     }
     std::vector<std::string>* getObjectNames() {
         return objectNames;
     }
-    
+
 private:
     std::string typeName;
     std::vector<std::string>* objectNames;
@@ -63,12 +75,12 @@ class NonFluentBlock {
 public:
     NonFluentBlock(std::string _name, std::string _domainName, std::vector<PvariablesInstanceDefine*>* _nonFluents, std::vector<ObjectDefine*>* _objects = nullptr)
         :name(_name), domainName(_domainName), nonFluents(_nonFluents), objects(_objects) {}
-    
+
     ~NonFluentBlock() {
         delete objects;
         delete nonFluents;
     }
-    
+
     std::string getName() {
         return name;
     }
@@ -100,14 +112,14 @@ public:
     CaseDefine(LogicalExpression* _condition, LogicalExpression* _effect)
         :condition(_condition), effect(_effect) {}
     ~CaseDefine();
-    
+
     LogicalExpression* getCondition() {
         return condition;
     }
     LogicalExpression* getEffect() {
         return effect;
     }
-    
+
 private:
     LogicalExpression* condition;
     LogicalExpression* effect;
@@ -121,7 +133,7 @@ public:
         delete values;
         delete probabilites;
     }
-    
+
     void addValue(LogicalExpression* expr) {
         values->push_back(expr);
     }
@@ -134,7 +146,7 @@ public:
     std::vector<LogicalExpression*>* getProbabilities() {
         return probabilites;
     }
-    
+
 private:
     std::vector<LogicalExpression*>* values;
     std::vector<LogicalExpression*>* probabilites;
@@ -147,7 +159,7 @@ public:
     ~PvarExpression() {
         delete parameters;
     }
-    
+
     std::string getName() {
         return name;
     }
@@ -165,7 +177,7 @@ public:
     CpfDefinition(PvarExpression* _pVarExpression, LogicalExpression* _logicalExpression)
         :pVarExpression(_pVarExpression), logicalExpression(_logicalExpression) {}
     ~CpfDefinition();
-    
+
     PvarExpression* getPvar() {
         return pVarExpression;
     }
@@ -268,23 +280,12 @@ public:
     std::vector<LogicalExpression*>* getStateConstraints() {
         return stateConstraints;
     }
-    
+
     void addTypes(std::vector<DefineType*>* _types) {
         types = _types;
     }
     void addPvar(std::vector<PvarDefinition*>* _pVariables) {
         pVariables = _pVariables;
-        // std::cout << "Adding variables..." << std::endl;
-        // // std::string _name, std::vector<std::string> *_parameteres, std::string _varType, std::string _defaultValueType, double _defaultVarValue
-        // for(std::vector<PvarDefinition*>::iterator it = pVariables->begin(); it != pVariables->end(); it++)
-        // {
-        //     std::cout << "Variable: " << (*it)->getName() << "; varType: " << (*it)->getVarType() << "; defaultVarType: " << (*it)->getDefaultVarType();
-        //     std::cout << "; defaultVarValue: " << (*it)->getDefaultVarValue() << std::endl;
-        //     std::cout << "With parameters: ";
-        //     for(std::vector<std::string>::iterator jt = (*it)->getParameters()->begin(); jt != (*it)->getParameters()->end(); jt++)
-        //         std::cout << (*jt) << ", ";
-        //     std::cout << std::endl;
-        // }
     }
     void addCPF(std::vector<CpfDefinition*>* _cpfs) {
         cpfs = _cpfs;
@@ -383,7 +384,7 @@ public:
     double getDiscount() {
         return discount;
     }
-    
+
 private:
     std::string name;
     std::string domainName;
@@ -402,7 +403,7 @@ class RDDLBlock {
 public:
     RDDLBlock();
     ~RDDLBlock() {}
-    
+
     void addDomain(Domain* d);
     void addInstance(Instance* i);
     void addNonFluent(NonFluentBlock* nf);
@@ -415,11 +416,16 @@ public:
     std::string getNonFluentsName() {
         return nonFluentsName;
     }
-    
+
     PlanningTask* task;
 private:
     std::string domainName;
     std::string nonFluentsName;
 };
+
+/*****************************************************************
+                           Helper Methods
+*****************************************************************/
+ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string name);
 
 #endif

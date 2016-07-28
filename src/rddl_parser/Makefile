@@ -7,7 +7,6 @@ HEADERS = rddl.h \
 	  logical_expressions.h \
 	  states.h \
 	  probability_distribution.h \
-	  helper_methods.h \
 	  utils/timer.h \
 	  utils/string_utils.h \
 	  utils/system_utils.h \
