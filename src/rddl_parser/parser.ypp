@@ -16,8 +16,6 @@ extern FILE* yyin; // Exter file, used for reading code from file
 #include "rddl.h"
 #include "utils/system_utils.h"
 
-
-std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
 std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
 std::map<std::string, Type*> typeMap; // Map for storing defined types
@@ -244,9 +242,9 @@ PvarList: PvarDefinition             { $$ = new std::vector<PvarDefinition*>(); 
         | PvarDefinition PvarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-PvarDefinition: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
-            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
+PvarDefinition: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10)); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10)); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10)); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
             | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
