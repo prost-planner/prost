@@ -426,5 +426,7 @@ void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefin
 void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression);
 bool storeObject(std::string objName, std::string objectType);
 Object* getObject(std::string objName);
+bool storeType(std::string typeName, std::string superTypeName);
+Type* getType(std::string typeName);
 
 #endif
