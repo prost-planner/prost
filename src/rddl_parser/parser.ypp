@@ -16,7 +16,6 @@ extern FILE* yyin; // Exter file, used for reading code from file
 #include "rddl.h"
 #include "utils/system_utils.h"
 
-std::map<std::string, Object*> objectMap; // Map for storing defined objects
 std::map<std::string, Type*> typeMap; // Map for storing defined types
 
 extern void yyerror (std::string message); // Function for syntax error handling
@@ -552,10 +551,8 @@ ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine
                                                                 SystemUtils::abort("Type " + *$1 + " not defined.");
                                                             for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
 
-                                                                if (objectMap.find(*it) != objectMap.end())
+                                                                if (storeObject(*it, *$1) == false)
                                                                     SystemUtils::abort("Object name " + *it + " is ambiguous.");
-
-                                                                objectMap[*it] = new Object(*it, typeMap[*$1]);
                                                             }
                                                          }
 ;
@@ -805,8 +802,8 @@ int main (int argc, char** argv) {
     typeMap["object"] = new Type("object");
 
     // Adding default objects
-    objectMap["true"] = new Object("true", typeMap["bool"]);
-    objectMap["false"] = new Object("false", typeMap["bool"]);
+    storeObject("true", "bool");
+    storeObject("false", "bool");
 
     yyin = fopen(".combined", "r");
     yyparse();

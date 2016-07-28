@@ -15,9 +15,6 @@ class Object;
 class Type;
 class ParametrizedVariable;
 
-extern std::map<std::string, Object*> objectMap; // Map for storing defined objects
-extern std::map<std::string, Type*> typeMap; // Map for storing defined types
-
 /*****************************************************************
                             Non Fluents
 ******************************************************************/
@@ -427,5 +424,7 @@ private:
 ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string name);
 void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefinition* pVarDefinition);
 void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression);
+bool storeObject(std::string objName, std::string objectType);
+Object* getObject(std::string objName);
 
 #endif
