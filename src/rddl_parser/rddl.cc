@@ -16,7 +16,7 @@
 std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
 std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
-extern std::map<std::string, Type*> typeMap; // Map for storing defined types
+std::map<std::string, Type*> typeMap; // Map for storing defined types
 
 CpfDefinition::~CpfDefinition() {
     delete pVarExpression;
@@ -493,3 +493,22 @@ Object* getObject(std::string objName) {
     else
        return NULL;
 }
+
+bool storeType(std::string typeName, std::string superTypeName) {
+
+    if (typeMap.find(superTypeName) != typeMap.end())
+        typeMap[typeName] = new Type(typeName, typeMap[superTypeName]);
+    else
+        typeMap[typeName] = new Type(typeName);
+
+    return true;
+}
+
+Type* getType(std::string typeName) {
+    if (typeMap.find(typeName) != typeMap.end())
+        return typeMap[typeName];
+    else
+        return NULL;
+}
+
+
