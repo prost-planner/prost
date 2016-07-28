@@ -16,8 +16,6 @@ extern FILE* yyin; // Exter file, used for reading code from file
 #include "rddl.h"
 #include "utils/system_utils.h"
 
-// #include "helper_methods.h" /*Hack*/
-
 
 std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
 std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
@@ -132,12 +130,12 @@ Program: RddlBlock            { $1->execute(targetDir); }
 ////////////////////////
 // RDDL block
 ////////////////////////
-RddlBlock: DomainBlock                { $$ = new RDDLBlock(); $$->addDomain($1); }
-        | InstanceBlock                { $$ = new RDDLBlock(); $$->addInstance($1); }
+RddlBlock: DomainBlock              { $$ = new RDDLBlock(); $$->addDomain($1); }
+        | InstanceBlock             { $$ = new RDDLBlock(); $$->addInstance($1); }
         | NonfluentBlock            { $$ = new RDDLBlock(); $$->addNonFluent($1); }
-        | RddlBlock DomainBlock        { $$ = $1; $$->addDomain($2); }
-        | RddlBlock InstanceBlock    { $$ = $1; $$->addInstance($2); }
-        | RddlBlock NonfluentBlock    { $$ = $1; $$->addNonFluent($2); }
+        | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
+        | RddlBlock InstanceBlock   { $$ = $1; $$->addInstance($2); }
+        | RddlBlock NonfluentBlock  { $$ = $1; $$->addNonFluent($2); }
 ;
 
 ////////////////////////////////////////////////
@@ -145,8 +143,8 @@ RddlBlock: DomainBlock                { $$ = new RDDLBlock(); $$->addDomain($1);
 // Domain block
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-DomainBlock: domain_token id_token '{' RequirementsSection DomainList '}'    { $$ = new Domain($2, $4, $5); }
-        | domain_token id_token '{' DomainList '}'                            { $$ = new Domain($2, $4); }
+DomainBlock: domain_token id_token '{' RequirementsSection DomainList '}'  { $$ = new Domain($2, $4, $5); }
+        | domain_token id_token '{' DomainList '}'                         { $$ = new Domain($2, $4); }
 ;
 
 ////////////////////////
@@ -157,28 +155,28 @@ RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { $$ = 
 ;
 
 RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*$1)); }
-            | id_token ',' RequirementsList { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*$1)); }
+            | id_token ',' RequirementsList   { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*$1)); }
 ;
 
 ////////////////////////
 // Domain list
 ////////////////////////
-DomainList: TypeSection DomainList                { $$ = $2; $$->addTypes($1); }
-        | PvarSection DomainList                { $$ = $2; $$->addPvar($1); }
-        | CpfSection DomainList                    { $$ = $2; $$->addCPF($1); }
-        | RewardsSection DomainList                { $$ = $2; $$->addReward($1); }
-        | StateConstraintsSection DomainList    { $$ = $2; $$->addStateConstraint($1); }
-        | ObjectsSection DomainList             { $$ = $2; $$->addObjects($1); }
-        | ActionPreconditionsSection DomainList    { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->addActionPrecondition($1);}
-        | StateInvariantSection    DomainList        { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->addStateInvariant($1); }
-        | TypeSection                             { $$ = new DomainList(); $$->addTypes($1); }
-        | PvarSection                             { $$ = new DomainList(); $$->addPvar($1); }
+DomainList: TypeSection DomainList               { $$ = $2; $$->addTypes($1); }
+        | PvarSection DomainList                 { $$ = $2; $$->addPvar($1); }
+        | CpfSection DomainList                  { $$ = $2; $$->addCPF($1); }
+        | RewardsSection DomainList              { $$ = $2; $$->addReward($1); }
+        | StateConstraintsSection DomainList     { $$ = $2; $$->addStateConstraint($1); }
+        | ObjectsSection DomainList              { $$ = $2; $$->addObjects($1); }
+        | ActionPreconditionsSection DomainList  { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->addActionPrecondition($1);}
+        | StateInvariantSection    DomainList    { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->addStateInvariant($1); }
+        | TypeSection                            { $$ = new DomainList(); $$->addTypes($1); }
+        | PvarSection                            { $$ = new DomainList(); $$->addPvar($1); }
         | CpfSection                             { $$ = new DomainList(); $$->addCPF($1); }
         | RewardsSection                         { $$ = new DomainList(); $$->addReward($1); }
-        | StateConstraintsSection                 { $$ = new DomainList(); $$->addStateConstraint($1); }
-        | ObjectsSection                          { $$ = new DomainList(); $$->addObjects($1); }
+        | StateConstraintsSection                { $$ = new DomainList(); $$->addStateConstraint($1); }
+        | ObjectsSection                         { $$ = new DomainList(); $$->addObjects($1); }
         | ActionPreconditionsSection             { SystemUtils::abort("Action precondition section not implemented yet.");  }//$$ = new DomainList(); $$->addActionPrecondition($1); }
-        | StateInvariantSection                    { SystemUtils::abort("State invariant section not implemented yet."); }//$$ = new DomainList(); $$->addStateInvariant($1); }
+        | StateInvariantSection                  { SystemUtils::abort("State invariant section not implemented yet."); }//$$ = new DomainList(); $$->addStateInvariant($1); }
 ;
 
 ////////////////////////
@@ -187,52 +185,52 @@ DomainList: TypeSection DomainList                { $$ = $2; $$->addTypes($1); }
 TypeSection: types_token '{' TypeList '}' ';' { $$ = $3; }
 ;
 
-TypeList: DefineType            { $$ = new std::vector<DefineType*>(); $$->insert($$->begin(), $1); }
+TypeList: DefineType             { $$ = new std::vector<DefineType*>(); $$->insert($$->begin(), $1); }
         | DefineType TypeList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
 // TODO: RDDL2: enable defining types in following way: id_token, id_token, ..., id_token : [definition like below]
-DefineType: id_token ':' object_token ';'                                        { $$ = new DefineType(*$1, *$3);
+DefineType: id_token ':' object_token ';'                                       { $$ = new DefineType(*$1, *$3);
                                                                                     if (typeMap.find(*$3) != typeMap.end())
                                                                                         typeMap[*$1] = new Type(*$1, typeMap[*$3]);
                                                                                     else
                                                                                         typeMap[*$1] = new Type(*$1);
                                                                                     /*std::cout << " added type from parser.ypp: " << *$1 << " with super type" << typeMap[*$3]->name << std::endl;*/
                                                                                 } // TODO: chose if this is a duplicate
-          | id_token ':' id_token ';'                                            { $$ = new DefineType(*$1, *$3);
+          | id_token ':' id_token ';'                                           { $$ = new DefineType(*$1, *$3);
                                                                                     if (typeMap.find(*$3) != typeMap.end())
                                                                                         typeMap[*$1] = new Type(*$1, typeMap[*$3]);
                                                                                     else
                                                                                         typeMap[*$1] = new Type(*$1);
                                                                                     /*std::cout << " added type from parser.ypp: " << *$1 << " with super type" << typeMap[*$3]->name << std::endl;*/
-                                                                                 }
-          | id_token ':' '{' EnumList '}' ';'                                     { SystemUtils::abort("Defining types using EnumList error. Not implemented yet.") ;} //TODO: $$ = new DefineType(*$1, $4); }
-          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'                { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; } // TODO: implement
-          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';'    { SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;} // TODO: Implement
-          | id_token ':' '<' StructMemberList '>' ';'                            { SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;} // TODO: Implement
+                                                                                }
+          | id_token ':' '{' EnumList '}' ';'                                   { SystemUtils::abort("Defining types using EnumList error. Not implemented yet.") ;} //TODO: $$ = new DefineType(*$1, $4); }
+          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; } // TODO: implement
+          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;} // TODO: Implement
+          | id_token ':' '<' StructMemberList '>' ';'                           { SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;} // TODO: Implement
 ;
 
 EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->insert($$->begin(), *$1); }
-        | enum_token ',' EnumList     { $$ = $3; $$->insert($$->begin(), *$1); }
+        | enum_token ',' EnumList   { $$ = $3; $$->insert($$->begin(), *$1); }
 ;
 
-TypeSpecification: id_token     { $$ = $1; }
-                | integer_token    { $$ = $1; }
-                | real_token    { $$ = $1; }
-                | bool_token    { $$ = $1; }
+TypeSpecification: id_token      { $$ = $1; }
+                | integer_token  { $$ = $1; }
+                | real_token     { $$ = $1; }
+                | bool_token     { $$ = $1; }
 ;
 
 // TODO: Implement
 // Ignored for now. Defining types using StructMemberList error. Not implemented yet.
-StructMemberList: LConst ':' TypeSpecification { SystemUtils::abort("StructMemberList not implemented yet."); }
+StructMemberList: LConst ':' TypeSpecification                      { SystemUtils::abort("StructMemberList not implemented yet."); }
                 | LConst ':' TypeSpecification ',' StructMemberList { SystemUtils::abort("StructMemberList not implemented yet."); }
 ;
 
 LConst: doubleNum_token { $$ = new NumericConstant($1); }
-    | intNum_token        { $$ = new NumericConstant($1); }
-    | id_token            { $$ = new Parameter(*$1); }// SystemUtils::abort("Defining constant as a variable not implemented yet."); }
+    | intNum_token      { $$ = new NumericConstant($1); }
+    | id_token          { $$ = new Parameter(*$1); } // SystemUtils::abort("Defining constant as a variable not implemented yet."); }
     | true_token        { $$ = new NumericConstant(1.0); }
-    | false_token        { $$ = new NumericConstant(0.0); }
+    | false_token       { $$ = new NumericConstant(0.0); }
     | enum_token        { SystemUtils::abort("Enums not implemnted;"); }
 ;
 
@@ -243,43 +241,43 @@ PvarSection: pvariables_token '{' PvarList '}' ';' { $$ = $3; }
 ;
 
 PvarList: PvarDefinition             { $$ = new std::vector<PvarDefinition*>(); $$->push_back($1); }
-        | PvarDefinition PvarList     { $$ = $2; $$->insert($$->begin(), $1); }
+        | PvarDefinition PvarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-PvarDefinition: id_token ParametarList '{' state_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString    '}' ';'    { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
-            | id_token ParametarList '{' non_fluent_token        ',' TypeSpecification ',' default_token '=' RangeConstantString    '}' ';'    { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString    '}' ';' { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
-            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'    { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
-            | id_token ParametarList '{' derived_fluent_token    ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'    { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
-            | id_token ParametarList '{' intermediate_token        ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
-            | id_token ParametarList '{' derived_fluent_token    ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
+PvarDefinition: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); parametrizedVariableDefinitionsMap[*$1] = new PvarDefinition(*$1, $2, *$4, *$6, *$8, *$10); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
             | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("observ-fluent parametrized variables definition not implemented. "); } // TODO: Implement
 ;
 
 ParametarList: ':'                                { $$ = new std::vector<std::string>(); }
-        | '(' ParametarListTypeSpecs ')' ':'    { $$ = $2; }
+        | '(' ParametarListTypeSpecs ')' ':'      { $$ = $2; }
 ;
 
 ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<std::string>(); $$->insert($$->begin(), *$1); }
-                    |    TypeSpecification ',' ParametarListTypeSpecs     { $$ = $3; $$->insert($$->begin(), *$1); }
+                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), *$1); }
 ;
 
 RangeConstantString: BoolType                        { $$ = $1; }
              | DoubleType                            { $$ = new std::string(std::to_string($1)); }
-             | IntType                                { $$ = new std::string(std::to_string($1)); }
-             | id_token                                { SystemUtils::abort("Variable as RangeConstant not implemented yet."); } // TODO: Implement retieving value from table, ??
-             | '$' id_token                            { SystemUtils::abort("$Variable as RangeConstant not implemented yet."); } // TODO: ??
+             | IntType                               { $$ = new std::string(std::to_string($1)); }
+             | id_token                              { SystemUtils::abort("Variable as RangeConstant not implemented yet."); } // TODO: Implement retieving value from table, ??
+             | '$' id_token                          { SystemUtils::abort("$Variable as RangeConstant not implemented yet."); } // TODO: ??
              | enum_token                            { SystemUtils::abort("Enums not implemented yet."); } // TODO: retrieve value from enum
              | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
              | '(' '<' StructRangeConsant '>' ')'    { SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
              | '[' '<' StructRangeConsant '>' ']'    { SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
 ;
 
-RangeConstant: BoolType                                { $$ = (*$1 == "true") ? 1 : 0;}
+RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 : 0;}
              | DoubleType                            { $$ = $1; }
-             | IntType                                { $$ = $1; }
-             | id_token                                { SystemUtils::abort("Range constant variable definition implemented yet."); } // TODO: Implement retieving value from table, ??
-             | '$' id_token                            { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); } // TODO: ??
+             | IntType                               { $$ = $1; }
+             | id_token                              { SystemUtils::abort("Range constant variable definition implemented yet."); } // TODO: Implement retieving value from table, ??
+             | '$' id_token                          { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); } // TODO: ??
              | enum_token                            { SystemUtils::abort("Enums not implemented yet."); } // TODO: retrieve value from enum
              | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
              | '(' '<' StructRangeConsant '>' ')'    { SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
@@ -287,26 +285,26 @@ RangeConstant: BoolType                                { $$ = (*$1 == "true") ? 
 ;
 
 
-StructRangeConsant: '?' ':' RangeConstant { SystemUtils::abort("StructRangeConsant not implemented yet."); }
-                | StructRangeConsantList { SystemUtils::abort("StructRangeConsant not implemented yet."); }
+StructRangeConsant: '?' ':' RangeConstant  { SystemUtils::abort("StructRangeConsant not implemented yet."); }
+                | StructRangeConsantList   { SystemUtils::abort("StructRangeConsant not implemented yet."); }
 ;
 
-StructRangeConsantList: LConst ':' RangeConstant { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
-                    | LConst ':' RangeConstant ',' StructRangeConsantList { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+StructRangeConsantList: LConst ':' RangeConstant                           { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+                    | LConst ':' RangeConstant ',' StructRangeConsantList  { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
 ;
 
-BoolType: true_token { $$ = $1; }
+BoolType: true_token  { $$ = $1; }
     | false_token     { $$ = $1; }
 ;
 
-DoubleType: doubleNum_token            { $$ = $1; }
+DoubleType: doubleNum_token           { $$ = $1; }
         | '-' doubleNum_token         { $$ = -$2; }
         | positive_infinity_token     { $$ = std::numeric_limits<double>::infinity(); }
         | negative_infinity_token     { $$ = -std::numeric_limits<double>::infinity();}
 ;
 
 IntType: intNum_token     { $$ = $1;  }
-    | '-' intNum_token     { $$ = -$2; }
+    | '-' intNum_token    { $$ = -$2; }
 ;
 
 ////////////////////////
@@ -319,7 +317,7 @@ CpfHeader: cpfs_token { } // Ok like this, no action here
         | cdfs_token  { } // Ok like this, no action here
 ;
 
-CpfList: CpfDefinition        { $$ = new std::vector<CpfDefinition*>(); $$->push_back($1); }
+CpfList: CpfDefinition         { $$ = new std::vector<CpfDefinition*>(); $$->push_back($1); }
     | CpfDefinition CpfList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
@@ -327,9 +325,9 @@ CpfDefinition: PvarExpression '=' Expression ';' { $$ = new CpfDefinition($1, $3
 ;
 
 PvarExpression: id_token                            { $$ = new PvarExpression(*$1); parametrizedVariableMap[*$1] = new PvarExpression(*$1); }
-            | id_token '(' TermList ')'                { $$ = new PvarExpression(*$1, $3); parametrizedVariableMap[*$1] = new PvarExpression(*$1, $3); }
-            | id_token MemberList                    { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
-            | id_token '(' TermList ')' MemberList    { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
+            | id_token '(' TermList ')'             { $$ = new PvarExpression(*$1, $3); parametrizedVariableMap[*$1] = new PvarExpression(*$1, $3); }
+            | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
+            | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
             | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
 ;
 
@@ -337,21 +335,21 @@ TermList: Term                 { $$ = new std::vector<std::string>(); $$->push_b
         | Term ',' TermList    { $$ = $3; $$->insert($$->begin(), *$1); }
 ;
 
-Term: var_token            { $$ = $1; } // TODO: Fix this ASAP. Conflict with definition in switch case and many more probably
+Term: var_token         { $$ = $1; } // TODO: Fix this ASAP. Conflict with definition in switch case and many more probably
     | PvarExpression    { SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); } // TODO; not implemented because stored variables cannot be accessed in this scope -> they do not exist
     | enum_token        { SystemUtils::abort("Enum definition of Term not implemented yet."); }
-    | '$' id_token        { SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); } // TODO: ???
+    | '$' id_token      { SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); } // TODO: ???
 ;
 
-MemberList: '.' Pterm     { SystemUtils::abort("MemberList not implemented yet."); }
+MemberList: '.' Pterm          { SystemUtils::abort("MemberList not implemented yet."); }
         | '.' Pterm MemberList { SystemUtils::abort("MemberList not implemented yet."); }
 ;
 
-Pterm: var_token { SystemUtils::abort("Pterm not implemented yet."); }
+Pterm: var_token             { SystemUtils::abort("Pterm not implemented yet."); }
     | '(' PvarExpression ')' { SystemUtils::abort("Pterm not implemented yet."); }
     | '[' PvarExpression ']' { SystemUtils::abort("Pterm not implemented yet."); }
-    | enum_token { SystemUtils::abort("Pterm not implemented yet."); }
-    | '$' id_token { SystemUtils::abort("Pterm not implemented yet."); }
+    | enum_token             { SystemUtils::abort("Pterm not implemented yet."); }
+    | '$' id_token           { SystemUtils::abort("Pterm not implemented yet."); }
 ;
 
 ////////////////////////
@@ -368,15 +366,15 @@ Expression:
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
                                                                                                 }
     | enum_token                                                                                { SystemUtils::abort("Enum expressions not implemented yet."); }
-    | '$' id_token                                                                                { SystemUtils::abort("'$<variable_name>' not implemented yet."); /* TODO: parse parameter?*/} /* '$' required here to disambiguate from parameterless PvarExpression. */
-    | '<' StructExpressionList                                                                    { SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
+    | '$' id_token                                                                              { SystemUtils::abort("'$<variable_name>' not implemented yet."); /* TODO: parse parameter?*/} /* '$' required here to disambiguate from parameterless PvarExpression. */
+    | '<' StructExpressionList                                                                  { SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
         // TODO: for now there are only sum, exists, product and forall. All of those are implemted and this part is left for purposes of further development of RDDL (definition of special functions)
-    | id_token '[' ExpressionList ']'                                                            { SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
-    | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                    { $$ = new UniversalQuantification($4, $6); }//std::cout << "\tima forall" << std::endl;} // TODO: problem for parameter list generation
-    | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                    { $$ = new ExistentialQuantification($4, $6);}// std::cout << "\tima exists" << std::endl;}
-    | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                        { $$ = new Sumation($4, $6); }//std::cout << "\tima sum" << std::endl;}
-    | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                    { $$ = new Product($4, $6); }//std::cout << "\tima product" << std::endl;}
-    | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token    { $$ = new IfThenElseExpression($3, $6, $8); }
+    | id_token '[' ExpressionList ']'                                                           { SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
+    | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new UniversalQuantification($4, $6); }//std::cout << "\tima forall" << std::endl;} // TODO: problem for parameter list generation
+    | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new ExistentialQuantification($4, $6);}// std::cout << "\tima exists" << std::endl;}
+    | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                      { $$ = new Sumation($4, $6); }//std::cout << "\tima sum" << std::endl;}
+    | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new Product($4, $6); }//std::cout << "\tima product" << std::endl;}
+    | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // SystemUtils::abort("Switch case control not implemented yet.");
                                                                                                     // TODO: Problem with accessing variables defined by user. They do not exist in this scope and when being accessed, seg fault is produced.
                                                                                                     LogicalExpression* switchVar;
@@ -405,56 +403,56 @@ Expression:
                                                                                                 }
     // Arithmetic & logical expressions
     | Expression '+' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Addition(exprs); }
-    | '-' Expression    %prec NEGATIVE                { std::vector<LogicalExpression*> exprs; exprs.push_back(new NumericConstant(0.0)); exprs.push_back($2); $$ = new Subtraction(exprs); } // TODO: this is patch, should be fixed
-    | '+' Expression  %prec NEGATIVE                { $$ = $2; }
+    | '-' Expression    %prec NEGATIVE                 { std::vector<LogicalExpression*> exprs; exprs.push_back(new NumericConstant(0.0)); exprs.push_back($2); $$ = new Subtraction(exprs); } // TODO: this is patch, should be fixed
+    | '+' Expression  %prec NEGATIVE                   { $$ = $2; }
     | Expression '-' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Subtraction(exprs); }
     | Expression '*' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Multiplication(exprs); }
     | Expression '/' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Division(exprs); }
     | Expression '>' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterExpression(exprs); }
     | Expression '<' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerExpression(exprs); }
-    | Expression lessOrEqual_token Expression        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerEqualsExpression(exprs); }
-    | Expression greaterOrEqual_token Expression    { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterEqualsExpression(exprs); }
+    | Expression lessOrEqual_token Expression          { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerEqualsExpression(exprs); }
+    | Expression greaterOrEqual_token Expression       { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterEqualsExpression(exprs); }
     | Expression equal_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new EqualsExpression(exprs); }
-    | Expression nonEqual_token Expression            { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Negation(new EqualsExpression(exprs)); }
-    | '(' Expression ')'                            { $$ = $2; }
-    | '[' Expression ']'                            { $$ = $2; }
+    | Expression nonEqual_token Expression             { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Negation(new EqualsExpression(exprs)); }
+    | '(' Expression ')'                               { $$ = $2; }
+    | '[' Expression ']'                               { $$ = $2; }
     | Expression '^' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
     | Expression '&' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
     | Expression '|' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Disjunction(exprs); }
-    | '~' Expression    %prec NEGATIVE                { $$ = new Negation($2); }
-    | Expression equivalent_token Expression        { std::vector<LogicalExpression*> posExprs, negExprs, exprs; posExprs.push_back($1); negExprs.push_back($3); exprs.push_back(new Conjunction(posExprs)); exprs.push_back(new Conjunction(posExprs)); $$ = new Disjunction(exprs); }
+    | '~' Expression    %prec NEGATIVE                 { $$ = new Negation($2); }
+    | Expression equivalent_token Expression           { std::vector<LogicalExpression*> posExprs, negExprs, exprs; posExprs.push_back($1); negExprs.push_back($3); exprs.push_back(new Conjunction(posExprs)); exprs.push_back(new Conjunction(posExprs)); $$ = new Disjunction(exprs); }
     | Expression imply_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back(new Negation($1)); exprs.push_back($3); $$ = new Disjunction(exprs); }
-    | doubleNum_token                                { $$ = new NumericConstant($1); }
-    | intNum_token                                      { $$ = new NumericConstant($1); }
-    | true_token                                    { $$ = new NumericConstant(1.0); }
-    | false_token                                    { $$ = new NumericConstant(0.0); }
-    | exponential_token '(' Expression ')'            { $$ = new ExponentialFunction($3); }
-    | exponential_token '[' Expression ']'            { $$ = new ExponentialFunction($3); }
+    | doubleNum_token                                  { $$ = new NumericConstant($1); }
+    | intNum_token                                     { $$ = new NumericConstant($1); }
+    | true_token                                       { $$ = new NumericConstant(1.0); }
+    | false_token                                      { $$ = new NumericConstant(0.0); }
+    | exponential_token '(' Expression ')'             { $$ = new ExponentialFunction($3); }
+    | exponential_token '[' Expression ']'             { $$ = new ExponentialFunction($3); }
 
     // Probability Distributions
     | bernoulli_token '(' Expression ')'                                    { $$ = new BernoulliDistribution($3); }
     | kronDelta_token '(' Expression ')'                                    { $$ = new KronDeltaDistribution($3); }
     | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = new DiscreteDistribution(*($5->getValues()), *($5->getProbabilities())); } // TODO: The return value (id_token) is optional in RDDL2.0
-    | diracDelta_token '(' Expression ')'                                    { SystemUtils::abort("DiracDelta not implemtend."); }
-    | uniform_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Uniform not implemtend."); }
+    | diracDelta_token '(' Expression ')'                                   { SystemUtils::abort("DiracDelta not implemtend."); }
+    | uniform_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Uniform not implemtend."); }
     | normal_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Normal not implemtend."); }
-    | dirichlet_token '(' id_token ',' Expression ')'                        { SystemUtils::abort("Dirichelt not implemtend."); }
-    | poisson_token '(' Expression ')'                                        { SystemUtils::abort("Poisson not implemtend."); }
-    | weibull_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Weibull not implemtend."); }
-    | gama_token '(' Expression ',' Expression ')'                            { SystemUtils::abort("Gama not implemtend.");  }
-    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'    { SystemUtils::abort("Multinomial not implemtend."); }
+    | dirichlet_token '(' id_token ',' Expression ')'                       { SystemUtils::abort("Dirichelt not implemtend."); }
+    | poisson_token '(' Expression ')'                                      { SystemUtils::abort("Poisson not implemtend."); }
+    | weibull_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Weibull not implemtend."); }
+    | gama_token '(' Expression ',' Expression ')'                          { SystemUtils::abort("Gama not implemtend.");  }
+    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { SystemUtils::abort("Multinomial not implemtend."); }
 ;
 
-StructExpressionList: LConst ':' Expression '>'                         { SystemUtils::abort("StructExpressionList not implemented yet."); }
+StructExpressionList: LConst ':' Expression '>'                          { SystemUtils::abort("StructExpressionList not implemented yet."); }
                     | LConst ':' Expression ',' StructExpressionList     { SystemUtils::abort("StructExpressionList not implemented yet."); }
 ;
 
 ExpressionList: Expression                    { SystemUtils::abort("ExpressionList not implemented yet."); }
-            | Expression ',' ExpressionList    { SystemUtils::abort("ExpressionList not implemented yet."); }
+              | Expression ',' ExpressionList { SystemUtils::abort("ExpressionList not implemented yet."); }
 ;
 
 TypedVarList: TypedVar                    { $$ = new ParameterList(*(new std::vector<Parameter*>()), *(new std::vector<Type*>())); $$->params.push_back(new Parameter($1->name, $1->type)); $$->types.push_back($1->type); } // TODO: problem with accessing the
-            | TypedVar ',' TypedVarList    { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
+            | TypedVar ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
 TypedVar: var_token ':' id_token { if (typeMap.find(*$3) != typeMap.end())
@@ -463,7 +461,7 @@ TypedVar: var_token ':' id_token { if (typeMap.find(*$3) != typeMap.end())
                                         SystemUtils::abort("Type " + *$3 + " not defined");
 
                                     /*std::cout << "\t param " << *$1 << " of type " << *$3 << std::endl;*/
-                                  }
+                                 }
 ;
 
 CaseList: CaseDefine                 { $$ = new std::vector<CaseDefine*>(); $$->push_back($1); }
@@ -478,13 +476,13 @@ CaseDefine: case_token Term ':' Expression        {
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
 
                                                     $$ = new CaseDefine(var, $4);
-                                                }
+                                                  }
         | default_token ':' Expression            { $$ = new CaseDefine(NULL, $3); }
 ;
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
 LConstCaseList: LConst ':' Expression                     { $$ = new LConstCaseList(); $$->addValue($1); $$->addProbability($3); }
-            | LConst ':' otherwise_token                { SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
+            | LConst ':' otherwise_token                  { SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
             | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->addValue($1); $$->addProbability($3); }
 ;
 
@@ -499,11 +497,11 @@ RewardsSection: reward_token '=' Expression ';'        { $$ = $3; }
 // State Action Contraint section
 ////////////////////////
 StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { $$ = $3; }
-                    |     state_action_constraints_token '{' '}' ';'                            { $$ = NULL; }
+                    |     state_action_constraints_token '{' '}' ';'                           { $$ = NULL; }
 ;
 
 StateConstraintList: StateConstraintDefine                        { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
-                |     StateConstraintDefine StateConstraintList    { $$ = $2; $$->insert($$->begin(), $1); }
+                |     StateConstraintDefine StateConstraintList   { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
 StateConstraintDefine: Expression ';' { $$ = $1; }
@@ -512,7 +510,7 @@ StateConstraintDefine: Expression ';' { $$ = $1; }
 ////////////////////////
 // Action Prediction section
 ////////////////////////
-ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'    { SystemUtils::abort("Action prediction not implemented yet."); }
+ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { SystemUtils::abort("Action prediction not implemented yet."); }
                         | action_preconditions_token '{' '}' ';'                            { SystemUtils::abort("Action prediction not implemented yet."); }
 ;
 
@@ -545,7 +543,7 @@ ObjectsSection: objects_token '{' ObjectsList '}' ';' { $$ = $3; }
 
 // This section is required in Non-fluents and Instance section
 ObjectsList: ObjectsDefine             { $$ = new std::vector<ObjectDefine*>(); $$->push_back($1); }
-        | ObjectsDefine ObjectsList  { $$ = $2; $$->insert($$->begin(), $1); }
+        | ObjectsDefine ObjectsList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
 ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine(*$1, $4);
@@ -563,9 +561,9 @@ ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine
 ;
 
 ObjectsConstList: id_token                        { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
-            | id_token ',' ObjectsConstList     { $$ = $3; $$->insert($$->begin(), *$1); }
+            | id_token ',' ObjectsConstList       { $$ = $3; $$->insert($$->begin(), *$1); }
             | '$' id_token                        { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
-            | '$' id_token ',' ObjectsConstList    { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token ',' ObjectsConstList   { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
 ;
 
 ///////////////////////////////////////////////
@@ -588,20 +586,20 @@ PvariablesInstanceList: PvariablesInstanceDefine                        { $$ = n
                     | PvariablesInstanceDefine PvariablesInstanceList   { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-PvariablesInstanceDefine: id_token '(' LConstListString ')' ';'                        { $$ = new PvariablesInstanceDefine(*$1, 1, $3); }
-                        | id_token ';'                                                { $$ = new PvariablesInstanceDefine(*$1, 1); }
-                        | '~' id_token '(' LConstListString ')' ';'                    { $$ = new PvariablesInstanceDefine(*$2, 0, $4); }
-                        | '~' id_token                                                { $$ = new PvariablesInstanceDefine(*$2, 0); }
-                        | id_token '(' LConstListString ')' '=' RangeConstant ';'     { $$ = new PvariablesInstanceDefine(*$1, $6, $3); }
+PvariablesInstanceDefine: id_token '(' LConstListString ')' ';'                     { $$ = new PvariablesInstanceDefine(*$1, 1, $3); }
+                        | id_token ';'                                              { $$ = new PvariablesInstanceDefine(*$1, 1); }
+                        | '~' id_token '(' LConstListString ')' ';'                 { $$ = new PvariablesInstanceDefine(*$2, 0, $4); }
+                        | '~' id_token                                              { $$ = new PvariablesInstanceDefine(*$2, 0); }
+                        | id_token '(' LConstListString ')' '=' RangeConstant ';'   { $$ = new PvariablesInstanceDefine(*$1, $6, $3); }
                         | id_token '=' RangeConstant ';'                            { $$ = new PvariablesInstanceDefine(*$1, $3); }
 ;
 
-/*LConstList: LConst                 { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
-        | LConst ',' LConstList { $$ = $3; $$->push_back($1); }
+/*LConstList: LConst              { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+        | LConst ',' LConstList   { $$ = $3; $$->push_back($1); }
 ;*/
 
 LConstListString: id_token                         { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
-                | id_token ',' LConstListString  { $$ = $3; $$->insert($$->begin(), *$1); }
+                | id_token ',' LConstListString    { $$ = $3; $$->insert($$->begin(), *$1); }
 ;
 
 ///////////////////////////////////////////////
