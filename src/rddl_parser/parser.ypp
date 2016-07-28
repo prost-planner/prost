@@ -356,10 +356,9 @@ Expression:
     // Flow control expressions, variables, enums, loops
       var_token                                                                                 { $$ = new Parameter(*$1); }//std::cout << "\t" << *$1 << std::endl;}
     | PvarExpression                                                                            {
+                                                                                                  $$ = getParametrizedVariableFromPvarDefinition($1->getName());
 
-                                                                                                  if (parametrizedVariableDefinitionsMap.find($1->getName()) != parametrizedVariableDefinitionsMap.end())
-                                                                                                      $$ = getParametrizedVariableFromPvarDefinition($1->getName());
-                                                                                                  else
+                                                                                                  if ($$ == NULL)
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
                                                                                                 }
     | enum_token                                                                                { SystemUtils::abort("Enum expressions not implemented yet."); }
@@ -375,10 +374,13 @@ Expression:
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // SystemUtils::abort("Switch case control not implemented yet.");
                                                                                                     // TODO: Problem with accessing variables defined by user. They do not exist in this scope and when being accessed, seg fault is produced.
                                                                                                     LogicalExpression* switchVar;
-                                                                                                    if (parametrizedVariableDefinitionsMap.find(*$3) != parametrizedVariableDefinitionsMap.end())
-                                                                                                        switchVar = getParametrizedVariableFromPvarDefinition(*$3);
-                                                                                                    else
+
+                                                                                                    switchVar = getParametrizedVariableFromPvarDefinition(*$3);
+
+                                                                                                    if (switchVar == NULL)
                                                                                                         SystemUtils::abort("Unknown parametrized variable " + *$3 + ".");
+
+
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
                                                                                                     for (std::vector<CaseDefine*>::iterator it = $6->begin(); it != $6->end(); it++) {
@@ -467,9 +469,10 @@ CaseList: CaseDefine                 { $$ = new std::vector<CaseDefine*>(); $$->
 
 CaseDefine: case_token Term ':' Expression        {
                                                     LogicalExpression* var;
-                                                    if (parametrizedVariableDefinitionsMap.find(*$2) != parametrizedVariableDefinitionsMap.end())
-                                                        var = getParametrizedVariableFromPvarDefinition(*$2);
-                                                    else
+
+                                                    var = getParametrizedVariableFromPvarDefinition(*$2);
+
+                                                    if (var == NULL)
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
 
                                                     $$ = new CaseDefine(var, $4);
