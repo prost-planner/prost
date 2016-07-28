@@ -427,5 +427,7 @@ private:
                            Helper Methods
 *****************************************************************/
 ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string name);
+void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefinition* pVarDefinition);
+void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression);
 
 #endif

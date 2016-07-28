@@ -13,6 +13,7 @@
 #include "utils/timer.h"
 #include "utils/system_utils.h"
 
+std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
 
 CpfDefinition::~CpfDefinition() {
     delete pVarExpression;
@@ -391,6 +392,10 @@ void RDDLBlock::execute(std::string td/*target dir*/) {
 // Parametrized variable is stored with its definition in pVarDefinition and the
 // values of parameters used in the particular call of parametrized variable are stored in pVarExpression
 ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVarName) {
+
+    if (parametrizedVariableDefinitionsMap.find(pVarName) == parametrizedVariableDefinitionsMap.end())
+        return NULL;
+
     PvarDefinition *pVarDefinition = parametrizedVariableDefinitionsMap[pVarName];
     PvarExpression *pVarExpression = parametrizedVariableMap[pVarName];
 
@@ -459,4 +464,12 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
     ParametrizedVariable* var = new ParametrizedVariable(name, params, varType, valueType, defaultVarValue);
 
     return var;
+}
+
+void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefinition* pVar) {
+    parametrizedVariableDefinitionsMap[pVarName] = pVar;
+}
+
+void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression) {
+    parametrizedVariableMap[pVarName] = pVarExpression;
 }
