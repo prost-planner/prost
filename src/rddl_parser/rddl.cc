@@ -14,6 +14,7 @@
 #include "utils/system_utils.h"
 
 std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
+std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
 
 CpfDefinition::~CpfDefinition() {
     delete pVarExpression;

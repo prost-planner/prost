@@ -16,7 +16,6 @@ extern FILE* yyin; // Exter file, used for reading code from file
 #include "rddl.h"
 #include "utils/system_utils.h"
 
-std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
 std::map<std::string, Type*> typeMap; // Map for storing defined types
 
@@ -322,8 +321,8 @@ CpfList: CpfDefinition         { $$ = new std::vector<CpfDefinition*>(); $$->pus
 CpfDefinition: PvarExpression '=' Expression ';' { $$ = new CpfDefinition($1, $3); }
 ;
 
-PvarExpression: id_token                            { $$ = new PvarExpression(*$1); parametrizedVariableMap[*$1] = new PvarExpression(*$1); }
-            | id_token '(' TermList ')'             { $$ = new PvarExpression(*$1, $3); parametrizedVariableMap[*$1] = new PvarExpression(*$1, $3); }
+PvarExpression: id_token                            { $$ = new PvarExpression(*$1); storeParametrizedVariableMap(*$1, new PvarExpression(*$1)); }
+            | id_token '(' TermList ')'             { $$ = new PvarExpression(*$1, $3); storeParametrizedVariableMap(*$1, new PvarExpression(*$1, $3)); }
             | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
             | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
             | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
