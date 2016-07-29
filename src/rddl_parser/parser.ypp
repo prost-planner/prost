@@ -155,22 +155,22 @@ RequirementsList: id_token                    { $$ = new std::vector<std::string
 ////////////////////////
 // Domain list
 ////////////////////////
-DomainList: TypeSection DomainList               { $$ = $2; $$->addTypes($1); }
-        | PvarSection DomainList                 { $$ = $2; $$->addPvar($1); }
-        | CpfSection DomainList                  { $$ = $2; $$->addCPF($1); }
-        | RewardsSection DomainList              { $$ = $2; $$->addReward($1); }
-        | StateConstraintsSection DomainList     { $$ = $2; $$->addStateConstraint($1); }
-        | ObjectsSection DomainList              { $$ = $2; $$->addObjects($1); }
-        | ActionPreconditionsSection DomainList  { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->addActionPrecondition($1);}
-        | StateInvariantSection    DomainList    { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->addStateInvariant($1); }
-        | TypeSection                            { $$ = new DomainList(); $$->addTypes($1); }
-        | PvarSection                            { $$ = new DomainList(); $$->addPvar($1); }
-        | CpfSection                             { $$ = new DomainList(); $$->addCPF($1); }
-        | RewardsSection                         { $$ = new DomainList(); $$->addReward($1); }
-        | StateConstraintsSection                { $$ = new DomainList(); $$->addStateConstraint($1); }
-        | ObjectsSection                         { $$ = new DomainList(); $$->addObjects($1); }
-        | ActionPreconditionsSection             { SystemUtils::abort("Action precondition section not implemented yet.");  }//$$ = new DomainList(); $$->addActionPrecondition($1); }
-        | StateInvariantSection                  { SystemUtils::abort("State invariant section not implemented yet."); }//$$ = new DomainList(); $$->addStateInvariant($1); }
+DomainList: TypeSection DomainList               { $$ = $2; $$->setTypes($1); }
+        | PvarSection DomainList                 { $$ = $2; $$->setPvar($1); }
+        | CpfSection DomainList                  { $$ = $2; $$->setCPF($1); }
+        | RewardsSection DomainList              { $$ = $2; $$->setReward($1); }
+        | StateConstraintsSection DomainList     { $$ = $2; $$->setStateConstraint($1); }
+        | ObjectsSection DomainList              { $$ = $2; $$->setObjects($1); }
+        | ActionPreconditionsSection DomainList  { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+        | StateInvariantSection    DomainList    { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+        | TypeSection                            { $$ = new DomainList(); $$->setTypes($1); }
+        | PvarSection                            { $$ = new DomainList(); $$->setPvar($1); }
+        | CpfSection                             { $$ = new DomainList(); $$->setCPF($1); }
+        | RewardsSection                         { $$ = new DomainList(); $$->setReward($1); }
+        | StateConstraintsSection                { $$ = new DomainList(); $$->setStateConstraint($1); }
+        | ObjectsSection                         { $$ = new DomainList(); $$->setObjects($1); }
+        | ActionPreconditionsSection             { SystemUtils::abort("Action precondition section not implemented yet.");  }//$$ = new DomainList(); $$->setActionPrecondition($1); }
+        | StateInvariantSection                  { SystemUtils::abort("State invariant section not implemented yet."); }//$$ = new DomainList(); $$->setStateInvariant($1); }
 ;
 
 ////////////////////////
