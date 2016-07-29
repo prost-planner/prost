@@ -38,8 +38,9 @@ RDDLBlock::RDDLBlock()
     : task(new PlanningTask()) {}
 
 void addTypeSection(RDDLBlock *rddlBlock, Domain* domain) {
-    if (domain->getDomainTypes() == NULL)
+    if (domain->getDomainTypes() == NULL) {
         return;
+    }
 
     // Adding TypeSection
     for (std::vector<DefineType*>::iterator it = domain->getDomainTypes()->begin(); it != domain->getDomainTypes()->end(); it++) {
@@ -60,8 +61,9 @@ void addTypeSection(RDDLBlock *rddlBlock, Domain* domain) {
 }
 
 void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
-    if (domain->getPvarDefinitions() == NULL)
+    if (domain->getPvarDefinitions() == NULL) {
         return;
+    }
 
     // Adding PvarSection
     for(std::vector<PvarDefinition*>::iterator it = domain->getPvarDefinitions()->begin(); it != domain->getPvarDefinitions()->end(); it++) {
@@ -74,12 +76,12 @@ void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
 
         std::vector<Parameter*> params;
         for(std::vector<std::string>::iterator jt = (*it)->getParameters()->begin(); jt != (*it)->getParameters()->end(); jt++) {
-            if (rddlBlock->task->types.find((*jt)) == rddlBlock->task->types.end())
+            if (rddlBlock->task->types.find((*jt)) == rddlBlock->task->types.end()) {
                 SystemUtils::abort("Undefined type " + *jt + " used as parameter in " + name + ".");
-            else
+            }
+            else {
                 params.push_back(new Parameter(rddlBlock->task->types[*jt]->name, rddlBlock->task->types[*jt]));
-                // params.push_back(new Parameter(*jt, rddlBlock->task->types[*jt]));
-
+            }
             // std::cout << "Adding parameter: " << rddlBlock->task->types[*jt]->name << " of type " << rddlBlock->task->types[*jt]->name << std::endl;
 
         }
@@ -87,50 +89,65 @@ void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
         // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
         // setting it to NULL doesn't help
         ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
-        if (varTypeName == "state-fluent")
+        if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
-        else if (varTypeName == "action-fluent")
+        }
+        else if (varTypeName == "action-fluent") {
             varType = ParametrizedVariable::ACTION_FLUENT;
-        else if (varTypeName == "non-fluent")
+        }
+        else if (varTypeName == "non-fluent") {
             varType = ParametrizedVariable::NON_FLUENT;
+        }
         // TODO: cover other types of parametrized variables
-        else
+        else {
             SystemUtils::abort("Parametrized variable: " + varTypeName + " not implemented. Implemented for now: state-fluent, action-fluent, non-fluent.");
+        }
 
-        if (rddlBlock->task->types.find(defaultVarType) == rddlBlock->task->types.end())
+        if (rddlBlock->task->types.find(defaultVarType) == rddlBlock->task->types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
+        }
+
         Type* valueType = rddlBlock->task->types[defaultVarType];
 
         switch (varType) {
             case ParametrizedVariable::NON_FLUENT:
             case ParametrizedVariable::STATE_FLUENT:
-            case ParametrizedVariable::ACTION_FLUENT:
-                if (satisfactionType != "default")
+            case ParametrizedVariable::ACTION_FLUENT: {
+                if (satisfactionType != "default") {
                     SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'default'?");
+                }
 
-                if (valueType->name == "int" || valueType->name == "real" ) // TODO: ?? -> || valueType->name == "bool")
+                // TODO: ?? -> || valueType->name == "bool")
+                if (valueType->name == "int" || valueType->name == "real" ) {
                     defaultVarValue = std::atof(defaultVarValString.c_str());
+                }
                 else {
-                    if (rddlBlock->task->objects.find(defaultVarValString) == rddlBlock->task->objects.end())
+                    if (rddlBlock->task->objects.find(defaultVarValString) == rddlBlock->task->objects.end()) {
                         SystemUtils::abort("Default value " + defaultVarValString + " of variable " + name + " not defined.");
+                    }
+
                     Object* val = rddlBlock->task->objects[defaultVarValString];
                     defaultVarValue = val->value;
                 }
                 break;
+            }
 
             // case ParametrizedVariable::INTERM_FLUENT:
             // case ParametrizedVariable::DERIVED_FLUENT:
-            //     if (satisfactionType != "level")
+            //     if (satisfactionType != "level") {
             //         SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'level'?");
-            //
+            //     }
             //     // TODO: implement this
             //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
             //     break;
 
             default:
+            {
                 SystemUtils::abort("Unknown var type: " + varTypeName);
                 break;
+            }
         }
+
         // std::cout << "Adding parametrized variable: " << name << " default var type " << defaultVarType  << " default value: " << defaultVarValue << std::endl;
         ParametrizedVariable* var = new ParametrizedVariable(name, params, varType, valueType, defaultVarValue);
 
@@ -144,8 +161,9 @@ void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
 }
 
 void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
-    if (domain->getCpfs() == NULL)
+    if (domain->getCpfs() == NULL) {
         return;
+    }
 
     // std::cout << "########## Adding " << domain->getCpfs()->size() << " CPF definitions" << std::endl;
 
@@ -156,11 +174,13 @@ void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
 
         // std::cout << "Pvar name: " << name << std::endl;
 
-        if (name[name.length() - 1] == '\'')
+        if (name[name.length() - 1] == '\'') {
             name = name.substr(0, name.length() - 1);
+        }
 
-        if (rddlBlock->task->variableDefinitions.find(name) == rddlBlock->task->variableDefinitions.end())
+        if (rddlBlock->task->variableDefinitions.find(name) == rddlBlock->task->variableDefinitions.end()) {
             SystemUtils::abort("No according variable to CPF " + name + ".");
+        }
 
         ParametrizedVariable* head = rddlBlock->task->variableDefinitions[name];
 
@@ -168,8 +188,9 @@ void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
                 if (head->params.size() != 0)
                     SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
             }
-        else if (head->params.size() != ((*it)->getPvar()->getParameters()->size()))
+        else if (head->params.size() != ((*it)->getPvar()->getParameters()->size())) {
                 SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
+            }
 
         if ((*it)->getPvar()->getParameters() != NULL) {
             unsigned i = 0;
@@ -179,8 +200,9 @@ void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
             }
         }
 
-        if (rddlBlock->task->CPFDefinitions.find(head) != rddlBlock->task->CPFDefinitions.end())
+        if (rddlBlock->task->CPFDefinitions.find(head) != rddlBlock->task->CPFDefinitions.end()) {
             SystemUtils::abort("Error: Multiple definition of CPF " + name + ".");
+        }
 
         // Expression
         rddlBlock->task->CPFDefinitions[head] = (*it)->getLogicalExpression();
@@ -195,21 +217,25 @@ void addRewardSection(RDDLBlock *rddlBlock, Domain *domain) {
 }
 
 void addStateConstraint(RDDLBlock *rddlBlock, Domain *domain) {
-    if (domain->getStateConstraints() == NULL)
+    if (domain->getStateConstraints() == NULL) {
         return;
+    }
 
-    for(std::vector<LogicalExpression*>::iterator it = domain->getStateConstraints()->begin(); it != domain->getStateConstraints()->end(); it++)
+    for(std::vector<LogicalExpression*>::iterator it = domain->getStateConstraints()->begin(); it != domain->getStateConstraints()->end(); it++) {
         rddlBlock->task->SACs.push_back(*it);
+    }
 }
 
 void addObjectsSection(RDDLBlock *rddlBlock, Domain *domain) {
-    if (domain->getObjects() == NULL)
+    if (domain->getObjects() == NULL) {
         return;
+    }
 
     for (std::vector<ObjectDefine*>::iterator it = domain->getObjects()->begin(); it != domain->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
-        if (rddlBlock->task->types.find(typeName) == rddlBlock->task->types.end())
+        if (rddlBlock->task->types.find(typeName) == rddlBlock->task->types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
+        }
         for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++) {
             rddlBlock->task->addObject(typeName, (*jt));
             std::cout << "Added object (from objects section): " << typeName << " : " << *jt << std::endl;
@@ -241,15 +267,17 @@ void RDDLBlock::addNonFluent(NonFluentBlock *nonFluent) {
     nonFluentsName = nonFluent->getName();
 
     // Check if domain name is corresponding
-    if (nonFluent->getDomainName() != this->getDomainName())
+    if (nonFluent->getDomainName() != this->getDomainName()) {
         SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() + "  defined in Non fluent section");
+    }
 
     // Adding objects
     for (std::vector<ObjectDefine*>::iterator it = nonFluent->getObjects()->begin(); it != nonFluent->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
-        if (task->types.find(typeName) == task->types.end())
+        if (task->types.find(typeName) == task->types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
-        for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++){
+        }
+        for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++) {
             task->addObject(typeName, (*jt));
             // std::cout << "Added object (from non fluents): " << *jt << " of type " << typeName << std::endl;
         }
@@ -266,16 +294,18 @@ void RDDLBlock::addNonFluent(NonFluentBlock *nonFluent) {
         {
             for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
                 std::string paramName = (*jt);
-                if (task->objects.find(paramName) == task->objects.end())
+                if (task->objects.find(paramName) == task->objects.end()) {
                     SystemUtils::abort("Unknown object: " + paramName);
+                }
 
                 // std::cout << "Added non fluent (from non fluents): " << paramName << " of type " << task->objects[paramName]->type->name << std::endl;
                 params.push_back(task->objects[paramName]); // TODO: this is wrong. It only covers the case that parametrized variable is a Parameter Expression
             }
         }
 
-        if (task->variableDefinitions.find(name) == task->variableDefinitions.end())
+        if (task->variableDefinitions.find(name) == task->variableDefinitions.end()) {
             SystemUtils::abort("Variable " + name + " used but not defined.");
+        }
 
         ParametrizedVariable* parent = task->variableDefinitions[name];
         double initialVal = (*it)->getInitValue();
@@ -295,12 +325,14 @@ void RDDLBlock::addInstance(Instance* instance) {
     this->task->name = instance->getName();
 
     // Check domain name
-    if (this->getDomainName() != instance->getDomainName())
+    if (this->getDomainName() != instance->getDomainName()) {
         SystemUtils::abort("Unknown domain " + instance->getDomainName() + " defined in Instance section");
+    }
 
     // Check Non fluents name
-    if (this->getNonFluentsName() != instance->getNonFluentsName())
+    if (this->getNonFluentsName() != instance->getNonFluentsName()) {
         SystemUtils::abort("Unknown non fluents " + instance->getNonFluentsName() + "defined in Non fluent section");
+    }
 
     // Add init states
     if (instance->getPVariables() != NULL) {
@@ -312,16 +344,18 @@ void RDDLBlock::addInstance(Instance* instance) {
             {
                 for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
                     std::string paramName = (*jt);
-                    if (task->objects.find(paramName) == task->objects.end())
+                    if (task->objects.find(paramName) == task->objects.end()) {
                         SystemUtils::abort("Unknown object: " + paramName);
+                    }
 
                     params.push_back(task->objects[paramName]); // TODO: this is wrong. It only covers the case that parametrized variable is and Parameter Expression
                 }
 
             }
 
-            if (task->variableDefinitions.find(name) == task->variableDefinitions.end())
+            if (task->variableDefinitions.find(name) == task->variableDefinitions.end()) {
                 SystemUtils::abort("Variable " + name + " used but not defined.");
+            }
 
             ParametrizedVariable* parent = task->variableDefinitions[name];
             double initialVal = (*it)->getInitValue();
@@ -412,40 +446,50 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
     std::vector<Parameter*> params;
     // Adding parameters from PvarExpression (those are the parameters that user set when he called parametrized variablea as an espression)
     for(unsigned i = 0; i < pVarDefinition->getParameters()->size(); i++)
-        if (typeMap.find((*pVarDefinition->getParameters())[i]) == typeMap.end())
+        if (typeMap.find((*pVarDefinition->getParameters())[i]) == typeMap.end()) {
             SystemUtils::abort("Undefined type " + (*pVarExpression->getParameters())[i] + " used as parameter in " + name + ".");
-        else
+        }
+        else {
             params.push_back(new Parameter((*pVarExpression->getParameters())[i], typeMap[(*pVarDefinition->getParameters())[i]]));
+        }
 
     // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
     // setting it to NULL doesn't help
     ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
-    if (varTypeName == "state-fluent")
+    if (varTypeName == "state-fluent") {
         varType = ParametrizedVariable::STATE_FLUENT;
-    else if (varTypeName == "action-fluent")
+    }
+    else if (varTypeName == "action-fluent") {
         varType = ParametrizedVariable::ACTION_FLUENT;
-    else if (varTypeName == "non-fluent")
+    }
+    else if (varTypeName == "non-fluent") {
         varType = ParametrizedVariable::NON_FLUENT;
+    }
     // TODO: cover other types of parametrized variables
-    else
+    else {
         SystemUtils::abort("Parametrized variable: " + varTypeName + " not implemented. Implemented for now: state-fluent, action-fluent, non-fluent.");
+    }
 
-    if (typeMap.find(defaultVarType) == typeMap.end())
+    if (typeMap.find(defaultVarType) == typeMap.end()) {
         SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
+    }
     Type* valueType = typeMap[defaultVarType];
 
     switch (varType) {
         case ParametrizedVariable::NON_FLUENT:
         case ParametrizedVariable::STATE_FLUENT:
         case ParametrizedVariable::ACTION_FLUENT:
-            if (satisfactionType != "default")
+            if (satisfactionType != "default") {
                 SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'default'?");
+            }
 
-            if (valueType->name == "int" || valueType->name == "real" ) // TODO: ?? -> || valueType->name == "bool")
+            if (valueType->name == "int" || valueType->name == "real" ) {// TODO: ?? -> || valueType->name == "bool")
                 defaultVarValue = std::atof(defaultVarValString.c_str());
+            }
             else {
-                if (objectMap.find(defaultVarValString) == objectMap.end())
+                if (objectMap.find(defaultVarValString) == objectMap.end()) {
                     SystemUtils::abort("Default value " + defaultVarValString + " of variable " + name + " not defined.");
+                }
                 Object* val = objectMap[defaultVarValString];
                 defaultVarValue = val->value;
             }
@@ -479,36 +523,43 @@ void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpr
 
 bool storeObject(std::string objName, std::string objectType) {
 
-    if (objectMap.find(objName) != objectMap.end())
+    if (objectMap.find(objName) != objectMap.end()) {
         return false;
+    }
 
-    objectMap[objName] = new Object(objName, typeMap[objectType]);
+    objectMap[objName] = new Object(objName, typeMap[objectType]); // TODO: Should check if type exists. For some reason, simple check gives worng results.
 
     return true;
 }
 
 Object* getObject(std::string objName) {
-    if (objectMap.find(objName) != objectMap.end())
+    if (objectMap.find(objName) != objectMap.end()) {
         return objectMap[objName];
-    else
+    }
+    else {
        return NULL;
+   }
 }
 
 bool storeType(std::string typeName, std::string superTypeName) {
 
-    if (typeMap.find(superTypeName) != typeMap.end())
+    if (typeMap.find(superTypeName) != typeMap.end()) {
         typeMap[typeName] = new Type(typeName, typeMap[superTypeName]);
-    else
+    }
+    else {
         typeMap[typeName] = new Type(typeName);
+    }
 
     return true;
 }
 
 Type* getType(std::string typeName) {
-    if (typeMap.find(typeName) != typeMap.end())
+    if (typeMap.find(typeName) != typeMap.end()) {
         return typeMap[typeName];
-    else
+    }
+    else {
         return NULL;
+    }
 }
 
 

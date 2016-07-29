@@ -351,8 +351,9 @@ Expression:
     | PvarExpression                                                                            {
                                                                                                   $$ = getParametrizedVariableFromPvarDefinition($1->getName());
 
-                                                                                                  if ($$ == NULL)
+                                                                                                  if ($$ == NULL) {
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
+                                                                                                  }
                                                                                                 }
     | enum_token                                                                                { SystemUtils::abort("Enum expressions not implemented yet."); }
     | '$' id_token                                                                              { SystemUtils::abort("'$<variable_name>' not implemented yet."); /* TODO: parse parameter?*/} /* '$' required here to disambiguate from parameterless PvarExpression. */
@@ -370,8 +371,9 @@ Expression:
 
                                                                                                     switchVar = getParametrizedVariableFromPvarDefinition(*$3);
 
-                                                                                                    if (switchVar == NULL)
+                                                                                                    if (switchVar == NULL) {
                                                                                                         SystemUtils::abort("Unknown parametrized variable " + *$3 + ".");
+                                                                                                    }
 
 
                                                                                                     std::vector<LogicalExpression*> conditions;
@@ -447,10 +449,12 @@ TypedVarList: TypedVar                    { $$ = new ParameterList(*(new std::ve
             | TypedVar ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
-TypedVar: var_token ':' id_token { if (getType(*$3) != NULL)
+TypedVar: var_token ':' id_token { if (getType(*$3) != NULL) {
                                      $$ = new Parameter(*$1, getType(*$3));
-                                   else
+                                   }
+                                   else {
                                         SystemUtils::abort("Type " + *$3 + " not defined");
+                                   }
 
                                     /*std::cout << "\t param " << *$1 << " of type " << *$3 << std::endl;*/
                                  }
@@ -465,8 +469,9 @@ CaseDefine: case_token Term ':' Expression        {
 
                                                     var = getParametrizedVariableFromPvarDefinition(*$2);
 
-                                                    if (var == NULL)
+                                                    if (var == NULL) {
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
+                                                    }
 
                                                     $$ = new CaseDefine(var, $4);
                                                   }
@@ -541,12 +546,14 @@ ObjectsList: ObjectsDefine             { $$ = new std::vector<ObjectDefine*>(); 
 
 ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine(*$1, $4);
                                                             /*TODO: hack, fix this*/
-                                                            if (getType(*$1) == NULL)
+                                                            if (getType(*$1) == NULL) {
                                                                 SystemUtils::abort("Type " + *$1 + " not defined.");
+                                                            }
                                                             for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
 
-                                                                if (storeObject(*it, *$1) == false)
+                                                                if (storeObject(*it, *$1) == false) {
                                                                     SystemUtils::abort("Object name " + *it + " is ambiguous.");
+                                                                }
                                                             }
                                                          }
 ;
@@ -751,11 +758,13 @@ PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
 %%
 
 bool CheckExtension(std::string s) {
-    if (s.length() < 6)
+    if (s.length() < 6) {
         return 0;
+    }
 
-    if (s.substr(s.length() - 5).compare(".rddl") != 0)
+    if (s.substr(s.length() - 5).compare(".rddl") != 0) {
         return 0;
+    }
 
     return 1;
 }
@@ -773,8 +782,9 @@ int main (int argc, char** argv) {
     }
 
     // Checking input file
-    if (!CheckExtension(argv[1]) || !CheckExtension(argv[2]))
+    if (!CheckExtension(argv[1]) || !CheckExtension(argv[2])) {
         SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
+    }
 
     std::ifstream domain(argv[1], std::ifstream::in);
     std::ifstream nfAndInst(argv[2], std::ifstream::in);
@@ -786,8 +796,9 @@ int main (int argc, char** argv) {
         combined << domain.rdbuf() << nfAndInst.rdbuf();
         combined.close();
     }
-    else
+    else {
         SystemUtils::abort("Error opening files. Check the correctnes of files.");
+    }
 
     // Adding default types and objects
     storeType("bool", "bool");
