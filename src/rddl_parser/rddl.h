@@ -28,13 +28,13 @@ public:
         delete lConstList;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return name;
     }
-    std::vector<std::string>* getLConstList() {
+    std::vector<std::string>* getLConstList() const {
         return lConstList;
     }
-    double getInitValue() {
+    double getInitValue() const {
         return initValue;
     }
 
@@ -53,10 +53,10 @@ public:
         delete objectNames;
     }
 
-    std::string getTypeName() {
+    std::string getTypeName() const {
          return typeName;
     }
-    std::vector<std::string>* getObjectNames() {
+    std::vector<std::string>* getObjectNames() const {
         return objectNames;
     }
 
@@ -76,16 +76,16 @@ public:
         delete nonFluents;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return name;
     }
-    std::string getDomainName() {
+    std::string getDomainName() const {
         return domainName;
     }
-    std::vector<ObjectDefine*>* getObjects() {
+    std::vector<ObjectDefine*>* getObjects() const {
         return objects;
     }
-    std::vector<PvariablesInstanceDefine*>* getNonFluents() {
+    std::vector<PvariablesInstanceDefine*>* getNonFluents() const {
         return nonFluents;
     }
 
@@ -108,10 +108,10 @@ public:
         :condition(_condition), effect(_effect) {}
     ~CaseDefine();
 
-    LogicalExpression* getCondition() {
+    LogicalExpression* getCondition() const {
         return condition;
     }
-    LogicalExpression* getEffect() {
+    LogicalExpression* getEffect() const {
         return effect;
     }
 
@@ -135,10 +135,10 @@ public:
     void addProbability(LogicalExpression* expr) {
         probabilites->push_back(expr);
     }
-    std::vector<LogicalExpression*>* getValues() {
+    std::vector<LogicalExpression*>* getValues() const {
         return values;
     }
-    std::vector<LogicalExpression*>* getProbabilities() {
+    std::vector<LogicalExpression*>* getProbabilities() const {
         return probabilites;
     }
 
@@ -155,10 +155,10 @@ public:
         delete parameters;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return name;
     }
-    std::vector<std::string>* getParameters() {
+    std::vector<std::string>* getParameters() const {
         return parameters;
     }
 
@@ -173,10 +173,10 @@ public:
         :pVarExpression(_pVarExpression), logicalExpression(_logicalExpression) {}
     ~CpfDefinition();
 
-    PvarExpression* getPvar() {
+    PvarExpression* getPvar() const {
         return pVarExpression;
     }
-    LogicalExpression* getLogicalExpression() {
+    LogicalExpression* getLogicalExpression() const {
         return logicalExpression;
     }
 
@@ -195,22 +195,22 @@ public:
         delete parameters;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return name;
     }
-    std::vector<std::string>* getParameters() {
+    std::vector<std::string>* getParameters() const {
         return parameters;
     }
-    std::string getVarType() {
+    std::string getVarType() const {
         return varType;
     }
-    std::string getDefaultVarType() {
+    std::string getDefaultVarType() const {
         return defaultVarType;
     }
-    std::string getSatisfactionType() {
+    std::string getSatisfactionType() const {
         return satisfactionType;
     }
-    std::string getDefaultVarValue() {
+    std::string getDefaultVarValue() const {
         return defaultVarValue;
     }
 
@@ -236,13 +236,13 @@ public:
         delete superTypeList;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return name;
     }
-    std::string getSuperType() {
+    std::string getSuperType() const {
         return superType;
     }
-    std::vector<std::string>* getSuperTypeList() {
+    std::vector<std::string>* getSuperTypeList() const {
         return superTypeList;
     }
 
@@ -257,22 +257,22 @@ public:
     DomainList() {}
     ~DomainList() {}
 
-    std::vector<DefineType*>* getTypes() {
+    std::vector<DefineType*>* getTypes() const {
         return types;
     }
-    std::vector<PvarDefinition*>* getPVars() {
+    std::vector<PvarDefinition*>* getPVars() const {
         return pVariables;
     }
-    std::vector<CpfDefinition*>* getCpfs(){
+    std::vector<CpfDefinition*>* getCpfs() const {
         return cpfs;
     }
-    LogicalExpression* getReward() {
+    LogicalExpression* getReward() const {
         return reward;
     }
-    std::vector<ObjectDefine*>* getObjects() {
+    std::vector<ObjectDefine*>* getObjects() const {
         return objects;
     }
-    std::vector<LogicalExpression*>* getStateConstraints() {
+    std::vector<LogicalExpression*>* getStateConstraints() const {
         return stateConstraints;
     }
 
@@ -318,25 +318,25 @@ public:
 
     static std::string validRequirement(std::string req);
 
-    std::vector<ObjectDefine*>* getObjects() {
+    std::vector<ObjectDefine*>* getObjects() const {
         return domainList->getObjects();
     }
-    std::vector<DefineType*>* getDomainTypes() {
+    std::vector<DefineType*>* getDomainTypes() const {
         return domainList->getTypes();
     }
-    std::vector<PvarDefinition*>* getPvarDefinitions() {
+    std::vector<PvarDefinition*>* getPvarDefinitions() const {
         return domainList->getPVars();
     }
-    std::vector<CpfDefinition*>* getCpfs() {
+    std::vector<CpfDefinition*>* getCpfs() const {
         return domainList->getCpfs();
     }
-    LogicalExpression* getReward() {
+    LogicalExpression* getReward() const {
         return domainList->getReward();
     }
-    std::vector<LogicalExpression*>* getStateConstraints() {
+    std::vector<LogicalExpression*>* getStateConstraints() const {
         return domainList->getStateConstraints();
     }
-    std::string getName() {
+    std::string getName() const {
         return *name;
     }
 
@@ -358,25 +358,25 @@ public:
         delete pVariables;
     }
 
-    std::string getName(){
+    std::string getName() const {
         return name;
     }
-    std::string getDomainName() {
+    std::string getDomainName() const {
         return domainName;
     }
-    std::string getNonFluentsName() {
+    std::string getNonFluentsName() const {
         return nonFluentsName;
     }
-    std::vector<PvariablesInstanceDefine*>* getPVariables() {
+    std::vector<PvariablesInstanceDefine*>* getPVariables() const {
         return pVariables;
     }
-    int getMaxNonDefActions() {
+    int getMaxNonDefActions() const {
         return maxNonDefActions;
     }
-    int getHorizon() {
+    int getHorizon() const {
         return horizon;
     }
-    double getDiscount() {
+    double getDiscount() const {
         return discount;
     }
 
@@ -405,10 +405,10 @@ public:
 
     void execute(std::string targetDir);
 
-    std::string getDomainName() {
+    std::string getDomainName() const {
         return domainName;
     }
-    std::string getNonFluentsName() {
+    std::string getNonFluentsName() const {
         return nonFluentsName;
     }
 
