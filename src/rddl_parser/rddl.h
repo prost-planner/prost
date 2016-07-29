@@ -276,22 +276,22 @@ public:
         return stateConstraints;
     }
 
-    void addTypes(std::vector<DefineType*>* _types) {
+    void setTypes(std::vector<DefineType*>* _types) {
         types = _types;
     }
-    void addPvar(std::vector<PvarDefinition*>* _pVariables) {
+    void setPvar(std::vector<PvarDefinition*>* _pVariables) {
         pVariables = _pVariables;
     }
-    void addCPF(std::vector<CpfDefinition*>* _cpfs) {
+    void setCPF(std::vector<CpfDefinition*>* _cpfs) {
         cpfs = _cpfs;
     }
-    void addReward(LogicalExpression* _reward) {
+    void setReward(LogicalExpression* _reward) {
         reward = _reward;
     }
-    void addStateConstraint(std::vector<LogicalExpression*>* _stateConstraints) {
+    void setStateConstraint(std::vector<LogicalExpression*>* _stateConstraints) {
         stateConstraints = _stateConstraints;
     }
-    void addObjects(std::vector<ObjectDefine*>* _objects) {
+    void setObjects(std::vector<ObjectDefine*>* _objects) {
         objects = _objects;
     }
 
