@@ -37,7 +37,7 @@ std::string Domain::validRequirement(std::string req) {
 RDDLBlock::RDDLBlock()
     : task(new PlanningTask()) {}
 
-void addTypeSection(RDDLBlock *rddlBlock, Domain* domain) {
+void addTypeSection(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getDomainTypes() == NULL) {
         return;
     }
@@ -60,7 +60,7 @@ void addTypeSection(RDDLBlock *rddlBlock, Domain* domain) {
     }
 }
 
-void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
+void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getPvarDefinitions() == NULL) {
         return;
     }
@@ -160,7 +160,7 @@ void addPVarSection(RDDLBlock *rddlBlock, Domain *domain) {
 
 }
 
-void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
+void addCpfSection(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getCpfs() == NULL) {
         return;
     }
@@ -209,14 +209,14 @@ void addCpfSection(RDDLBlock *rddlBlock, Domain *domain) {
     }
 }
 
-void addRewardSection(RDDLBlock *rddlBlock, Domain *domain) {
+void addRewardSection(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getReward() == NULL)
         return;
 
     rddlBlock->task->setRewardCPF(domain->getReward());
 }
 
-void addStateConstraint(RDDLBlock *rddlBlock, Domain *domain) {
+void addStateConstraint(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getStateConstraints() == NULL) {
         return;
     }
@@ -226,7 +226,7 @@ void addStateConstraint(RDDLBlock *rddlBlock, Domain *domain) {
     }
 }
 
-void addObjectsSection(RDDLBlock *rddlBlock, Domain *domain) {
+void addObjectsSection(RDDLBlock* rddlBlock, Domain* domain) {
     if (domain->getObjects() == NULL) {
         return;
     }
@@ -262,7 +262,7 @@ void RDDLBlock::addDomain(Domain* domain) {
 
 }
 
-void RDDLBlock::addNonFluent(NonFluentBlock *nonFluent) {
+void RDDLBlock::addNonFluent(NonFluentBlock* nonFluent) {
     // Set nonFluentsName
     nonFluentsName = nonFluent->getName();
 
@@ -433,8 +433,8 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
     if (parametrizedVariableDefinitionsMap.find(pVarName) == parametrizedVariableDefinitionsMap.end())
         return NULL;
 
-    PvarDefinition *pVarDefinition = parametrizedVariableDefinitionsMap[pVarName];
-    PvarExpression *pVarExpression = parametrizedVariableMap[pVarName];
+    PvarDefinition* pVarDefinition = parametrizedVariableDefinitionsMap[pVarName];
+    PvarExpression* pVarExpression = parametrizedVariableMap[pVarName];
 
     std::string name = pVarDefinition->getName();
     std::string varTypeName = pVarDefinition->getVarType();

@@ -24,34 +24,34 @@ std::string targetDir;
 %union {
     double d;
     int i;
-    std::string *str;
-    std::vector<std::string> *vectorStr;
+    std::string* str;
+    std::vector<std::string>* vectorStr;
 
-    RDDLBlock *rddlBlock;
-    Domain *domain;
-    DefineType *defineType;
-    std::vector<DefineType*> *vectorDefineType;
-    DomainList *domainList;
-    std::vector<PvarDefinition*> *vectorPvarDefinition;
-    PvarDefinition *pVarDefinition;
-    CpfDefinition *cpfDefinition;
-    std::vector<CpfDefinition*> *vectorCpfDefinition;
-    PvarExpression *pVarExpression;
-    LogicalExpression *logicalExpression;
-    std::vector<LogicalExpression*> *vectorLogicalExpression;
-    LConstCaseList *lConstCaseList;
-    CaseDefine *caseDefine;
-    std::vector<CaseDefine*> *vectorCaseList;
-    Parameter *parameter;
-    ParameterList *parameterList;
+    RDDLBlock* rddlBlock;
+    Domain* domain;
+    DefineType* defineType;
+    std::vector<DefineType*>* vectorDefineType;
+    DomainList* domainList;
+    std::vector<PvarDefinition*>* vectorPvarDefinition;
+    PvarDefinition* pVarDefinition;
+    CpfDefinition* cpfDefinition;
+    std::vector<CpfDefinition*>* vectorCpfDefinition;
+    PvarExpression* pVarExpression;
+    LogicalExpression* logicalExpression;
+    std::vector<LogicalExpression*>* vectorLogicalExpression;
+    LConstCaseList* lConstCaseList;
+    CaseDefine* caseDefine;
+    std::vector<CaseDefine*>* vectorCaseList;
+    Parameter* parameter;
+    ParameterList* parameterList;
 
-    ObjectDefine *objectDefine;
-    std::vector<ObjectDefine*> *objectsList;
+    ObjectDefine* objectDefine;
+    std::vector<ObjectDefine*>* objectsList;
     PvariablesInstanceDefine* pvariablesInstanceDefine;
-    std::vector<PvariablesInstanceDefine*> *pvariablesInstanceList;
+    std::vector<PvariablesInstanceDefine*>* pvariablesInstanceList;
 
-    Instance *instance;
-    NonFluentBlock *nonFluentBlock;
+    Instance* instance;
+    NonFluentBlock* nonFluentBlock;
 }
 
 // Expression tokens
