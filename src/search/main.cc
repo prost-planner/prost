@@ -2,7 +2,7 @@
 #include "ippc_client.h"
 #include "prost_planner.h"
 
-#include "utils/timer.h"
+#include "utils/stopwatch.h"
 
 #include <string>
 #include <iostream>
@@ -339,7 +339,7 @@ cout << "  -uc <0|1>" << endl;
 }
 
 int main(int argc, char** argv) {
-    Timer totalTime;
+    Stopwatch totalTime;
     if (argc < 3) {
         printUsage();
         return 1;
