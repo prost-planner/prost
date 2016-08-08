@@ -3,14 +3,14 @@
 
 #include <vector>
 
-class PlanningTask;
 class Parameter;
 class ParametrizedVariable;
 class LogicalExpression;
+class RDDLBlock;
 
 class Instantiator {
 public:
-    Instantiator(PlanningTask* _task) :
+    Instantiator(RDDLBlock* _task) :
         task(_task) {}
 
     void instantiate(bool const& output = true);
@@ -21,7 +21,7 @@ public:
             int indexToProcess = 0);
 
 private:
-    PlanningTask* task;
+    RDDLBlock* task;
 
     void instantiateVariables();
     void instantiateCPFs();
