@@ -3,7 +3,7 @@
 
 #include "search_engine.h"
 
-#include "utils/timer.h"
+#include "utils/stopwatch.h"
 
 class ActionSelection;
 class OutcomeSelection;
@@ -262,8 +262,8 @@ private:
     int lastUsedNodePoolIndex;
     std::vector<SearchNode*> nodePool;
 
-    // The timer used for timeout check
-    Timer timer;
+    // The stopwatch used for timeout check
+    Stopwatch stopwatch;
   
     // Parameter
     THTS::TerminationMethod terminationMethod;
