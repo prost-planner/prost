@@ -75,9 +75,9 @@ struct Evaluatable {
 
     // These function are used to calculate the two parts of state fluent hash
     // keys: the action part (that is stored in the actionHashKeyMap of
-    // Evaluatable), and the state fluent part (that is stored in PlanningTask
+    // Evaluatable), and the state fluent part (that is stored in RDDLBlock
     // and computed within states).
-    void initializeHashKeys(PlanningTask* task);
+    void initializeHashKeys(RDDLBlock* task);
     long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
     bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
                                 ActionState const& action,
@@ -85,8 +85,8 @@ struct Evaluatable {
     long getActionHashKey(std::vector<ActionState> const& actionStates,
                           std::vector<ActionFluent*>& scheduledActions);
 
-    void initializeStateFluentHashKeys(PlanningTask* task, long const& baseKey);
-    void initializeKleeneStateFluentHashKeys(PlanningTask* task,
+    void initializeStateFluentHashKeys(RDDLBlock* task, long const& baseKey);
+    void initializeKleeneStateFluentHashKeys(RDDLBlock* task,
                                              long const& baseKey);
 };
 

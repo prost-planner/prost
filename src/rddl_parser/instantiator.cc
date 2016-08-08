@@ -1,7 +1,8 @@
 #include "instantiator.h"
 
-#include "planning_task.h"
 #include "evaluatables.h"
+
+#include "rddl.h"
 
 #include "utils/timer.h"
 

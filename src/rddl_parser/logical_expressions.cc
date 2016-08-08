@@ -1,8 +1,9 @@
 #include "logical_expressions.h"
 
 #include "instantiator.h"
-#include "planning_task.h"
 #include "probability_distribution.h"
+
+#include "rddl.h"
 
 #include "utils/string_utils.h"
 #include "utils/math_utils.h"

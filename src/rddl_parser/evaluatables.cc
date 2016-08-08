@@ -1,6 +1,6 @@
 #include "evaluatables.h"
 
-#include "planning_task.h"
+#include "rddl.h"
 
 #include "utils/system_utils.h"
 
@@ -67,7 +67,7 @@ void Evaluatable::simplify(map<ParametrizedVariable*, double>& replace) {
     initialize();
 }
 
-void Evaluatable::initializeHashKeys(PlanningTask* task) {
+void Evaluatable::initializeHashKeys(RDDLBlock* task) {
     assert(hashIndex >= 0);
 
     long baseKey = initializeActionHashKeys(task->actionStates);
@@ -141,7 +141,7 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates,
     return -1;
 }
 
-void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
+void Evaluatable::initializeStateFluentHashKeys(RDDLBlock* task,
                                                 long const& baseKey) {
     long nextHashKeyBase = baseKey;
 
@@ -189,7 +189,7 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
     }
 }
 
-void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task,
+void Evaluatable::initializeKleeneStateFluentHashKeys(RDDLBlock* task,
                                                       long const& baseKey) {
     long nextHashKeyBase = baseKey;
 

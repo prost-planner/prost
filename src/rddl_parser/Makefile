@@ -2,7 +2,6 @@ HEADERS = rddl.h \
 	  instantiator.h \
 	  preprocessor.h \
 	  task_analyzer.h \
-	  planning_task.h \
 	  evaluatables.h \
 	  logical_expressions.h \
 	  states.h \
