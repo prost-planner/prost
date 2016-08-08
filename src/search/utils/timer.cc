@@ -1,35 +1,17 @@
 #include "timer.h"
 
-#include <sys/time.h>
-#include <ostream>
-#include <unistd.h>
-
-using namespace std;
-
-Timer::Timer() {
-    currentTime = getCurrentTime();
-}
+using namespace std::chrono;
 
 void Timer::reset() {
-    currentTime = getCurrentTime();
+    startTime = steady_clock::now();
 }
 
 double Timer::operator()() const {
-    return getCurrentTime() - currentTime;
+    duration<double> time_span = steady_clock::now() - startTime;
+    return time_span.count();
 }
 
-inline double Timer::getCurrentTime() const {
-    timeval tv;
-    gettimeofday(&tv, nullptr);
-    return (double) tv.tv_sec + (double) tv.tv_usec / USEC_PER_SEC;
-}
-
-ostream& operator<<(ostream& os, const Timer& timer) {
-    double value = timer();
-    if (value < 0 && value > -1e-10)
-        value = 0.0;  // We sometimes get inaccuracies from god knows where.
-    if (value < 1e-10)
-        value = 0.0;  // Don't care about such small values.
-    os << value << "s";
+std::ostream& operator<<(std::ostream& os, const Timer& timer) {
+    os << timer() << "s";
     return os;
 }
