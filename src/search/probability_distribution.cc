@@ -34,3 +34,14 @@ void DiscretePD::print(ostream& out) const {
     }
     out << "]" << endl;
 }
+
+
+double DiscretePD::sample() const {
+    vector<int> dummy;
+    return sample(dummy);
+}
+
+
+double DiscretePD::sample(vector<int> const& /*blacklistedIndices*/) const {
+    return 0.0;
+}
