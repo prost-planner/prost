@@ -1,5 +1,7 @@
 #include "probability_distribution.h"
 
+#include <algorithm>
+
 using namespace std;
 
 bool DiscretePD::isWellDefined() const {
@@ -35,13 +37,31 @@ void DiscretePD::print(ostream& out) const {
     out << "]" << endl;
 }
 
-
 double DiscretePD::sample() const {
     vector<int> dummy;
     return sample(dummy);
 }
 
+double DiscretePD::sample(vector<int> const& blacklistedIndices) const {
+    assert(isWellDefined());
+    double remainingProbSum = 1.0;
+    for (int i : blacklistedIndices) {
+        remainingProbSum -= probabilities[i];
+    }
+    assert(MathUtils::doubleIsGreater(remainingProbSum, 0.0));
 
-double DiscretePD::sample(vector<int> const& /*blacklistedIndices*/) const {
+    double randNum = MathUtils::rnd->genDouble(0.0, remainingProbSum);
+    double probSum = 0.0;
+
+    for (int i = 0; i < values.size(); ++i) {
+        if (find(blacklistedIndices.begin(), blacklistedIndices.end(), i) ==
+            blacklistedIndices.end()) {
+            probSum += probabilities[i];
+            if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
+                return values[i];
+            }
+        }
+    }
+    assert(false);
     return 0.0;
 }
