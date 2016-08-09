@@ -5,6 +5,8 @@
 #include "utils/system_utils.h"
 #include "utils/string_utils.h"
 
+#include <vector>
+
 /******************************************************************
                   Outcome Selection Creation
 ******************************************************************/
@@ -60,7 +62,7 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
     }
 
-    int childIndex = (int)nextState.sample(varIndex);
+    int childIndex = static_cast<int>(nextState.sample(varIndex));
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
@@ -78,47 +80,28 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
 ******************************************************************/
 
 SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
-        SearchNode* node, PDState& nextState, int const& varIndex, int const& lastProbVarIndex) {
-    DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
-    assert(pd.isWellDefined());
+    SearchNode* node, PDState& nextState, int const& varIndex,
+    int const& lastProbVarIndex) {
 
-    double unsolvedProbSum = 1.0;
-    int childIndex = 0;
+    DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
+    std::vector<int> blacklist;
 
     if (node->children.empty()) {
         node->children.resize(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
     } else {
-        // Determine the sum of the probabilities of unsolved outcomes
+        // Determine the indices of solved outcomes
         for (size_t i = 0; i < pd.size(); ++i) {
-            childIndex = pd.values[i];
+            int childIndex = pd.values[i];
             if (node->children[childIndex] && node->children[childIndex]->solved) {
-                unsolvedProbSum -= pd.probabilities[i];
+                blacklist.push_back(i);
             }
         }
     }
 
-    assert(MathUtils::doubleIsGreater(unsolvedProbSum, 0.0) && 
-           MathUtils::doubleIsSmallerOrEqual(unsolvedProbSum, 1.0));
-
-    double randNum = MathUtils::rnd->genDouble(0, unsolvedProbSum);
-    //cout << "ProbSum is " << probSum << endl;
-    //cout << "RandNum is " << randNum << endl;
-
-    double probSum = 0.0;
-    double childProb = 0.0;
-
-    for (size_t i = 0; i < pd.size(); ++i) {
-        childIndex = pd.values[i];
-        if (!node->children[childIndex] || !node->children[childIndex]->solved) {
-            probSum += pd.probabilities[i];
-            if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
-                childProb = pd.probabilities[i];
-                break;
-            }
-        }
-    }
-
+    std::pair<double, double> sample = pd.sample(blacklist);
+    int childIndex = static_cast<int>(sample.first);
+    double childProb = sample.second;
     // cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
 
     assert((childIndex >= 0) && childIndex < node->children.size());
