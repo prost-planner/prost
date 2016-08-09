@@ -4,6 +4,8 @@
 // For now, we only consider discrete probability distributions, which will be
 // used for the RDDL KronDelta, Bernoulli and Discrete statements (TODO: maybe
 // it is more efficient to distinguish these by using different classes.)
+//
+// TODO: Use the distribution classes provided by <random>
 
 #include <map>
 #include <iostream>
@@ -138,6 +140,13 @@ public:
 
     bool isWellDefined() const;
     void print(std::ostream& out) const;
+
+    // Sample a value proportional to it's probability
+    double sample() const;
+
+    // Sample a value which is not blacklisted. Probability of blackisted values
+    // is ignored
+    double sample(std::vector<int> const& blacklistedIndices) const;
 
     std::vector<double> values;
     std::vector<double> probabilities;
