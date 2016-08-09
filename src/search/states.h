@@ -403,7 +403,7 @@ public:
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
         assert(pd.isWellDefined());
 
-        double randNum = MathUtils::generateRandomNumber();
+        double randNum = MathUtils::rnd->genReal();
         double probSum = 0.0;
         for (unsigned int index = 0; index < pd.probabilities.size(); ++index) {
             probSum += pd.probabilities[index];

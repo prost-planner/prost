@@ -82,7 +82,7 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
-    double probSum = 1.0;
+    double unsolvedProbSum = 1.0;
     int childIndex = 0;
 
     if (node->children.empty()) {
@@ -90,31 +90,29 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
     } else {
         // Determine the sum of the probabilities of unsolved outcomes
-        for (unsigned int i = 0; i < pd.size(); ++i) {
+        for (size_t i = 0; i < pd.size(); ++i) {
             childIndex = pd.values[i];
-            if (node->children[childIndex] &&
-                node->children[childIndex]->solved) {
-                probSum -= pd.probabilities[i];
+            if (node->children[childIndex] && node->children[childIndex]->solved) {
+                unsolvedProbSum -= pd.probabilities[i];
             }
         }
     }
 
-    assert(MathUtils::doubleIsGreater(probSum, 0.0) && 
-           MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
+    assert(MathUtils::doubleIsGreater(unsolvedProbSum, 0.0) && 
+           MathUtils::doubleIsSmallerOrEqual(unsolvedProbSum, 1.0));
 
-    double randNum = MathUtils::generateRandomNumber() * probSum;
+    double randNum = MathUtils::rnd->genDouble(0, unsolvedProbSum);
     //cout << "ProbSum is " << probSum << endl;
     //cout << "RandNum is " << randNum << endl;
 
-    probSum = 0.0;
+    double probSum = 0.0;
     double childProb = 0.0;
 
-    for (unsigned int i = 0; i < pd.size(); ++i) {
+    for (size_t i = 0; i < pd.size(); ++i) {
         childIndex = pd.values[i];
-        if (!node->children[childIndex] ||
-            !node->children[childIndex]->solved) {
+        if (!node->children[childIndex] || !node->children[childIndex]->solved) {
             probSum += pd.probabilities[i];
-            if (MathUtils::doubleIsSmaller(randNum, probSum)) {
+            if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
                 childProb = pd.probabilities[i];
                 break;
             }
