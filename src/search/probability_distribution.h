@@ -7,8 +7,8 @@
 //
 // TODO: Use the distribution classes provided by <random>
 
-#include <map>
 #include <iostream>
+#include <map>
 
 #include "utils/math_utils.h"
 
@@ -142,11 +142,11 @@ public:
     void print(std::ostream& out) const;
 
     // Sample a value proportional to it's probability
-    double sample() const;
+    std::pair<double, double> sample() const;
 
     // Sample a value which is not blacklisted. Probability of blackisted values
     // is ignored
-    double sample(std::vector<int> const& blacklistedIndices) const;
+    std::pair<double, double> sample(std::vector<int> const& blacklist) const;
 
     std::vector<double> values;
     std::vector<double> probabilities;

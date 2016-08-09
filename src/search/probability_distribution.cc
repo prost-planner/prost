@@ -37,15 +37,15 @@ void DiscretePD::print(ostream& out) const {
     out << "]" << endl;
 }
 
-double DiscretePD::sample() const {
+pair<double, double> DiscretePD::sample() const {
     vector<int> dummy;
     return sample(dummy);
 }
 
-double DiscretePD::sample(vector<int> const& blacklistedIndices) const {
+pair<double, double> DiscretePD::sample(vector<int> const& blacklist) const {
     assert(isWellDefined());
     double remainingProbSum = 1.0;
-    for (int i : blacklistedIndices) {
+    for (int i : blacklist) {
         remainingProbSum -= probabilities[i];
     }
     assert(MathUtils::doubleIsGreater(remainingProbSum, 0.0));
@@ -54,14 +54,13 @@ double DiscretePD::sample(vector<int> const& blacklistedIndices) const {
     double probSum = 0.0;
 
     for (int i = 0; i < values.size(); ++i) {
-        if (find(blacklistedIndices.begin(), blacklistedIndices.end(), i) ==
-            blacklistedIndices.end()) {
+        if (find(blacklist.begin(), blacklist.end(), i) == blacklist.end()) {
             probSum += probabilities[i];
             if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
-                return values[i];
+                return std::make_pair(values[i], probabilities[i]);
             }
         }
     }
     assert(false);
-    return 0.0;
+    return std::make_pair(0.0, 0.0);
 }
