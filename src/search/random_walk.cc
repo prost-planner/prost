@@ -49,18 +49,15 @@ void RandomWalk::performRandomWalks(PDState const& root, int firstActionIndex,
     PDState next;
 
     for (unsigned int i = 0; i < numberOfIterations; ++i) {
-        PDState current(root.stepsToGo() -1);
+        PDState current(root.stepsToGo() - 1);
         sampleSuccessorState(root, firstActionIndex, current, reward);
         result += reward;
 
         while (current.stepsToGo() > 0) {
-            std::vector<int> applicableActions =
-                getIndicesOfApplicableActions(current);
+            int rndActionIndex = MathUtils::rnd->randomElement(
+                getIndicesOfApplicableActions(current));
             next.reset(current.stepsToGo() - 1);
-
-            int actIndex = std::rand() % applicableActions.size();
-            sampleSuccessorState(current, applicableActions[actIndex],
-                                 next, reward);
+            sampleSuccessorState(current, rndActionIndex, next, reward);
             result += reward;
             current = next;
         }

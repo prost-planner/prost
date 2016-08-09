@@ -3,6 +3,7 @@
 #include "thts.h"
 #include "uniform_evaluation_search.h"
 
+#include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
@@ -179,7 +180,7 @@ void SingleChildInitializer::initialize(SearchNode* node, State const& current) 
     }
 
     assert(!candidates.empty());
-    int actionIndex = candidates[rand() % candidates.size()];
+    int actionIndex = MathUtils::rnd->randomElement(candidates);
 
     double initialQValue = 0.0;
     heuristic->estimateQValue(current, actionIndex, initialQValue);
