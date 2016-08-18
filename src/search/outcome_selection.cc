@@ -84,7 +84,7 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
     int const& lastProbVarIndex) {
 
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
-    std::vector<int> blacklist;
+    std::vector<int> solvedIndices;
 
     if (node->children.empty()) {
         node->children.resize(
@@ -94,12 +94,12 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         for (size_t i = 0; i < pd.size(); ++i) {
             int childIndex = pd.values[i];
             if (node->children[childIndex] && node->children[childIndex]->solved) {
-                blacklist.push_back(i);
+                solvedIndices.push_back(i);
             }
         }
     }
 
-    std::pair<double, double> sample = pd.sample(blacklist);
+    std::pair<double, double> sample = pd.sample(solvedIndices);
     int childIndex = static_cast<int>(sample.first);
     double childProb = sample.second;
     // cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;

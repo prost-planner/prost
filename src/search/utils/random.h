@@ -15,6 +15,9 @@ public:
     virtual int genInt(int min, int max) = 0;
     virtual double genDouble(double min, double max) = 0;
     virtual double genReal() = 0;
+    virtual int sample(std::discrete_distribution<int>& distr) = 0;
+    virtual int sample(std::discrete_distribution<int>& distr,
+                       std::vector<double> const& probabilities) = 0;
 
     // Returns an iterator to a randomly selected element
     template <typename Iter>
@@ -56,7 +59,7 @@ public:
         std::random_device r;
         std::generate_n(seed_data.data(), seed_data.size(), std::ref(r));
         std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
-        std::mt19937 generator(seq);
+        generator.seed(seq);
     }
 
     // Generates a random int between [min, max]
@@ -72,6 +75,19 @@ public:
     // Generates a random number between [0, 1)
     double genReal() override {
         return std::generate_canonical<double, 10>(generator);
+    }
+
+    // Samples according to the distribution probabilities
+    int sample(std::discrete_distribution<int>& distr) override {
+        return distr(generator);
+    }
+
+    // Samples according to weighted probabilities
+    int sample(std::discrete_distribution<int>& distr,
+               std::vector<double> const& weights) override {
+        std::discrete_distribution<int>::param_type par(weights.begin(),
+                                                        weights.end());
+        return distr(generator, par);
     }
 
     // Reinitialize the engine with a new seed

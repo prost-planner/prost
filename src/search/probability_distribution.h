@@ -10,6 +10,8 @@
 #include <iostream>
 #include <map>
 
+#include <random>
+
 #include "utils/math_utils.h"
 
 class DiscretePD {
@@ -61,6 +63,7 @@ public:
         reset();
         values.push_back(val);
         probabilities.push_back(1.0);
+        resetDistribution();
     }
 
     // Places truthProb on 1.0 and the rest on 0.0
@@ -74,6 +77,7 @@ public:
             values.push_back(1.0);
             probabilities.push_back(truthProb);
         }
+        resetDistribution();
     }
 
     // We use a map here as this makes sure that the values are sorted
@@ -84,11 +88,13 @@ public:
             values.push_back(it->first);
             probabilities.push_back(it->second);
         }
+        resetDistribution();
     }
 
     void reset() {
         values.clear();
         probabilities.clear();
+        resetDistribution();
     }
 
     double probabilityOf(double const& val) const {
@@ -141,15 +147,23 @@ public:
     bool isWellDefined() const;
     void print(std::ostream& out) const;
 
+    void resetDistribution() {
+        std::discrete_distribution<int>::param_type par(probabilities.begin(), 
+                probabilities.end());
+        distribution.param(par);
+    }
+
     // Sample a value proportional to it's probability
-    std::pair<double, double> sample() const;
+    std::pair<double, double> sample();
 
     // Sample a value which is not blacklisted. Probability of blackisted values
     // is ignored
-    std::pair<double, double> sample(std::vector<int> const& blacklist) const;
+    std::pair<double, double> sample(std::vector<int> const& blacklist);
 
     std::vector<double> values;
     std::vector<double> probabilities;
+
+    std::discrete_distribution<int> distribution;
 };
 
 #endif
