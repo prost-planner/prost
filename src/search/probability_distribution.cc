@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "utils/math_utils.h"
+
 using namespace std;
 
 bool DiscretePD::isWellDefined() const {
@@ -37,30 +39,17 @@ void DiscretePD::print(ostream& out) const {
     out << "]" << endl;
 }
 
-pair<double, double> DiscretePD::sample() const {
-    vector<int> dummy;
-    return sample(dummy);
+pair<double, double> DiscretePD::sample() {
+    int index = MathUtils::rnd->sample(distribution);
+    return std::make_pair(values[index], probabilities[index]);
 }
 
-pair<double, double> DiscretePD::sample(vector<int> const& blacklist) const {
+pair<double, double> DiscretePD::sample(vector<int> const& blacklist) {
     assert(isWellDefined());
-    double remainingProbSum = 1.0;
+    vector<double> newWeights = probabilities;
     for (int i : blacklist) {
-        remainingProbSum -= probabilities[i];
+        newWeights[i] = 0.0;
     }
-    assert(MathUtils::doubleIsGreater(remainingProbSum, 0.0));
-
-    double randNum = MathUtils::rnd->genDouble(0.0, remainingProbSum);
-    double probSum = 0.0;
-
-    for (int i = 0; i < values.size(); ++i) {
-        if (find(blacklist.begin(), blacklist.end(), i) == blacklist.end()) {
-            probSum += probabilities[i];
-            if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
-                return std::make_pair(values[i], probabilities[i]);
-            }
-        }
-    }
-    assert(false);
-    return std::make_pair(0.0, 0.0);
+    int index = MathUtils::rnd->sample(distribution, newWeights);
+    return std::make_pair(values[index], probabilities[index]);
 }
