@@ -401,6 +401,7 @@ public:
 
     double sample(int const& varIndex) {
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
+        probabilisticStateFluent(varIndex) = pd.sample().first;
         return pd.sample().first;
     }
 

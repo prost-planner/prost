@@ -115,8 +115,6 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
     }
 
     assert(!node->children[childIndex]->solved);
-
-    nextState.probabilisticStateFluent(varIndex) = childIndex;
     return node->children[childIndex];
 }
 
