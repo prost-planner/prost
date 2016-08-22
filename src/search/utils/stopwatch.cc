@@ -11,7 +11,7 @@ double Stopwatch::operator()() const {
     return time_span.count();
 }
 
-std::ostream& operator<<(std::ostream& os, const Stopwatch& stopwatch) {
+std::ostream& operator<<(std::ostream& os, Stopwatch const& stopwatch) {
     os << stopwatch() << "s";
     return os;
 }

@@ -7,6 +7,10 @@
 // Measure amount of time elapsed since construction/reset
 class Stopwatch {
 public:
+
+    // Set start time to now, otherwise clock epoch will be used
+    Stopwatch() : startTime(std::chrono::steady_clock::now()) {}
+
     void reset();
     // Returns the elapsed time since start
     double operator()() const;
@@ -16,6 +20,6 @@ private:
 };
 
 // Convenience operator to stream elapsed time with seconds as unit
-std::ostream& operator<<(std::ostream& os, const Stopwatch& stopwatch);
+std::ostream& operator<<(std::ostream& os, Stopwatch const& stopwatch);
 
 #endif
