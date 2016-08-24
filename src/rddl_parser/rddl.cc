@@ -63,14 +63,14 @@ RDDLTask::RDDLTask() :
     }
 
 void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getDomainTypes() == NULL) {
+    if (domain->getDomainTypes() == nullptr) {
         return;
     }
 
     // Adding TypeSection
     for (std::vector<DefineType*>::iterator it = domain->getDomainTypes()->begin(); it != domain->getDomainTypes()->end(); it++) {
         // Simple type definition (type_name : type)
-        if ((*it)->getSuperTypeList() == NULL) {
+        if ((*it)->getSuperTypeList() == nullptr) {
             // std::cout << "Added type (from type section): " << (*it)->getName() << " of type " << (*it)->getSuperType() << std::endl;
             rddlTask->addType((*it)->getName(), (*it)->getSuperType());
         }
@@ -86,7 +86,7 @@ void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
 }
 
 void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getPvarDefinitions() == NULL) {
+    if (domain->getPvarDefinitions() == nullptr) {
         return;
     }
 
@@ -112,7 +112,7 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         }
 
         // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
-        // setting it to NULL doesn't help
+        // setting it to nullptr doesn't help
         ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
@@ -186,7 +186,7 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
 }
 
 void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getCpfs() == NULL) {
+    if (domain->getCpfs() == nullptr) {
         return;
     }
 
@@ -209,7 +209,7 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
 
         ParametrizedVariable* head = rddlTask->variableDefinitions[name];
 
-        if ((*it)->getPvar()->getParameters() == NULL) {
+        if ((*it)->getPvar()->getParameters() == nullptr) {
                 if (head->params.size() != 0)
                     SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
             }
@@ -217,7 +217,7 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
                 SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
             }
 
-        if ((*it)->getPvar()->getParameters() != NULL) {
+        if ((*it)->getPvar()->getParameters() != nullptr) {
             unsigned i = 0;
             for(std::vector<std::string>::iterator jt = (*it)->getPvar()->getParameters()->begin(); jt != (*it)->getPvar()->getParameters()->end(); jt++) {
                 head->params[i++]->name = (*jt);
@@ -235,14 +235,14 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
 }
 
 void addRewardSection(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getReward() == NULL)
+    if (domain->getReward() == nullptr)
         return;
 
     rddlTask->setRewardCPF(domain->getReward());
 }
 
 void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getStateConstraints() == NULL) {
+    if (domain->getStateConstraints() == nullptr) {
         return;
     }
 
@@ -252,7 +252,7 @@ void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
 }
 
 void addObjectsSection(RDDLTask* rddlTask, Domain* domain) {
-    if (domain->getObjects() == NULL) {
+    if (domain->getObjects() == nullptr) {
         return;
     }
 
@@ -315,7 +315,7 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
 
         params.clear();
         // Set parameters
-        if ((*it)->getLConstList() != NULL)
+        if ((*it)->getLConstList() != nullptr)
         {
             for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
                 std::string paramName = (*jt);
@@ -360,12 +360,12 @@ void RDDLTask::addInstance(Instance* instance) {
     }
 
     // Add init states
-    if (instance->getPVariables() != NULL) {
+    if (instance->getPVariables() != nullptr) {
         for (std::vector<PvariablesInstanceDefine*>::iterator it = instance->getPVariables()->begin(); it != instance->getPVariables()->end(); it++) {
             std::string name = (*it)->getName();
             std::vector<Parameter*> params;
             // Set parameters
-            if ((*it)->getLConstList() != NULL)
+            if ((*it)->getLConstList() != nullptr)
             {
                 for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
                     std::string paramName = (*jt);
@@ -1000,7 +1000,7 @@ void RDDLTask::execute(std::string td/*target dir*/) {
 ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVarName) {
 
     if (parametrizedVariableDefinitionsMap.find(pVarName) == parametrizedVariableDefinitionsMap.end())
-        return NULL;
+        return nullptr;
 
     PvarDefinition* pVarDefinition = parametrizedVariableDefinitionsMap[pVarName];
     PvarExpression* pVarExpression = parametrizedVariableMap[pVarName];
@@ -1023,7 +1023,7 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
         }
 
     // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
-    // setting it to NULL doesn't help
+    // setting it to nullptr doesn't help
     ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
     if (varTypeName == "state-fluent") {
         varType = ParametrizedVariable::STATE_FLUENT;
@@ -1106,7 +1106,7 @@ Object* getObject(std::string objName) {
         return objectMap[objName];
     }
     else {
-       return NULL;
+       return nullptr;
    }
 }
 
@@ -1127,7 +1127,7 @@ Type* getType(std::string typeName) {
         return typeMap[typeName];
     }
     else {
-        return NULL;
+        return nullptr;
     }
 }
 

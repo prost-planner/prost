@@ -145,7 +145,7 @@ DomainBlock: domain_token id_token '{' RequirementsSection DomainList '}'  { $$ 
 // Requirements section
 ////////////////////////
 RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { $$ = $4; }
-                | requirements_token '=' '{' '}' ';'                     { $$ = NULL; }
+                | requirements_token '=' '{' '}' ';'                     { $$ = nullptr; }
 ;
 
 RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*$1)); }
@@ -351,7 +351,7 @@ Expression:
     | PvarExpression                                                                            {
                                                                                                   $$ = getParametrizedVariableFromPvarDefinition($1->getName());
 
-                                                                                                  if ($$ == NULL) {
+                                                                                                  if ($$ == nullptr) {
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
                                                                                                   }
                                                                                                 }
@@ -371,7 +371,7 @@ Expression:
 
                                                                                                     switchVar = getParametrizedVariableFromPvarDefinition(*$3);
 
-                                                                                                    if (switchVar == NULL) {
+                                                                                                    if (switchVar == nullptr) {
                                                                                                         SystemUtils::abort("Unknown parametrized variable " + *$3 + ".");
                                                                                                     }
 
@@ -379,7 +379,7 @@ Expression:
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
                                                                                                     for (std::vector<CaseDefine*>::iterator it = $6->begin(); it != $6->end(); it++) {
-                                                                                                        if ((*it)->getCondition() == NULL){
+                                                                                                        if ((*it)->getCondition() == nullptr){
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
                                                                                                             conditions.push_back(new NumericConstant(1.0));
                                                                                                         }
@@ -449,7 +449,7 @@ TypedVarList: TypedVar                    { $$ = new ParameterList(*(new std::ve
             | TypedVar ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
-TypedVar: var_token ':' id_token { if (getType(*$3) != NULL) {
+TypedVar: var_token ':' id_token { if (getType(*$3) != nullptr) {
                                      $$ = new Parameter(*$1, getType(*$3));
                                    }
                                    else {
@@ -469,13 +469,13 @@ CaseDefine: case_token Term ':' Expression        {
 
                                                     var = getParametrizedVariableFromPvarDefinition(*$2);
 
-                                                    if (var == NULL) {
+                                                    if (var == nullptr) {
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
                                                     }
 
                                                     $$ = new CaseDefine(var, $4);
                                                   }
-        | default_token ':' Expression            { $$ = new CaseDefine(NULL, $3); }
+        | default_token ':' Expression            { $$ = new CaseDefine(nullptr, $3); }
 ;
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
@@ -495,7 +495,7 @@ RewardsSection: reward_token '=' Expression ';'        { $$ = $3; }
 // State Action Contraint section
 ////////////////////////
 StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { $$ = $3; }
-                    |     state_action_constraints_token '{' '}' ';'                           { $$ = NULL; }
+                    |     state_action_constraints_token '{' '}' ';'                           { $$ = nullptr; }
 ;
 
 StateConstraintList: StateConstraintDefine                        { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
@@ -546,7 +546,7 @@ ObjectsList: ObjectsDefine             { $$ = new std::vector<ObjectDefine*>(); 
 
 ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine(*$1, $4);
                                                             /*TODO: hack, fix this*/
-                                                            if (getType(*$1) == NULL) {
+                                                            if (getType(*$1) == nullptr) {
                                                                 SystemUtils::abort("Type " + *$1 + " not defined.");
                                                             }
                                                             for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
@@ -669,7 +669,7 @@ InstanceBlock:
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
                                 // new Instance(std::string domainName, std::string nonFluentsName, PvariablesInstanceList, int PositiveIntOrPositiveInfinity, int  horizon, double discount)
-                            '}' {  $$ = new Instance(*$2, *$6, *$10, NULL, $14, $16, $20);  }
+                            '}' {  $$ = new Instance(*$2, *$6, *$10, nullptr, $14, $16, $20);  }
         // 1.8 No non fluents, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -677,7 +677,7 @@ InstanceBlock:
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
                                 // new Instance(std::string domainName, std::string nonFluentsName, PvariablesInstanceList, int PositiveIntOrPositiveInfinity, int  horizon, double discount)
-                            '}' { $$ = new Instance(*$2, *$6, "", NULL, $10, $12, $16); }
+                            '}' { $$ = new Instance(*$2, *$6, "", nullptr, $10, $12, $16); }
         // Omitting Max Non Def Actions and ..
 
         // 2.1 All
@@ -736,14 +736,14 @@ InstanceBlock:
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
                 // new Instance(std::string domainName, std::string nonFluentsName, PvariablesInstanceList, int PositiveIntOrPositiveInfinity, int  horizon, double discount)
-                                '}' { $$ = new Instance(*$2, *$6, *$10, NULL, -1, $12, $16); }
+                                '}' { $$ = new Instance(*$2, *$6, *$10, nullptr, -1, $12, $16); }
         // 2.8 No non fluetnts, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
                 // new Instance(std::string domainName, std::string nonFluentsName, PvariablesInstanceList, int PositiveIntOrPositiveInfinity, int  horizon, double discount)
-                                '}' { $$ = new Instance(*$2, *$6, "", NULL, -1, $8, $12); }
+                                '}' { $$ = new Instance(*$2, *$6, "", nullptr, -1, $8, $12); }
 ;
 
 
