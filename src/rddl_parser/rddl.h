@@ -233,7 +233,7 @@ class DefineType {
 public:
     DefineType(std::string _name, std::string _superType)
         :name(_name), superType(_superType) {
-        superTypeList = NULL;
+        superTypeList = nullptr;
     }
     DefineType(std::string _name, std::vector<std::string>* _superTypeList)
         :name(_name), superTypeList(_superTypeList) {}
