@@ -399,10 +399,10 @@ private:
                            RDDL Block
 *****************************************************************/
 
-class RDDLBlock {
+class RDDLTask {
 public:
-    RDDLBlock();
-    ~RDDLBlock() {}
+    RDDLTask();
+    ~RDDLTask() {}
 
     void addDomain(Domain* d);
     void addInstance(Instance* i);

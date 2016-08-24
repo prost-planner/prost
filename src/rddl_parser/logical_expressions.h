@@ -7,7 +7,7 @@
 #include <string>
 
 class Instantiator;
-class RDDLBlock;
+class RDDLTask;
 class StateFluent;
 class ActionFluent;
 class NumericConstant;
@@ -30,7 +30,7 @@ public:
 
     virtual LogicalExpression* replaceQuantifier(Instantiations& replace,
                                                  Instantiator* inst);
-    virtual LogicalExpression* instantiate(RDDLBlock* task,
+    virtual LogicalExpression* instantiate(RDDLTask* task,
                                            Instantiations& replace);
     virtual LogicalExpression* simplify(Simplifications& replace);
 
@@ -99,7 +99,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
 
     void print(std::ostream& out) const;
@@ -115,7 +115,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
 
     void print(std::ostream& out) const;
@@ -158,7 +158,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -271,7 +271,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -400,7 +400,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -434,7 +434,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -468,7 +468,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -504,7 +504,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -540,7 +540,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -576,7 +576,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -612,7 +612,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -648,7 +648,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -682,7 +682,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -718,7 +718,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -754,7 +754,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -796,7 +796,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -834,7 +834,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -875,7 +875,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -892,7 +892,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -933,7 +933,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -978,7 +978,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -1018,7 +1018,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(RDDLBlock* task,
+    LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 

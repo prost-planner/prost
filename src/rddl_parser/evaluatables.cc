@@ -67,7 +67,7 @@ void Evaluatable::simplify(map<ParametrizedVariable*, double>& replace) {
     initialize();
 }
 
-void Evaluatable::initializeHashKeys(RDDLBlock* task) {
+void Evaluatable::initializeHashKeys(RDDLTask* task) {
     assert(hashIndex >= 0);
 
     long baseKey = initializeActionHashKeys(task->actionStates);
@@ -141,7 +141,7 @@ long Evaluatable::getActionHashKey(vector<ActionState> const& actionStates,
     return -1;
 }
 
-void Evaluatable::initializeStateFluentHashKeys(RDDLBlock* task,
+void Evaluatable::initializeStateFluentHashKeys(RDDLTask* task,
                                                 long const& baseKey) {
     long nextHashKeyBase = baseKey;
 
@@ -189,7 +189,7 @@ void Evaluatable::initializeStateFluentHashKeys(RDDLBlock* task,
     }
 }
 
-void Evaluatable::initializeKleeneStateFluentHashKeys(RDDLBlock* task,
+void Evaluatable::initializeKleeneStateFluentHashKeys(RDDLTask* task,
                                                       long const& baseKey) {
     long nextHashKeyBase = baseKey;
 

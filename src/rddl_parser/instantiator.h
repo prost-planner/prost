@@ -6,11 +6,11 @@
 class Parameter;
 class ParametrizedVariable;
 class LogicalExpression;
-class RDDLBlock;
+class RDDLTask;
 
 class Instantiator {
 public:
-    Instantiator(RDDLBlock* _task) :
+    Instantiator(RDDLTask* _task) :
         task(_task) {}
 
     void instantiate(bool const& output = true);
@@ -21,7 +21,7 @@ public:
             int indexToProcess = 0);
 
 private:
-    RDDLBlock* task;
+    RDDLTask* task;
 
     void instantiateVariables();
     void instantiateCPFs();
