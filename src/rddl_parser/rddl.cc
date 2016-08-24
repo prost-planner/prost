@@ -36,7 +36,7 @@ std::string Domain::validRequirement(std::string req) {
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
-RDDLBlock::RDDLBlock() :
+RDDLTask::RDDLTask() :
     numberOfConcurrentActions(std::numeric_limits<int>::max()),
     horizon(1),
     discountFactor(1.0),
@@ -62,7 +62,7 @@ RDDLBlock::RDDLBlock() :
     addType("object");
     }
 
-void addTypeSection(RDDLBlock* rddlBlock, Domain* domain) {
+void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getDomainTypes() == NULL) {
         return;
     }
@@ -72,20 +72,20 @@ void addTypeSection(RDDLBlock* rddlBlock, Domain* domain) {
         // Simple type definition (type_name : type)
         if ((*it)->getSuperTypeList() == NULL) {
             // std::cout << "Added type (from type section): " << (*it)->getName() << " of type " << (*it)->getSuperType() << std::endl;
-            rddlBlock->addType((*it)->getName(), (*it)->getSuperType());
+            rddlTask->addType((*it)->getName(), (*it)->getSuperType());
         }
         else {
         // Definition of type using enum values (type_name : @enum1, @enum2, ... , @enumN)
-            rddlBlock->addType((*it)->getName());
+            rddlTask->addType((*it)->getName());
             for(std::vector<std::string>::iterator jt = (*it)->getSuperTypeList()->begin(); jt != (*it)->getSuperTypeList()->end(); jt++){
                 // std::cout << "Added object (from type section): " << (*it)->getName() << " of type " << *jt << std::endl;
-                rddlBlock->addObject((*it)->getName(), (*jt));
+                rddlTask->addObject((*it)->getName(), (*jt));
             }
         }
     }
 }
 
-void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
+void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getPvarDefinitions() == NULL) {
         return;
     }
@@ -101,13 +101,13 @@ void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
 
         std::vector<Parameter*> params;
         for(std::vector<std::string>::iterator jt = (*it)->getParameters()->begin(); jt != (*it)->getParameters()->end(); jt++) {
-            if (rddlBlock->types.find((*jt)) == rddlBlock->types.end()) {
+            if (rddlTask->types.find((*jt)) == rddlTask->types.end()) {
                 SystemUtils::abort("Undefined type " + *jt + " used as parameter in " + name + ".");
             }
             else {
-                params.push_back(new Parameter(rddlBlock->types[*jt]->name, rddlBlock->types[*jt]));
+                params.push_back(new Parameter(rddlTask->types[*jt]->name, rddlTask->types[*jt]));
             }
-            // std::cout << "Adding parameter: " << rddlBlock->types[*jt]->name << " of type " << rddlBlock->types[*jt]->name << std::endl;
+            // std::cout << "Adding parameter: " << rddlTask->types[*jt]->name << " of type " << rddlTask->types[*jt]->name << std::endl;
 
         }
 
@@ -128,11 +128,11 @@ void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
             SystemUtils::abort("Parametrized variable: " + varTypeName + " not implemented. Implemented for now: state-fluent, action-fluent, non-fluent.");
         }
 
-        if (rddlBlock->types.find(defaultVarType) == rddlBlock->types.end()) {
+        if (rddlTask->types.find(defaultVarType) == rddlTask->types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
         }
 
-        Type* valueType = rddlBlock->types[defaultVarType];
+        Type* valueType = rddlTask->types[defaultVarType];
 
         switch (varType) {
             case ParametrizedVariable::NON_FLUENT:
@@ -147,11 +147,11 @@ void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
                     defaultVarValue = std::atof(defaultVarValString.c_str());
                 }
                 else {
-                    if (rddlBlock->objects.find(defaultVarValString) == rddlBlock->objects.end()) {
+                    if (rddlTask->objects.find(defaultVarValString) == rddlTask->objects.end()) {
                         SystemUtils::abort("Default value " + defaultVarValString + " of variable " + name + " not defined.");
                     }
 
-                    Object* val = rddlBlock->objects[defaultVarValString];
+                    Object* val = rddlTask->objects[defaultVarValString];
                     defaultVarValue = val->value;
                 }
                 break;
@@ -180,12 +180,12 @@ void addPVarSection(RDDLBlock* rddlBlock, Domain* domain) {
         // for (unsigned i = 0; i < params.size(); i++)
         //     std::cout << "\t" << params[i]->name << std::endl;
 
-        rddlBlock->addVariableDefinition(var);
+        rddlTask->addVariableDefinition(var);
     }
 
 }
 
-void addCpfSection(RDDLBlock* rddlBlock, Domain* domain) {
+void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getCpfs() == NULL) {
         return;
     }
@@ -203,11 +203,11 @@ void addCpfSection(RDDLBlock* rddlBlock, Domain* domain) {
             name = name.substr(0, name.length() - 1);
         }
 
-        if (rddlBlock->variableDefinitions.find(name) == rddlBlock->variableDefinitions.end()) {
+        if (rddlTask->variableDefinitions.find(name) == rddlTask->variableDefinitions.end()) {
             SystemUtils::abort("No according variable to CPF " + name + ".");
         }
 
-        ParametrizedVariable* head = rddlBlock->variableDefinitions[name];
+        ParametrizedVariable* head = rddlTask->variableDefinitions[name];
 
         if ((*it)->getPvar()->getParameters() == NULL) {
                 if (head->params.size() != 0)
@@ -225,50 +225,50 @@ void addCpfSection(RDDLBlock* rddlBlock, Domain* domain) {
             }
         }
 
-        if (rddlBlock->CPFDefinitions.find(head) != rddlBlock->CPFDefinitions.end()) {
+        if (rddlTask->CPFDefinitions.find(head) != rddlTask->CPFDefinitions.end()) {
             SystemUtils::abort("Error: Multiple definition of CPF " + name + ".");
         }
 
         // Expression
-        rddlBlock->CPFDefinitions[head] = (*it)->getLogicalExpression();
+        rddlTask->CPFDefinitions[head] = (*it)->getLogicalExpression();
     }
 }
 
-void addRewardSection(RDDLBlock* rddlBlock, Domain* domain) {
+void addRewardSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getReward() == NULL)
         return;
 
-    rddlBlock->setRewardCPF(domain->getReward());
+    rddlTask->setRewardCPF(domain->getReward());
 }
 
-void addStateConstraint(RDDLBlock* rddlBlock, Domain* domain) {
+void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getStateConstraints() == NULL) {
         return;
     }
 
     for(std::vector<LogicalExpression*>::iterator it = domain->getStateConstraints()->begin(); it != domain->getStateConstraints()->end(); it++) {
-        rddlBlock->SACs.push_back(*it);
+        rddlTask->SACs.push_back(*it);
     }
 }
 
-void addObjectsSection(RDDLBlock* rddlBlock, Domain* domain) {
+void addObjectsSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getObjects() == NULL) {
         return;
     }
 
     for (std::vector<ObjectDefine*>::iterator it = domain->getObjects()->begin(); it != domain->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
-        if (rddlBlock->types.find(typeName) == rddlBlock->types.end()) {
+        if (rddlTask->types.find(typeName) == rddlTask->types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
         for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++) {
-            rddlBlock->addObject(typeName, (*jt));
+            rddlTask->addObject(typeName, (*jt));
             std::cout << "Added object (from objects section): " << typeName << " : " << *jt << std::endl;
         }
     }
 }
 
-void RDDLBlock::addDomain(Domain* domain) {
+void RDDLTask::addDomain(Domain* domain) {
     // TODO: requirements section is stored and prepared, implementation is left
 
     domainName = domain->getName();
@@ -287,7 +287,7 @@ void RDDLBlock::addDomain(Domain* domain) {
 
 }
 
-void RDDLBlock::addNonFluent(NonFluentBlock* nonFluent) {
+void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
     // Set nonFluentsName
     nonFluentsName = nonFluent->getName();
 
@@ -345,7 +345,7 @@ void RDDLBlock::addNonFluent(NonFluentBlock* nonFluent) {
     // std::cout << "NonFluents added." << std::endl;
 }
 
-void RDDLBlock::addInstance(Instance* instance) {
+void RDDLTask::addInstance(Instance* instance) {
     // std::cout << "Adding instance" << std::endl;
     this->name = instance->getName();
 
@@ -407,7 +407,7 @@ void RDDLBlock::addInstance(Instance* instance) {
     // std::cout << "Instance added." << std::endl;
 }
 
-void RDDLBlock::addType(std::string const& name, std::string const& superType) {
+void RDDLTask::addType(std::string const& name, std::string const& superType) {
     if (types.find(name) != types.end()) {
         SystemUtils::abort("Error: Type " + name + " is ambiguous.");
     }
@@ -421,7 +421,7 @@ void RDDLBlock::addType(std::string const& name, std::string const& superType) {
     }
 }
 
-void RDDLBlock::addObject(std::string const& typeName,
+void RDDLTask::addObject(std::string const& typeName,
                              std::string const& objectName) {
     if (types.find(typeName) == types.end()) {
         SystemUtils::abort("Error: Type " + typeName + " not defined.");
@@ -435,7 +435,7 @@ void RDDLBlock::addObject(std::string const& typeName,
     objects[objectName] = new Object(objectName, types[typeName]);
 }
 
-void RDDLBlock::addVariableDefinition(ParametrizedVariable* varDef) {
+void RDDLTask::addVariableDefinition(ParametrizedVariable* varDef) {
     if (variableDefinitions.find(varDef->fullName) !=
         variableDefinitions.end()) {
         SystemUtils::abort(
@@ -444,12 +444,12 @@ void RDDLBlock::addVariableDefinition(ParametrizedVariable* varDef) {
     variableDefinitions[varDef->fullName] = varDef;
 }
 
-void RDDLBlock::addParametrizedVariable(ParametrizedVariable* parent,
+void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
                                            std::vector<Parameter*> const& params) {
     addParametrizedVariable(parent, params, parent->initialValue);
 }
 
-void RDDLBlock::addParametrizedVariable(ParametrizedVariable* parent,
+void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
                                            std::vector<Parameter*> const& params,
                                            double initialValue) {
     if (variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
@@ -504,7 +504,7 @@ void RDDLBlock::addParametrizedVariable(ParametrizedVariable* parent,
     }
 }
 
-StateFluent* RDDLBlock::getStateFluent(std::string const& name) {
+StateFluent* RDDLTask::getStateFluent(std::string const& name) {
     if(stateFluentMap.find(name) == stateFluentMap.end()) {
         SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
         return nullptr;
@@ -512,7 +512,7 @@ StateFluent* RDDLBlock::getStateFluent(std::string const& name) {
     return stateFluentMap[name];
 }
 
-ActionFluent* RDDLBlock::getActionFluent(std::string const& name) {
+ActionFluent* RDDLTask::getActionFluent(std::string const& name) {
     if(actionFluentMap.find(name) == actionFluentMap.end()) {
         SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
         return nullptr;
@@ -520,7 +520,7 @@ ActionFluent* RDDLBlock::getActionFluent(std::string const& name) {
     return actionFluentMap[name];
 }
 
-NonFluent* RDDLBlock::getNonFluent(std::string const& name) {
+NonFluent* RDDLTask::getNonFluent(std::string const& name) {
     if(nonFluentMap.find(name) == nonFluentMap.end()) {
         SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
         return nullptr;
@@ -529,19 +529,19 @@ NonFluent* RDDLBlock::getNonFluent(std::string const& name) {
 }
 
 // TODO: Return const reference?
-std::vector<StateFluent*> RDDLBlock::getStateFluentsOfSchema(ParametrizedVariable* schema) {
+std::vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(ParametrizedVariable* schema) {
     assert(stateFluentsBySchema.find(schema) != stateFluentsBySchema.end());
     return stateFluentsBySchema[schema];
 }
 
-void RDDLBlock::setRewardCPF(LogicalExpression* const& rewardFormula) {
+void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     if (rewardCPF) {
         SystemUtils::abort("Error: RewardCPF exists already.");
     }
     rewardCPF = new RewardFunction(rewardFormula);
 }
 
-void RDDLBlock::print(std::ostream& out) {
+void RDDLTask::print(std::ostream& out) {
     // Set precision of doubles
     out.unsetf(std::ios::floatfield);
     out.precision(std::numeric_limits<double>::digits10);
@@ -951,7 +951,7 @@ void RDDLBlock::print(std::ostream& out) {
     }
 }
 
-void RDDLBlock::execute(std::string td/*target dir*/) {
+void RDDLTask::execute(std::string td/*target dir*/) {
     std::cout << "Executing..." << std::endl << "Writing output.." << std::endl;
 
     Timer t, totalTime;

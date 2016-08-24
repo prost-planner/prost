@@ -6,18 +6,18 @@
 #include <vector>
 #include <set>
 
-class RDDLBlock;
+class RDDLTask;
 
 class TaskAnalyzer {
 public:
-    TaskAnalyzer(RDDLBlock* _task) :
+    TaskAnalyzer(RDDLTask* _task) :
         task(_task) {}
 
     void analyzeTask(int const& numberOfStates = 200,
             double const& maxTimeout = 2.0);
 
 protected:
-    RDDLBlock* task;
+    RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
 

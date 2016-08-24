@@ -27,7 +27,7 @@ std::string targetDir;
     std::string* str;
     std::vector<std::string>* vectorStr;
 
-    RDDLBlock* rddlBlock;
+    RDDLTask* rddlTask;
     Domain* domain;
     DefineType* defineType;
     std::vector<DefineType*>* vectorDefineType;
@@ -73,7 +73,7 @@ std::string targetDir;
 %token objects_token init_state_token state_action_constraints_token action_preconditions_token
 %token state_invariants_token instance_token non_fluents_token
 %token discount_token terminate_when_token horizon_token max_nondef_actions_token
-%type <rddlBlock> RddlBlock
+%type <rddlTask> RddlBlock
 %type <domain> DomainBlock
 %type <vectorStr> RequirementsSection RequirementsList ParametarListTypeSpecs EnumList ParametarList TermList LConstListString
 %type <defineType> DefineType
@@ -124,9 +124,9 @@ Program: RddlBlock            { $1->execute(targetDir); }
 ////////////////////////
 // RDDL block
 ////////////////////////
-RddlBlock: DomainBlock              { $$ = new RDDLBlock(); $$->addDomain($1); }
-        | InstanceBlock             { $$ = new RDDLBlock(); $$->addInstance($1); }
-        | NonfluentBlock            { $$ = new RDDLBlock(); $$->addNonFluent($1); }
+RddlBlock: DomainBlock              { $$ = new RDDLTask(); $$->addDomain($1); }
+        | InstanceBlock             { $$ = new RDDLTask(); $$->addInstance($1); }
+        | NonfluentBlock            { $$ = new RDDLTask(); $$->addNonFluent($1); }
         | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
         | RddlBlock InstanceBlock   { $$ = $1; $$->addInstance($2); }
         | RddlBlock NonfluentBlock  { $$ = $1; $$->addNonFluent($2); }
