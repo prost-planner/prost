@@ -239,7 +239,7 @@ void THTS::estimateBestActions(State const& _rootState,
                                std::vector<int>& bestActions) {
     assert(bestActions.empty());
 
-    timer.reset();
+    stopwatch.reset();
 
     // Init round (if this is the first call in a round)
     if (_rootState.stepsToGo() == SearchEngine::horizon) {
@@ -304,7 +304,7 @@ void THTS::estimateBestActions(State const& _rootState,
     }
 
     // Print statistics
-    std::cout << "Search time: " << timer << std::endl;
+    std::cout << "Search time: " << stopwatch << std::endl;
     printStats(std::cout, (_rootState.stepsToGo() == 1));
 }
 
@@ -322,7 +322,7 @@ bool THTS::moreTrials() {
     // Check selected termination criterion
     switch (terminationMethod) {
     case THTS::TIME:
-        if (MathUtils::doubleIsGreater(timer(), timeout)) {
+        if (MathUtils::doubleIsGreater(stopwatch(), timeout)) {
             return false;
         }
         break;
@@ -332,7 +332,7 @@ bool THTS::moreTrials() {
         }
         break;
     case THTS::TIME_AND_NUMBER_OF_TRIALS:
-        if (MathUtils::doubleIsGreater(timer(), timeout) ||
+        if (MathUtils::doubleIsGreater(stopwatch(), timeout) ||
             (currentTrial == maxNumberOfTrials)) {
             return false;
         }
