@@ -23,9 +23,9 @@ public:
         BEST_OF_CANDIDATE_SET
     };
 
-/*****************************************************************
-                       Search engine creation
-*****************************************************************/
+    /*****************************************************************
+                           Search engine creation
+    *****************************************************************/
 
     virtual ~SearchEngine() {}
 
@@ -62,17 +62,17 @@ public:
     }
 
 protected:
-    SearchEngine(std::string _name) :
-        name(_name),
-        cachingEnabled(true),
-        useRewardLockDetection(SearchEngine::rewardLockDetected),
-        cacheRewardLocks(true),
-        maxSearchDepth(horizon),
-        timeout(1.0) {}
+    SearchEngine(std::string _name)
+        : name(_name),
+          cachingEnabled(true),
+          useRewardLockDetection(SearchEngine::rewardLockDetected),
+          cacheRewardLocks(true),
+          maxSearchDepth(horizon),
+          timeout(1.0) {}
 
-/*****************************************************************
-                     Main search functions
-*****************************************************************/
+    /*****************************************************************
+                         Main search functions
+    *****************************************************************/
 public:
     // This is called initially to learn parameter values from a training set
     virtual void learn() {}
@@ -84,10 +84,9 @@ public:
     // Start the search engine for state value estimation
     virtual void estimateStateValue(State const& _rootState,
                                     double& stateValue);
-    
+
     // Start the search engine to estimate the Q-value of a single action
-    virtual void estimateQValue(State const& state,
-                                int actionIndex,
+    virtual void estimateQValue(State const& state, int actionIndex,
                                 double& qValue) = 0;
 
     // Start the search engine to estimate the Q-values of all applicable
@@ -110,9 +109,9 @@ public:
         return result;
     }
 
-/*****************************************************************
-                    Calculation of reward
-*****************************************************************/
+    /*****************************************************************
+                        Calculation of reward
+    *****************************************************************/
 
 protected:
     // Calculate the reward (since the reward must be deteriministic, this is
@@ -149,9 +148,9 @@ private:
     void calcOptimalFinalRewardAsBestOfCandidateSet(State const& current,
                                                     double& reward) const;
 
-/*****************************************************************
-             Calculation of applicable actions
-*****************************************************************/
+    /*****************************************************************
+                 Calculation of applicable actions
+    *****************************************************************/
 
 protected:
     bool actionIsApplicable(ActionState const& action,
@@ -166,9 +165,9 @@ protected:
         return true;
     }
 
-/*****************************************************************
-                             Parameter
-*****************************************************************/
+    /*****************************************************************
+                                 Parameter
+    *****************************************************************/
 
 public:
     // Don't confuse setCachingEnabled with the disabling of caching during a
@@ -190,9 +189,9 @@ public:
         return maxSearchDepth;
     }
 
-/*****************************************************************
-                         Member variables
-*****************************************************************/
+    /*****************************************************************
+                             Member variables
+    *****************************************************************/
 
 public:
     // The name of this task (this is equivalent to the instance name)
@@ -260,10 +259,12 @@ public:
     static bdd cachedGoals;
 
     typedef std::unordered_map<State, double, State::HashWithRemSteps,
-                               State::EqualWithRemSteps> StateValueHashMap;
+                               State::EqualWithRemSteps>
+        StateValueHashMap;
     typedef std::unordered_map<State, std::vector<int>,
                                State::HashWithoutRemSteps,
-                               State::EqualWithoutRemSteps> ActionHashMap;
+                               State::EqualWithoutRemSteps>
+        ActionHashMap;
 
 protected:
     // Used for debug output only
@@ -276,9 +277,9 @@ protected:
     int maxSearchDepth;
     double timeout;
 
-/*****************************************************************
-                       Printing and statistics
-*****************************************************************/
+    /*****************************************************************
+                           Printing and statistics
+    *****************************************************************/
 
 public:
     // Reset statistic variables
@@ -300,12 +301,12 @@ public:
     static void printTask(std::ostream& out);
     static void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval);
     static void printDeterministicCPFInDetail(std::ostream& out,
-            int const& index);
+                                              int const& index);
     static void printProbabilisticCPFInDetail(std::ostream& out,
-            int const& index);
+                                              int const& index);
     static void printRewardCPFInDetail(std::ostream& out);
     static void printActionPreconditionInDetail(std::ostream& out,
-            int const& index);
+                                                int const& index);
 };
 
 /*****************************************************************
@@ -314,8 +315,7 @@ public:
 
 class ProbabilisticSearchEngine : public SearchEngine {
 public:
-    ProbabilisticSearchEngine(std::string _name) :
-        SearchEngine(_name) {}
+    ProbabilisticSearchEngine(std::string _name) : SearchEngine(_name) {}
 
     // Is true if unreasonable actions where detected during learning
     static bool hasUnreasonableActions;
@@ -326,9 +326,9 @@ public:
     // Cache for applicable reasonable actions
     static ActionHashMap applicableActionsCache;
 
-/*****************************************************************
-             Calculation of applicable actions
-*****************************************************************/
+    /*****************************************************************
+                 Calculation of applicable actions
+    *****************************************************************/
 
     // Returns a vector ("res") that encodes applicable and reasonable actions.
     // If res[i] = i, the action with index i is applicable, and if res[i] = -1
@@ -386,48 +386,50 @@ public:
     }
 
 protected:
-/*****************************************************************
-                Calculation of state transition
-*****************************************************************/
+    /*****************************************************************
+                    Calculation of state transition
+    *****************************************************************/
 
     // Apply action 'actionIndex' to 'current', resulting in 'next'
-    void calcSuccessorState(State const& current,
-                            int const& actionIndex,
+    void calcSuccessorState(State const& current, int const& actionIndex,
                             PDState& next) const {
-        for (int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
-            deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index), current, actionStates[actionIndex]);
+        for (int index = 0; index < State::numberOfDeterministicStateFluents;
+             ++index) {
+            deterministicCPFs[index]->evaluate(
+                next.deterministicStateFluent(index), current,
+                actionStates[actionIndex]);
         }
 
-        for (int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
-            probabilisticCPFs[index]->evaluate(next.probabilisticStateFluentAsPD(index), current, actionStates[actionIndex]);
+        for (int index = 0; index < State::numberOfProbabilisticStateFluents;
+             ++index) {
+            probabilisticCPFs[index]->evaluate(
+                next.probabilisticStateFluentAsPD(index), current,
+                actionStates[actionIndex]);
         }
     }
 
-/*****************************************************************
-             Calculation of Kleene state transition
-*****************************************************************/
+    /*****************************************************************
+                 Calculation of Kleene state transition
+    *****************************************************************/
 
     // Calculate successor in Kleene logic
-    void calcKleeneSuccessor(KleeneState const& current,
-                             int const& actionIndex,
+    void calcKleeneSuccessor(KleeneState const& current, int const& actionIndex,
                              KleeneState& next) const {
         for (size_t i = 0; i < KleeneState::stateSize; ++i) {
-            allCPFs[i]->evaluateToKleene(next[i], current, 
+            allCPFs[i]->evaluateToKleene(next[i], current,
                                          actionStates[actionIndex]);
         }
     }
 
     // Calulate the reward in Kleene logic
-    void calcKleeneReward(KleeneState const& current,
-                          int const& actionIndex,
+    void calcKleeneReward(KleeneState const& current, int const& actionIndex,
                           std::set<double>& reward) const {
-        rewardCPF->evaluateToKleene(reward, current,
-                                    actionStates[actionIndex]);
+        rewardCPF->evaluateToKleene(reward, current, actionStates[actionIndex]);
     }
 
-/*****************************************************************
-                       Reward lock detection
-*****************************************************************/
+    /*****************************************************************
+                           Reward lock detection
+    *****************************************************************/
 
     // Checks if current is a reward lock (actually, currently this checks only
     // if it is a dead end or a goal, i.e., a reward lock with minimal or
@@ -451,8 +453,7 @@ private:
 
 class DeterministicSearchEngine : public SearchEngine {
 public:
-    DeterministicSearchEngine(std::string _name) :
-        SearchEngine(_name) {}
+    DeterministicSearchEngine(std::string _name) : SearchEngine(_name) {}
 
     // Is true if unreasonable actions where detected during learning
     static bool hasUnreasonableActions;
@@ -464,44 +465,43 @@ public:
     static ActionHashMap applicableActionsCache;
 
 protected:
-/*****************************************************************
-                Calculation of state transition
-*****************************************************************/
+    /*****************************************************************
+                    Calculation of state transition
+    *****************************************************************/
 
     // Apply action 'actionIndex' in the determinization to 'current', get state
     // 'next' and yield reward 'reward'
-    void calcStateTransition(State const& current,
-                             int const& actionIndex,
-                             State& next,
-                             double& reward) const {
+    void calcStateTransition(State const& current, int const& actionIndex,
+                             State& next, double& reward) const {
         calcSuccessorState(current, actionIndex, next);
         calcReward(current, actionIndex, reward);
     }
 
     // Apply action 'actionIndex' in the determinization to 'current', resulting
     // in 'next'.
-    void calcSuccessorState(State const& current,
-                            int const& actionIndex,
+    void calcSuccessorState(State const& current, int const& actionIndex,
                             State& next) const {
-        for (size_t index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
-            deterministicCPFs[index]->evaluate(next.deterministicStateFluent(index),
-                                               current,
-                                               actionStates[actionIndex]);
+        for (size_t index = 0; index < State::numberOfDeterministicStateFluents;
+             ++index) {
+            deterministicCPFs[index]->evaluate(
+                next.deterministicStateFluent(index), current,
+                actionStates[actionIndex]);
         }
 
-        for (size_t index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
-            determinizedCPFs[index]->evaluate(next.probabilisticStateFluent(index),
-                                              current,
-                                              actionStates[actionIndex]);
+        for (size_t index = 0; index < State::numberOfProbabilisticStateFluents;
+             ++index) {
+            determinizedCPFs[index]->evaluate(
+                next.probabilisticStateFluent(index), current,
+                actionStates[actionIndex]);
         }
 
         State::calcStateFluentHashKeys(next);
         State::calcStateHashKey(next);
     }
 
-/*****************************************************************
-             Calculation of applicable actions
-*****************************************************************/
+    /*****************************************************************
+                 Calculation of applicable actions
+    *****************************************************************/
 
     // Returns a vector ("res") that encodes applicable and reasonable actions.
     // If res[i] = i, the action with index i is applicable, and if res[i] = -1
@@ -519,9 +519,11 @@ protected:
             }
         } else {
             if (hasUnreasonableActions) {
-                std::map<State, int, State::CompareIgnoringStepsToGo> childStates;
+                std::map<State, int, State::CompareIgnoringStepsToGo>
+                    childStates;
 
-                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions;
+                     ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         // This action is applicable
                         State nxt;
@@ -542,7 +544,8 @@ protected:
                     }
                 }
             } else {
-                for (size_t actionIndex = 0; actionIndex < numberOfActions; ++actionIndex) {
+                for (size_t actionIndex = 0; actionIndex < numberOfActions;
+                     ++actionIndex) {
                     if (actionIsApplicable(actionStates[actionIndex], state)) {
                         res[actionIndex] = actionIndex;
                     } else {

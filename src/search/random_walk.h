@@ -15,7 +15,7 @@ public:
 
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
-                        double& qValue) override;    
+                        double& qValue) override;
 
     // Start the search engine to estimate the Q-values of all applicable
     // actions

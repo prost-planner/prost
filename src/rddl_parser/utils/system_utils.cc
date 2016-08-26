@@ -1,21 +1,20 @@
 #include "system_utils.h"
 #include "string_utils.h"
 
-#include <cstdlib>
 #include <cassert>
+#include <cstdlib>
 #include <ctime>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
-#include "sys/types.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
 #include "sys/sysinfo.h"
 #include "sys/times.h"
+#include "sys/types.h"
 #include "sys/vtimes.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
-
 
 clock_t SystemUtils::start = 0;
 clock_t SystemUtils::lastCPU = 0;
@@ -47,11 +46,11 @@ double SystemUtils::stopTime() {
     }
 
     clockRunning = false;
-    return double(clock() - start) / (double) CLOCKS_PER_SEC;
+    return double(clock() - start) / (double)CLOCKS_PER_SEC;
 }
 
 bool SystemUtils::readFile(std::string& file, std::string& res,
-        std::string ignoreSign) {
+                           std::string ignoreSign) {
     std::ifstream ifs(file.c_str());
     if (!ifs) {
         return false;
@@ -75,7 +74,7 @@ bool SystemUtils::readFile(std::string& file, std::string& res,
     return true;
 }
 
-//returns the available total virtual memory
+// returns the available total virtual memory
 long SystemUtils::getTotalVirtualMemory() {
     struct sysinfo memInfo;
     sysinfo(&memInfo);
@@ -86,7 +85,7 @@ long SystemUtils::getTotalVirtualMemory() {
     return res;
 }
 
-//returns the virtual memory used (by all processes)
+// returns the virtual memory used (by all processes)
 long SystemUtils::getUsedVirtualMemory() {
     struct sysinfo memInfo;
     sysinfo(&memInfo);
@@ -97,8 +96,8 @@ long SystemUtils::getUsedVirtualMemory() {
 }
 
 int SystemUtils::parseLine(char* line) {
-    int i = (int) strlen(line);
-    while (*line < '0' || * line > '9') {
+    int i = (int)strlen(line);
+    while (*line < '0' || *line > '9') {
         line++;
     }
     line[i - 3] = '\0';
@@ -106,7 +105,7 @@ int SystemUtils::parseLine(char* line) {
     return i;
 }
 
-//returns the virtual memory used by this process in KB
+// returns the virtual memory used by this process in KB
 int SystemUtils::getVirtualMemoryUsedByThis() {
     FILE* file = fopen("/proc/self/status", "r");
     int res = -1;
@@ -122,7 +121,7 @@ int SystemUtils::getVirtualMemoryUsedByThis() {
     return res;
 }
 
-//returns the available total RAM
+// returns the available total RAM
 long SystemUtils::getTotalRAM() {
     struct sysinfo memInfo;
     sysinfo(&memInfo);
@@ -140,7 +139,7 @@ long SystemUtils::getUsedRAM() {
     return res;
 }
 
-//returns the RAM used by this process in KB
+// returns the RAM used by this process in KB
 int SystemUtils::getRAMUsedByThis() {
     FILE* file = fopen("/proc/self/status", "r");
     int res = -1;
@@ -156,7 +155,7 @@ int SystemUtils::getRAMUsedByThis() {
     return res;
 }
 
-//inits measurement of CPU usage by this process
+// inits measurement of CPU usage by this process
 void SystemUtils::initCPUMeasurementOfThis() {
     FILE* file;
     struct tms timeSample;
@@ -190,14 +189,12 @@ double SystemUtils::getCPUUsageOfThis() {
     now = times(&timeSample);
     if (now <= lastCPU || timeSample.tms_stime < lastSysCPU ||
         timeSample.tms_utime < lastUserCPU) {
-        //Overflow detection. Just skip this value.
+        // Overflow detection. Just skip this value.
         res = -1.0;
     } else {
-        res =
-            (double) (timeSample.tms_stime -
-                      lastSysCPU) +
-            (double) (timeSample.tms_utime - lastUserCPU);
-        res /= (double) (now - lastCPU);
+        res = (double)(timeSample.tms_stime - lastSysCPU) +
+              (double)(timeSample.tms_utime - lastUserCPU);
+        res /= (double)(now - lastCPU);
         res /= numProcessors;
         res *= 100;
     }
