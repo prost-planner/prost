@@ -25,16 +25,17 @@ struct PlanningTask {
     void addVariableDefinition(ParametrizedVariable* varDef);
 
     void addParametrizedVariable(ParametrizedVariable* parent,
-            std::vector<Parameter*> const& params);
+                                 std::vector<Parameter*> const& params);
     void addParametrizedVariable(ParametrizedVariable* parent,
-            std::vector<Parameter*> const& params,
-            double initialValue);
+                                 std::vector<Parameter*> const& params,
+                                 double initialValue);
 
     StateFluent* getStateFluent(std::string const& name);
     ActionFluent* getActionFluent(std::string const& name);
     NonFluent* getNonFluent(std::string const& name);
 
-    std::vector<StateFluent*> getStateFluentsOfSchema(ParametrizedVariable* schema);
+    std::vector<StateFluent*> getStateFluentsOfSchema(
+        ParametrizedVariable* schema);
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
@@ -59,7 +60,8 @@ struct PlanningTask {
     // stateFluentCPFs and their heads are used!)
     std::vector<StateFluent*> stateFluents;
     std::map<std::string, StateFluent*> stateFluentMap;
-    std::map<ParametrizedVariable*, std::vector<StateFluent*> > stateFluentsBySchema;
+    std::map<ParametrizedVariable*, std::vector<StateFluent*>>
+        stateFluentsBySchema;
 
     std::vector<ActionFluent*> actionFluents;
     std::map<std::string, ActionFluent*> actionFluentMap;
@@ -101,11 +103,12 @@ struct PlanningTask {
     int uniqueNonTerminalStatesWithUniqueAction;
 
     // Hash Keys
-    std::vector<std::vector<long> > stateHashKeys;
+    std::vector<std::vector<long>> stateHashKeys;
     std::vector<long> kleeneStateHashKeyBases;
 
-    std::vector<std::vector<std::pair<int, long> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int, long> > > indexToKleeneStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long>>> indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long>>>
+        indexToKleeneStateFluentHashKeyMap;
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;

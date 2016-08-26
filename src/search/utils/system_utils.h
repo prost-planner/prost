@@ -12,7 +12,7 @@ public:
     static double stopTime();
 
     static bool readFile(std::string& file, std::string& res,
-            std::string ignoreSign = "");
+                         std::string ignoreSign = "");
 
     static long getTotalVirtualMemory();
     static long getUsedVirtualMemory();
@@ -35,7 +35,6 @@ protected:
     static clock_t lastSysCPU;
     static clock_t lastUserCPU;
     static int numProcessors;
-
 
     static int parseLine(char* line);
 

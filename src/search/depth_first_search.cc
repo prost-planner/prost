@@ -13,9 +13,8 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-DepthFirstSearch::DepthFirstSearch() :
-    DeterministicSearchEngine("DFS"),
-    rewardHelperVar(0.0) {}
+DepthFirstSearch::DepthFirstSearch()
+    : DeterministicSearchEngine("DFS"), rewardHelperVar(0.0) {}
 
 /******************************************************************
                        Main Search Functions
@@ -70,7 +69,6 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
     expandState(nxt, futureResult);
     reward += futureResult;
 }
-
 
 void DepthFirstSearch::expandState(State const& state, double& result) {
     assert(!cachingEnabled ||

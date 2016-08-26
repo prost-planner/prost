@@ -1,10 +1,10 @@
 #ifndef LOGICAL_EXPRESSIONS_H
 #define LOGICAL_EXPRESSIONS_H
 
-#include <set>
 #include <map>
-#include <vector>
+#include <set>
 #include <string>
+#include <vector>
 
 class Instantiator;
 class PlanningTask;
@@ -22,7 +22,7 @@ typedef std::map<std::string, Object*> Instantiations;
 typedef std::map<ParametrizedVariable*, double> Simplifications;
 typedef std::set<StateFluent*> StateFluentSet;
 typedef std::set<ActionFluent*> ActionFluentSet;
-typedef std::vector<std::set<double> > Domains;
+typedef std::vector<std::set<double>> Domains;
 
 class LogicalExpression {
 public:
@@ -66,8 +66,8 @@ public:
 
 class Type {
 public:
-    Type(std::string _name, Type* _superType = nullptr) :
-        name(_name), superType(_superType) {}
+    Type(std::string _name, Type* _superType = nullptr)
+        : name(_name), superType(_superType) {}
 
     std::string name;
     Type* superType;
@@ -88,19 +88,17 @@ public:
 // object or enum fluent that evaluates to type1, the parameter type of var(
 // type1 ). TODO: These are currently not supported, change that!
 
-
 class Parameter : public LogicalExpression {
 public:
-    Parameter(std::string _name, Type* _type = nullptr) :
-        name(_name), type(_type) {}
+    Parameter(std::string _name, Type* _type = nullptr)
+        : name(_name), type(_type) {}
 
     std::string name;
     Type* type;
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
 
     void print(std::ostream& out) const;
 };
@@ -115,8 +113,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
 
     void print(std::ostream& out) const;
 };
@@ -126,28 +123,26 @@ public:
     enum VariableType {
         STATE_FLUENT,
         ACTION_FLUENT,
-        //DERIVED_FLUENT,
-        //INTERM_FLUENT,
+        // DERIVED_FLUENT,
+        // INTERM_FLUENT,
         NON_FLUENT
     };
 
     ParametrizedVariable(std::string _variableName,
                          std::vector<Parameter*> _params,
-                         VariableType _variableType,
-                         Type* _valueType,
-                         double _initialValue) :
-        LogicalExpression(),
-        variableName(_variableName),
-        fullName(_variableName),
-        params(_params),
-        variableType(_variableType),
-        valueType(_valueType),
-        initialValue(_initialValue) {}
+                         VariableType _variableType, Type* _valueType,
+                         double _initialValue)
+        : LogicalExpression(),
+          variableName(_variableName),
+          fullName(_variableName),
+          params(_params),
+          variableType(_variableType),
+          valueType(_valueType),
+          initialValue(_initialValue) {}
     ParametrizedVariable(ParametrizedVariable const& source,
                          std::vector<Parameter*> _params);
     ParametrizedVariable(ParametrizedVariable const& source,
-                         std::vector<Parameter*> _params,
-                         double _initialValue);
+                         std::vector<Parameter*> _params, double _initialValue);
 
     std::string variableName;
     std::string fullName;
@@ -158,8 +153,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -174,12 +168,11 @@ public:
 class StateFluent : public ParametrizedVariable {
 public:
     StateFluent(ParametrizedVariable const& source,
-                std::vector<Parameter*> _params,
-                double _initialValue) :
-        ParametrizedVariable(source, _params, _initialValue), index(-1) {}
+                std::vector<Parameter*> _params, double _initialValue)
+        : ParametrizedVariable(source, _params, _initialValue), index(-1) {}
     StateFluent(ParametrizedVariable const& source,
-                std::vector<Parameter*> _params) :
-        ParametrizedVariable(source, _params), index(-1) {}
+                std::vector<Parameter*> _params)
+        : ParametrizedVariable(source, _params), index(-1) {}
 
     int index;
 
@@ -191,13 +184,12 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -212,8 +204,8 @@ public:
 class ActionFluent : public ParametrizedVariable {
 public:
     ActionFluent(ParametrizedVariable const& source,
-                 std::vector<Parameter*> _params) :
-        ParametrizedVariable(source, _params, 0.0), index(-1) {}
+                 std::vector<Parameter*> _params)
+        : ParametrizedVariable(source, _params, 0.0), index(-1) {}
 
     int index;
 
@@ -225,12 +217,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -254,25 +245,22 @@ public:
 class NonFluent : public ParametrizedVariable {
 public:
     NonFluent(ParametrizedVariable const& source,
-              std::vector<Parameter*> _params,
-              double _initialValue) :
-        ParametrizedVariable(source, _params, _initialValue) {}
+              std::vector<Parameter*> _params, double _initialValue)
+        : ParametrizedVariable(source, _params, _initialValue) {}
     NonFluent(ParametrizedVariable const& source,
-              std::vector<Parameter*> _params) :
-        ParametrizedVariable(source, _params) {}
+              std::vector<Parameter*> _params)
+        : ParametrizedVariable(source, _params) {}
 };
 
 class NumericConstant : public LogicalExpression {
 public:
-    NumericConstant(double _value) :
-        value(_value) {}
+    NumericConstant(double _value) : value(_value) {}
 
     double value;
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -283,13 +271,12 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -307,9 +294,8 @@ public:
 
 class ParameterList : public LogicalExpression {
 public:
-    ParameterList(std::vector<Parameter*> _params,
-                  std::vector<Type*> _types) :
-        params(_params), types(_types) {}
+    ParameterList(std::vector<Parameter*> _params, std::vector<Type*> _types)
+        : params(_params), types(_types) {}
     ParameterList() {}
 
     std::vector<Parameter*> params;
@@ -320,21 +306,21 @@ public:
 
 class Quantifier : public LogicalExpression {
 public:
-    Quantifier(ParameterList* _paramList, LogicalExpression* _expr) :
-        paramList(_paramList), expr(_expr) {}
+    Quantifier(ParameterList* _paramList, LogicalExpression* _expr)
+        : paramList(_paramList), expr(_expr) {}
 
     ParameterList* paramList;
     LogicalExpression* expr;
 
     void getReplacements(std::vector<std::string>& parameterNames,
-                         std::vector<std::vector<Parameter*> >& replace,
+                         std::vector<std::vector<Parameter*>>& replace,
                          Instantiator* inst);
 };
 
 class Sumation : public Quantifier {
 public:
-    Sumation(ParameterList* _paramList, LogicalExpression* _expr) :
-        Quantifier(_paramList, _expr) {}
+    Sumation(ParameterList* _paramList, LogicalExpression* _expr)
+        : Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
@@ -344,8 +330,8 @@ public:
 
 class Product : public Quantifier {
 public:
-    Product(ParameterList* _paramList, LogicalExpression* _expr) :
-        Quantifier(_paramList, _expr) {}
+    Product(ParameterList* _paramList, LogicalExpression* _expr)
+        : Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
@@ -355,9 +341,8 @@ public:
 
 class UniversalQuantification : public Quantifier {
 public:
-    UniversalQuantification(ParameterList* _paramList,
-                            LogicalExpression* _expr) :
-        Quantifier(_paramList, _expr) {}
+    UniversalQuantification(ParameterList* _paramList, LogicalExpression* _expr)
+        : Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
@@ -368,8 +353,8 @@ public:
 class ExistentialQuantification : public Quantifier {
 public:
     ExistentialQuantification(ParameterList* _paramList,
-                              LogicalExpression* _expr) :
-        Quantifier(_paramList, _expr) {}
+                              LogicalExpression* _expr)
+        : Quantifier(_paramList, _expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
@@ -385,8 +370,7 @@ class Connective : public LogicalExpression {
 public:
     std::vector<LogicalExpression*> exprs;
 
-    Connective(std::vector<LogicalExpression*>& _exprs) :
-        exprs(_exprs) {}
+    Connective(std::vector<LogicalExpression*>& _exprs) : exprs(_exprs) {}
 
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
@@ -395,13 +379,11 @@ public:
 
 class Conjunction : public Connective {
 public:
-    Conjunction(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Conjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -410,12 +392,11 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -429,13 +410,11 @@ public:
 
 class Disjunction : public Connective {
 public:
-    Disjunction(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Disjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -444,12 +423,11 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -463,13 +441,12 @@ public:
 
 class EqualsExpression : public Connective {
 public:
-    EqualsExpression(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    EqualsExpression(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -480,12 +457,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -499,13 +475,12 @@ public:
 
 class GreaterExpression : public Connective {
 public:
-    GreaterExpression(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    GreaterExpression(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -516,12 +491,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -535,13 +509,12 @@ public:
 
 class LowerExpression : public Connective {
 public:
-    LowerExpression(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    LowerExpression(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -552,12 +525,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -571,13 +543,12 @@ public:
 
 class GreaterEqualsExpression : public Connective {
 public:
-    GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -588,12 +559,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -607,13 +577,12 @@ public:
 
 class LowerEqualsExpression : public Connective {
 public:
-    LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -624,12 +593,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -643,13 +611,11 @@ public:
 
 class Addition : public Connective {
 public:
-    Addition(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Addition(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -658,12 +624,11 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -677,13 +642,11 @@ public:
 
 class Subtraction : public Connective {
 public:
-    Subtraction(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Subtraction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -694,12 +657,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -713,13 +675,12 @@ public:
 
 class Multiplication : public Connective {
 public:
-    Multiplication(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Multiplication(std::vector<LogicalExpression*>& _exprs)
+        : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -730,12 +691,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -749,13 +709,11 @@ public:
 
 class Division : public Connective {
 public:
-    Division(std::vector<LogicalExpression*>& _exprs) :
-        Connective(_exprs) {}
+    Division(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -766,12 +724,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -791,13 +748,11 @@ class Negation : public LogicalExpression {
 public:
     LogicalExpression* expr;
 
-    Negation(LogicalExpression* _expr) :
-        expr(_expr) {}
+    Negation(LogicalExpression* _expr) : expr(_expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -808,12 +763,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -827,15 +781,13 @@ public:
 
 class ExponentialFunction : public LogicalExpression {
 public:
-    ExponentialFunction(LogicalExpression* _expr) :
-        expr(_expr) {}
+    ExponentialFunction(LogicalExpression* _expr) : expr(_expr) {}
 
     LogicalExpression* expr;
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -846,12 +798,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -869,14 +820,12 @@ public:
 
 class KronDeltaDistribution : public LogicalExpression {
 public:
-    KronDeltaDistribution(LogicalExpression* _expr) :
-        LogicalExpression(),
-        expr(_expr) {}
+    KronDeltaDistribution(LogicalExpression* _expr)
+        : LogicalExpression(), expr(_expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* expr;
@@ -886,14 +835,12 @@ public:
 
 class BernoulliDistribution : public LogicalExpression {
 public:
-    BernoulliDistribution(LogicalExpression* _expr) :
-        LogicalExpression(),
-        expr(_expr) {}
+    BernoulliDistribution(LogicalExpression* _expr)
+        : LogicalExpression(), expr(_expr) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -902,13 +849,12 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
 
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -928,13 +874,12 @@ public:
     std::vector<LogicalExpression*> probabilities;
 
     DiscreteDistribution(std::vector<LogicalExpression*> _values,
-                         std::vector<LogicalExpression*> _probabilities) :
-        LogicalExpression(), values(_values), probabilities(_probabilities) {}
+                         std::vector<LogicalExpression*> _probabilities)
+        : LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -943,12 +888,11 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -972,14 +916,14 @@ public:
 
     IfThenElseExpression(LogicalExpression* _condition,
                          LogicalExpression* _valueIfTrue,
-                         LogicalExpression* _valueIfFalse) :
-        condition(_condition), valueIfTrue(_valueIfTrue),
-        valueIfFalse(_valueIfFalse) {}
+                         LogicalExpression* _valueIfFalse)
+        : condition(_condition),
+          valueIfTrue(_valueIfTrue),
+          valueIfFalse(_valueIfFalse) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -990,12 +934,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;
@@ -1013,13 +956,12 @@ public:
     std::vector<LogicalExpression*> effects;
 
     MultiConditionChecker(std::vector<LogicalExpression*> _conditions,
-                          std::vector<LogicalExpression*> _effects) :
-        conditions(_conditions), effects(_effects) {}
+                          std::vector<LogicalExpression*> _effects)
+        : conditions(_conditions), effects(_effects) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task,
-                                   Instantiations& replace);
+    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -1030,12 +972,11 @@ public:
                             ActionFluentSet& dependentActionFluents);
     void classifyActionFluents(ActionFluentSet& positive,
                                ActionFluentSet& negative);
-    void calculateDomain(Domains const& domains,
-                         ActionState const& action,
+    void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res);
     void calculateDomainAsInterval(Domains const& domains,
-                                   ActionState const& action,
-                                   double& minRes, double& maxRes);
+                                   ActionState const& action, double& minRes,
+                                   double& maxRes);
 
     void evaluate(double& res, State const& current,
                   ActionState const& action) const;

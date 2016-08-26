@@ -2,8 +2,8 @@
 
 #include "thts.h"
 
-#include "utils/system_utils.h"
 #include "utils/string_utils.h"
+#include "utils/system_utils.h"
 
 /******************************************************************
                   Outcome Selection Creation
@@ -38,8 +38,8 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
+                               value);
         }
     }
 
@@ -54,10 +54,10 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
                                               PDState& nextState,
                                               int const& varIndex,
                                               int const& lastProbVarIndex) {
-
     if (node->children.empty()) {
         node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+            nullptr);
     }
 
     int childIndex = (int)nextState.sample(varIndex);
@@ -78,7 +78,8 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
 ******************************************************************/
 
 SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
-        SearchNode* node, PDState& nextState, int const& varIndex, int const& lastProbVarIndex) {
+    SearchNode* node, PDState& nextState, int const& varIndex,
+    int const& lastProbVarIndex) {
     DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     assert(pd.isWellDefined());
 
@@ -87,7 +88,8 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
 
     if (node->children.empty()) {
         node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+            nullptr);
     } else {
         // Determine the sum of the probabilities of unsolved outcomes
         for (unsigned int i = 0; i < pd.size(); ++i) {
@@ -99,12 +101,12 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         }
     }
 
-    assert(MathUtils::doubleIsGreater(probSum, 0.0) && 
+    assert(MathUtils::doubleIsGreater(probSum, 0.0) &&
            MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
 
     double randNum = MathUtils::generateRandomNumber() * probSum;
-    //cout << "ProbSum is " << probSum << endl;
-    //cout << "RandNum is " << randNum << endl;
+    // cout << "ProbSum is " << probSum << endl;
+    // cout << "RandNum is " << randNum << endl;
 
     probSum = 0.0;
     double childProb = 0.0;
@@ -121,7 +123,8 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         }
     }
 
-    // cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
+    // cout << "Chosen child is " << childIndex << " and prob is " << childProb
+    // << endl;
 
     assert((childIndex >= 0) && childIndex < node->children.size());
 
@@ -138,4 +141,3 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
     nextState.probabilisticStateFluent(varIndex) = childIndex;
     return node->children[childIndex];
 }
-

@@ -1,0 +1,7 @@
+#!/bin/sh
+hg status -n -m -a -I **.cc -I **.h | xargs -n1 clang-format -output-replacements-xml | grep "<replacement " > /dev/null
+if [ $? -ne 1 ]
+then 
+    echo "Error: commit did not match clang-format."
+    exit 1;
+fi

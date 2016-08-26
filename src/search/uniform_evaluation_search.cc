@@ -8,12 +8,10 @@ using namespace std;
                      Search Engine Creation
 ******************************************************************/
 
-UniformEvaluationSearch::UniformEvaluationSearch() :
-    DeterministicSearchEngine("UniformEvaluation"),
-    initialValue(0.0) {}
+UniformEvaluationSearch::UniformEvaluationSearch()
+    : DeterministicSearchEngine("UniformEvaluation"), initialValue(0.0) {}
 
-bool UniformEvaluationSearch::setValueFromString(string& param,
-        string& value) {
+bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     if (param == "-val") {
         if (value == "MAX") {
             setInitialValue(SearchEngine::rewardCPF->getMaxVal());
@@ -31,14 +29,14 @@ bool UniformEvaluationSearch::setValueFromString(string& param,
 ******************************************************************/
 
 void UniformEvaluationSearch::estimateBestActions(
-        State const& _rootState, std::vector<int>& bestActions) {
+    State const& _rootState, std::vector<int>& bestActions) {
     // All applicable actions are equally good
     bestActions = getIndicesOfApplicableActions(_rootState);
 }
 
-void UniformEvaluationSearch::estimateQValues(State const& state,
-                                              vector<int> const& actionsToExpand,
-                                              vector<double>& qValues) {
+void UniformEvaluationSearch::estimateQValues(
+    State const& state, vector<int> const& actionsToExpand,
+    vector<double>& qValues) {
     // Assign the initial value to all applicable actions
     for (unsigned int index = 0; index < qValues.size(); ++index) {
         if (actionsToExpand[index] == index) {
