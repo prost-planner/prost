@@ -15,8 +15,7 @@ class StateFluent;
 
 class Preprocessor {
 public:
-    Preprocessor(PlanningTask* _task) :
-        task(_task) {}
+    Preprocessor(PlanningTask* _task) : task(_task) {}
 
     void preprocess(bool const& output = true);
 
@@ -33,10 +32,9 @@ private:
                              int scheduledActions = 0) const;
 
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
-            ActionState const& actionState) const;
+                                         ActionState const& actionState) const;
     bool sacContainsAdditionalPositiveActionFluent(
-            ActionPrecondition* const& sac,
-            ActionState const& actionState) const;
+        ActionPrecondition* const& sac, ActionState const& actionState) const;
 
     void calculateCPFDomains();
     void finalizeEvaluatables();
@@ -45,7 +43,7 @@ private:
     void determineTaskProperties();
     bool actionStateIsDominated(int stateIndex) const;
     bool actionStateDominates(ActionState const& lhs,
-            ActionState const& rhs) const;
+                              ActionState const& rhs) const;
     void addDominantState(int stateIndex) const;
 
     void prepareStateHashKeys();
@@ -55,9 +53,9 @@ private:
     void precomputeEvaluatables();
     void precomputeEvaluatable(Evaluatable* eval);
     void createRelevantStates(std::vector<StateFluent*>& dependentStateFluents,
-            std::vector<State>& result);
+                              std::vector<State>& result);
     long calculateStateFluentHashKey(Evaluatable* eval,
-            State const& state) const;
+                                     State const& state) const;
 
     void calculateMinAndMaxReward() const;
 };

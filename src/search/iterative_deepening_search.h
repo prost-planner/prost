@@ -31,7 +31,7 @@ public:
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
                         double& qValue) override;
-    
+
     // Start the search engine to estimate the Q-values of all applicable
     // actions
     void estimateQValues(State const& state,
@@ -60,7 +60,8 @@ public:
     // Caching
     typedef std::unordered_map<State, std::vector<double>,
                                State::HashWithoutRemSteps,
-                               State::EqualWithoutRemSteps> HashMap;
+                               State::EqualWithoutRemSteps>
+        HashMap;
     static HashMap rewardCache;
 
 protected:
@@ -75,7 +76,7 @@ protected:
 
     // Learning related variables
     bool isLearning;
-    std::vector<std::vector<double> > elapsedTime;
+    std::vector<std::vector<double>> elapsedTime;
 
     // Stopwatch used to make sure that computation doesn't take too much time
     Stopwatch stopwatch;

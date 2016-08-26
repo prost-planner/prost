@@ -6,8 +6,8 @@
 
 #include "search_engine.h"
 
-#include <set>
 #include <cassert>
+#include <set>
 
 class ProstPlanner;
 class UCTSearchEngine;
@@ -19,7 +19,7 @@ public:
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
                         double& qValue) override;
-    
+
     // Start the search engine to estimate the Q-values of all applicable
     // actions
     void estimateQValues(State const& state,

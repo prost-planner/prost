@@ -8,12 +8,12 @@
 using namespace std;
 
 void Parser::parseTask(map<string, int>& stateVariableIndices,
-        vector<vector<string> >& stateVariableValues) {
+                       vector<vector<string>>& stateVariableValues) {
     // Read the parser output file
     string problemDesc;
     if (!SystemUtils::readFile(problemFileName, problemDesc, "#")) {
-        SystemUtils::abort(
-                "Error: Unable to read problem file: " + problemFileName);
+        SystemUtils::abort("Error: Unable to read problem file: " +
+                           problemFileName);
     }
     stringstream desc(problemDesc);
     resetStatics();
@@ -37,23 +37,23 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     KleeneState::numberOfStateFluentHashKeys =
         State::numberOfStateFluentHashKeys;
 
-    KleeneState::stateSize = State::numberOfDeterministicStateFluents + State::numberOfProbabilisticStateFluents;
+    KleeneState::stateSize = State::numberOfDeterministicStateFluents +
+                             State::numberOfProbabilisticStateFluents;
 
     // Parse initial state
     vector<double> initialValsOfDeterministicStateFluents(
-            State::numberOfDeterministicStateFluents, 0.0);
+        State::numberOfDeterministicStateFluents, 0.0);
     for (size_t i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
         desc >> initialValsOfDeterministicStateFluents[i];
     }
     vector<double> initialValsOfProbabilisticStateFluents(
-            State::numberOfProbabilisticStateFluents, 0.0);
+        State::numberOfProbabilisticStateFluents, 0.0);
     for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
         desc >> initialValsOfProbabilisticStateFluents[i];
     }
     SearchEngine::initialState =
         State(initialValsOfDeterministicStateFluents,
-                initialValsOfProbabilisticStateFluents,
-                SearchEngine::horizon);
+              initialValsOfProbabilisticStateFluents, SearchEngine::horizon);
 
     // Parse task properties
     desc >> SearchEngine::taskIsDeterministic;
@@ -74,7 +74,8 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
 
         int sizeOfCandidateSet;
         desc >> sizeOfCandidateSet;
-        SearchEngine::candidatesForOptimalFinalAction.resize(sizeOfCandidateSet);
+        SearchEngine::candidatesForOptimalFinalAction.resize(
+            sizeOfCandidateSet);
         for (size_t i = 0; i < sizeOfCandidateSet; ++i) {
             desc >> SearchEngine::candidatesForOptimalFinalAction[i];
         }
@@ -93,10 +94,9 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     int encounteredUnqiueStates;
     int encounteredStatesWithUniqueAction;
     int encounteredUnqiueStatesWithUniqueAction;
-    desc >> encounteredStates 
-         >> encounteredUnqiueStates 
-         >> encounteredStatesWithUniqueAction 
-         >> encounteredUnqiueStatesWithUniqueAction;
+    desc >> encounteredStates >> encounteredUnqiueStates >>
+        encounteredStatesWithUniqueAction >>
+        encounteredUnqiueStatesWithUniqueAction;
     // TODO: These are currently ignored, but we could use they are interesting
     // properties of planning tasks that could be used, e.g., for time
     // management
@@ -117,7 +117,7 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
                  determinizedFormulas, false);
     }
 
-    for (size_t i = 0; i < State::numberOfProbabilisticStateFluents;  ++i) {
+    for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
         parseCPF(desc, deterministicFormulas, probabilisticFormulas,
                  determinizedFormulas, true);
     }
@@ -140,13 +140,16 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     assert(SearchEngine::allCPFs.size() == KleeneState::stateSize);
 
     // All fluents have been created -> create the CPF formulas
-    for(size_t i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
-        SearchEngine::deterministicCPFs[i]->formula = LogicalExpression::createFromString(deterministicFormulas[i]);
+    for (size_t i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
+        SearchEngine::deterministicCPFs[i]->formula =
+            LogicalExpression::createFromString(deterministicFormulas[i]);
     }
 
-    for(size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-        SearchEngine::probabilisticCPFs[i]->formula = LogicalExpression::createFromString(probabilisticFormulas[i]);
-        SearchEngine::determinizedCPFs[i]->formula = LogicalExpression::createFromString(determinizedFormulas[i]);
+    for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
+        SearchEngine::probabilisticCPFs[i]->formula =
+            LogicalExpression::createFromString(probabilisticFormulas[i]);
+        SearchEngine::determinizedCPFs[i]->formula =
+            LogicalExpression::createFromString(determinizedFormulas[i]);
     }
 
     // Parse reward function
@@ -165,14 +168,14 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     // Parse hash keys
     if (State::stateHashingPossible) {
         State::stateHashKeysOfDeterministicStateFluents.resize(
-                State::numberOfDeterministicStateFluents);
+            State::numberOfDeterministicStateFluents);
         State::stateHashKeysOfProbabilisticStateFluents.resize(
-                State::numberOfProbabilisticStateFluents);
+            State::numberOfProbabilisticStateFluents);
     }
     State::stateFluentHashKeysOfDeterministicStateFluents.resize(
-            State::numberOfDeterministicStateFluents);
+        State::numberOfDeterministicStateFluents);
     State::stateFluentHashKeysOfProbabilisticStateFluents.resize(
-            State::numberOfProbabilisticStateFluents);
+        State::numberOfProbabilisticStateFluents);
 
     if (KleeneState::stateHashingPossible) {
         KleeneState::hashKeyBases.resize(KleeneState::stateSize);
@@ -191,18 +194,21 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     // Set mapping of variables to variable names and of values as strings to
     // internal values for communication between planner and environment
     for (size_t i = 0; i < State::numberOfDeterministicStateFluents; ++i) {
-        assert(stateVariableIndices.find(SearchEngine::deterministicCPFs[i]->
-                        name) == stateVariableIndices.end());
+        assert(stateVariableIndices.find(
+                   SearchEngine::deterministicCPFs[i]->name) ==
+               stateVariableIndices.end());
         stateVariableIndices[SearchEngine::deterministicCPFs[i]->name] = i;
         stateVariableValues.push_back(
-                SearchEngine::deterministicCPFs[i]->head->values);
+            SearchEngine::deterministicCPFs[i]->head->values);
     }
     for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-        assert(stateVariableIndices.find(SearchEngine::probabilisticCPFs[i]->name) ==
+        assert(stateVariableIndices.find(
+                   SearchEngine::probabilisticCPFs[i]->name) ==
                stateVariableIndices.end());
         stateVariableIndices[SearchEngine::probabilisticCPFs[i]->name] =
             State::numberOfDeterministicStateFluents + i;
-        stateVariableValues.push_back(SearchEngine::probabilisticCPFs[i]->head->values);
+        stateVariableValues.push_back(
+            SearchEngine::probabilisticCPFs[i]->head->values);
     }
 }
 
@@ -227,13 +233,14 @@ void Parser::parseActionFluent(stringstream& desc) const {
         assert(val == j);
         values.push_back(value);
     }
-    SearchEngine::actionFluents.push_back(new ActionFluent(index, name, values));
+    SearchEngine::actionFluents.push_back(
+        new ActionFluent(index, name, values));
 }
 
 void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
-        vector<string>& probabilisticFormulas,
-        vector<string>& determinizedFormulas,
-        bool const& isProbabilistic) const {
+                      vector<string>& probabilisticFormulas,
+                      vector<string>& determinizedFormulas,
+                      bool const& isProbabilistic) const {
     int index;
     desc >> index;
 
@@ -270,7 +277,7 @@ void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
     desc >> hashIndex;
 
     if (isProbabilistic) {
-        ProbabilisticStateFluent* sf = 
+        ProbabilisticStateFluent* sf =
             new ProbabilisticStateFluent(index, name, values);
         SearchEngine::stateFluents.push_back(sf);
 
@@ -284,7 +291,7 @@ void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
 
         SearchEngine::determinizedCPFs.push_back(detCPF);
     } else {
-        DeterministicStateFluent* sf = 
+        DeterministicStateFluent* sf =
             new DeterministicStateFluent(index, name, values);
         SearchEngine::stateFluents.push_back(sf);
 
@@ -301,7 +308,7 @@ void Parser::parseRewardFunction(stringstream& desc) const {
     string formulaAsString;
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
-    LogicalExpression* rewardFormula = 
+    LogicalExpression* rewardFormula =
         LogicalExpression::createFromString(formulaAsString);
 
     double minVal;
@@ -316,8 +323,8 @@ void Parser::parseRewardFunction(stringstream& desc) const {
     int hashIndex;
     desc >> hashIndex;
 
-    SearchEngine::rewardCPF =
-        new RewardFunction(rewardFormula, hashIndex, minVal, maxVal, actionIndependent);
+    SearchEngine::rewardCPF = new RewardFunction(
+        rewardFormula, hashIndex, minVal, maxVal, actionIndependent);
 
     parseCachingType(desc, nullptr, SearchEngine::rewardCPF);
     parseActionHashKeyMap(desc, nullptr, SearchEngine::rewardCPF);
@@ -334,13 +341,13 @@ void Parser::parseActionPrecondition(stringstream& desc) const {
     desc.ignore(1, '\n');
     getline(desc, formulaAsString, '\n');
 
-    LogicalExpression* formula = 
+    LogicalExpression* formula =
         LogicalExpression::createFromString(formulaAsString);
 
     int hashIndex;
     desc >> hashIndex;
 
-    DeterministicEvaluatable* precond = 
+    DeterministicEvaluatable* precond =
         new DeterministicEvaluatable(name.str(), formula, hashIndex);
 
     assert(SearchEngine::actionPreconditions.size() == index);
@@ -351,8 +358,8 @@ void Parser::parseActionPrecondition(stringstream& desc) const {
 }
 
 void Parser::parseCachingType(stringstream& desc,
-        ProbabilisticEvaluatable* probEval,
-        DeterministicEvaluatable* detEval) const {
+                              ProbabilisticEvaluatable* probEval,
+                              DeterministicEvaluatable* detEval) const {
     string cachingType;
     desc >> cachingType;
 
@@ -366,7 +373,8 @@ void Parser::parseCachingType(stringstream& desc,
         desc >> cachingVecSize;
 
         detEval->cachingType = Evaluatable::VECTOR;
-        detEval->evaluationCacheVector.resize(cachingVecSize, -numeric_limits<double>::max());
+        detEval->evaluationCacheVector.resize(cachingVecSize,
+                                              -numeric_limits<double>::max());
 
         if (probEval) {
             probEval->cachingType = Evaluatable::VECTOR;
@@ -383,7 +391,7 @@ void Parser::parseCachingType(stringstream& desc,
 
                 probEval->evaluationCacheVector[i].values.resize(sizeOfPD);
                 probEval->evaluationCacheVector[i].probabilities.resize(
-                        sizeOfPD);
+                    sizeOfPD);
                 for (size_t j = 0; j < sizeOfPD; ++j) {
                     desc >> probEval->evaluationCacheVector[i].values[j];
                     desc >> probEval->evaluationCacheVector[i].probabilities[j];
@@ -440,8 +448,8 @@ void Parser::parseCachingType(stringstream& desc,
 }
 
 void Parser::parseActionHashKeyMap(stringstream& desc,
-        ProbabilisticEvaluatable* probEval,
-        DeterministicEvaluatable* detEval) const {
+                                   ProbabilisticEvaluatable* probEval,
+                                   DeterministicEvaluatable* detEval) const {
     detEval->actionHashKeyMap.resize(SearchEngine::numberOfActions);
     if (probEval) {
         probEval->actionHashKeyMap.resize(SearchEngine::numberOfActions);
@@ -475,7 +483,7 @@ void Parser::parseActionState(stringstream& desc) const {
     int numberOfRelevantPreconditions;
     desc >> numberOfRelevantPreconditions;
     vector<DeterministicEvaluatable*> relevantPreconditions(
-            numberOfRelevantPreconditions);
+        numberOfRelevantPreconditions);
 
     for (size_t j = 0; j < numberOfRelevantPreconditions; ++j) {
         int precondIndex;
@@ -484,8 +492,8 @@ void Parser::parseActionState(stringstream& desc) const {
             SearchEngine::actionPreconditions[precondIndex];
     }
 
-    SearchEngine::actionStates.push_back(ActionState(index, values,
-                    scheduledActionFluents, relevantPreconditions));
+    SearchEngine::actionStates.push_back(ActionState(
+        index, values, scheduledActionFluents, relevantPreconditions));
 }
 
 void Parser::parseHashKeys(stringstream& desc) const {
@@ -496,10 +504,12 @@ void Parser::parseHashKeys(stringstream& desc) const {
 
         if (State::stateHashingPossible) {
             State::stateHashKeysOfDeterministicStateFluents[index].resize(
-                    SearchEngine::deterministicCPFs[index]->head->values.size());
-            for (size_t j = 0; j < SearchEngine::deterministicCPFs[index]->head->values.size(); ++j) {
+                SearchEngine::deterministicCPFs[index]->head->values.size());
+            for (size_t j = 0; j < SearchEngine::deterministicCPFs[index]
+                                       ->head->values.size();
+                 ++j) {
                 desc >>
-                State::stateHashKeysOfDeterministicStateFluents[index][j];
+                    State::stateHashKeysOfDeterministicStateFluents[index][j];
             }
         }
 
@@ -513,7 +523,8 @@ void Parser::parseHashKeys(stringstream& desc) const {
             int var;
             long key;
             desc >> var >> key;
-            State::stateFluentHashKeysOfDeterministicStateFluents[index].push_back(make_pair(var, key));
+            State::stateFluentHashKeysOfDeterministicStateFluents[index]
+                .push_back(make_pair(var, key));
         }
 
         desc >> numberOfKeys;
@@ -521,10 +532,10 @@ void Parser::parseHashKeys(stringstream& desc) const {
             int var;
             long key;
             desc >> var >> key;
-            KleeneState::indexToStateFluentHashKeyMap[index].push_back(make_pair(var, key));
+            KleeneState::indexToStateFluentHashKeyMap[index].push_back(
+                make_pair(var, key));
         }
     }
-
 
     for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
         int index;
@@ -533,14 +544,18 @@ void Parser::parseHashKeys(stringstream& desc) const {
 
         if (State::stateHashingPossible) {
             State::stateHashKeysOfProbabilisticStateFluents[index].resize(
-                    SearchEngine::probabilisticCPFs[index]->head->values.size());
-            for (size_t j = 0; j < SearchEngine::probabilisticCPFs[index]->head->values.size(); ++j) {
-                desc >> State::stateHashKeysOfProbabilisticStateFluents[index][j];
+                SearchEngine::probabilisticCPFs[index]->head->values.size());
+            for (size_t j = 0; j < SearchEngine::probabilisticCPFs[index]
+                                       ->head->values.size();
+                 ++j) {
+                desc >>
+                    State::stateHashKeysOfProbabilisticStateFluents[index][j];
             }
         }
 
         if (KleeneState::stateHashingPossible) {
-            desc >> KleeneState::hashKeyBases[index + State::numberOfDeterministicStateFluents];
+            desc >> KleeneState::hashKeyBases
+                        [index + State::numberOfDeterministicStateFluents];
         }
 
         int numberOfKeys;
@@ -549,7 +564,8 @@ void Parser::parseHashKeys(stringstream& desc) const {
             int var;
             long key;
             desc >> var >> key;
-            State::stateFluentHashKeysOfProbabilisticStateFluents[index].push_back(make_pair(var, key));
+            State::stateFluentHashKeysOfProbabilisticStateFluents[index]
+                .push_back(make_pair(var, key));
         }
 
         desc >> numberOfKeys;
@@ -557,7 +573,9 @@ void Parser::parseHashKeys(stringstream& desc) const {
             int var;
             long key;
             desc >> var >> key;
-            KleeneState::indexToStateFluentHashKeyMap[index + State::numberOfDeterministicStateFluents].push_back(make_pair(var, key));
+            KleeneState::indexToStateFluentHashKeyMap
+                [index + State::numberOfDeterministicStateFluents]
+                    .push_back(make_pair(var, key));
         }
     }
 }
@@ -566,19 +584,21 @@ void Parser::parseTrainingSet(stringstream& desc) const {
     int numberOfTrainingStates;
     desc >> numberOfTrainingStates;
     for (size_t i = 0; i < numberOfTrainingStates; ++i) {
-        vector<double> valuesOfDeterministicStateFluents(State::numberOfDeterministicStateFluents);
+        vector<double> valuesOfDeterministicStateFluents(
+            State::numberOfDeterministicStateFluents);
         for (size_t j = 0; j < State::numberOfDeterministicStateFluents; ++j) {
             desc >> valuesOfDeterministicStateFluents[j];
         }
 
-        vector<double> valuesOfProbabilisticStateFluents(State::numberOfProbabilisticStateFluents);
+        vector<double> valuesOfProbabilisticStateFluents(
+            State::numberOfProbabilisticStateFluents);
         for (size_t j = 0; j < State::numberOfProbabilisticStateFluents; ++j) {
             desc >> valuesOfProbabilisticStateFluents[j];
         }
 
         State trainingState(valuesOfDeterministicStateFluents,
-                valuesOfProbabilisticStateFluents,
-                SearchEngine::horizon);
+                            valuesOfProbabilisticStateFluents,
+                            SearchEngine::horizon);
         State::calcStateFluentHashKeys(trainingState);
         State::calcStateHashKey(trainingState);
         SearchEngine::trainingSet.push_back(trainingState);

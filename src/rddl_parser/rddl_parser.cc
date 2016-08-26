@@ -1,13 +1,13 @@
 #include "rddl_parser.h"
 
-#include "planning_task.h"
 #include "logical_expressions.h"
+#include "planning_task.h"
 
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 using namespace std;
 
@@ -15,8 +15,7 @@ using namespace std;
                          Constructor
 *****************************************************************/
 
-RDDLParser::RDDLParser() :
-    task(new PlanningTask()) {}
+RDDLParser::RDDLParser() : task(new PlanningTask()) {}
 
 /*****************************************************************
                         Toplevel parsing
@@ -67,9 +66,8 @@ void RDDLParser::readFiles(string& domainFile, string& problemFile) {
         instanceDesc = nonFluentsAndInstance[0];
     } else {
         assert(nonFluentsAndInstance.size() == 2);
-        assert(nonFluentsAndInstance[0].find(
-                        "non-fluents ") == 0 &&
-                nonFluentsAndInstance[1].find("instance ") == 0);
+        assert(nonFluentsAndInstance[0].find("non-fluents ") == 0 &&
+               nonFluentsAndInstance[1].find("instance ") == 0);
 
         nonFluentsDesc = nonFluentsAndInstance[0];
         instanceDesc = nonFluentsAndInstance[1];
@@ -146,8 +144,8 @@ void RDDLParser::parseDomain() {
                 task->SACs.push_back(formula);
             }
         } else {
-            SystemUtils::abort(
-                    "Error: Domain token '" + tokens[i] + "' is unknown!");
+            SystemUtils::abort("Error: Domain token '" + tokens[i] +
+                               "' is unknown!");
         }
     }
 }
@@ -184,9 +182,8 @@ void RDDLParser::parseNonFluents() {
                     parseAtomicLogicalExpression(nonFluentsAsString[j]);
                 }
             } else {
-                SystemUtils::abort(
-                        "Error: Non-fluents token '" + tokens[i] +
-                        "' is unknown!");
+                SystemUtils::abort("Error: Non-fluents token '" + tokens[i] +
+                                   "' is unknown!");
             }
         }
     }
@@ -235,8 +232,8 @@ void RDDLParser::parseInstance() {
             StringUtils::removeTRN(tokens[i]);
             task->discountFactor = atof(tokens[i].c_str());
         } else {
-            SystemUtils::abort(
-                    "Error: Instance token '" + tokens[i] + "' is unknown!");
+            SystemUtils::abort("Error: Instance token '" + tokens[i] +
+                               "' is unknown!");
         }
     }
 }
@@ -309,18 +306,19 @@ void RDDLParser::parseVariableDefinition(string& desc) {
         cutPos = nameAndParams.find("(");
         name = nameAndParams.substr(0, cutPos);
 
-        string allParams = nameAndParams.substr(cutPos + 1,
-                nameAndParams.length() - cutPos - 2);
+        string allParams = nameAndParams.substr(
+            cutPos + 1, nameAndParams.length() - cutPos - 2);
         vector<string> allParamsAsString;
         StringUtils::split(allParams, allParamsAsString, ",");
         for (unsigned int i = 0; i < allParamsAsString.size(); ++i) {
             if (task->types.find(allParamsAsString[i]) == task->types.end()) {
-                SystemUtils::abort(
-                        "Error: undefined type " + allParamsAsString[i] +
-                        " used as parameter in " + name + ".");
+                SystemUtils::abort("Error: undefined type " +
+                                   allParamsAsString[i] +
+                                   " used as parameter in " + name + ".");
             }
-            params.push_back(new Parameter(task->types[allParamsAsString[i]]->
-                            name, task->types[allParamsAsString[i]]));
+            params.push_back(
+                new Parameter(task->types[allParamsAsString[i]]->name,
+                              task->types[allParamsAsString[i]]));
         }
     }
 
@@ -351,7 +349,7 @@ void RDDLParser::parseVariableDefinition(string& desc) {
 
     double defaultVal = 0.0;
     string defaultValString;
-    //int level = 0;
+    // int level = 0;
 
     switch (varType) {
     case ParametrizedVariable::NON_FLUENT:
@@ -367,26 +365,25 @@ void RDDLParser::parseVariableDefinition(string& desc) {
         } else {
             if (task->objects.find(defaultValString) == task->objects.end()) {
                 string err = "Error: Default value " + defaultValString +
-                    " of variable " + name + " not defined.";
+                             " of variable " + name + " not defined.";
                 SystemUtils::abort(err);
             }
             Object* val = task->objects[defaultValString];
             defaultVal = val->value;
         }
         break;
-        //case ParametrizedVariable::INTERM_FLUENT:
+        // case ParametrizedVariable::INTERM_FLUENT:
         // assert(optionals[2].find("level =") == 0);
         // optionals[2] = optionals[2].substr(7,optionals[2].length());
         // StringUtils::trim(optionals[2]);
         // level = atoi(optionals[2].c_str());
-        //break;
+        // break;
     }
 
     ParametrizedVariable* var =
         new ParametrizedVariable(name, params, varType, valueType, defaultVal);
 
     task->addVariableDefinition(var);
-        
 }
 
 void RDDLParser::parseCPFDefinition(string& desc) {
@@ -463,9 +460,9 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
         StringUtils::split(paramsAsString, paramStrings, ",");
         for (unsigned int i = 0; i < paramStrings.size(); ++i) {
             if (task->objects.find(paramStrings[i]) == task->objects.end()) {
-                SystemUtils::abort(
-                        "Error: Undefined object " + paramStrings[i] +
-                        " referenced in " + desc + ".");
+                SystemUtils::abort("Error: Undefined object " +
+                                   paramStrings[i] + " referenced in " + desc +
+                                   ".");
             }
             params.push_back(task->objects[paramStrings[i]]);
         }
@@ -473,7 +470,8 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
 
     if (task->variableDefinitions.find(name) ==
         task->variableDefinitions.end()) {
-        SystemUtils::abort("Error: variable " + name + " used but not defined.");
+        SystemUtils::abort("Error: variable " + name +
+                           " used but not defined.");
     }
     ParametrizedVariable* parent = task->variableDefinitions[name];
 
@@ -488,7 +486,7 @@ void RDDLParser::parseAtomicLogicalExpression(string& desc) {
     } else {
         if (task->objects.find(initialValString) == task->objects.end()) {
             string err = "Error: Initial value" + initialValString +
-                " of variable " + name + " not defined.";
+                         " of variable " + name + " not defined.";
             SystemUtils::abort(err);
         }
         Object* val = task->objects[initialValString];
@@ -525,7 +523,7 @@ LogicalExpression* RDDLParser::parseRDDLFormula(string desc) {
         }
         // Copy the schematic variable and replace the params
         return new ParametrizedVariable(*task->variableDefinitions[tokens[0]],
-                params);
+                                        params);
     } else if (tokens[0] == "sum") {
         // Sumation
         assert(tokens.size() == 3);

@@ -1,4 +1,5 @@
-void LogicalExpression::evaluateToPD(DiscretePD& /*res*/, State const& /*current*/,
+void LogicalExpression::evaluateToPD(DiscretePD& /*res*/,
+                                     State const& /*current*/,
                                      ActionState const& /*actions*/) const {
     assert(false);
 }
@@ -80,7 +81,8 @@ void EqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
     // compute the probability that they evaluateToPD to the same value!
     double equalityProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
-        equalityProb += (lhs.probabilities[i] * rhs.probabilityOf(lhs.values[i]));
+        equalityProb +=
+            (lhs.probabilities[i] * rhs.probabilityOf(lhs.values[i]));
     }
 
     res.assignBernoulli(equalityProb);
@@ -155,7 +157,7 @@ void GreaterEqualsExpression::evaluateToPD(DiscretePD& res,
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (unsigned int j = 0; j < rhs.values.size(); ++j) {
             if (MathUtils::doubleIsGreaterOrEqual(lhs.values[i],
-                        rhs.values[j])) {
+                                                  rhs.values[j])) {
                 greaterEqualProb +=
                     (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
@@ -183,7 +185,7 @@ void LowerEqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (int j = rhs.values.size() - 1; j >= 0; --j) {
             if (MathUtils::doubleIsSmallerOrEqual(lhs.values[i],
-                        rhs.values[j])) {
+                                                  rhs.values[j])) {
                 lowerEqualProb += (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
                 break;
@@ -315,8 +317,7 @@ void Negation::evaluateToPD(DiscretePD& res, State const& current,
     res.assignBernoulli(exprRes.falsityProbability());
 }
 
-void ExponentialFunction::evaluateToPD(DiscretePD& res,
-                                       State const& current,
+void ExponentialFunction::evaluateToPD(DiscretePD& res, State const& current,
                                        ActionState const& actions) const {
     expr->evaluateToPD(res, current, actions);
 
@@ -335,7 +336,8 @@ void BernoulliDistribution::evaluateToPD(DiscretePD& res, State const& current,
     expr->evaluateToPD(exprRes, current, actions);
     assert(exprRes.isWellDefined());
 
-    // the expression must evaluateToPD to a real number which is converted to the
+    // the expression must evaluateToPD to a real number which is converted to
+    // the
     // probability that this is true
     assert(exprRes.isDeterministic());
     res.assignBernoulli(exprRes.values[0]);
@@ -400,8 +402,7 @@ void IfThenElseExpression::evaluateToPD(DiscretePD& res, State const& current,
         }
 
         for (unsigned int i = 0; i < falsityRes.values.size(); ++i) {
-            if (valProbPairs.find(falsityRes.values[i]) ==
-                valProbPairs.end()) {
+            if (valProbPairs.find(falsityRes.values[i]) == valProbPairs.end()) {
                 valProbPairs[falsityRes.values[i]] = 0.0;
             }
             valProbPairs[falsityRes.values[i]] +=
@@ -434,10 +435,9 @@ void MultiConditionChecker::evaluateToPD(DiscretePD& res, State const& current,
                 }
                 valProbPairs[exprRes.values[i]] +=
                     (prob.truthProbability() * remainingProb *
-                exprRes.probabilities[i]);
+                     exprRes.probabilities[i]);
             }
         }
-
 
         remainingProb *= prob.falsityProbability();
         if (MathUtils::doubleIsEqual(remainingProb, 0.0)) {

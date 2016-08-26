@@ -11,7 +11,7 @@ public:
 
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
-                        double& qValue) override;    
+                        double& qValue) override;
 
     // Start the search engine to estimate the Q-values of all applicable
     // actions
@@ -24,13 +24,13 @@ public:
                     std::string indent = "") const;
 
     // Caching
-    typedef std::unordered_map<State, std::vector<double>, 
-                               State::HashWithoutRemSteps, 
-                               State::EqualWithoutRemSteps> HashMap;
+    typedef std::unordered_map<State, std::vector<double>,
+                               State::HashWithoutRemSteps,
+                               State::EqualWithoutRemSteps>
+        HashMap;
     static HashMap rewardCache;
 
 protected:
-    
     // Statistics
     int numberOfRuns;
     int cacheHits;

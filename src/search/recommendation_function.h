@@ -32,16 +32,14 @@ public:
                            std::vector<int>& bestActions) = 0;
 
 protected:
-    RecommendationFunction(THTS* thts) :
-        thts(thts) {}
+    RecommendationFunction(THTS* thts) : thts(thts) {}
 
     THTS* thts;
 };
 
 class ExpectedBestArmRecommendation : public RecommendationFunction {
 public:
-    ExpectedBestArmRecommendation(THTS* thts) :
-        RecommendationFunction(thts) {}
+    ExpectedBestArmRecommendation(THTS* thts) : RecommendationFunction(thts) {}
 
     void recommend(SearchNode const* rootNode,
                    std::vector<int>& bestActions) override;
@@ -49,8 +47,7 @@ public:
 
 class MostPlayedArmRecommendation : public RecommendationFunction {
 public:
-    MostPlayedArmRecommendation(THTS* thts) :
-        RecommendationFunction(thts) {}
+    MostPlayedArmRecommendation(THTS* thts) : RecommendationFunction(thts) {}
 
     void recommend(SearchNode const* rootNode,
                    std::vector<int>& bestActions) override;
