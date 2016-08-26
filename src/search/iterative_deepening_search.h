@@ -8,7 +8,7 @@
 #include "search_engine.h"
 #include "states.h"
 
-#include "utils/timer.h"
+#include "utils/stopwatch.h"
 
 #include <unordered_map>
 
@@ -77,9 +77,8 @@ protected:
     bool isLearning;
     std::vector<std::vector<double> > elapsedTime;
 
-    // The timer that is used to make sure that computation doesn't take too
-    // much time
-    Timer timer;
+    // Stopwatch used to make sure that computation doesn't take too much time
+    Stopwatch stopwatch;
 
     // The number of remaining steps for this step
     int maxSearchDepthForThisStep;

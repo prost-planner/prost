@@ -20,7 +20,7 @@ IDS::HashMap IDS::rewardCache;
 IDS::IDS() :
     DeterministicSearchEngine("IDS"),
     isLearning(false),
-    timer(),
+    stopwatch(),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
     strictTerminationTimeout(0.1),
@@ -145,7 +145,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         ++cacheHits;
         qValue = it->second[actionIndex] * (double)state.stepsToGo();
     }  else {
-        timer.reset();
+        stopwatch.reset();
 
         maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
 
@@ -191,7 +191,7 @@ void IDS::estimateQValues(State const& state,
             }
         }
     } else {
-        timer.reset();
+        stopwatch.reset();
 
         maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
 
@@ -231,7 +231,7 @@ void IDS::estimateQValues(State const& state,
 }
 
 bool IDS::moreIterations(int const& stepsToGo) {
-    double time = timer();
+    double time = stopwatch();
 
     // 1. If caching was disabled, we check if the strict timeout is violated to
     // readjust the maximal search depth
@@ -257,7 +257,7 @@ bool IDS::moreIterations(int const& stepsToGo) {
 bool IDS::moreIterations(int const& stepsToGo,
                          vector<int> const& actionsToExpand,
                          vector<double>& qValues) {
-    double time = timer();
+    double time = stopwatch();
 
     // 0. If we are learning, we apply different termination criteria
     if (isLearning) {
