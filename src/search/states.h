@@ -401,9 +401,11 @@ public:
 
     double sample(int const& varIndex) {
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
+        // bug: do not sample two times
         probabilisticStateFluent(varIndex) = pd.sample().first;
         return pd.sample().first;
     }
+    // TODO sample(vector...) here too
 
     // Remaining steps are not considered here!
     struct PDStateCompare {
