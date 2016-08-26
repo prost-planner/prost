@@ -505,8 +505,9 @@ void Parser::parseHashKeys(stringstream& desc) const {
         if (State::stateHashingPossible) {
             State::stateHashKeysOfDeterministicStateFluents[index].resize(
                 SearchEngine::deterministicCPFs[index]->head->values.size());
-            for (size_t j = 0; j < SearchEngine::deterministicCPFs[index]
-                                       ->head->values.size();
+            for (size_t j = 0;
+                 j <
+                 SearchEngine::deterministicCPFs[index]->head->values.size();
                  ++j) {
                 desc >>
                     State::stateHashKeysOfDeterministicStateFluents[index][j];
@@ -545,8 +546,9 @@ void Parser::parseHashKeys(stringstream& desc) const {
         if (State::stateHashingPossible) {
             State::stateHashKeysOfProbabilisticStateFluents[index].resize(
                 SearchEngine::probabilisticCPFs[index]->head->values.size());
-            for (size_t j = 0; j < SearchEngine::probabilisticCPFs[index]
-                                       ->head->values.size();
+            for (size_t j = 0;
+                 j <
+                 SearchEngine::probabilisticCPFs[index]->head->values.size();
                  ++j) {
                 desc >>
                     State::stateHashKeysOfProbabilisticStateFluents[index][j];

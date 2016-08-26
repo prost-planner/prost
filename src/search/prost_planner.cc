@@ -182,7 +182,8 @@ void ProstPlanner::finishRound(double const& roundReward) {
     cout << "***********************************************" << endl
          << ">>> END OF ROUND " << (currentRound + 1)
          << " -- REWARD RECEIVED: " << roundReward << endl
-         << "***********************************************\n" << endl;
+         << "***********************************************\n"
+         << endl;
 }
 
 void ProstPlanner::initStep(vector<double> const& nextStateVec,
