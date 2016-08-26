@@ -1,6 +1,5 @@
-LogicalExpression*
-LogicalExpression::replaceQuantifier(Instantiations& /*replace*/,
-                                     Instantiator* /*inst*/) {
+LogicalExpression* LogicalExpression::replaceQuantifier(
+    Instantiations& /*replace*/, Instantiator* /*inst*/) {
     print(cout);
     assert(false);
     return nullptr;
@@ -10,13 +9,12 @@ LogicalExpression::replaceQuantifier(Instantiations& /*replace*/,
                          Schematics
 *****************************************************************/
 
-LogicalExpression*
-ParametrizedVariable::replaceQuantifier(Instantiations& replace,
-                                        Instantiator* inst) {
+LogicalExpression* ParametrizedVariable::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<Parameter*> newParams;
     for (unsigned int i = 0; i < params.size(); ++i) {
-        Parameter* param =
-            dynamic_cast<Parameter*>(params[i]->replaceQuantifier(replace, inst));
+        Parameter* param = dynamic_cast<Parameter*>(
+            params[i]->replaceQuantifier(replace, inst));
         assert(param);
         newParams.push_back(param);
     }
@@ -27,9 +25,8 @@ ParametrizedVariable::replaceQuantifier(Instantiations& replace,
                            Atomics
 *****************************************************************/
 
-LogicalExpression*
-NumericConstant::replaceQuantifier(Instantiations& /*replace*/,
-                                   Instantiator* /*inst*/) {
+LogicalExpression* NumericConstant::replaceQuantifier(
+    Instantiations& /*replace*/, Instantiator* /*inst*/) {
     return this;
 }
 
@@ -51,7 +48,7 @@ LogicalExpression* Object::replaceQuantifier(Instantiations& /*replace*/,
 *****************************************************************/
 
 void Quantifier::getReplacements(vector<string>& parameterNames,
-                                 vector<vector<Parameter*> >& replace,
+                                 vector<vector<Parameter*>>& replace,
                                  Instantiator* inst) {
     vector<Parameter*> parameterTypes;
     for (unsigned int i = 0; i < paramList->params.size(); ++i) {
@@ -67,7 +64,7 @@ LogicalExpression* Sumation::replaceQuantifier(Instantiations& replace,
                                                Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Parameter*> > newParams;
+    vector<vector<Parameter*>> newParams;
     getReplacements(parameterNames, newParams, inst);
 
     for (unsigned int i = 0; i < newParams.size(); ++i) {
@@ -90,7 +87,7 @@ LogicalExpression* Product::replaceQuantifier(Instantiations& replace,
                                               Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Parameter*> > newParams;
+    vector<vector<Parameter*>> newParams;
     getReplacements(parameterNames, newParams, inst);
 
     for (unsigned int i = 0; i < newParams.size(); ++i) {
@@ -109,12 +106,11 @@ LogicalExpression* Product::replaceQuantifier(Instantiations& replace,
     return new Multiplication(newExprs);
 }
 
-LogicalExpression*
-UniversalQuantification::replaceQuantifier(Instantiations& replace,
-                                           Instantiator* inst) {
+LogicalExpression* UniversalQuantification::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Parameter*> > newParams;
+    vector<vector<Parameter*>> newParams;
     getReplacements(parameterNames, newParams, inst);
 
     for (unsigned int i = 0; i < newParams.size(); ++i) {
@@ -133,12 +129,11 @@ UniversalQuantification::replaceQuantifier(Instantiations& replace,
     return new Conjunction(newExprs);
 }
 
-LogicalExpression*
-ExistentialQuantification::replaceQuantifier(Instantiations& replace,
-                                             Instantiator* inst) {
+LogicalExpression* ExistentialQuantification::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     vector<string> parameterNames;
-    vector<vector<Parameter*> > newParams;
+    vector<vector<Parameter*>> newParams;
     getReplacements(parameterNames, newParams, inst);
 
     for (unsigned int i = 0; i < newParams.size(); ++i) {
@@ -206,9 +201,8 @@ LogicalExpression* LowerExpression::replaceQuantifier(Instantiations& replace,
     return new LowerExpression(newExprs);
 }
 
-LogicalExpression*
-GreaterEqualsExpression::replaceQuantifier(Instantiations& replace,
-                                           Instantiator* inst) {
+LogicalExpression* GreaterEqualsExpression::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         newExprs.push_back(exprs[i]->replaceQuantifier(replace, inst));
@@ -216,9 +210,8 @@ GreaterEqualsExpression::replaceQuantifier(Instantiations& replace,
     return new GreaterEqualsExpression(newExprs);
 }
 
-LogicalExpression*
-LowerEqualsExpression::replaceQuantifier(Instantiations& replace,
-                                         Instantiator* inst) {
+LogicalExpression* LowerEqualsExpression::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         newExprs.push_back(exprs[i]->replaceQuantifier(replace, inst));
@@ -271,9 +264,8 @@ LogicalExpression* Negation::replaceQuantifier(Instantiations& replace,
     return new Negation(expr->replaceQuantifier(replace, inst));
 }
 
-LogicalExpression*
-ExponentialFunction::replaceQuantifier(Instantiations& replace,
-                                       Instantiator* inst) {
+LogicalExpression* ExponentialFunction::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     return new ExponentialFunction(expr->replaceQuantifier(replace, inst));
 }
 
@@ -281,21 +273,18 @@ ExponentialFunction::replaceQuantifier(Instantiations& replace,
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression*
-KronDeltaDistribution::replaceQuantifier(Instantiations& replace,
-                                         Instantiator* inst) {
+LogicalExpression* KronDeltaDistribution::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     return new KronDeltaDistribution(expr->replaceQuantifier(replace, inst));
 }
 
-LogicalExpression*
-BernoulliDistribution::replaceQuantifier(Instantiations& replace,
-                                         Instantiator* inst) {
+LogicalExpression* BernoulliDistribution::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     return new BernoulliDistribution(expr->replaceQuantifier(replace, inst));
 }
 
-LogicalExpression*
-DiscreteDistribution::replaceQuantifier(Instantiations& replace,
-                                        Instantiator* inst) {
+LogicalExpression* DiscreteDistribution::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
 
@@ -310,9 +299,8 @@ DiscreteDistribution::replaceQuantifier(Instantiations& replace,
                          Conditionals
 *****************************************************************/
 
-LogicalExpression*
-IfThenElseExpression::replaceQuantifier(Instantiations& replace,
-                                        Instantiator* inst) {
+LogicalExpression* IfThenElseExpression::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     LogicalExpression* newCondition =
         condition->replaceQuantifier(replace, inst);
     LogicalExpression* newValueIfTrue =
@@ -323,14 +311,14 @@ IfThenElseExpression::replaceQuantifier(Instantiations& replace,
                                     newValueIfFalse);
 }
 
-LogicalExpression*
-MultiConditionChecker::replaceQuantifier(Instantiations& replace,
-                                         Instantiator* inst) {
+LogicalExpression* MultiConditionChecker::replaceQuantifier(
+    Instantiations& replace, Instantiator* inst) {
     std::vector<LogicalExpression*> newConditions;
     std::vector<LogicalExpression*> newEffects;
 
     for (unsigned int i = 0; i < conditions.size(); ++i) {
-        newConditions.push_back(conditions[i]->replaceQuantifier(replace, inst));
+        newConditions.push_back(
+            conditions[i]->replaceQuantifier(replace, inst));
         newEffects.push_back(effects[i]->replaceQuantifier(replace, inst));
     }
     return new MultiConditionChecker(newConditions, newEffects);

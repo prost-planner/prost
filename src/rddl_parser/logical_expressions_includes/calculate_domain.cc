@@ -37,8 +37,7 @@ void NumericConstant::calculateDomain(Domains const& /*domains*/,
 *****************************************************************/
 
 void Conjunction::calculateDomain(Domains const& domains,
-                                  ActionState const& action,
-                                  set<double>& res) {
+                                  ActionState const& action, set<double>& res) {
     assert(res.empty());
 
     // This must be true if all variables are true
@@ -66,8 +65,7 @@ void Conjunction::calculateDomain(Domains const& domains,
 }
 
 void Disjunction::calculateDomain(Domains const& domains,
-                                  ActionState const& action,
-                                  set<double>& res) {
+                                  ActionState const& action, set<double>& res) {
     assert(res.empty());
 
     // This must be false if all variables are false
@@ -76,8 +74,7 @@ void Disjunction::calculateDomain(Domains const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
         exprs[i]->calculateDomain(domains, action, res);
-        if ((res.size() == 1) &&
-            !MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
+        if ((res.size() == 1) && !MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
             // This element and the whole conjunction must be true
             res.clear();
             res.insert(1.0);
@@ -213,8 +210,7 @@ void LowerEqualsExpression::calculateDomain(Domains const& domains,
 }
 
 void Addition::calculateDomain(Domains const& domains,
-                               ActionState const& action,
-                               set<double>& res) {
+                               ActionState const& action, set<double>& res) {
     assert(res.empty());
     set<double> sums;
     exprs[0]->calculateDomain(domains, action, sums);
@@ -236,8 +232,7 @@ void Addition::calculateDomain(Domains const& domains,
 }
 
 void Subtraction::calculateDomain(Domains const& domains,
-                                  ActionState const& action,
-                                  set<double>& res) {
+                                  ActionState const& action, set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -247,8 +242,7 @@ void Subtraction::calculateDomain(Domains const& domains,
     set<double> rhs;
     exprs[1]->calculateDomain(domains, action, rhs);
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it - *it2);
         }
     }
@@ -279,8 +273,7 @@ void Multiplication::calculateDomain(Domains const& domains,
 }
 
 void Division::calculateDomain(Domains const& domains,
-                               ActionState const& action,
-                               set<double>& res) {
+                               ActionState const& action, set<double>& res) {
     assert(exprs.size() == 2);
     assert(res.empty());
 
@@ -290,8 +283,7 @@ void Division::calculateDomain(Domains const& domains,
     set<double> rhs;
     exprs[1]->calculateDomain(domains, action, rhs);
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it / *it2);
         }
     }
@@ -302,8 +294,7 @@ void Division::calculateDomain(Domains const& domains,
 *****************************************************************/
 
 void Negation::calculateDomain(Domains const& domains,
-                               ActionState const& action,
-                               set<double>& res) {
+                               ActionState const& action, set<double>& res) {
     set<double> tmp;
     expr->calculateDomain(domains, action, tmp);
 
@@ -341,8 +332,8 @@ void BernoulliDistribution::calculateDomain(Domains const& domains,
             res.insert(1.0);
         }
 
-        if (MathUtils::doubleIsGreaterOrEqual(*it,
-                    0.0) && MathUtils::doubleIsSmaller(*it, 1.0)) {
+        if (MathUtils::doubleIsGreaterOrEqual(*it, 0.0) &&
+            MathUtils::doubleIsSmaller(*it, 1.0)) {
             res.insert(0.0);
         }
 

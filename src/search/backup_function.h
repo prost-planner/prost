@@ -16,9 +16,10 @@ public:
 
     // Create a backup function component
     static BackupFunction* fromString(std::string& desc, THTS* thts);
-    
+
     // Set parameters from command line
-    virtual bool setValueFromString(std::string& /*param*/, std::string& /*value*/) {
+    virtual bool setValueFromString(std::string& /*param*/,
+                                    std::string& /*value*/) {
         return false;
     }
 
@@ -34,20 +35,21 @@ public:
     }
 
     // Backup functions
-    virtual void backupDecisionNodeLeaf(SearchNode* node, double const& futReward);
+    virtual void backupDecisionNodeLeaf(SearchNode* node,
+                                        double const& futReward);
     virtual void backupDecisionNode(SearchNode* node);
-    virtual void backupChanceNode(SearchNode* node, double const& futReward) = 0;
+    virtual void backupChanceNode(SearchNode* node,
+                                  double const& futReward) = 0;
 
     // Prints statistics
     virtual void printStats(std::ostream& out, std::string indent);
 
 protected:
-    BackupFunction(THTS* _thts,
-                   bool _useSolveLabeling = false,
-                   bool _useBackupLock = false) :
-        thts(_thts),
-        useSolveLabeling(_useSolveLabeling),
-        useBackupLock(_useBackupLock) {}
+    BackupFunction(THTS* _thts, bool _useSolveLabeling = false,
+                   bool _useBackupLock = false)
+        : thts(_thts),
+          useSolveLabeling(_useSolveLabeling),
+          useBackupLock(_useBackupLock) {}
 
     THTS* thts;
 
@@ -62,7 +64,7 @@ protected:
     int skippedBackups;
 
     // Tests which access private members
-    friend class BFSTestSearch;    
+    friend class BFSTestSearch;
 };
 
 /******************************************************************
@@ -71,10 +73,10 @@ protected:
 
 class MCBackupFunction : public BackupFunction {
 public:
-    MCBackupFunction(THTS* _thts) :
-        BackupFunction(_thts),
-        initialLearningRate(1.0),
-        learningRateDecay(1.0) {}
+    MCBackupFunction(THTS* _thts)
+        : BackupFunction(_thts),
+          initialLearningRate(1.0),
+          learningRateDecay(1.0) {}
 
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
@@ -102,8 +104,7 @@ private:
 
 class MaxMCBackupFunction : public BackupFunction {
 public:
-    MaxMCBackupFunction(THTS* _thts) :
-        BackupFunction(_thts) {}
+    MaxMCBackupFunction(THTS* _thts) : BackupFunction(_thts) {}
 
     // Backup functions
     void backupChanceNode(SearchNode* node, double const& futReward) override;
@@ -115,8 +116,7 @@ public:
 
 class PBBackupFunction : public BackupFunction {
 public:
-    PBBackupFunction(THTS* _thts) :
-    BackupFunction(_thts, true, true) {}
+    PBBackupFunction(THTS* _thts) : BackupFunction(_thts, true, true) {}
 
     // Backup functions
     void backupChanceNode(SearchNode* node, double const& futReward) override;
