@@ -399,7 +399,7 @@ public:
         }
     }
 
-    std::pair<double, double> sample(int const& varIndex,
+    std::pair<double, double> sample(int varIndex,
                                      std::vector<int> const& blacklist = {}) {
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
         std::pair<double, double> outcome = pd.sample(blacklist);
