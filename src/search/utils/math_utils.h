@@ -60,7 +60,7 @@ public:
     }
 
     // Random number generator
-    static std::unique_ptr<Random> rnd;
+    static std::unique_ptr<Random<>> rnd;
 
 private:
     MathUtils() {}

@@ -7,17 +7,15 @@
 #include <iterator>
 #include <random>
 
-// Base class for common functions regarding random number generation
-
+// Base class for common functions regarding random number generation.
+// URNG is the c++ concept UniformRandomBitGenerator.
+template <class URNG = std::mt19937>
 class Random {
 public:
     virtual ~Random() = default;
     virtual int genInt(int min, int max) = 0;
     virtual double genDouble(double min, double max) = 0;
     virtual double genReal() = 0;
-    virtual int sample(std::discrete_distribution<int>& distr) = 0;
-    virtual int sample(std::discrete_distribution<int>& distr,
-                       std::vector<double> const& probabilities) = 0;
 
     // Returns an iterator to a randomly selected element
     template <typename Iter>
@@ -34,10 +32,19 @@ public:
 
     // Reinitialize the engine with a new seed
     virtual void seed(int value) = 0;
+
+    // Some classes, like distributions, require a generator to produce random
+    // numbers
+    URNG getGenerator() const {
+        return generator;
+    }
+
+protected:
+    URNG generator;
 };
 
 // Random number generation with a mersenne twister generator
-class RandomMT : public Random {
+class RandomMT : public Random<std::mt19937> {
 public:
     // Default constructor using a random seed.
     //
@@ -77,26 +84,11 @@ public:
         return std::generate_canonical<double, 10>(generator);
     }
 
-    // Samples according to the distribution probabilities
-    int sample(std::discrete_distribution<int>& distr) override {
-        return distr(generator);
-    }
-
-    // Samples according to weighted probabilities
-    int sample(std::discrete_distribution<int>& distr,
-               std::vector<double> const& weights) override {
-        std::discrete_distribution<int>::param_type par(weights.begin(),
-                                                        weights.end());
-        return distr(generator, par);
-    }
-
     // Reinitialize the engine with a new seed
     void seed(int value) override {
         generator.seed(value);
     }
 
-private:
-    std::mt19937 generator;
 };
 
 #endif /* RANDOM_H */

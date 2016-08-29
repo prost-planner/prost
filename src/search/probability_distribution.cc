@@ -40,8 +40,9 @@ void DiscretePD::print(ostream& out) const {
 }
 
 pair<double, double> DiscretePD::sample() {
-    int index = MathUtils::rnd->sample(distribution);
-    return std::make_pair(values[index], probabilities[index]);
+    return std::make_pair(0,0);
+    assert(false);
+    //TODO method body
 }
 
 pair<double, double> DiscretePD::sample(vector<int> const& blacklist) {
@@ -50,6 +51,7 @@ pair<double, double> DiscretePD::sample(vector<int> const& blacklist) {
     for (int i : blacklist) {
         newWeights[i] = 0.0;
     }
-    int index = MathUtils::rnd->sample(distribution, newWeights);
-    return std::make_pair(values[index], probabilities[index]);
+    assert(false);
+    //TODO method body
+    return std::make_pair(0,0);
 }

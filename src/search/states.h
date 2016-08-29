@@ -401,9 +401,9 @@ public:
 
     double sample(int const& varIndex) {
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
-        // bug: do not sample two times
-        probabilisticStateFluent(varIndex) = pd.sample().first;
-        return pd.sample().first;
+        double outcome = pd.sample().first;
+        probabilisticStateFluent(varIndex) = outcome;
+        return outcome;
     }
     // TODO sample(vector...) here too
 
