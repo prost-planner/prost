@@ -62,13 +62,14 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
     }
 
-    int childIndex = static_cast<int>(nextState.sample(varIndex));
+    std::pair<double, double> sample = nextState.sample(varIndex);
+    int childIndex = static_cast<int>(sample.first);
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(1.0);
+            node->children[childIndex] = thts->createDecisionNode(sample.second);
         } else {
-            node->children[childIndex] = thts->createChanceNode(1.0);
+            node->children[childIndex] = thts->createChanceNode(sample.second);
         }
     }
 
@@ -83,9 +84,8 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
     SearchNode* node, PDState& nextState, int const& varIndex,
     int const& lastProbVarIndex) {
 
-    DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
+    DiscretePD const& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     std::vector<int> solvedIndices;
-
     if (node->children.empty()) {
         node->children.resize(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
@@ -99,18 +99,19 @@ SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
         }
     }
 
-    std::pair<double, double> sample = pd.sample(solvedIndices);
+    std::pair<double, double> sample =
+        nextState.sample(varIndex, solvedIndices);
     int childIndex = static_cast<int>(sample.first);
-    double childProb = sample.second;
-    // cout << "Chosen child is " << childIndex << " and prob is " << childProb << endl;
+    // cout << "Chosen child is " << childIndex << " and prob is " <<
+    // sample.second << endl;
 
     assert((childIndex >= 0) && childIndex < node->children.size());
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(childProb);
+            node->children[childIndex] = thts->createDecisionNode(sample.second);
         } else {
-            node->children[childIndex] = thts->createChanceNode(childProb);
+            node->children[childIndex] = thts->createChanceNode(sample.second);
         }
     }
 
