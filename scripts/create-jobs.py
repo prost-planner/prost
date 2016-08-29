@@ -35,66 +35,9 @@ revision = "rev157"
 configs = [
     "[IPPC2011]",
     "[IPPC2014]",
-
-    "[UCTStar -init [Expand -h [IDS]]]",
-    "[UCTStar -init [Expand -h [MLS]]]",
-    "[UCTStar -init [Expand -h [Uniform]]]",
-    "[UCTStar -init [Expand -h [RandomWalk]]]",
-
-    "[DP-UCT -init [Expand -h [IDS]]]",
-    "[DP-UCT -init [Expand -h [MLS]]]",
-    "[DP-UCT -init [Expand -h [Uniform]]]",
-    "[DP-UCT -init [Expand -h [RandomWalk]]]",
-
-    "[UCT -init [Expand -h [IDS]]]",
-    "[UCT -init [Expand -h [MLS]]]",
-    "[UCT -init [Expand -h [Uniform]]]",
-    "[UCT -init [Expand -h [RandomWalk]]]",
-
-    "[UCT -init [Expand -h [IDS]] -rec [MPA]]",
-    "[UCT -init [Expand -h [MLS]] -rec [MPA]]",
-    "[UCT -init [Expand -h [Uniform]] -rec [MPA]]",
-    "[UCT -init [Expand -h [RandomWalk]] -rec [MPA]]",
-
-    "[MaxUCT -init [Expand -h [IDS]]]",
-    "[MaxUCT -init [Expand -h [MLS]]]",
-    "[MaxUCT -init [Expand -h [Uniform]]]",
-    "[MaxUCT -init [Expand -h [RandomWalk]]]",
-
-    "[MaxUCT -init [Expand -h [IDS]] -rec [MPA]]",
-    "[MaxUCT -init [Expand -h [MLS]] -rec [MPA]]",
-    "[MaxUCT -init [Expand -h [Uniform]] -rec [MPA]]",
-    "[MaxUCT -init [Expand -h [RandomWalk]] -rec [MPA]]",
-
-    "[UCTStar -init [Single -h [IDS]]]",
-    "[UCTStar -init [Single -h [MLS]]]",
-    "[UCTStar -init [Single -h [Uniform]]]",
-    "[UCTStar -init [Single -h [RandomWalk]]]",
-
-    "[DP-UCT -init [Single -h [IDS]]]",
-    "[DP-UCT -init [Single -h [MLS]]]",
-    "[DP-UCT -init [Single -h [Uniform]]]",
-    "[DP-UCT -init [Single -h [RandomWalk]]]",
-
-    "[UCT -init [Single -h [IDS]]]",
-    "[UCT -init [Single -h [MLS]]]",
-    "[UCT -init [Single -h [Uniform]]]",
     "[UCT -init [Single -h [RandomWalk]]]",
-
-    "[UCT -init [Single -h [IDS]] -rec [MPA]]",
-    "[UCT -init [Single -h [MLS]] -rec [MPA]]",
-    "[UCT -init [Single -h [Uniform]] -rec [MPA]]",
-    "[UCT -init [Single -h [RandomWalk]] -rec [MPA]]",
-
-    "[MaxUCT -init [Single -h [IDS]]]",
-    "[MaxUCT -init [Single -h [MLS]]]",
-    "[MaxUCT -init [Single -h [Uniform]]]",
-    "[MaxUCT -init [Single -h [RandomWalk]]]",
-
-    "[MaxUCT -init [Single -h [IDS]] -rec [MPA]]",
-    "[MaxUCT -init [Single -h [MLS]] -rec [MPA]]",
-    "[MaxUCT -init [Single -h [Uniform]] -rec [MPA]]",
-    "[MaxUCT -init [Single -h [RandomWalk]] -rec [MPA]]",
+    "[MaxUCT -init [Expand -h [MLS]] -rec [MPA]]",
+    "[UCTStar -init [Single -h [Uniform]] -rec [EBA]]",
 ]
 
 host = "localhost"
