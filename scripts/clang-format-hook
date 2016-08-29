@@ -1,7 +1,21 @@
 #!/bin/sh
-hg status -n -m -a -I **.cc -I **.h | xargs -n1 clang-format-3.8 -output-replacements-xml | grep "<replacement " > /dev/null
-if [ $? -ne 1 ]
-then 
-    echo "Error: commit did not match clang-format."
+#hg status -n -m -a -I **.cc -I **.h | xargs -n1 clang-format-3.8 -output-replacements-xml | grep "<replacement " > /dev/null
+#if [ $? -ne 1 ]
+#then 
+#    echo "Error: commit did not match clang-format."
+#    exit 1;
+#fi
+files="`hg status -n -m -a --include re:.*\.cc$ --include re:.*\.h$`"
+all_files_match=true
+for FILE in $files
+do
+    clang-format-3.8 -output-replacements-xml $FILE | grep "<replacement " > /dev/null
+    if [ $? -ne 1 ]; then 
+        echo "$FILE violates code formatting style."
+        all_files_match=false
+    fi
+done
+if [ $all_files_match = false ]; then 
+    echo "Error: commit unsuccessful."
     exit 1;
 fi
