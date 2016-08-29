@@ -18,7 +18,8 @@ public:
     virtual bool setValueFromString(std::string& param, std::string& value);
 
     // Parameter setter
-    virtual void setSelectLeastVisitedActionInRoot(bool _selectLeastVisitedActionInRoot) {
+    virtual void setSelectLeastVisitedActionInRoot(
+        bool _selectLeastVisitedActionInRoot) {
         selectLeastVisitedActionInRoot = _selectLeastVisitedActionInRoot;
     }
 
@@ -51,12 +52,12 @@ public:
     virtual void printStats(std::ostream& /*out*/, std::string /*indent*/);
 
 protected:
-    ActionSelection(THTS* _thts) :
-        thts(_thts),
-        selectLeastVisitedActionInRoot(false),
-        maxVisitDiff(50),
-        exploreInRoot(0),
-        exploitInRoot(0) {}
+    ActionSelection(THTS* _thts)
+        : thts(_thts),
+          selectLeastVisitedActionInRoot(false),
+          maxVisitDiff(50),
+          exploreInRoot(0),
+          exploitInRoot(0) {}
 
     THTS* thts;
 
@@ -76,8 +77,7 @@ protected:
 
 class BFSActionSelection : public ActionSelection {
 public:
-    BFSActionSelection(THTS* _thts) :
-        ActionSelection(_thts) {}
+    BFSActionSelection(THTS* _thts) : ActionSelection(_thts) {}
 
     // Action selection
     void _selectAction(SearchNode* node) override {
@@ -88,26 +88,21 @@ public:
 class UCB1ActionSelection : public ActionSelection {
 public:
     // Possible types for the exploration-rate function
-    enum ExplorationRate {
-        LOG,
-        SQRT,
-        LIN,
-        LNQUAD
-    };
+    enum ExplorationRate { LOG, SQRT, LIN, LNQUAD };
 
-    UCB1ActionSelection(THTS* _thts) :
-        ActionSelection(_thts),
-        explorationRate(LOG),
-        magicConstantScaleFactor(1.0) {}
+    UCB1ActionSelection(THTS* _thts)
+        : ActionSelection(_thts),
+          explorationRate(LOG),
+          magicConstantScaleFactor(1.0) {}
 
     // Set parameters from command line
     bool setValueFromString(std::string& param, std::string& value);
 
     // Parameter setter
-    virtual void setMagicConstantScaleFactor( double _magicConstantScaleFactor) {
+    virtual void setMagicConstantScaleFactor(double _magicConstantScaleFactor) {
         magicConstantScaleFactor = _magicConstantScaleFactor;
     }
-    
+
     virtual void setExplorationRate(ExplorationRate _explorationRate) {
         explorationRate = _explorationRate;
     }

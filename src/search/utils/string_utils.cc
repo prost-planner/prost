@@ -1,8 +1,8 @@
 #include "string_utils.h"
 
+#include <algorithm>
 #include <cassert>
 #include <sstream>
-#include <algorithm>
 
 void StringUtils::replaceAll(std::string& s, char const& searchFor,
                              char const& replaceBy) {
@@ -69,10 +69,9 @@ void StringUtils::standardizeEqualSign(std::string& s) {
     size_t index = 0;
     while ((index = s.find("=", index + 2)) != std::string::npos) {
         assert(index > 0 && index < s.length() - 1);
-        if (s[index - 1] != '<' && s[index - 1] != '>' && s[index + 1] !=
-            '>' && s[index - 1] != '='
-            && s[index + 1] != '=' && s[index - 1] != '!' && s[index - 1] !=
-            '~') {
+        if (s[index - 1] != '<' && s[index - 1] != '>' && s[index + 1] != '>' &&
+            s[index - 1] != '=' && s[index + 1] != '=' && s[index - 1] != '!' &&
+            s[index - 1] != '~') {
             s.replace(index, 1, " = ");
         }
     }
@@ -97,11 +96,11 @@ void StringUtils::removeConsecutiveWhiteSpaces(std::string& s, bool doTrim) {
 }
 
 void StringUtils::toLowerCase(std::string& s) {
-    std::transform(s.begin(), s.end(), s.begin(), (int (*)(int)) std::tolower);
+    std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::tolower);
 }
 
 void StringUtils::toUpperCase(std::string& s) {
-    std::transform(s.begin(), s.end(), s.begin(), (int (*)(int)) std::toupper);
+    std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))std::toupper);
 }
 
 void StringUtils::firstLetterToUpper(std::string& s) {
@@ -199,7 +198,7 @@ void StringUtils::split(std::string const& s, std::vector<std::string>& res,
             }
 
             tmp.str("");
-            i += (int) delim.size() - 1;
+            i += (int)delim.size() - 1;
         } else {
             tmp << s[i];
         }

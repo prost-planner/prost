@@ -1,8 +1,8 @@
 #ifndef RDDL_PARSER_H
 #define RDDL_PARSER_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 class PlanningTask;
 class LogicalExpression;
