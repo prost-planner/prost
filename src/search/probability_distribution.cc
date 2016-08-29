@@ -39,10 +39,6 @@ void DiscretePD::print(ostream& out) const {
     out << "]" << endl;
 }
 
-pair<double, double> DiscretePD::sample() const {
-    return sample({});
-}
-
 pair<double, double> DiscretePD::sample(vector<int> const& blacklist) const {
     assert(isWellDefined());
     double remainingProbSum = 1.0;

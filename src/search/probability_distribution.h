@@ -143,12 +143,9 @@ public:
     bool isWellDefined() const;
     void print(std::ostream& out) const;
 
-    // Sample a value proportional to it's probability
-    std::pair<double, double> sample() const;
-
     // Sample a value which is not blacklisted. Probability of blackisted values
     // is ignored
-    std::pair<double, double> sample(std::vector<int> const& blacklist) const;
+    std::pair<double, double> sample(std::vector<int> const& blacklist = {}) const;
 
     std::vector<double> values;
     std::vector<double> probabilities;
