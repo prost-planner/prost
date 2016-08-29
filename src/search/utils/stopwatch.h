@@ -7,7 +7,6 @@
 // Measure amount of time elapsed since construction/reset
 class Stopwatch {
 public:
-
     // Set start time to now, otherwise clock epoch will be used
     Stopwatch() : startTime(std::chrono::steady_clock::now()) {}
 

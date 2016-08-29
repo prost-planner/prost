@@ -33,15 +33,15 @@ class RecommendationFunction;
 // Add ingredients by deriving from the corresponding class.
 
 struct SearchNode {
-    SearchNode(double const& _prob, int const& _stepsToGo) :
-        children(),
-        immediateReward(0.0),
-        prob(_prob),
-        stepsToGo(_stepsToGo),
-        futureReward(-std::numeric_limits<double>::max()),
-        numberOfVisits(0),
-        initialized(false),
-        solved(false) {}
+    SearchNode(double const& _prob, int const& _stepsToGo)
+        : children(),
+          immediateReward(0.0),
+          prob(_prob),
+          stepsToGo(_stepsToGo),
+          futureReward(-std::numeric_limits<double>::max()),
+          numberOfVisits(0),
+          initialized(false),
+          solved(false) {}
 
     ~SearchNode() {
         for (unsigned int i = 0; i < children.size(); ++i) {
@@ -72,11 +72,11 @@ struct SearchNode {
 
     void print(std::ostream& out, std::string indent = "") const {
         if (solved) {
-            out << indent << "SOLVED with: " << getExpectedRewardEstimate() <<
-            " (in " << numberOfVisits << " real visits)" << std::endl;
+            out << indent << "SOLVED with: " << getExpectedRewardEstimate()
+                << " (in " << numberOfVisits << " real visits)" << std::endl;
         } else {
-            out << indent << getExpectedRewardEstimate() << " (in " <<
-            numberOfVisits << " real visits)" << std::endl;
+            out << indent << getExpectedRewardEstimate() << " (in "
+                << numberOfVisits << " real visits)" << std::endl;
         }
     }
 
@@ -85,7 +85,7 @@ struct SearchNode {
     double immediateReward;
     double prob;
     int stepsToGo;
-    
+
     double futureReward;
     int numberOfVisits;
 
@@ -102,9 +102,10 @@ struct SearchNode {
 class THTS : public ProbabilisticSearchEngine {
 public:
     enum TerminationMethod {
-        TIME, //stop after timeout sec
-        NUMBER_OF_TRIALS, //stop after maxNumberOfTrials trials
-        TIME_AND_NUMBER_OF_TRIALS //stop after timeout sec or maxNumberOfTrials trials, whichever comes first
+        TIME,                     // stop after timeout sec
+        NUMBER_OF_TRIALS,         // stop after maxNumberOfTrials trials
+        TIME_AND_NUMBER_OF_TRIALS // stop after timeout sec or maxNumberOfTrials
+                                  // trials, whichever comes first
     };
 
     THTS(std::string _name);
@@ -127,7 +128,7 @@ public:
                         double& /*qValue*/) override {
         assert(false);
     }
-    
+
     // Start the search engine to estimate the Q-values of all applicable
     // actions
     void estimateQValues(State const& /*state*/,
@@ -143,10 +144,9 @@ public:
     void setInitializer(Initializer* _initializer);
     void setRecommendationFunction(
         RecommendationFunction* _recommendationFunction);
-    
+
     void setMaxSearchDepth(int _maxSearchDepth);
-    void setTerminationMethod(
-            THTS::TerminationMethod _terminationMethod) {
+    void setTerminationMethod(THTS::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
     }
 
@@ -155,7 +155,7 @@ public:
     }
 
     void setNumberOfNewDecisionNodesPerTrial(
-            int _numberOfNewDecisionNodesPerTrial) {
+        int _numberOfNewDecisionNodesPerTrial) {
         numberOfNewDecisionNodesPerTrial = _numberOfNewDecisionNodesPerTrial;
     }
 
@@ -202,7 +202,8 @@ private:
         return initializedDecisionNodes < numberOfNewDecisionNodesPerTrial;
     }
 
-    // Determines if the current state has been solved before or can be solved now
+    // Determines if the current state has been solved before or can be solved
+    // now
     bool currentStateIsSolved(SearchNode* node);
 
     // If the root state is a reward lock or has only one reasonable action,
@@ -264,13 +265,13 @@ private:
 
     // The stopwatch used for timeout check
     Stopwatch stopwatch;
-  
+
     // Parameter
     THTS::TerminationMethod terminationMethod;
     int maxNumberOfTrials;
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
- 
+
     // Statistics
     int numberOfRuns;
     int cacheHits;

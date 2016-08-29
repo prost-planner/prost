@@ -1,21 +1,22 @@
-#include <string>
-#include <iostream>
-#include <fstream>
 #include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <string>
 
-#include "rddl_parser.h"
 #include "instantiator.h"
-#include "preprocessor.h"
-#include "task_analyzer.h"
 #include "planning_task.h"
+#include "preprocessor.h"
+#include "rddl_parser.h"
+#include "task_analyzer.h"
 
 #include "utils/timer.h"
 
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>" <<
-    endl << endl;
+    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>"
+         << endl
+         << endl;
 }
 
 int main(int argc, char** argv) {
@@ -76,7 +77,7 @@ int main(int argc, char** argv) {
     resultFile.open(targetDir.c_str());
     task->print(resultFile);
     resultFile.close();
-    //task->print(cout);
+    // task->print(cout);
     cout << "...finished (" << t << ")." << endl;
 
     cout << "total time: " << totalTime << endl;
