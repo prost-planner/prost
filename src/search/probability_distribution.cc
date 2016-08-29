@@ -39,19 +39,29 @@ void DiscretePD::print(ostream& out) const {
     out << "]" << endl;
 }
 
-pair<double, double> DiscretePD::sample() {
-    return std::make_pair(0,0);
-    assert(false);
-    //TODO method body
+pair<double, double> DiscretePD::sample() const {
+    return sample({});
 }
 
-pair<double, double> DiscretePD::sample(vector<int> const& blacklist) {
+pair<double, double> DiscretePD::sample(vector<int> const& blacklist) const {
     assert(isWellDefined());
-    vector<double> newWeights = probabilities;
+    double remainingProbSum = 1.0;
     for (int i : blacklist) {
-        newWeights[i] = 0.0;
+        remainingProbSum -= probabilities[i];
+    }
+    assert(MathUtils::doubleIsGreater(remainingProbSum, 0.0));
+
+    double randNum = MathUtils::rnd->genDouble(0.0, remainingProbSum);
+    double probSum = 0.0;
+
+    for (int i = 0; i < values.size(); ++i) {
+        if (find(blacklist.begin(), blacklist.end(), i) == blacklist.end()) {
+            probSum += probabilities[i];
+            if (MathUtils::doubleIsSmallerOrEqual(randNum, probSum)) {
+                return std::make_pair(values[i], probabilities[i]);
+            }
+        }
     }
     assert(false);
-    //TODO method body
-    return std::make_pair(0,0);
+    return std::make_pair(0, 0);
 }

@@ -399,12 +399,18 @@ public:
         }
     }
 
-    double sample(int const& varIndex) {
+    std::pair<double, double> sample(int const& varIndex) {
+        return sample(varIndex, {});
+    }
+
+    std::pair<double, double> sample(int const& varIndex,
+                                     std::vector<int> const& blacklist) {
         DiscretePD& pd = probabilisticStateFluentsAsPD[varIndex];
-        double outcome = pd.sample().first;
-        probabilisticStateFluent(varIndex) = outcome;
+        std::pair<double, double> outcome = pd.sample(blacklist);
+        probabilisticStateFluent(varIndex) = outcome.first;
         return outcome;
     }
+
     // TODO sample(vector...) here too
 
     // Remaining steps are not considered here!
