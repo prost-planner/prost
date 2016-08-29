@@ -54,16 +54,19 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
 
 SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
                                               PDState& nextState,
-                                              int const& varIndex,
-                                              int const& lastProbVarIndex) {
-
+                                              int varIndex,
+                                              int lastProbVarIndex) {
+    std::vector<int> blacklist;
     if (node->children.empty()) {
         node->children.resize(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
+    } else {
+        computeBlacklist(node, nextState, varIndex, blacklist);
     }
 
-    std::pair<double, double> sample = nextState.sample(varIndex);
+    std::pair<double, double> sample = nextState.sample(varIndex, blacklist);
     int childIndex = static_cast<int>(sample.first);
+    assert((childIndex >= 0) && childIndex < node->children.size());
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
@@ -80,42 +83,17 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
              MC Outcome Selection with Solve Labeling
 ******************************************************************/
 
-SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
-    SearchNode* node, PDState& nextState, int const& varIndex,
-    int const& lastProbVarIndex) {
-
+void UnsolvedMCOutcomeSelection::computeBlacklist(SearchNode* node,
+                                                  PDState& nextState,
+                                                  int varIndex,
+                                                  std::vector<int>& blacklist) const {
+    // Determines the indices of all solved outcomes
     DiscretePD const& pd = nextState.probabilisticStateFluentAsPD(varIndex);
-    std::vector<int> solvedIndices;
-    if (node->children.empty()) {
-        node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
-    } else {
-        // Determine the indices of solved outcomes
-        for (size_t i = 0; i < pd.size(); ++i) {
-            int childIndex = pd.values[i];
-            if (node->children[childIndex] && node->children[childIndex]->solved) {
-                solvedIndices.push_back(i);
-            }
+    for (size_t i = 0; i < pd.size(); ++i) {
+        int childIndex = pd.values[i];
+        if (node->children[childIndex] && node->children[childIndex]->solved) {
+            blacklist.push_back(i);
         }
     }
-
-    std::pair<double, double> sample =
-        nextState.sample(varIndex, solvedIndices);
-    int childIndex = static_cast<int>(sample.first);
-    // cout << "Chosen child is " << childIndex << " and prob is " <<
-    // sample.second << endl;
-
-    assert((childIndex >= 0) && childIndex < node->children.size());
-
-    if (!node->children[childIndex]) {
-        if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(sample.second);
-        } else {
-            node->children[childIndex] = thts->createChanceNode(sample.second);
-        }
-    }
-
-    assert(!node->children[childIndex]->solved);
-    return node->children[childIndex];
 }
 
