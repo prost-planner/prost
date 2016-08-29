@@ -32,12 +32,16 @@ int main(int argc, char** argv) {
     string targetDir = string(argv[3]);
 
     double seed = time(nullptr);
+    int numStates = 200;
+    int numSimulations = 20;
 
     // Read optinals
     for (unsigned int i = 4; i < argc; ++i) {
         string nextOption = string(argv[i]);
         if (nextOption == "-s") {
             seed = atoi(string(argv[++i]).c_str());
+        } else if (nextOption == "-simulations") {
+            numSimulations = atoi(string(argv[++i]).c_str());
         } else {
             assert(false);
         }
@@ -67,7 +71,7 @@ int main(int argc, char** argv) {
     t.reset();
     cout << "analyzing task..." << endl;
     TaskAnalyzer analyzer(task);
-    analyzer.analyzeTask();
+    analyzer.analyzeTask(numStates, numSimulations);
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
