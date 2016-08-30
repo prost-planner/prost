@@ -6,9 +6,9 @@
 //#include "minimal_lookahead_search.h"
 
 #include "utils/math_utils.h"
+#include "utils/stopwatch.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
-#include "utils/timer.h"
 
 #include <iostream>
 
@@ -79,7 +79,7 @@ void ProstPlanner::setSeed(int _seed) {
 }
 
 void ProstPlanner::init() {
-    Timer t;
+    Stopwatch time;
     cout << "learning..." << endl;
 
     cout.precision(6);
@@ -97,7 +97,7 @@ void ProstPlanner::init() {
         }
         fdd_extdomain(domains, KleeneState::stateSize);
     }
-    cout << "...finished (" << t << ")." << endl << endl;
+    cout << "...finished (" << time << ")." << endl << endl;
 
     cout << "Final task: " << endl;
     SearchEngine::printTask(cout);

@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "prost_planner.h"
 
-#include "utils/timer.h"
+#include "utils/stopwatch.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -541,7 +541,7 @@ void printUsage() {
 }
 
 int main(int argc, char** argv) {
-    Timer totalTime;
+    Stopwatch totalTime;
     if (argc < 3) {
         printUsage();
         return 1;
