@@ -1,10 +1,10 @@
 #ifndef STATES_H
 #define STATES_H
 
+#include <cassert>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
-#include <cassert>
 
 #include "probability_distribution.h"
 #include "utils/math_utils.h"
@@ -19,10 +19,8 @@ class ConditionalProbabilityFunction;
 
 struct State {
     State(std::vector<ConditionalProbabilityFunction*> const& cpfs);
-    State(State const& other) :
-        state(other.state) {}
-    State(int stateSize) :
-        state(stateSize, 0.0) {}
+    State(State const& other) : state(other.state) {}
+    State(int stateSize) : state(stateSize, 0.0) {}
 
     double& operator[](int const& index) {
         assert(index < state.size());
@@ -44,7 +42,7 @@ struct State {
                 if (MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
                     return true;
                 } else if (MathUtils::doubleIsSmaller(rhs.state[i],
-                                   lhs.state[i])) {
+                                                      lhs.state[i])) {
                     return false;
                 }
             }
@@ -60,8 +58,7 @@ struct State {
 *****************************************************************/
 
 struct PDState {
-    PDState(int stateSize) :
-        state(stateSize, DiscretePD()) {}
+    PDState(int stateSize) : state(stateSize, DiscretePD()) {}
 
     DiscretePD& operator[](int const& index) {
         assert(index < state.size());
@@ -95,12 +92,9 @@ struct PDState {
 
 class KleeneState {
 public:
+    KleeneState(int stateSize) : state(stateSize) {}
 
-    KleeneState(int stateSize) :
-        state(stateSize) {}
-
-    KleeneState(State const& origin) :
-        state(origin.state.size()) {
+    KleeneState(State const& origin) : state(origin.state.size()) {
         for (unsigned int index = 0; index < state.size(); ++index) {
             state[index].insert(origin[index]);
         }
@@ -121,7 +115,7 @@ public:
 
         for (unsigned int index = 0; index < state.size(); ++index) {
             if (!std::equal(state[index].begin(), state[index].end(),
-                        other.state[index].begin())) {
+                            other.state[index].begin())) {
                 return false;
             }
         }
@@ -146,13 +140,11 @@ public:
     void print(std::ostream& out) const;
 
 protected:
-    std::vector<std::set<double> > state;
+    std::vector<std::set<double>> state;
 
 private:
-    KleeneState(KleeneState const& other) :
-        state(other.state) {}
+    KleeneState(KleeneState const& other) : state(other.state) {}
 };
-
 
 /*****************************************************************
                             ActionState
@@ -160,11 +152,10 @@ private:
 
 class ActionState {
 public:
-    ActionState(int size) :
-        state(size, 0), index(-1) {}
+    ActionState(int size) : state(size, 0), index(-1) {}
 
-    ActionState(ActionState const& other) :
-        state(other.state), index(other.index) {}
+    ActionState(ActionState const& other)
+        : state(other.state), index(other.index) {}
 
     // This is used to sort action states by the number of true fluents and the
     // position of the true fluents to ensure deterministic behaviour
@@ -198,14 +189,14 @@ public:
     bool operator<(ActionState const& other) const {
         if (state.size() < other.state.size()) {
             return true;
-        } else if(state.size() > other.state.size()) {
+        } else if (state.size() > other.state.size()) {
             return false;
         }
 
-        for(unsigned int i = 0; i < state.size(); ++i) {
-            if(state[i] < other.state[i]) {
+        for (unsigned int i = 0; i < state.size(); ++i) {
+            if (state[i] < other.state[i]) {
                 return true;
-            } else if(state[i] > other.state[i]) {
+            } else if (state[i] > other.state[i]) {
                 return false;
             }
         }

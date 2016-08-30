@@ -5,8 +5,8 @@
 // used for the RDDL KronDelta, Bernoulli and Discrete statements (TODO: maybe
 // it is more efficient to distinguish these by using different classes.)
 
-#include <map>
 #include <iostream>
+#include <map>
 
 #include "utils/math_utils.h"
 
@@ -21,7 +21,7 @@ public:
 
         for (unsigned int i = 0; i < values.size(); ++i) {
             if (!MathUtils::doubleIsEqual(probabilities[i],
-                        rhs.probabilities[i]) ||
+                                          rhs.probabilities[i]) ||
                 !MathUtils::doubleIsEqual(values[i], rhs.values[i])) {
                 return false;
             }
@@ -44,10 +44,10 @@ public:
             }
 
             if (MathUtils::doubleIsSmaller(probabilities[i],
-                        rhs.probabilities[i])) {
+                                           rhs.probabilities[i])) {
                 return true;
             } else if (MathUtils::doubleIsSmaller(rhs.probabilities[i],
-                               probabilities[i])) {
+                                                  probabilities[i])) {
                 return false;
             }
         }
@@ -115,8 +115,8 @@ public:
 
     bool isTruth() const {
         return isDeterministic() &&
-               (MathUtils::doubleIsGreaterOrEqual(values[0],
-                        1.0) || MathUtils::doubleIsSmaller(values[0], 0.0));
+               (MathUtils::doubleIsGreaterOrEqual(values[0], 1.0) ||
+                MathUtils::doubleIsSmaller(values[0], 0.0));
     }
 
     bool isDeterministic() const {

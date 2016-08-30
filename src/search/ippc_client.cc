@@ -2,16 +2,16 @@
 
 #include "prost_planner.h"
 
-#include "utils/system_utils.h"
 #include "utils/string_utils.h"
 #include "utils/strxml.h"
+#include "utils/system_utils.h"
 
-#include <iostream>
-#include <sstream>
 #include <cstdlib>
 #include <cstring>
-#include <sys/socket.h>
+#include <iostream>
 #include <netdb.h>
+#include <sstream>
+#include <sys/socket.h>
 #include <unistd.h>
 
 using namespace std;
@@ -27,7 +27,8 @@ void IPPCClient::run(string const& problemName) {
     double immediateReward = 0.0;
 
     // Main loop
-    for (unsigned int currentRound = 0; currentRound < numberOfRounds; ++currentRound) {
+    for (unsigned int currentRound = 0; currentRound < numberOfRounds;
+         ++currentRound) {
         initRound(nextState, immediateReward);
 
         while (true) {
@@ -79,10 +80,10 @@ int IPPCClient::connectToServer() {
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr = *((struct in_addr*) host->h_addr);
+    addr.sin_addr = *((struct in_addr*)host->h_addr);
     memset(&(addr.sin_zero), '\0', 8);
 
-    if (::connect(res, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
+    if (::connect(res, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         return -1;
     }
     return res;
@@ -101,10 +102,14 @@ void IPPCClient::closeConnection() {
 
 void IPPCClient::initSession(string const& rddlProblem) {
     stringstream os;
-    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "<session-request>"
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+       << "<session-request>"
        << "<problem-name>" << rddlProblem << "</problem-name>"
-       << "<client-name>" << "prost" << "</client-name>"
-       << "<no-header/>" << "</session-request>" << '\0';
+       << "<client-name>"
+       << "prost"
+       << "</client-name>"
+       << "<no-header/>"
+       << "</session-request>" << '\0';
     if (write(socket, os.str().c_str(), os.str().length()) == -1) {
         SystemUtils::abort("Error: writing to socket failed.");
     }
@@ -131,7 +136,7 @@ void IPPCClient::initSession(string const& rddlProblem) {
 }
 void IPPCClient::finishSession() {
     XMLNode const* sessionEndResponse = XMLNode::readNode(socket);
-    
+
     if (sessionEndResponse->getName() != "session-end") {
         SystemUtils::abort("Error: session end message insufficient.");
     }
@@ -147,7 +152,8 @@ void IPPCClient::finishSession() {
     planner->finishSession(totalReward);
 }
 
-void IPPCClient::initRound(vector<double>& initialState, double& immediateReward) {
+void IPPCClient::initRound(vector<double>& initialState,
+                           double& immediateReward) {
     stringstream os;
     os.str("");
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -207,7 +213,8 @@ bool IPPCClient::submitAction(vector<string>& actions,
                               vector<double>& nextState,
                               double& immediateReward) {
     stringstream os;
-    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" << "<actions>";
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+       << "<actions>";
 
     for (unsigned int i = 0; i < actions.size(); ++i) {
         size_t cutPos = actions[i].find("(");
@@ -250,7 +257,8 @@ bool IPPCClient::submitAction(vector<string>& actions,
                              Receiving of states
 ******************************************************************************/
 
-void IPPCClient::readState(XMLNode const* node, vector<double>& nextState, double& immediateReward) {
+void IPPCClient::readState(XMLNode const* node, vector<double>& nextState,
+                           double& immediateReward) {
     assert(node);
     assert(node->getName() == "turn");
 
@@ -279,7 +287,8 @@ void IPPCClient::readState(XMLNode const* node, vector<double>& nextState, doubl
         }
     }
 
-    for(map<string,string>::iterator it = newValues.begin(); it != newValues.end(); ++it) {
+    for (map<string, string>::iterator it = newValues.begin();
+         it != newValues.end(); ++it) {
         string varName = it->first;
         string value = it->second;
 
@@ -287,24 +296,29 @@ void IPPCClient::readState(XMLNode const* node, vector<double>& nextState, doubl
         // that is used by PROST internally where no parents are used (afaik,
         // this changed at some point in rddlsim, and I am not sure if it will
         // change back which is why this hacky solution is fine for the moment).
-        if(varName[varName.length()-2] == '(') {
-            varName = varName.substr(0,varName.length()-2);
+        if (varName[varName.length() - 2] == '(') {
+            varName = varName.substr(0, varName.length() - 2);
         }
 
-        if(stateVariableIndices.find(varName) != stateVariableIndices.end()) {
-            if(stateVariableValues[stateVariableIndices[varName]].empty()) {
+        if (stateVariableIndices.find(varName) != stateVariableIndices.end()) {
+            if (stateVariableValues[stateVariableIndices[varName]].empty()) {
                 // TODO: This should be a numerical variable without
                 // value->index mapping, but it can also be a boolean one atm.
-                if(value =="true") {
+                if (value == "true") {
                     nextState[stateVariableIndices[varName]] = 1.0;
-                } else if(value == "false") {
+                } else if (value == "false") {
                     nextState[stateVariableIndices[varName]] = 0.0;
                 } else {
-                    nextState[stateVariableIndices[varName]] = atof(value.c_str());
+                    nextState[stateVariableIndices[varName]] =
+                        atof(value.c_str());
                 }
             } else {
-                for(unsigned int i = 0; i < stateVariableValues[stateVariableIndices[varName]].size(); ++i) {
-                    if(stateVariableValues[stateVariableIndices[varName]][i] == value) {
+                for (unsigned int i = 0;
+                     i <
+                     stateVariableValues[stateVariableIndices[varName]].size();
+                     ++i) {
+                    if (stateVariableValues[stateVariableIndices[varName]][i] ==
+                        value) {
                         nextState[stateVariableIndices[varName]] = i;
                         break;
                     }

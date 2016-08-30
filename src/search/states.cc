@@ -1,7 +1,7 @@
 #include "states.h"
 
-#include "search_engine.h"
 #include "evaluatables.h"
+#include "search_engine.h"
 
 #include "utils/string_utils.h"
 
@@ -26,8 +26,10 @@ void State::print(ostream& out) const {
     for (unsigned int index = 0;
          index < State::numberOfDeterministicStateFluents; ++index) {
         out << SearchEngine::deterministicCPFs[index]->name << ": ";
-        //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
-        //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
+        // if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
+        //    out <<
+        //    CPFs[index]->head->parent->valueType->domain[state[index]]->name
+        //    << endl;
         //} else {
         out << deterministicStateFluents[index] << endl;
         //}
@@ -37,8 +39,10 @@ void State::print(ostream& out) const {
     for (unsigned int index = 0;
          index < State::numberOfProbabilisticStateFluents; ++index) {
         out << SearchEngine::probabilisticCPFs[index]->name << ": ";
-        //if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
-        //    out << CPFs[index]->head->parent->valueType->domain[state[index]]->name << endl;
+        // if(CPFs[index]->head->parent->valueType->type == Type::OBJECT) {
+        //    out <<
+        //    CPFs[index]->head->parent->valueType->domain[state[index]]->name
+        //    << endl;
         //} else {
         out << probabilisticStateFluents[index] << endl;
         //}
@@ -49,12 +53,14 @@ void State::print(ostream& out) const {
 }
 
 void PDState::printPDState(ostream& out) const {
-    for (unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
-        out << SearchEngine::deterministicCPFs[index]->name << ": " <<
-        deterministicStateFluents[index] << endl;
+    for (unsigned int index = 0;
+         index < State::numberOfDeterministicStateFluents; ++index) {
+        out << SearchEngine::deterministicCPFs[index]->name << ": "
+            << deterministicStateFluents[index] << endl;
     }
 
-    for (unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+    for (unsigned int index = 0;
+         index < State::numberOfProbabilisticStateFluents; ++index) {
         out << SearchEngine::probabilisticCPFs[index]->name << ": ";
         probabilisticStateFluentsAsPD[index].print(out);
     }
@@ -62,14 +68,18 @@ void PDState::printPDState(ostream& out) const {
 }
 
 void PDState::printPDStateCompact(ostream& out) const {
-    for (unsigned int index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+    for (unsigned int index = 0;
+         index < State::numberOfDeterministicStateFluents; ++index) {
         out << deterministicStateFluents[index] << " ";
     }
 
-    for (unsigned int index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+    for (unsigned int index = 0;
+         index < State::numberOfProbabilisticStateFluents; ++index) {
         out << "[ ";
-        for (unsigned int i = 0; i < probabilisticStateFluentsAsPD[index].values.size(); ++i) {
-            out << probabilisticStateFluentsAsPD[index].values[i] << ":" << probabilisticStateFluentsAsPD[index].probabilities[i] << " ";
+        for (unsigned int i = 0;
+             i < probabilisticStateFluentsAsPD[index].values.size(); ++i) {
+            out << probabilisticStateFluentsAsPD[index].values[i] << ":"
+                << probabilisticStateFluentsAsPD[index].probabilities[i] << " ";
         }
         out << "] ";
     }

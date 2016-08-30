@@ -1,13 +1,13 @@
 #ifndef MATH_UTILS_H
 #define MATH_UTILS_H
 
-#define EPSILON 0.000000001 //std::numeric_limits<double>::epsilon()
+#define EPSILON 0.000000001 // std::numeric_limits<double>::epsilon()
 
-#include <cstdlib>
-#include <cmath>
-#include <vector>
 #include <cassert>
+#include <cmath>
+#include <cstdlib>
 #include <limits>
+#include <vector>
 
 class MathUtils {
 public:
@@ -60,7 +60,7 @@ public:
     // TODO: Make sure that this always generates a number that is smaller than
     // 1.0 - EPSILON
     static double generateRandomNumber() {
-        return (double) (rand() % 1000001) / 1000001.0;
+        return (double)(rand() % 1000001) / 1000001.0;
     }
 
 private:

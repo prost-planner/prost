@@ -1,15 +1,15 @@
 #include "preprocessor.h"
 
-#include "planning_task.h"
 #include "evaluatables.h"
+#include "planning_task.h"
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <algorithm>
 
 #include "utils/timer.h"
 
@@ -18,60 +18,78 @@ using namespace std;
 void Preprocessor::preprocess(bool const& output) {
     Timer t;
     // Create and initialize CPFs, rewardCPF, and SACs
-    if (output) cout << "    Preparing evaluatables..." << endl;
+    if (output)
+        cout << "    Preparing evaluatables..." << endl;
     prepareEvaluatables();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Create action fluents and calculate legal action states
-    if (output) cout << "    Preparing actions..." << endl;
+    if (output)
+        cout << "    Preparing actions..." << endl;
     prepareActions();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Approximate reachable values (domains) of CPFs
-    if (output) cout << "    Calculating CPF domain..." << endl;
+    if (output)
+        cout << "    Calculating CPF domain..." << endl;
     calculateCPFDomains();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Remove CPFs with only one reachable value (i.e. a domain size of 1) and
     // simplify remaining CPFs, rewardCPF, and SACs
-    if (output) cout << "    Finalizing evaluatables..." << endl;
+    if (output)
+        cout << "    Finalizing evaluatables..." << endl;
     finalizeEvaluatables();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Determinize CPFs
-    if (output) cout << "    Computing determinization..." << endl;
+    if (output)
+        cout << "    Computing determinization..." << endl;
     determinize();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Determine some non-trivial properties
-    if (output) cout << "    Determining task properties..." << endl;
+    if (output)
+        cout << "    Determining task properties..." << endl;
     determineTaskProperties();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Initialize Hash Key Bases and Mappings
-    if (output) cout << "    Preparing hash keys..." << endl;
+    if (output)
+        cout << "    Preparing hash keys..." << endl;
     prepareStateHashKeys();
     prepareKleeneStateHashKeys();
     prepareStateFluentHashKeys();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Precompute results of evaluate for (some) evaluatables
-    if (output) cout << "    Precomputing evaluatables..." << endl;
+    if (output)
+        cout << "    Precomputing evaluatables..." << endl;
     precomputeEvaluatables();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
 
     // Approximate or calculate the min and max reward
-    if (output) cout << "    Calculating min and max reward..." << endl;
+    if (output)
+        cout << "    Calculating min and max reward..." << endl;
     calculateMinAndMaxReward();
-    if (output) cout << "    ...finished (" << t() << ")" << endl;
+    if (output)
+        cout << "    ...finished (" << t() << ")" << endl;
 }
 
 /*****************************************************************
@@ -125,20 +143,24 @@ void Preprocessor::prepareEvaluatables() {
         // Split conjunctions into their elements
 
         Conjunction* conj = dynamic_cast<Conjunction*>(task->SACs[index]);
-        if(conj) {
-            preconds.insert(preconds.end(), conj->exprs.begin(), conj->exprs.end());
+        if (conj) {
+            preconds.insert(preconds.end(), conj->exprs.begin(),
+                            conj->exprs.end());
         } else {
             preconds.push_back(task->SACs[index]);
         }
     }
 
-    // Divide preconds into dynamic SACs, static SACs, primitive static SACs and state invariants.
-    for(unsigned int index = 0; index < preconds.size(); ++index) {
+    // Divide preconds into dynamic SACs, static SACs, primitive static SACs and
+    // state invariants.
+    for (unsigned int index = 0; index < preconds.size(); ++index) {
         stringstream name;
         name << "SAC " << index;
-        ActionPrecondition* sac = new ActionPrecondition(name.str(), preconds[index]);
+        ActionPrecondition* sac =
+            new ActionPrecondition(name.str(), preconds[index]);
 
-        // Collect the properties of the SAC that are necessary for distinction of
+        // Collect the properties of the SAC that are necessary for distinction
+        // of
         // action preconditions, (primitive) static SACs and state invariants
         sac->initialize();
         if (sac->containsStateFluent()) {
@@ -149,11 +171,11 @@ void Preprocessor::prepareEvaluatables() {
                 sac->index = task->actionPreconds.size();
                 task->actionPreconds.push_back(sac);
             }
-    	} else {
+        } else {
             Negation* neg = dynamic_cast<Negation*>(sac->formula);
-            if(neg) {
+            if (neg) {
                 ActionFluent* act = dynamic_cast<ActionFluent*>(neg->expr);
-                if(act) {
+                if (act) {
                     // This is a "primitive" static action constraint of the
                     // form "not doSomething(params)", i.e., an sac that forbids
                     // the usage of an action fluent in general. We extract
@@ -173,33 +195,39 @@ void Preprocessor::prepareEvaluatables() {
     }
 }
 
-void Preprocessor::removeInapplicableActionFluents(bool const& updateActionStates) {
+void Preprocessor::removeInapplicableActionFluents(
+    bool const& updateActionStates) {
     // Check if there are action fluents that aren't used in any CPF or SAC
     vector<bool> fluentIsUsed(task->actionFluents.size(), false);
 
     for (unsigned int i = 0; i < task->actionPreconds.size(); ++i) {
-        for (set<ActionFluent*>::const_iterator it = task->actionPreconds[i]->dependentActionFluents.begin();
-            it != task->actionPreconds[i]->dependentActionFluents.end(); ++it) {
+        for (set<ActionFluent*>::const_iterator it =
+                 task->actionPreconds[i]->dependentActionFluents.begin();
+             it != task->actionPreconds[i]->dependentActionFluents.end();
+             ++it) {
             fluentIsUsed[(*it)->index] = true;
         }
     }
 
     for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
-        for (set<ActionFluent*>::const_iterator it = task->staticSACs[i]->dependentActionFluents.begin();
-            it != task->staticSACs[i]->dependentActionFluents.end(); ++it) {
+        for (set<ActionFluent*>::const_iterator it =
+                 task->staticSACs[i]->dependentActionFluents.begin();
+             it != task->staticSACs[i]->dependentActionFluents.end(); ++it) {
             fluentIsUsed[(*it)->index] = true;
         }
     }
 
     for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        for (set<ActionFluent*>::const_iterator it = task->CPFs[i]->dependentActionFluents.begin();
-            it != task->CPFs[i]->dependentActionFluents.end(); ++it) {
+        for (set<ActionFluent*>::const_iterator it =
+                 task->CPFs[i]->dependentActionFluents.begin();
+             it != task->CPFs[i]->dependentActionFluents.end(); ++it) {
             fluentIsUsed[(*it)->index] = true;
         }
     }
 
-    for (set<ActionFluent*>::const_iterator it = task->rewardCPF->dependentActionFluents.begin();
-        it != task->rewardCPF->dependentActionFluents.end(); ++it) {
+    for (set<ActionFluent*>::const_iterator it =
+             task->rewardCPF->dependentActionFluents.begin();
+         it != task->rewardCPF->dependentActionFluents.end(); ++it) {
         fluentIsUsed[(*it)->index] = true;
     }
 
@@ -216,25 +244,27 @@ void Preprocessor::removeInapplicableActionFluents(bool const& updateActionState
         }
     }
 
-    if(updateActionStates) {
+    if (updateActionStates) {
         set<ActionState> newActionStates;
         for (unsigned int i = 0; i < task->actionStates.size(); ++i) {
-           ActionState& state = task->actionStates[i];
-           ActionState newState(nextIndex);
-           int newVarIndex = 0;
+            ActionState& state = task->actionStates[i];
+            ActionState newState(nextIndex);
+            int newVarIndex = 0;
 
-           assert(fluentIsUsed.size() == state.state.size());
-           for (unsigned int j = 0; j < fluentIsUsed.size(); ++j) {
-               if (fluentIsUsed[j]) {
-                   newState[newVarIndex] = state[j];
-                   ++newVarIndex;
-               }
-           }
-           newActionStates.insert(newState);
+            assert(fluentIsUsed.size() == state.state.size());
+            for (unsigned int j = 0; j < fluentIsUsed.size(); ++j) {
+                if (fluentIsUsed[j]) {
+                    newState[newVarIndex] = state[j];
+                    ++newVarIndex;
+                }
+            }
+            newActionStates.insert(newState);
         }
 
         task->actionStates.clear();
-        task->actionStates.insert(task->actionStates.end(), newActionStates.begin(), newActionStates.end());
+        task->actionStates.insert(task->actionStates.end(),
+                                  newActionStates.begin(),
+                                  newActionStates.end());
 
         initializeActionStates();
     } else {
@@ -255,8 +285,10 @@ void Preprocessor::prepareActions() {
     if (task->primitiveStaticSACs.empty()) {
         finalActionFluents = task->actionFluents;
     } else {
-        for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
-            if (task->primitiveStaticSACs.find(task->actionFluents[index]) == task->primitiveStaticSACs.end()) {
+        for (unsigned int index = 0; index < task->actionFluents.size();
+             ++index) {
+            if (task->primitiveStaticSACs.find(task->actionFluents[index]) ==
+                task->primitiveStaticSACs.end()) {
                 finalActionFluents.push_back(task->actionFluents[index]);
             } else {
                 replacements[task->actionFluents[index]] = 0.0;
@@ -266,14 +298,16 @@ void Preprocessor::prepareActions() {
         task->actionFluents.clear();
         task->actionFluents = finalActionFluents;
 
-        // Simplify all evaluatables by removing the unused action fluents from their formula
+        // Simplify all evaluatables by removing the unused action fluents from
+        // their formula
         for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             task->CPFs[index]->simplify(replacements);
         }
 
         task->rewardCPF->simplify(replacements);
 
-        for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+        for (unsigned int index = 0; index < task->actionPreconds.size();
+             ++index) {
             task->actionPreconds[index]->simplify(replacements);
             // TODO: What if this became static?
         }
@@ -288,8 +322,8 @@ void Preprocessor::prepareActions() {
 
     // Sort action fluents for deterministic behaviour and assign (possibly
     // temporary) indices
-    sort(task->actionFluents.begin(),
-         task->actionFluents.end(), ActionFluent::ActionFluentSort());
+    sort(task->actionFluents.begin(), task->actionFluents.end(),
+         ActionFluent::ActionFluentSort());
     for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
         task->actionFluents[index]->index = index;
     }
@@ -307,7 +341,7 @@ void Preprocessor::prepareActions() {
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
 
-    for (ActionState const& actionState: allActionStates) {
+    for (ActionState const& actionState : allActionStates) {
         bool isLegal = true;
         for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
             double res = 0.0;
@@ -328,16 +362,16 @@ void Preprocessor::prepareActions() {
     // value) in every legal action. We can safely remove those action fluents
     // entirely from each action.
     ActionState usedFluents((int)task->actionFluents.size());
-    for(unsigned int i = 0; i < legalActionStates.size(); ++i) {
-        for(unsigned int j = 0; j < legalActionStates[i].state.size(); ++j) {
+    for (unsigned int i = 0; i < legalActionStates.size(); ++i) {
+        for (unsigned int j = 0; j < legalActionStates[i].state.size(); ++j) {
             usedFluents[j] |= legalActionStates[i].state[j];
         }
     }
 
     // Assign new indices
     int newIndex = 0;
-    for(unsigned int i = 0; i < usedFluents.state.size(); ++i) {
-        if(usedFluents[i]) {
+    for (unsigned int i = 0; i < usedFluents.state.size(); ++i) {
+        if (usedFluents[i]) {
             task->actionFluents[i]->index = newIndex;
             ++newIndex;
         } else {
@@ -345,14 +379,17 @@ void Preprocessor::prepareActions() {
         }
     }
 
-    if(newIndex < task->actionFluents.size()) {
+    if (newIndex < task->actionFluents.size()) {
         // Remove values of unused action fluents from action states
-        for(unsigned int i = 0; i < legalActionStates.size(); ++i) {
-            ActionState state(newIndex); // newIndex is equal to the number of used action fluents
-            for(unsigned int j = 0; j < legalActionStates[i].state.size(); ++j) {
-                if(task->actionFluents[j]->index != -1) {
+        for (unsigned int i = 0; i < legalActionStates.size(); ++i) {
+            ActionState state(newIndex); // newIndex is equal to the number of
+                                         // used action fluents
+            for (unsigned int j = 0; j < legalActionStates[i].state.size();
+                 ++j) {
+                if (task->actionFluents[j]->index != -1) {
                     assert(task->actionFluents[j]->index < state.state.size());
-                    state[task->actionFluents[j]->index] = legalActionStates[i][j];
+                    state[task->actionFluents[j]->index] =
+                        legalActionStates[i][j];
                 } else {
                     replacements[task->actionFluents[j]] = 0.0;
                 }
@@ -362,9 +399,10 @@ void Preprocessor::prepareActions() {
 
         // Remove unused action fluents
         finalActionFluents.clear();
-        for(unsigned int i = 0; i < task->actionFluents.size(); ++i) {
-            if(task->actionFluents[i]->index != -1) {
-                assert(task->actionFluents[i]->index == finalActionFluents.size());
+        for (unsigned int i = 0; i < task->actionFluents.size(); ++i) {
+            if (task->actionFluents[i]->index != -1) {
+                assert(task->actionFluents[i]->index ==
+                       finalActionFluents.size());
                 finalActionFluents.push_back(task->actionFluents[i]);
             }
         }
@@ -373,13 +411,14 @@ void Preprocessor::prepareActions() {
 
         // Simplify all evaluatables by removing unused action fluents from the
         // formulas
-        for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             task->CPFs[index]->simplify(replacements);
         }
 
         task->rewardCPF->simplify(replacements);
 
-        for(unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
+        for (unsigned int index = 0; index < task->actionPreconds.size();
+             ++index) {
             task->actionPreconds[index]->index = index;
         }
     } else {
@@ -391,8 +430,8 @@ void Preprocessor::prepareActions() {
 
 void Preprocessor::initializeActionStates() {
     // Sort action states again for deterministic behaviour
-    sort(task->actionStates.begin(),
-         task->actionStates.end(), ActionState::ActionStateSort());
+    sort(task->actionStates.begin(), task->actionStates.end(),
+         ActionState::ActionStateSort());
 
     // Set inidices and calculate properties of action states
     for (unsigned int i = 0; i < task->actionStates.size(); ++i) {
@@ -402,7 +441,7 @@ void Preprocessor::initializeActionStates() {
         for (unsigned int i = 0; i < actionState.state.size(); ++i) {
             if (actionState.state[i]) {
                 actionState.scheduledActionFluents.push_back(
-                        task->actionFluents[i]);
+                    task->actionFluents[i]);
             }
         }
 
@@ -414,12 +453,12 @@ void Preprocessor::initializeActionStates() {
                 // checks if it does influence this!
                 actionState.relevantSACs.push_back(task->actionPreconds[i]);
             } else if (sacContainsNegativeActionFluent(task->actionPreconds[i],
-                               actionState)) {
+                                                       actionState)) {
                 // If the SAC contains one of this ActionStates' action fluents
                 // negatively it might forbid this action.
                 actionState.relevantSACs.push_back(task->actionPreconds[i]);
-            } else if (sacContainsAdditionalPositiveActionFluent(task->
-                               actionPreconds[i], actionState)) {
+            } else if (sacContainsAdditionalPositiveActionFluent(
+                           task->actionPreconds[i], actionState)) {
                 // If the SAC contains action fluents positively that are not in
                 // this ActionStates' action fluents it might enforce that
                 // action fluent (and thereby forbid this action)
@@ -429,9 +468,11 @@ void Preprocessor::initializeActionStates() {
     }
 }
 
-void Preprocessor::calcAllActionStates(vector<ActionState>& result, int minElement, int scheduledActions) const {
+void Preprocessor::calcAllActionStates(vector<ActionState>& result,
+                                       int minElement,
+                                       int scheduledActions) const {
     if (result.empty()) {
-        result.push_back(ActionState((int) task->actionFluents.size()));
+        result.push_back(ActionState((int)task->actionFluents.size()));
     } else {
         int lastIndex = result.size();
 
@@ -464,7 +505,7 @@ void Preprocessor::calcAllActionStates(vector<ActionState>& result, int minEleme
 }
 
 bool Preprocessor::sacContainsNegativeActionFluent(
-        ActionPrecondition* const& sac, ActionState const& actionState) const {
+    ActionPrecondition* const& sac, ActionState const& actionState) const {
     set<ActionFluent*> const& actionFluents = sac->negativeActionDependencies;
 
     for (unsigned int index = 0;
@@ -478,7 +519,7 @@ bool Preprocessor::sacContainsNegativeActionFluent(
 }
 
 bool Preprocessor::sacContainsAdditionalPositiveActionFluent(
-        ActionPrecondition* const& sac, ActionState const& actionState) const {
+    ActionPrecondition* const& sac, ActionState const& actionState) const {
     set<ActionFluent*> const& actionFluents = sac->positiveActionDependencies;
 
     for (set<ActionFluent*>::iterator it = actionFluents.begin();
@@ -505,7 +546,7 @@ bool Preprocessor::sacContainsAdditionalPositiveActionFluent(
 
 void Preprocessor::calculateCPFDomains() {
     // Insert initial values to set of reachable values
-    vector<set<double> > domains(task->CPFs.size());
+    vector<set<double>> domains(task->CPFs.size());
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         domains[index].insert(task->CPFs[index]->getInitialValue());
     }
@@ -516,19 +557,20 @@ void Preprocessor::calculateCPFDomains() {
     int currentHorizon = 0;
     while (currentHorizon < task->horizon) {
         // The values that are reachable in this step
-        vector<set<double> > reachable(task->CPFs.size());
+        vector<set<double>> reachable(task->CPFs.size());
 
         // For each cpf, apply all actions and collect all reachable values
-        for (unsigned int varIndex = 0; varIndex < task->CPFs.size(); ++varIndex) {
-            for (unsigned int actionIndex = 0; actionIndex < task->actionStates.size(); ++actionIndex) {
+        for (unsigned int varIndex = 0; varIndex < task->CPFs.size();
+             ++varIndex) {
+            for (unsigned int actionIndex = 0;
+                 actionIndex < task->actionStates.size(); ++actionIndex) {
                 set<double> actionDependentValues;
                 task->CPFs[varIndex]->formula->calculateDomain(
-                        domains, task->actionStates[actionIndex],
-                        actionDependentValues);
+                    domains, task->actionStates[actionIndex],
+                    actionDependentValues);
                 assert(!actionDependentValues.empty());
-                reachable[varIndex].insert(
-                        actionDependentValues.begin(),
-                        actionDependentValues.end());
+                reachable[varIndex].insert(actionDependentValues.begin(),
+                                           actionDependentValues.end());
             }
         }
 
@@ -536,11 +578,10 @@ void Preprocessor::calculateCPFDomains() {
         // are additional values, if so insert them and continue, otherwise the
         // fixpoint iteration has reached its end
         bool someDomainChanged = false;
-        for (unsigned int varIndex = 0; varIndex < domains.size();
-             ++varIndex) {
+        for (unsigned int varIndex = 0; varIndex < domains.size(); ++varIndex) {
             int sizeBefore = domains[varIndex].size();
             domains[varIndex].insert(reachable[varIndex].begin(),
-                    reachable[varIndex].end());
+                                     reachable[varIndex].end());
             if (domains[varIndex].size() != sizeBefore) {
                 someDomainChanged = true;
             }
@@ -562,13 +603,16 @@ void Preprocessor::calculateCPFDomains() {
 void Preprocessor::finalizeEvaluatables() {
     // Remove all CPFs with a domain that only includes their initial value
     map<ParametrizedVariable*, double> replacements;
-    for (vector<ConditionalProbabilityFunction*>::iterator it = task->CPFs.begin(); it != task->CPFs.end(); ++it) {
+    for (vector<ConditionalProbabilityFunction*>::iterator it =
+             task->CPFs.begin();
+         it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
 
         if ((*it)->getDomainSize() == 1) {
             // As the initial value must be included, the only value must be the
             // initial value
-            assert(MathUtils::doubleIsEqual(*((*it)->domain.begin()), (*it)->getInitialValue()));
+            assert(MathUtils::doubleIsEqual(*((*it)->domain.begin()),
+                                            (*it)->getInitialValue()));
 
             replacements[(*it)->head] = (*it)->getInitialValue();
             task->CPFs.erase(it);
@@ -601,7 +645,8 @@ void Preprocessor::finalizeEvaluatables() {
             assert(!MathUtils::doubleIsEqual(nc->value, 0.0));
             // This SAC is not dynamic anymore after simplification as it
             // simplifies to a state invariant
-            swap(task->actionPreconds[i], task->actionPreconds[task->actionPreconds.size() - 1]);
+            swap(task->actionPreconds[i],
+                 task->actionPreconds[task->actionPreconds.size() - 1]);
             task->actionPreconds.pop_back();
             --i;
         }
@@ -622,8 +667,8 @@ void Preprocessor::finalizeEvaluatables() {
 void Preprocessor::determinize() {
     // Calculate determinzation of CPFs.
     map<ParametrizedVariable*, double> replacementsDummy;
-    for(unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        if(task->CPFs[index]->isProbabilistic()) {
+    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =
                 task->CPFs[index]->formula->determinizeMostLikely();
             task->CPFs[index]->determinization =
@@ -672,12 +717,15 @@ void Preprocessor::determineTaskProperties() {
 }
 
 void Preprocessor::addDominantState(int stateIndex) const {
-    //cout << "Adding action state " << task->actionStates[stateIndex].getName() << endl;
-    for (vector<int>::iterator it = task->candidatesForOptimalFinalAction.begin();
+    // cout << "Adding action state " <<
+    // task->actionStates[stateIndex].getName() << endl;
+    for (vector<int>::iterator it =
+             task->candidatesForOptimalFinalAction.begin();
          it != task->candidatesForOptimalFinalAction.end(); ++it) {
         if (actionStateDominates(task->actionStates[stateIndex],
-                    task->actionStates[*it])) {
-            //cout << "It dominates " << task->actionStates[*it].getName() << endl;
+                                 task->actionStates[*it])) {
+            // cout << "It dominates " << task->actionStates[*it].getName() <<
+            // endl;
             task->candidatesForOptimalFinalAction.erase(it);
             --it;
         }
@@ -688,10 +736,9 @@ void Preprocessor::addDominantState(int stateIndex) const {
 bool Preprocessor::actionStateIsDominated(int stateIndex) const {
     for (unsigned int i = 0; i < task->candidatesForOptimalFinalAction.size();
          ++i) {
-        if (actionStateDominates(task->actionStates[task->
-                                                    candidatesForOptimalFinalAction
-                                                    [i]],
-                    task->actionStates[stateIndex])) {
+        if (actionStateDominates(
+                task->actionStates[task->candidatesForOptimalFinalAction[i]],
+                task->actionStates[stateIndex])) {
             return true;
         }
     }
@@ -699,7 +746,7 @@ bool Preprocessor::actionStateIsDominated(int stateIndex) const {
 }
 
 bool Preprocessor::actionStateDominates(ActionState const& lhs,
-        ActionState const& rhs) const {
+                                        ActionState const& rhs) const {
     // An action state with preconditions cannot dominate another action state
     if (!lhs.relevantSACs.empty()) {
         return false;
@@ -709,8 +756,8 @@ bool Preprocessor::actionStateDominates(ActionState const& lhs,
     // positively or negatively
     set<ActionFluent*> lhsPos;
     for (unsigned int i = 0; i < lhs.scheduledActionFluents.size(); ++i) {
-        if (task->rewardCPF->positiveActionDependencies.find(lhs.
-                    scheduledActionFluents[i]) !=
+        if (task->rewardCPF->positiveActionDependencies.find(
+                lhs.scheduledActionFluents[i]) !=
             task->rewardCPF->positiveActionDependencies.end()) {
             lhsPos.insert(lhs.scheduledActionFluents[i]);
         }
@@ -718,8 +765,8 @@ bool Preprocessor::actionStateDominates(ActionState const& lhs,
 
     set<ActionFluent*> rhsPos;
     for (unsigned int i = 0; i < rhs.scheduledActionFluents.size(); ++i) {
-        if (task->rewardCPF->positiveActionDependencies.find(rhs.
-                    scheduledActionFluents[i]) !=
+        if (task->rewardCPF->positiveActionDependencies.find(
+                rhs.scheduledActionFluents[i]) !=
             task->rewardCPF->positiveActionDependencies.end()) {
             rhsPos.insert(rhs.scheduledActionFluents[i]);
         }
@@ -727,8 +774,8 @@ bool Preprocessor::actionStateDominates(ActionState const& lhs,
 
     set<ActionFluent*> lhsNeg;
     for (unsigned int i = 0; i < lhs.scheduledActionFluents.size(); ++i) {
-        if (task->rewardCPF->negativeActionDependencies.find(lhs.
-                    scheduledActionFluents[i]) !=
+        if (task->rewardCPF->negativeActionDependencies.find(
+                lhs.scheduledActionFluents[i]) !=
             task->rewardCPF->negativeActionDependencies.end()) {
             lhsNeg.insert(lhs.scheduledActionFluents[i]);
         }
@@ -736,8 +783,8 @@ bool Preprocessor::actionStateDominates(ActionState const& lhs,
 
     set<ActionFluent*> rhsNeg;
     for (unsigned int i = 0; i < rhs.scheduledActionFluents.size(); ++i) {
-        if (task->rewardCPF->negativeActionDependencies.find(rhs.
-                    scheduledActionFluents[i]) !=
+        if (task->rewardCPF->negativeActionDependencies.find(
+                rhs.scheduledActionFluents[i]) !=
             task->rewardCPF->negativeActionDependencies.end()) {
             rhsNeg.insert(rhs.scheduledActionFluents[i]);
         }
@@ -775,12 +822,15 @@ void Preprocessor::prepareStateHashKeys() {
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         ConditionalProbabilityFunction* cpf = task->CPFs[index];
         task->stateHashKeys.push_back(vector<long>(cpf->getDomainSize()));
-        for (unsigned int valueIndex = 0; valueIndex < cpf->getDomainSize(); ++valueIndex) {
-            task->stateHashKeys[index][valueIndex] = (valueIndex * nextHashKeyBase);
+        for (unsigned int valueIndex = 0; valueIndex < cpf->getDomainSize();
+             ++valueIndex) {
+            task->stateHashKeys[index][valueIndex] =
+                (valueIndex * nextHashKeyBase);
         }
 
         if (!cpf->hasFiniteDomain() ||
-            !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, cpf->getDomainSize())) {
+            !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
+                                                  cpf->getDomainSize())) {
             stateHashingPossible = false;
             break;
         }
@@ -800,8 +850,9 @@ void Preprocessor::prepareKleeneStateHashKeys() {
         // The number of possible values of this variable in Kleene states is
         // 2^0 + 2^1 + ... + 2^{n-1} = 2^n -1 with n = CPFs[i]->domain.size()
         task->CPFs[index]->kleeneDomainSize = 2;
-        if (!MathUtils::toThePowerOfWithOverflowCheck(task->CPFs[index]->
-                    kleeneDomainSize, task->CPFs[index]->getDomainSize())) {
+        if (!MathUtils::toThePowerOfWithOverflowCheck(
+                task->CPFs[index]->kleeneDomainSize,
+                task->CPFs[index]->getDomainSize())) {
             // KleeneState hashing is impossible because the kleeneDomain of
             // this CPF is too large. We nevertheless compute the other
             // kleenDomainSizes as they can still be used for
@@ -822,8 +873,8 @@ void Preprocessor::prepareKleeneStateHashKeys() {
         // Set the kleeneStateHashKeyBase
         task->kleeneStateHashKeyBases.push_back(nextHashKeyBase);
 
-        if (!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                    task->CPFs[index]->kleeneDomainSize)) {
+        if (!MathUtils::multiplyWithOverflowCheck(
+                nextHashKeyBase, task->CPFs[index]->kleeneDomainSize)) {
             kleeneStateHashingPossible = false;
             break;
         }
@@ -903,25 +954,23 @@ void Preprocessor::precomputeEvaluatable(Evaluatable* eval) {
                 if (eval->isProbabilistic()) {
                     double res;
                     eval->determinization->evaluate(res, relevantStates[i],
-                            task->actionStates[j]);
-                    assert(MathUtils::doubleIsMinusInfinity(eval->
-                                    precomputedResults[hashKey + actionHashKey]));
+                                                    task->actionStates[j]);
+                    assert(MathUtils::doubleIsMinusInfinity(
+                        eval->precomputedResults[hashKey + actionHashKey]));
                     eval->precomputedResults[hashKey + actionHashKey] = res;
 
                     DiscretePD pdRes;
                     eval->formula->evaluateToPD(pdRes, relevantStates[i],
-                            task->actionStates[j]);
-                    assert(
-                            eval->precomputedPDResults[hashKey +
-                                                       actionHashKey].
-                            isUndefined());
+                                                task->actionStates[j]);
+                    assert(eval->precomputedPDResults[hashKey + actionHashKey]
+                               .isUndefined());
                     eval->precomputedPDResults[hashKey + actionHashKey] = pdRes;
                 } else {
                     double res;
                     eval->formula->evaluate(res, relevantStates[i],
-                            task->actionStates[j]);
-                    assert(MathUtils::doubleIsMinusInfinity(eval->
-                                    precomputedResults[hashKey + actionHashKey]));
+                                            task->actionStates[j]);
+                    assert(MathUtils::doubleIsMinusInfinity(
+                        eval->precomputedResults[hashKey + actionHashKey]));
                     eval->precomputedResults[hashKey + actionHashKey] = res;
                 }
             }
@@ -930,7 +979,7 @@ void Preprocessor::precomputeEvaluatable(Evaluatable* eval) {
 }
 
 void Preprocessor::createRelevantStates(
-        vector<StateFluent*>& dependentStateFluents, vector<State>& result) {
+    vector<StateFluent*>& dependentStateFluents, vector<State>& result) {
     StateFluent* fluent =
         dependentStateFluents[dependentStateFluents.size() - 1];
     dependentStateFluents.pop_back();
@@ -969,7 +1018,7 @@ void Preprocessor::createRelevantStates(
 }
 
 long Preprocessor::calculateStateFluentHashKey(Evaluatable* eval,
-        State const& state) const {
+                                               State const& state) const {
     long res = 0;
     for (unsigned int i = 0; i < eval->stateFluentHashKeyBases.size(); ++i) {
         res += state[eval->stateFluentHashKeyBases[i].first] *
@@ -991,7 +1040,7 @@ void Preprocessor::calculateMinAndMaxReward() const {
         // using interval arithmetic. Otherwise, we use the min and max values
         // from the precomputation further above.
 
-        vector<set<double> > domains(task->CPFs.size());
+        vector<set<double>> domains(task->CPFs.size());
         for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             domains[index] = task->CPFs[index]->domain;
         }
@@ -999,8 +1048,8 @@ void Preprocessor::calculateMinAndMaxReward() const {
         for (ActionState const& action : task->actionStates) {
             double min = numeric_limits<double>::max();
             double max = -numeric_limits<double>::max();
-            task->rewardCPF->formula->calculateDomainAsInterval(
-                domains, action, min, max);
+            task->rewardCPF->formula->calculateDomainAsInterval(domains, action,
+                                                                min, max);
             if (MathUtils::doubleIsSmaller(min, minVal)) {
                 minVal = min;
             }
@@ -1015,13 +1064,13 @@ void Preprocessor::calculateMinAndMaxReward() const {
     } else {
         for (unsigned int i = 0; i < task->rewardCPF->precomputedResults.size();
              ++i) {
-            if (MathUtils::doubleIsSmaller(task->rewardCPF->precomputedResults[
-                            i], minVal)) {
+            if (MathUtils::doubleIsSmaller(
+                    task->rewardCPF->precomputedResults[i], minVal)) {
                 minVal = task->rewardCPF->precomputedResults[i];
             }
 
-            if (MathUtils::doubleIsGreater(task->rewardCPF->precomputedResults[
-                            i], maxVal)) {
+            if (MathUtils::doubleIsGreater(
+                    task->rewardCPF->precomputedResults[i], maxVal)) {
                 maxVal = task->rewardCPF->precomputedResults[i];
             }
         }

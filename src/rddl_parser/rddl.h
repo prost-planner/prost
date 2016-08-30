@@ -1,10 +1,10 @@
 #ifndef RDDL_H
 #define RDDL_H
 
-#include <set>
-#include <vector>
-#include <string>
 #include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 #include "states.h"
 
@@ -49,17 +49,16 @@ private:
     std::vector<std::string>* lConstList;
 };
 
-
 class ObjectDefine {
 public:
     ObjectDefine(std::string _typeName, std::vector<std::string>* _objectNames)
-        :typeName(_typeName), objectNames(_objectNames) {}
+        : typeName(_typeName), objectNames(_objectNames) {}
     ~ObjectDefine() {
         delete objectNames;
     }
 
     std::string getTypeName() const {
-         return typeName;
+        return typeName;
     }
     std::vector<std::string>* getObjectNames() const {
         return objectNames;
@@ -70,11 +69,15 @@ private:
     std::vector<std::string>* objectNames;
 };
 
-
 class NonFluentBlock {
 public:
-    NonFluentBlock(std::string _name, std::string _domainName, std::vector<PvariablesInstanceDefine*>* _nonFluents, std::vector<ObjectDefine*>* _objects = nullptr)
-        :name(_name), domainName(_domainName), nonFluents(_nonFluents), objects(_objects) {}
+    NonFluentBlock(std::string _name, std::string _domainName,
+                   std::vector<PvariablesInstanceDefine*>* _nonFluents,
+                   std::vector<ObjectDefine*>* _objects = nullptr)
+        : name(_name),
+          domainName(_domainName),
+          nonFluents(_nonFluents),
+          objects(_objects) {}
 
     ~NonFluentBlock() {
         delete objects;
@@ -105,12 +108,15 @@ private:
                             Domain
 ******************************************************************/
 
-static const std::set<std::string> validRequirements = {"continuous", "multivalued", "reward-deterministic", "intermediate-nodes", "constrained-state", "partially-observed", "concurrent", "integer-valued", "cpf-deterministic" };
+static const std::set<std::string> validRequirements = {
+    "continuous",         "multivalued",       "reward-deterministic",
+    "intermediate-nodes", "constrained-state", "partially-observed",
+    "concurrent",         "integer-valued",    "cpf-deterministic"};
 
 class CaseDefine {
 public:
     CaseDefine(LogicalExpression* _condition, LogicalExpression* _effect)
-        :condition(_condition), effect(_effect) {}
+        : condition(_condition), effect(_effect) {}
     ~CaseDefine();
 
     LogicalExpression* getCondition() const {
@@ -128,7 +134,8 @@ private:
 class LConstCaseList {
 public:
     LConstCaseList()
-        :values(new std::vector<LogicalExpression*>()), probabilites(new std::vector<LogicalExpression*>()) {}
+        : values(new std::vector<LogicalExpression*>()),
+          probabilites(new std::vector<LogicalExpression*>()) {}
     ~LConstCaseList() {
         delete values;
         delete probabilites;
@@ -154,8 +161,9 @@ private:
 
 class PvarExpression {
 public:
-    PvarExpression(std::string _name, std::vector<std::string>* _parameters = nullptr)
-        :name(_name), parameters(_parameters) {}
+    PvarExpression(std::string _name,
+                   std::vector<std::string>* _parameters = nullptr)
+        : name(_name), parameters(_parameters) {}
     ~PvarExpression() {
         delete parameters;
     }
@@ -174,8 +182,10 @@ private:
 
 class CpfDefinition {
 public:
-    CpfDefinition(PvarExpression* _pVarExpression, LogicalExpression* _logicalExpression)
-        :pVarExpression(_pVarExpression), logicalExpression(_logicalExpression) {}
+    CpfDefinition(PvarExpression* _pVarExpression,
+                  LogicalExpression* _logicalExpression)
+        : pVarExpression(_pVarExpression),
+          logicalExpression(_logicalExpression) {}
     ~CpfDefinition();
 
     PvarExpression* getPvar() const {
@@ -194,8 +204,14 @@ class PvarDefinition {
 public:
     PvarDefinition(std::string _name, std::vector<std::string>* _parameteres,
                    std::string _varType, std::string _defaultValueType,
-                   std::string _satisfactionType = "", std::string _defaultVarValue = "")
-        :name(_name), parameters(_parameteres), varType(_varType), defaultVarType(_defaultValueType), satisfactionType(_satisfactionType), defaultVarValue(_defaultVarValue) {}
+                   std::string _satisfactionType = "",
+                   std::string _defaultVarValue = "")
+        : name(_name),
+          parameters(_parameteres),
+          varType(_varType),
+          defaultVarType(_defaultValueType),
+          satisfactionType(_satisfactionType),
+          defaultVarValue(_defaultVarValue) {}
     ~PvarDefinition() {
         delete parameters;
     }
@@ -228,15 +244,14 @@ private:
     std::string defaultVarValue;
 };
 
-
 class DefineType {
 public:
     DefineType(std::string _name, std::string _superType)
-        :name(_name), superType(_superType) {
+        : name(_name), superType(_superType) {
         superTypeList = nullptr;
     }
     DefineType(std::string _name, std::vector<std::string>* _superTypeList)
-        :name(_name), superTypeList(_superTypeList) {}
+        : name(_name), superTypeList(_superTypeList) {}
     ~DefineType() {
         delete superTypeList;
     }
@@ -293,7 +308,8 @@ public:
     void setReward(LogicalExpression* _reward) {
         reward = _reward;
     }
-    void setStateConstraint(std::vector<LogicalExpression*>* _stateConstraints) {
+    void setStateConstraint(
+        std::vector<LogicalExpression*>* _stateConstraints) {
         stateConstraints = _stateConstraints;
     }
     void setObjects(std::vector<ObjectDefine*>* _objects) {
@@ -311,10 +327,11 @@ private:
 
 class Domain {
 public:
-    Domain(std::string* _name, std::vector<std::string>* _requirements, DomainList* _domainList)
-        :name(_name), requirements(_requirements), domainList(_domainList) {}
+    Domain(std::string* _name, std::vector<std::string>* _requirements,
+           DomainList* _domainList)
+        : name(_name), requirements(_requirements), domainList(_domainList) {}
     Domain(std::string* _name, DomainList* _domainList)
-        :name(_name), domainList(_domainList) {}
+        : name(_name), domainList(_domainList) {}
     ~Domain() {
         delete requirements;
         delete domainList;
@@ -357,8 +374,17 @@ private:
 
 class Instance {
 public:
-    Instance(std::string _name, std::string _domainName, std::string _nonFluentsName, std::vector<PvariablesInstanceDefine*>* _pVariables, int _maxNonDefAction, int _horizon, double _discount)
-        :name(_name), domainName(_domainName), nonFluentsName(_nonFluentsName), pVariables(_pVariables), maxNonDefActions(_maxNonDefAction), horizon(_horizon), discount(_discount) {}
+    Instance(std::string _name, std::string _domainName,
+             std::string _nonFluentsName,
+             std::vector<PvariablesInstanceDefine*>* _pVariables,
+             int _maxNonDefAction, int _horizon, double _discount)
+        : name(_name),
+          domainName(_domainName),
+          nonFluentsName(_nonFluentsName),
+          pVariables(_pVariables),
+          maxNonDefActions(_maxNonDefAction),
+          horizon(_horizon),
+          discount(_discount) {}
     ~Instance() {
         delete pVariables;
     }
@@ -426,16 +452,17 @@ public:
     void addVariableDefinition(ParametrizedVariable* varDef);
 
     void addParametrizedVariable(ParametrizedVariable* parent,
-            std::vector<Parameter*> const& params);
+                                 std::vector<Parameter*> const& params);
     void addParametrizedVariable(ParametrizedVariable* parent,
-            std::vector<Parameter*> const& params,
-            double initialValue);
+                                 std::vector<Parameter*> const& params,
+                                 double initialValue);
 
     StateFluent* getStateFluent(std::string const& name);
     ActionFluent* getActionFluent(std::string const& name);
     NonFluent* getNonFluent(std::string const& name);
 
-    std::vector<StateFluent*> getStateFluentsOfSchema(ParametrizedVariable* schema);
+    std::vector<StateFluent*> getStateFluentsOfSchema(
+        ParametrizedVariable* schema);
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
@@ -462,7 +489,8 @@ public:
     // stateFluentCPFs and their heads are used!)
     std::vector<StateFluent*> stateFluents;
     std::map<std::string, StateFluent*> stateFluentMap;
-    std::map<ParametrizedVariable*, std::vector<StateFluent*> > stateFluentsBySchema;
+    std::map<ParametrizedVariable*, std::vector<StateFluent*>>
+        stateFluentsBySchema;
 
     std::vector<ActionFluent*> actionFluents;
     std::map<std::string, ActionFluent*> actionFluentMap;
@@ -504,11 +532,12 @@ public:
     int uniqueNonTerminalStatesWithUniqueAction;
 
     // Hash Keys
-    std::vector<std::vector<long> > stateHashKeys;
+    std::vector<std::vector<long>> stateHashKeys;
     std::vector<long> kleeneStateHashKeyBases;
 
-    std::vector<std::vector<std::pair<int, long> > > indexToStateFluentHashKeyMap;
-    std::vector<std::vector<std::pair<int, long> > > indexToKleeneStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long>>> indexToStateFluentHashKeyMap;
+    std::vector<std::vector<std::pair<int, long>>>
+        indexToKleeneStateFluentHashKeyMap;
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;
@@ -521,9 +550,12 @@ private:
 /*****************************************************************
                            Helper Methods
 *****************************************************************/
-ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string name);
-void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefinition* pVarDefinition);
-void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression);
+ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
+    std::string name);
+void storeParametrizedVariableFromPvarDefinition(
+    std::string pVarName, PvarDefinition* pVarDefinition);
+void storeParametrizedVariableMap(std::string pVarName,
+                                  PvarExpression* pVarExpression);
 bool storeObject(std::string objName, std::string objectType);
 Object* getObject(std::string objName);
 bool storeType(std::string typeName, std::string superTypeName);
