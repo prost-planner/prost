@@ -8,28 +8,31 @@ void LogicalExpression::evaluateToKleene(set<double>& /*res*/,
                            Atomics
 *****************************************************************/
 
-void DeterministicStateFluent::evaluateToKleene(set<double>& res,
-                                                KleeneState const& current,
-                                                ActionState const& /*actions*/) const {
+void DeterministicStateFluent::evaluateToKleene(
+    set<double>& res, KleeneState const& current,
+    ActionState const& /*actions*/) const {
     assert(res.empty());
     res.insert(current[index].begin(), current[index].end());
 }
 
-void ProbabilisticStateFluent::evaluateToKleene(set<double>& res,
-                                                KleeneState const& current,
-                                                ActionState const& /*actions*/) const {
+void ProbabilisticStateFluent::evaluateToKleene(
+    set<double>& res, KleeneState const& current,
+    ActionState const& /*actions*/) const {
     assert(res.empty());
-    res.insert(current[State::numberOfDeterministicStateFluents + index].begin(),
-               current[State::numberOfDeterministicStateFluents + index].end());
+    res.insert(
+        current[State::numberOfDeterministicStateFluents + index].begin(),
+        current[State::numberOfDeterministicStateFluents + index].end());
 }
 
-void ActionFluent::evaluateToKleene(set<double>& res, KleeneState const& /*current*/,
+void ActionFluent::evaluateToKleene(set<double>& res,
+                                    KleeneState const& /*current*/,
                                     ActionState const& actions) const {
     assert(res.empty());
     res.insert(actions[index]);
 }
 
-void NumericConstant::evaluateToKleene(set<double>& res, KleeneState const& /*current*/,
+void NumericConstant::evaluateToKleene(set<double>& res,
+                                       KleeneState const& /*current*/,
                                        ActionState const& /*actions*/) const {
     assert(res.empty());
     res.insert(value);
@@ -169,9 +172,9 @@ void LowerExpression::evaluateToKleene(set<double>& res,
     assert(res.size() == 1 || res.size() == 2);
 }
 
-void GreaterEqualsExpression::evaluateToKleene(set<double>& res,
-                                               KleeneState const& current,
-                                               ActionState const& actions) const {
+void GreaterEqualsExpression::evaluateToKleene(
+    set<double>& res, KleeneState const& current,
+    ActionState const& actions) const {
     assert(res.empty());
     assert(exprs.size() == 2);
 
@@ -247,8 +250,7 @@ void Subtraction::evaluateToKleene(set<double>& res, KleeneState const& current,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it - *it2);
         }
     }
@@ -266,8 +268,7 @@ void Multiplication::evaluateToKleene(set<double>& res,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it * *it2);
         }
     }
@@ -284,9 +285,8 @@ void Division::evaluateToKleene(set<double>& res, KleeneState const& current,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
-            if(!MathUtils::doubleIsEqual(*it2, 0.0)) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
+            if (!MathUtils::doubleIsEqual(*it2, 0.0)) {
                 res.insert(*it / *it2);
             }
         }
@@ -329,7 +329,8 @@ void ExponentialFunction::evaluateToKleene(set<double>& res,
 
     expr->evaluateToKleene(exprRes, current, actions);
 
-    for(set<double>::iterator it = exprRes.begin(); it != exprRes.end(); ++it) {
+    for (set<double>::iterator it = exprRes.begin(); it != exprRes.end();
+         ++it) {
         res.insert(std::exp(*it));
     }
 }
@@ -347,7 +348,7 @@ void BernoulliDistribution::evaluateToKleene(set<double>& res,
     expr->evaluateToKleene(tmp, current, actions);
 
     for (set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        if (MathUtils::doubleIsGreater(*it, 0.0) && 
+        if (MathUtils::doubleIsGreater(*it, 0.0) &&
             MathUtils::doubleIsSmaller(*it, 1.0)) {
             res.insert(0.0);
             res.insert(1.0);
@@ -368,7 +369,7 @@ void DiscreteDistribution::evaluateToKleene(set<double>& res,
         probabilities[index]->evaluateToKleene(tmp, current, actions);
         assert(!tmp.empty());
 
-        // If there is at least one value in tmp that is different from 0.0 it 
+        // If there is at least one value in tmp that is different from 0.0 it
         // is possible that the according value is assigned (this is due to the
         // fact that we consider probabilities smaller than 0 and greater than 1
         // as 1)

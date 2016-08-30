@@ -9,12 +9,12 @@
 class ConditionalProbabilityFunction;
 
 struct Evaluatable {
-    Evaluatable(std::string _name, LogicalExpression* _formula) :
-        name(_name),
-        formula(_formula),
-        determinization(nullptr),
-        isProb(false),
-        hasArithmeticFunction(false) {}
+    Evaluatable(std::string _name, LogicalExpression* _formula)
+        : name(_name),
+          formula(_formula),
+          determinization(nullptr),
+          isProb(false),
+          hasArithmeticFunction(false) {}
 
     // Initialization
     virtual void initialize();
@@ -71,7 +71,7 @@ struct Evaluatable {
 
     // The stateFluentHashKeyMap contains the state fluent hash key (base) of
     // each of the dependent state fluents
-    std::vector<std::pair<int, long> > stateFluentHashKeyBases;
+    std::vector<std::pair<int, long>> stateFluentHashKeyBases;
 
     // These function are used to calculate the two parts of state fluent hash
     // keys: the action part (that is stored in the actionHashKeyMap of
@@ -80,8 +80,7 @@ struct Evaluatable {
     void initializeHashKeys(RDDLTask* task);
     long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
     bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
-                                ActionState const& action,
-                                long& nextKey);
+                                ActionState const& action, long& nextKey);
     long getActionHashKey(std::vector<ActionState> const& actionStates,
                           std::vector<ActionFluent*>& scheduledActions);
 
@@ -91,8 +90,8 @@ struct Evaluatable {
 };
 
 struct ActionPrecondition : public Evaluatable {
-    ActionPrecondition(std::string _name, LogicalExpression* _formula) :
-        Evaluatable(_name, _formula) {}
+    ActionPrecondition(std::string _name, LogicalExpression* _formula)
+        : Evaluatable(_name, _formula) {}
 
     void initialize();
 
@@ -111,8 +110,8 @@ struct ActionPrecondition : public Evaluatable {
 };
 
 struct RewardFunction : public Evaluatable {
-    RewardFunction(LogicalExpression* _formula) :
-        Evaluatable("Reward", _formula) {}
+    RewardFunction(LogicalExpression* _formula)
+        : Evaluatable("Reward", _formula) {}
 
     void initialize();
 
@@ -146,10 +145,10 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     };
 
     ConditionalProbabilityFunction(StateFluent* _head,
-                                   LogicalExpression* _formula) :
-        Evaluatable(_head->fullName, _formula),
-        head(_head),
-        kleeneDomainSize(0) {}
+                                   LogicalExpression* _formula)
+        : Evaluatable(_head->fullName, _formula),
+          head(_head),
+          kleeneDomainSize(0) {}
 
     int getDomainSize() const {
         return domain.size();
@@ -175,6 +174,5 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     // Hashing of KleeneStates
     long kleeneDomainSize;
 };
-
 
 #endif

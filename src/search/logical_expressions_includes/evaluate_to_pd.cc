@@ -1,5 +1,6 @@
-void LogicalExpression::evaluateToPD(DiscretePD& /*res*/, State const& /*current*/,
-        ActionState const& /*actions*/) const {
+void LogicalExpression::evaluateToPD(DiscretePD& /*res*/,
+                                     State const& /*current*/,
+                                     ActionState const& /*actions*/) const {
     assert(false);
 }
 
@@ -7,25 +8,25 @@ void LogicalExpression::evaluateToPD(DiscretePD& /*res*/, State const& /*current
                            Atomics
 *****************************************************************/
 
-void DeterministicStateFluent::evaluateToPD(DiscretePD& res,
-        State const& current,
-        ActionState const& /*actions*/) const {
+void DeterministicStateFluent::evaluateToPD(
+    DiscretePD& res, State const& current,
+    ActionState const& /*actions*/) const {
     res.assignDiracDelta(current.deterministicStateFluent(index));
 }
 
-void ProbabilisticStateFluent::evaluateToPD(DiscretePD& res,
-        State const& current,
-        ActionState const& /*actions*/) const {
+void ProbabilisticStateFluent::evaluateToPD(
+    DiscretePD& res, State const& current,
+    ActionState const& /*actions*/) const {
     res.assignDiracDelta(current.probabilisticStateFluent(index));
 }
 
 void ActionFluent::evaluateToPD(DiscretePD& res, State const& /*current*/,
-        ActionState const& actions) const {
+                                ActionState const& actions) const {
     res.assignDiracDelta(actions[index]);
 }
 
 void NumericConstant::evaluateToPD(DiscretePD& res, State const& /*current*/,
-        ActionState const& /*actions*/) const {
+                                   ActionState const& /*actions*/) const {
     res.assignDiracDelta(value);
 }
 
@@ -34,7 +35,7 @@ void NumericConstant::evaluateToPD(DiscretePD& res, State const& /*current*/,
 *****************************************************************/
 
 void Conjunction::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                               ActionState const& actions) const {
     double truthProb = 1.0;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         DiscretePD exprRes;
@@ -53,7 +54,7 @@ void Conjunction::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void Disjunction::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                               ActionState const& actions) const {
     double falsityProb = 1.0;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         DiscretePD exprRes;
@@ -72,7 +73,7 @@ void Disjunction::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void EqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                    ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     DiscretePD lhs;
@@ -87,14 +88,15 @@ void EqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
     // compute the probability that they evaluateToPD to the same value!
     double equalityProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
-        equalityProb += (lhs.probabilities[i] * rhs.probabilityOf(lhs.values[i]));
+        equalityProb +=
+            (lhs.probabilities[i] * rhs.probabilityOf(lhs.values[i]));
     }
 
     res.assignBernoulli(equalityProb);
 }
 
 void GreaterExpression::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                     ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     DiscretePD lhs;
@@ -120,7 +122,7 @@ void GreaterExpression::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void LowerExpression::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                   ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     DiscretePD lhs;
@@ -146,8 +148,8 @@ void LowerExpression::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void GreaterEqualsExpression::evaluateToPD(DiscretePD& res,
-        State const& current,
-        ActionState const& actions) const {
+                                           State const& current,
+                                           ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     DiscretePD lhs;
@@ -162,7 +164,7 @@ void GreaterEqualsExpression::evaluateToPD(DiscretePD& res,
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (unsigned int j = 0; j < rhs.values.size(); ++j) {
             if (MathUtils::doubleIsGreaterOrEqual(lhs.values[i],
-                        rhs.values[j])) {
+                                                  rhs.values[j])) {
                 greaterEqualProb +=
                     (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
@@ -175,7 +177,7 @@ void GreaterEqualsExpression::evaluateToPD(DiscretePD& res,
 }
 
 void LowerEqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                         ActionState const& actions) const {
     assert(exprs.size() == 2);
 
     DiscretePD lhs;
@@ -190,7 +192,7 @@ void LowerEqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (int j = rhs.values.size() - 1; j >= 0; --j) {
             if (MathUtils::doubleIsSmallerOrEqual(lhs.values[i],
-                        rhs.values[j])) {
+                                                  rhs.values[j])) {
                 lowerEqualProb += (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
                 break;
@@ -202,7 +204,7 @@ void LowerEqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void Addition::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                            ActionState const& actions) const {
     exprs[0]->evaluateToPD(res, current, actions);
     assert(res.isWellDefined());
 
@@ -229,7 +231,7 @@ void Addition::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void Subtraction::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                               ActionState const& actions) const {
     exprs[0]->evaluateToPD(res, current, actions);
     assert(res.isWellDefined());
 
@@ -256,7 +258,7 @@ void Subtraction::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void Multiplication::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                  ActionState const& actions) const {
     exprs[0]->evaluateToPD(res, current, actions);
     assert(res.isWellDefined());
 
@@ -283,7 +285,7 @@ void Multiplication::evaluateToPD(DiscretePD& res, State const& current,
 }
 
 void Division::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                            ActionState const& actions) const {
     exprs[0]->evaluateToPD(res, current, actions);
     assert(res.isWellDefined());
 
@@ -315,15 +317,14 @@ void Division::evaluateToPD(DiscretePD& res, State const& current,
 *****************************************************************/
 
 void Negation::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                            ActionState const& actions) const {
     DiscretePD exprRes;
     expr->evaluateToPD(exprRes, current, actions);
     assert(exprRes.isWellDefined());
     res.assignBernoulli(exprRes.falsityProbability());
 }
 
-void ExponentialFunction::evaluateToPD(DiscretePD& res,
-                                       State const& current,
+void ExponentialFunction::evaluateToPD(DiscretePD& res, State const& current,
                                        ActionState const& actions) const {
     expr->evaluateToPD(res, current, actions);
 
@@ -337,19 +338,20 @@ void ExponentialFunction::evaluateToPD(DiscretePD& res,
 *****************************************************************/
 
 void BernoulliDistribution::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                         ActionState const& actions) const {
     DiscretePD exprRes;
     expr->evaluateToPD(exprRes, current, actions);
     assert(exprRes.isWellDefined());
 
-    // the expression must evaluateToPD to a real number which is converted to the
+    // the expression must evaluateToPD to a real number which is converted to
+    // the
     // probability that this is true
     assert(exprRes.isDeterministic());
     res.assignBernoulli(exprRes.values[0]);
 }
 
 void DiscreteDistribution::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                        ActionState const& actions) const {
     std::map<double, double> valProbPairs;
     res.reset();
     for (unsigned int i = 0; i < values.size(); ++i) {
@@ -380,7 +382,7 @@ void DiscreteDistribution::evaluateToPD(DiscretePD& res, State const& current,
 *****************************************************************/
 
 void MultiConditionChecker::evaluateToPD(DiscretePD& res, State const& current,
-        ActionState const& actions) const {
+                                         ActionState const& actions) const {
     std::map<double, double> valProbPairs;
     double remainingProb = 1.0;
 
@@ -404,7 +406,6 @@ void MultiConditionChecker::evaluateToPD(DiscretePD& res, State const& current,
                      exprRes.probabilities[i]);
             }
         }
-
 
         remainingProb *= prob.falsityProbability();
         if (MathUtils::doubleIsEqual(remainingProb, 0.0)) {

@@ -3,27 +3,28 @@
 
 #include "states.h"
 
-#include <vector>
 #include <set>
+#include <vector>
 
 class RDDLTask;
 
 class TaskAnalyzer {
 public:
-    TaskAnalyzer(RDDLTask* _task) :
-        task(_task) {}
+    TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
     void analyzeTask(int const& numberOfStates = 200,
-            double const& maxTimeout = 2.0);
+                     double const& maxTimeout = 2.0);
 
 protected:
     RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
 
-    void analyzeStateAndApplyAction(State const& current, State& next, double& reward) const;
+    void analyzeStateAndApplyAction(State const& current, State& next,
+                                    double& reward) const;
 
-    bool actionIsApplicable(ActionState const& action, State const& current) const;
+    bool actionIsApplicable(ActionState const& action,
+                            State const& current) const;
 
     void detectUnreasonableActionsInDeterminization(State const& current) const;
 

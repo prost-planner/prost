@@ -1,24 +1,28 @@
 #include "rddl.h"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "logical_expressions.h"
 
+#include "evaluatables.h"
 #include "instantiator.h"
 #include "preprocessor.h"
-#include "evaluatables.h"
 #include "task_analyzer.h"
 
-#include "utils/timer.h"
-#include "utils/system_utils.h"
-#include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/string_utils.h"
+#include "utils/system_utils.h"
+#include "utils/timer.h"
 
-std::map<std::string, PvarDefinition*> parametrizedVariableDefinitionsMap; // Map for storing definition of ParametrizedVariables
-std::map<std::string, PvarExpression*> parametrizedVariableMap; // Map for storing ParametrizedVariables as expressions
+std::map<std::string, PvarDefinition*>
+    parametrizedVariableDefinitionsMap; // Map for storing definition of
+                                        // ParametrizedVariables
+std::map<std::string, PvarExpression*>
+    parametrizedVariableMap; // Map for storing ParametrizedVariables as
+                             // expressions
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
-std::map<std::string, Type*> typeMap; // Map for storing defined types
+std::map<std::string, Type*> typeMap;     // Map for storing defined types
 
 CpfDefinition::~CpfDefinition() {
     delete pVarExpression;
@@ -36,19 +40,18 @@ std::string Domain::validRequirement(std::string req) {
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
-RDDLTask::RDDLTask() :
-    numberOfConcurrentActions(std::numeric_limits<int>::max()),
-    horizon(1),
-    discountFactor(1.0),
-    rewardCPF(nullptr),
-    rewardLockDetected(false),
-    unreasonableActionDetected(false),
-    unreasonableActionInDeterminizationDetected(false),
-    numberOfEncounteredStates(0),
-    numberOfUniqueEncounteredStates(0),
-    nonTerminalStatesWithUniqueAction(0),
-    uniqueNonTerminalStatesWithUniqueAction(0)  {
-
+RDDLTask::RDDLTask()
+    : numberOfConcurrentActions(std::numeric_limits<int>::max()),
+      horizon(1),
+      discountFactor(1.0),
+      rewardCPF(nullptr),
+      rewardLockDetected(false),
+      unreasonableActionDetected(false),
+      unreasonableActionInDeterminizationDetected(false),
+      numberOfEncounteredStates(0),
+      numberOfUniqueEncounteredStates(0),
+      nonTerminalStatesWithUniqueAction(0),
+      uniqueNonTerminalStatesWithUniqueAction(0) {
     // Add bool type
     addType("bool");
     addObject("bool", "false");
@@ -60,7 +63,7 @@ RDDLTask::RDDLTask() :
 
     // Add object super type
     addType("object");
-    }
+}
 
 void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
     if (domain->getDomainTypes() == nullptr) {
@@ -68,17 +71,24 @@ void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
     }
 
     // Adding TypeSection
-    for (std::vector<DefineType*>::iterator it = domain->getDomainTypes()->begin(); it != domain->getDomainTypes()->end(); it++) {
+    for (std::vector<DefineType*>::iterator it =
+             domain->getDomainTypes()->begin();
+         it != domain->getDomainTypes()->end(); it++) {
         // Simple type definition (type_name : type)
         if ((*it)->getSuperTypeList() == nullptr) {
-            // std::cout << "Added type (from type section): " << (*it)->getName() << " of type " << (*it)->getSuperType() << std::endl;
+            // std::cout << "Added type (from type section): " <<
+            // (*it)->getName() << " of type " << (*it)->getSuperType() <<
+            // std::endl;
             rddlTask->addType((*it)->getName(), (*it)->getSuperType());
-        }
-        else {
-        // Definition of type using enum values (type_name : @enum1, @enum2, ... , @enumN)
+        } else {
+            // Definition of type using enum values (type_name : @enum1, @enum2,
+            // ... , @enumN)
             rddlTask->addType((*it)->getName());
-            for(std::vector<std::string>::iterator jt = (*it)->getSuperTypeList()->begin(); jt != (*it)->getSuperTypeList()->end(); jt++){
-                // std::cout << "Added object (from type section): " << (*it)->getName() << " of type " << *jt << std::endl;
+            for (std::vector<std::string>::iterator jt =
+                     (*it)->getSuperTypeList()->begin();
+                 jt != (*it)->getSuperTypeList()->end(); jt++) {
+                // std::cout << "Added object (from type section): " <<
+                // (*it)->getName() << " of type " << *jt << std::endl;
                 rddlTask->addObject((*it)->getName(), (*jt));
             }
         }
@@ -91,7 +101,9 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
     }
 
     // Adding PvarSection
-    for(std::vector<PvarDefinition*>::iterator it = domain->getPvarDefinitions()->begin(); it != domain->getPvarDefinitions()->end(); it++) {
+    for (std::vector<PvarDefinition*>::iterator it =
+             domain->getPvarDefinitions()->begin();
+         it != domain->getPvarDefinitions()->end(); it++) {
         std::string name = (*it)->getName();
         std::string varTypeName = (*it)->getVarType();
         std::string defaultVarType = (*it)->getDefaultVarType();
@@ -100,32 +112,37 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         double defaultVarValue;
 
         std::vector<Parameter*> params;
-        for(std::vector<std::string>::iterator jt = (*it)->getParameters()->begin(); jt != (*it)->getParameters()->end(); jt++) {
+        for (std::vector<std::string>::iterator jt =
+                 (*it)->getParameters()->begin();
+             jt != (*it)->getParameters()->end(); jt++) {
             if (rddlTask->types.find((*jt)) == rddlTask->types.end()) {
-                SystemUtils::abort("Undefined type " + *jt + " used as parameter in " + name + ".");
+                SystemUtils::abort("Undefined type " + *jt +
+                                   " used as parameter in " + name + ".");
+            } else {
+                params.push_back(new Parameter(rddlTask->types[*jt]->name,
+                                               rddlTask->types[*jt]));
             }
-            else {
-                params.push_back(new Parameter(rddlTask->types[*jt]->name, rddlTask->types[*jt]));
-            }
-            // std::cout << "Adding parameter: " << rddlTask->types[*jt]->name << " of type " << rddlTask->types[*jt]->name << std::endl;
-
+            // std::cout << "Adding parameter: " << rddlTask->types[*jt]->name
+            // << " of type " << rddlTask->types[*jt]->name << std::endl;
         }
 
-        // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
+        // TODO: This initialization here is wrong but is put here to prevent
+        // warning during the compliation
         // setting it to nullptr doesn't help
-        ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
+        ParametrizedVariable::VariableType varType =
+            ParametrizedVariable::STATE_FLUENT;
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
-        }
-        else if (varTypeName == "action-fluent") {
+        } else if (varTypeName == "action-fluent") {
             varType = ParametrizedVariable::ACTION_FLUENT;
-        }
-        else if (varTypeName == "non-fluent") {
+        } else if (varTypeName == "non-fluent") {
             varType = ParametrizedVariable::NON_FLUENT;
         }
         // TODO: cover other types of parametrized variables
         else {
-            SystemUtils::abort("Parametrized variable: " + varTypeName + " not implemented. Implemented for now: state-fluent, action-fluent, non-fluent.");
+            SystemUtils::abort("Parametrized variable: " + varTypeName +
+                               " not implemented. Implemented for now: "
+                               "state-fluent, action-fluent, non-fluent.");
         }
 
         if (rddlTask->types.find(defaultVarType) == rddlTask->types.end()) {
@@ -135,54 +152,63 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         Type* valueType = rddlTask->types[defaultVarType];
 
         switch (varType) {
-            case ParametrizedVariable::NON_FLUENT:
-            case ParametrizedVariable::STATE_FLUENT:
-            case ParametrizedVariable::ACTION_FLUENT: {
-                if (satisfactionType != "default") {
-                    SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'default'?");
-                }
-
-                // TODO: ?? -> || valueType->name == "bool")
-                if (valueType->name == "int" || valueType->name == "real" ) {
-                    defaultVarValue = std::atof(defaultVarValString.c_str());
-                }
-                else {
-                    if (rddlTask->objects.find(defaultVarValString) == rddlTask->objects.end()) {
-                        SystemUtils::abort("Default value " + defaultVarValString + " of variable " + name + " not defined.");
-                    }
-
-                    Object* val = rddlTask->objects[defaultVarValString];
-                    defaultVarValue = val->value;
-                }
-                break;
+        case ParametrizedVariable::NON_FLUENT:
+        case ParametrizedVariable::STATE_FLUENT:
+        case ParametrizedVariable::ACTION_FLUENT: {
+            if (satisfactionType != "default") {
+                SystemUtils::abort(
+                    "Unknown satisfaction type for parametrized variable " +
+                    varTypeName + ". Did you mean 'default'?");
             }
 
-            // case ParametrizedVariable::INTERM_FLUENT:
-            // case ParametrizedVariable::DERIVED_FLUENT:
-            //     if (satisfactionType != "level") {
-            //         SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'level'?");
-            //     }
-            //     // TODO: implement this
-            //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
-            //     break;
+            // TODO: ?? -> || valueType->name == "bool")
+            if (valueType->name == "int" || valueType->name == "real") {
+                defaultVarValue = std::atof(defaultVarValString.c_str());
+            } else {
+                if (rddlTask->objects.find(defaultVarValString) ==
+                    rddlTask->objects.end()) {
+                    SystemUtils::abort("Default value " + defaultVarValString +
+                                       " of variable " + name +
+                                       " not defined.");
+                }
 
-            default:
-            {
-                SystemUtils::abort("Unknown var type: " + varTypeName);
-                break;
+                Object* val = rddlTask->objects[defaultVarValString];
+                defaultVarValue = val->value;
             }
+            break;
         }
 
-        // std::cout << "Adding parametrized variable: " << name << " default var type " << defaultVarType  << " default value: " << defaultVarValue << std::endl;
-        ParametrizedVariable* var = new ParametrizedVariable(name, params, varType, valueType, defaultVarValue);
+        // case ParametrizedVariable::INTERM_FLUENT:
+        // case ParametrizedVariable::DERIVED_FLUENT:
+        //     if (satisfactionType != "level") {
+        //         SystemUtils::abort("Unknown satisfaction type for
+        //         parametrized variable " + varTypeName + ". Did you mean
+        //         'level'?");
+        //     }
+        //     // TODO: implement this
+        //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
+        //     break;
 
-        // std::cout << "Adding parametrized variable in addPvarSection: " << name << " default var type " << defaultVarType  << " default value: " << defaultVarValue << std::endl;
+        default: {
+            SystemUtils::abort("Unknown var type: " + varTypeName);
+            break;
+        }
+        }
+
+        // std::cout << "Adding parametrized variable: " << name << " default
+        // var type " << defaultVarType  << " default value: " <<
+        // defaultVarValue << std::endl;
+        ParametrizedVariable* var = new ParametrizedVariable(
+            name, params, varType, valueType, defaultVarValue);
+
+        // std::cout << "Adding parametrized variable in addPvarSection: " <<
+        // name << " default var type " << defaultVarType  << " default value: "
+        // << defaultVarValue << std::endl;
         // for (unsigned i = 0; i < params.size(); i++)
         //     std::cout << "\t" << params[i]->name << std::endl;
 
         rddlTask->addVariableDefinition(var);
     }
-
 }
 
 void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
@@ -190,10 +216,12 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
         return;
     }
 
-    // std::cout << "########## Adding " << domain->getCpfs()->size() << " CPF definitions" << std::endl;
+    // std::cout << "########## Adding " << domain->getCpfs()->size() << " CPF
+    // definitions" << std::endl;
 
     // Consists of Parametrized variable and logical expression
-    for(std::vector<CpfDefinition*>::iterator it = domain->getCpfs()->begin(); it != domain->getCpfs()->end(); it++) {
+    for (std::vector<CpfDefinition*>::iterator it = domain->getCpfs()->begin();
+         it != domain->getCpfs()->end(); it++) {
         // P Var
         std::string name = (*it)->getPvar()->getName();
 
@@ -203,30 +231,40 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
             name = name.substr(0, name.length() - 1);
         }
 
-        if (rddlTask->variableDefinitions.find(name) == rddlTask->variableDefinitions.end()) {
+        if (rddlTask->variableDefinitions.find(name) ==
+            rddlTask->variableDefinitions.end()) {
             SystemUtils::abort("No according variable to CPF " + name + ".");
         }
 
         ParametrizedVariable* head = rddlTask->variableDefinitions[name];
 
         if ((*it)->getPvar()->getParameters() == nullptr) {
-                if (head->params.size() != 0)
-                    SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
-            }
-        else if (head->params.size() != ((*it)->getPvar()->getParameters()->size())) {
-                SystemUtils::abort("Wrong number of parameters for parametrized variable " + name + ".");
-            }
+            if (head->params.size() != 0)
+                SystemUtils::abort(
+                    "Wrong number of parameters for parametrized variable " +
+                    name + ".");
+        } else if (head->params.size() !=
+                   ((*it)->getPvar()->getParameters()->size())) {
+            SystemUtils::abort(
+                "Wrong number of parameters for parametrized variable " + name +
+                ".");
+        }
 
         if ((*it)->getPvar()->getParameters() != nullptr) {
             unsigned i = 0;
-            for(std::vector<std::string>::iterator jt = (*it)->getPvar()->getParameters()->begin(); jt != (*it)->getPvar()->getParameters()->end(); jt++) {
+            for (std::vector<std::string>::iterator jt =
+                     (*it)->getPvar()->getParameters()->begin();
+                 jt != (*it)->getPvar()->getParameters()->end(); jt++) {
                 head->params[i++]->name = (*jt);
-                // std::cout << "\tparameter: " << *jt << " of type " << head->params[i-1]->type->name << std::endl;
+                // std::cout << "\tparameter: " << *jt << " of type " <<
+                // head->params[i-1]->type->name << std::endl;
             }
         }
 
-        if (rddlTask->CPFDefinitions.find(head) != rddlTask->CPFDefinitions.end()) {
-            SystemUtils::abort("Error: Multiple definition of CPF " + name + ".");
+        if (rddlTask->CPFDefinitions.find(head) !=
+            rddlTask->CPFDefinitions.end()) {
+            SystemUtils::abort("Error: Multiple definition of CPF " + name +
+                               ".");
         }
 
         // Expression
@@ -246,7 +284,9 @@ void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
         return;
     }
 
-    for(std::vector<LogicalExpression*>::iterator it = domain->getStateConstraints()->begin(); it != domain->getStateConstraints()->end(); it++) {
+    for (std::vector<LogicalExpression*>::iterator it =
+             domain->getStateConstraints()->begin();
+         it != domain->getStateConstraints()->end(); it++) {
         rddlTask->SACs.push_back(*it);
     }
 }
@@ -256,14 +296,19 @@ void addObjectsSection(RDDLTask* rddlTask, Domain* domain) {
         return;
     }
 
-    for (std::vector<ObjectDefine*>::iterator it = domain->getObjects()->begin(); it != domain->getObjects()->end(); it++) {
+    for (std::vector<ObjectDefine*>::iterator it =
+             domain->getObjects()->begin();
+         it != domain->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
         if (rddlTask->types.find(typeName) == rddlTask->types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
-        for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++) {
+        for (std::vector<std::string>::iterator jt =
+                 (*it)->getObjectNames()->begin();
+             jt != (*it)->getObjectNames()->end(); jt++) {
             rddlTask->addObject(typeName, (*jt));
-            std::cout << "Added object (from objects section): " << typeName << " : " << *jt << std::endl;
+            std::cout << "Added object (from objects section): " << typeName
+                      << " : " << *jt << std::endl;
         }
     }
 }
@@ -284,7 +329,6 @@ void RDDLTask::addDomain(Domain* domain) {
     // TODO: StateInvariantSection
     // TODO: ObjectsSection -> this can be implemented already
     // std::cout << "Domain added." << std::endl;
-
 }
 
 void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
@@ -293,38 +337,53 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
 
     // Check if domain name is corresponding
     if (nonFluent->getDomainName() != this->getDomainName()) {
-        SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() + "  defined in Non fluent section");
+        SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() +
+                           "  defined in Non fluent section");
     }
 
     // Adding objects
-    for (std::vector<ObjectDefine*>::iterator it = nonFluent->getObjects()->begin(); it != nonFluent->getObjects()->end(); it++) {
+    for (std::vector<ObjectDefine*>::iterator it =
+             nonFluent->getObjects()->begin();
+         it != nonFluent->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
         if (types.find(typeName) == types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
-        for (std::vector<std::string>::iterator jt = (*it)->getObjectNames()->begin(); jt != (*it)->getObjectNames()->end(); jt++) {
+        for (std::vector<std::string>::iterator jt =
+                 (*it)->getObjectNames()->begin();
+             jt != (*it)->getObjectNames()->end(); jt++) {
             addObject(typeName, (*jt));
-            // std::cout << "Added object (from non fluents): " << *jt << " of type " << typeName << std::endl;
+            // std::cout << "Added object (from non fluents): " << *jt << " of
+            // type " << typeName << std::endl;
         }
     }
 
     // Adding non fluents
     std::vector<Parameter*> params;
-    for (std::vector<PvariablesInstanceDefine*>::iterator it = nonFluent->getNonFluents()->begin(); it != nonFluent->getNonFluents()->end(); it++) {
+    for (std::vector<PvariablesInstanceDefine*>::iterator it =
+             nonFluent->getNonFluents()->begin();
+         it != nonFluent->getNonFluents()->end(); it++) {
         std::string name = (*it)->getName();
 
         params.clear();
         // Set parameters
-        if ((*it)->getLConstList() != nullptr)
-        {
-            for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
+        if ((*it)->getLConstList() != nullptr) {
+            for (std::vector<std::string>::iterator jt =
+                     (*it)->getLConstList()->begin();
+                 jt != (*it)->getLConstList()->end(); jt++) {
                 std::string paramName = (*jt);
                 if (objects.find(paramName) == objects.end()) {
                     SystemUtils::abort("Unknown object: " + paramName);
                 }
 
-                // std::cout << "Added non fluent (from non fluents): " << paramName << " of type " << objects[paramName]->type->name << std::endl;
-                params.push_back(objects[paramName]); // TODO: this is wrong. It only covers the case that parametrized variable is a Parameter Expression
+                // std::cout << "Added non fluent (from non fluents): " <<
+                // paramName << " of type " << objects[paramName]->type->name <<
+                // std::endl;
+                params.push_back(objects[paramName]); // TODO: this is wrong. It
+                                                      // only covers the case
+                                                      // that parametrized
+                                                      // variable is a Parameter
+                                                      // Expression
             }
         }
 
@@ -337,7 +396,8 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
 
         addParametrizedVariable(parent, params, initialVal);
 
-        // std::cout << "###### Added parametrized variable (from addNonFluent) " << name << " with parameters: " << std::endl;
+        // std::cout << "###### Added parametrized variable (from addNonFluent)
+        // " << name << " with parameters: " << std::endl;
         // for (unsigned i = 0; i < params.size(); i++)
         //     std::cout << "\t" << params[i]->name << std::endl;
         // std::cout << "and value: " << initialVal << std::endl;
@@ -351,35 +411,47 @@ void RDDLTask::addInstance(Instance* instance) {
 
     // Check domain name
     if (this->getDomainName() != instance->getDomainName()) {
-        SystemUtils::abort("Unknown domain " + instance->getDomainName() + " defined in Instance section");
+        SystemUtils::abort("Unknown domain " + instance->getDomainName() +
+                           " defined in Instance section");
     }
 
     // Check Non fluents name
     if (this->getNonFluentsName() != instance->getNonFluentsName()) {
-        SystemUtils::abort("Unknown non fluents " + instance->getNonFluentsName() + "defined in Non fluent section");
+        SystemUtils::abort("Unknown non fluents " +
+                           instance->getNonFluentsName() +
+                           "defined in Non fluent section");
     }
 
     // Add init states
     if (instance->getPVariables() != nullptr) {
-        for (std::vector<PvariablesInstanceDefine*>::iterator it = instance->getPVariables()->begin(); it != instance->getPVariables()->end(); it++) {
+        for (std::vector<PvariablesInstanceDefine*>::iterator it =
+                 instance->getPVariables()->begin();
+             it != instance->getPVariables()->end(); it++) {
             std::string name = (*it)->getName();
             std::vector<Parameter*> params;
             // Set parameters
-            if ((*it)->getLConstList() != nullptr)
-            {
-                for(std::vector<std::string>::iterator jt = (*it)->getLConstList()->begin(); jt != (*it)->getLConstList()->end(); jt++) {
+            if ((*it)->getLConstList() != nullptr) {
+                for (std::vector<std::string>::iterator jt =
+                         (*it)->getLConstList()->begin();
+                     jt != (*it)->getLConstList()->end(); jt++) {
                     std::string paramName = (*jt);
                     if (objects.find(paramName) == objects.end()) {
                         SystemUtils::abort("Unknown object: " + paramName);
                     }
 
-                    params.push_back(objects[paramName]); // TODO: this is wrong. It only covers the case that parametrized variable is and Parameter Expression
+                    params.push_back(objects[paramName]); // TODO: this is
+                                                          // wrong. It only
+                                                          // covers the case
+                                                          // that parametrized
+                                                          // variable is and
+                                                          // Parameter
+                                                          // Expression
                 }
-
             }
 
             if (variableDefinitions.find(name) == variableDefinitions.end()) {
-                SystemUtils::abort("Variable " + name + " used but not defined.");
+                SystemUtils::abort("Variable " + name +
+                                   " used but not defined.");
             }
 
             ParametrizedVariable* parent = variableDefinitions[name];
@@ -387,11 +459,11 @@ void RDDLTask::addInstance(Instance* instance) {
 
             addParametrizedVariable(parent, params, initialVal);
 
-            // std::cout << "###### Added parametrized (from addInstance) " << name << " with parameters: " << std::endl;
+            // std::cout << "###### Added parametrized (from addInstance) " <<
+            // name << " with parameters: " << std::endl;
             // for (unsigned i = 0; i < params.size(); i++)
             //     std::cout << "\t" << params[i]->name << std::endl;
             // std::cout << "and value: " << initialVal << std::endl;
-
         }
     }
 
@@ -422,14 +494,14 @@ void RDDLTask::addType(std::string const& name, std::string const& superType) {
 }
 
 void RDDLTask::addObject(std::string const& typeName,
-                             std::string const& objectName) {
+                         std::string const& objectName) {
     if (types.find(typeName) == types.end()) {
         SystemUtils::abort("Error: Type " + typeName + " not defined.");
     }
 
     if (objects.find(objectName) != objects.end()) {
-        SystemUtils::abort(
-            "Error: Object name " + objectName + " is ambiguous.");
+        SystemUtils::abort("Error: Object name " + objectName +
+                           " is ambiguous.");
     }
 
     objects[objectName] = new Object(objectName, types[typeName]);
@@ -438,39 +510,39 @@ void RDDLTask::addObject(std::string const& typeName,
 void RDDLTask::addVariableDefinition(ParametrizedVariable* varDef) {
     if (variableDefinitions.find(varDef->fullName) !=
         variableDefinitions.end()) {
-        SystemUtils::abort(
-                "Error: Ambiguous variable name: " + varDef->fullName);
+        SystemUtils::abort("Error: Ambiguous variable name: " +
+                           varDef->fullName);
     }
     variableDefinitions[varDef->fullName] = varDef;
 }
 
 void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
-                                           std::vector<Parameter*> const& params) {
+                                       std::vector<Parameter*> const& params) {
     addParametrizedVariable(parent, params, parent->initialValue);
 }
 
 void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
-                                           std::vector<Parameter*> const& params,
-                                           double initialValue) {
-    if (variableDefinitions.find(parent->variableName) == variableDefinitions.end()) {
-        SystemUtils::abort(
-                "Error: Parametrized variable " + parent->variableName +
-                " not defined.");
+                                       std::vector<Parameter*> const& params,
+                                       double initialValue) {
+    if (variableDefinitions.find(parent->variableName) ==
+        variableDefinitions.end()) {
+        SystemUtils::abort("Error: Parametrized variable " +
+                           parent->variableName + " not defined.");
     }
 
-    switch(parent->variableType) {
+    switch (parent->variableType) {
     case ParametrizedVariable::STATE_FLUENT: {
         StateFluent* sf = new StateFluent(*parent, params, initialValue);
 
         // This is already defined if it occurs in the initial state entry
-        if(stateFluentMap.find(sf->fullName) != stateFluentMap.end()) {
+        if (stateFluentMap.find(sf->fullName) != stateFluentMap.end()) {
             return;
         }
 
         stateFluents.push_back(sf);
         stateFluentMap[sf->fullName] = sf;
 
-        if(stateFluentsBySchema.find(parent) == stateFluentsBySchema.end()) {
+        if (stateFluentsBySchema.find(parent) == stateFluentsBySchema.end()) {
             stateFluentsBySchema[parent] = std::vector<StateFluent*>();
         }
         stateFluentsBySchema[parent].push_back(sf);
@@ -490,7 +562,7 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
         NonFluent* nf = new NonFluent(*parent, params, initialValue);
 
         // This is already defined if it occurs in the non fluents entry
-        if(nonFluentMap.find(nf->fullName) != nonFluentMap.end()) {
+        if (nonFluentMap.find(nf->fullName) != nonFluentMap.end()) {
             return;
         }
 
@@ -505,31 +577,35 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
 }
 
 StateFluent* RDDLTask::getStateFluent(std::string const& name) {
-    if(stateFluentMap.find(name) == stateFluentMap.end()) {
-        SystemUtils::abort("Error: state-fluent " + name + " used but not defined.");
+    if (stateFluentMap.find(name) == stateFluentMap.end()) {
+        SystemUtils::abort("Error: state-fluent " + name +
+                           " used but not defined.");
         return nullptr;
     }
     return stateFluentMap[name];
 }
 
 ActionFluent* RDDLTask::getActionFluent(std::string const& name) {
-    if(actionFluentMap.find(name) == actionFluentMap.end()) {
-        SystemUtils::abort("Error: action-fluent " + name + " used but not defined.");
+    if (actionFluentMap.find(name) == actionFluentMap.end()) {
+        SystemUtils::abort("Error: action-fluent " + name +
+                           " used but not defined.");
         return nullptr;
     }
     return actionFluentMap[name];
 }
 
 NonFluent* RDDLTask::getNonFluent(std::string const& name) {
-    if(nonFluentMap.find(name) == nonFluentMap.end()) {
-        SystemUtils::abort("Error: non-fluent " + name + " used but not defined.");
+    if (nonFluentMap.find(name) == nonFluentMap.end()) {
+        SystemUtils::abort("Error: non-fluent " + name +
+                           " used but not defined.");
         return nullptr;
     }
     return nonFluentMap[name];
 }
 
 // TODO: Return const reference?
-std::vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(ParametrizedVariable* schema) {
+std::vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(
+    ParametrizedVariable* schema) {
     assert(stateFluentsBySchema.find(schema) != stateFluentsBySchema.end());
     return stateFluentsBySchema[schema];
 }
@@ -546,7 +622,7 @@ void RDDLTask::print(std::ostream& out) {
     out.unsetf(std::ios::floatfield);
     out.precision(std::numeric_limits<double>::digits10);
 
-    int firstProbabilisticVarIndex = (int) CPFs.size();
+    int firstProbabilisticVarIndex = (int)CPFs.size();
     bool deterministic = true;
     for (unsigned int i = 0; i < CPFs.size(); ++i) {
         if (CPFs[i]->isProbabilistic()) {
@@ -589,8 +665,8 @@ void RDDLTask::print(std::ostream& out) {
     out << "## method to calculate the final reward" << std::endl;
     out << finalRewardCalculationMethod << std::endl;
     if (finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
-        out <<
-        "## set of candidates to calculate final reward (first line is the number)"
+        out << "## set of candidates to calculate final reward (first line is "
+               "the number)"
             << std::endl;
         out << candidatesForOptimalFinalAction.size() << std::endl;
         for (unsigned int i = 0; i < candidatesForOptimalFinalAction.size();
@@ -599,27 +675,31 @@ void RDDLTask::print(std::ostream& out) {
         }
         out << std::endl;
     }
-    out <<
-    "## 1 if reward formula allows reward lock detection and a reward lock was found during task analysis"
+    out << "## 1 if reward formula allows reward lock detection and a reward "
+           "lock was found during task analysis"
         << std::endl;
     out << rewardLockDetected << std::endl;
     out << "## 1 if an unreasonable action was detected" << std::endl;
     out << unreasonableActionDetected << std::endl;
-    out <<
-    "## 1 if an unreasonable action was detected in the determinization" <<
-    std::endl;
+    out << "## 1 if an unreasonable action was detected in the determinization"
+        << std::endl;
     out << unreasonableActionInDeterminizationDetected << std::endl;
 
-
-    out << "## number of states that were encountered during task analysis" << std::endl;
+    out << "## number of states that were encountered during task analysis"
+        << std::endl;
     out << numberOfEncounteredStates << std::endl;
-    out << "## number of unique states that were encountered during task analysis" << std::endl;
+    out << "## number of unique states that were encountered during task "
+           "analysis"
+        << std::endl;
     out << numberOfUniqueEncounteredStates << std::endl;
-    out << "## number of states with only one applicable reasonable action that were encountered during task analysis" << std::endl;
+    out << "## number of states with only one applicable reasonable action "
+           "that were encountered during task analysis"
+        << std::endl;
     out << nonTerminalStatesWithUniqueAction << std::endl;
-    out << "## number of unique states with only one applicable reasonable action that were encountered during task analysis" << std::endl;
+    out << "## number of unique states with only one applicable reasonable "
+           "action that were encountered during task analysis"
+        << std::endl;
     out << uniqueNonTerminalStatesWithUniqueAction << std::endl;
-
 
     out << std::endl << std::endl << "#####ACTION FLUENTS#####" << std::endl;
     for (unsigned int i = 0; i < actionFluents.size(); ++i) {
@@ -634,7 +714,9 @@ void RDDLTask::print(std::ostream& out) {
         out << std::endl;
     }
 
-    out << std::endl << std::endl << "#####DET STATE FLUENTS AND CPFS#####" << std::endl;
+    out << std::endl
+        << std::endl
+        << "#####DET STATE FLUENTS AND CPFS#####" << std::endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         assert(!CPFs[index]->isProbabilistic());
@@ -647,8 +729,9 @@ void RDDLTask::print(std::ostream& out) {
         out << "## values" << std::endl;
         for (std::set<double>::iterator it = CPFs[index]->domain.begin();
              it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " " <<
-            CPFs[index]->head->valueType->objects[*it]->name << std::endl;
+            out << *it << " "
+                << CPFs[index]->head->valueType->objects[*it]->name
+                << std::endl;
         }
 
         out << "## formula" << std::endl;
@@ -664,8 +747,8 @@ void RDDLTask::print(std::ostream& out) {
             out << CPFs[index]->precomputedResults.size() << std::endl;
             for (unsigned int res = 0;
                  res < CPFs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << CPFs[index]->precomputedResults[res] <<
-                std::endl;
+                out << res << " " << CPFs[index]->precomputedResults[res]
+                    << std::endl;
             }
         }
         out << "## kleene caching type" << std::endl;
@@ -679,14 +762,17 @@ void RDDLTask::print(std::ostream& out) {
         for (unsigned int actionIndex = 0;
              actionIndex < CPFs[index]->actionHashKeyMap.size();
              ++actionIndex) {
-            out << actionIndex << " " <<
-            CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
+            out << actionIndex << " "
+                << CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
         }
         out << std::endl;
     }
 
-    out << std::endl << std::endl << "#####PROB STATE FLUENTS AND CPFS#####" << std::endl;
-    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size(); ++index) {
+    out << std::endl
+        << std::endl
+        << "#####PROB STATE FLUENTS AND CPFS#####" << std::endl;
+    for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
+         ++index) {
         assert(CPFs[index]->head->index == index);
         assert(CPFs[index]->isProbabilistic());
         out << "## index" << std::endl;
@@ -698,8 +784,9 @@ void RDDLTask::print(std::ostream& out) {
         out << "## values" << std::endl;
         for (std::set<double>::iterator it = CPFs[index]->domain.begin();
              it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " " <<
-            CPFs[index]->head->valueType->objects[*it]->name << std::endl;
+            out << *it << " "
+                << CPFs[index]->head->valueType->objects[*it]->name
+                << std::endl;
         }
 
         out << "## formula" << std::endl;
@@ -715,23 +802,26 @@ void RDDLTask::print(std::ostream& out) {
         out << "## caching type " << std::endl;
         out << CPFs[index]->cachingType << std::endl;
         if (CPFs[index]->cachingType == "VECTOR") {
-            out <<
-            "## precomputed results (key - determinization - size of distribution - value-probability pairs)"
+            out << "## precomputed results (key - determinization - size of "
+                   "distribution - value-probability pairs)"
                 << std::endl;
             out << CPFs[index]->precomputedResults.size() << std::endl;
             for (unsigned int res = 0;
                  res < CPFs[index]->precomputedResults.size(); ++res) {
-                out << res << " " << CPFs[index]->precomputedResults[res] <<
-                " " << CPFs[index]->precomputedPDResults[res].values.size();
+                out << res << " " << CPFs[index]->precomputedResults[res] << " "
+                    << CPFs[index]->precomputedPDResults[res].values.size();
                 for (unsigned int valProbPair = 0;
                      valProbPair <
                      CPFs[index]->precomputedPDResults[res].values.size();
                      ++valProbPair) {
-                    out << " " <<
-                    CPFs[index]->precomputedPDResults[res].values[valProbPair]
-                        << " " <<
-                    CPFs[index]->precomputedPDResults[res].probabilities[
-                        valProbPair];
+                    out << " "
+                        << CPFs[index]
+                               ->precomputedPDResults[res]
+                               .values[valProbPair]
+                        << " "
+                        << CPFs[index]
+                               ->precomputedPDResults[res]
+                               .probabilities[valProbPair];
                 }
                 out << std::endl;
             }
@@ -747,8 +837,8 @@ void RDDLTask::print(std::ostream& out) {
         for (unsigned int actionIndex = 0;
              actionIndex < CPFs[index]->actionHashKeyMap.size();
              ++actionIndex) {
-            out << actionIndex << " " <<
-            CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
+            out << actionIndex << " "
+                << CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
         }
 
         out << std::endl;
@@ -763,7 +853,9 @@ void RDDLTask::print(std::ostream& out) {
     out << "## max" << std::endl;
     out << *rewardCPF->domain.rbegin() << std::endl;
     out << "## independent from actions" << std::endl;
-    out << (rewardCPF->positiveActionDependencies.empty() && rewardCPF->negativeActionDependencies.empty()) << std::endl;
+    out << (rewardCPF->positiveActionDependencies.empty() &&
+            rewardCPF->negativeActionDependencies.empty())
+        << std::endl;
     out << "## hash index" << std::endl;
     out << rewardCPF->hashIndex << std::endl;
     out << "## caching type" << std::endl;
@@ -773,7 +865,8 @@ void RDDLTask::print(std::ostream& out) {
         out << rewardCPF->precomputedResults.size() << std::endl;
         for (unsigned int res = 0; res < rewardCPF->precomputedResults.size();
              ++res) {
-            out << res << " " << rewardCPF->precomputedResults[res] << std::endl;
+            out << res << " " << rewardCPF->precomputedResults[res]
+                << std::endl;
         }
     }
     out << "## kleene caching type" << std::endl;
@@ -786,8 +879,8 @@ void RDDLTask::print(std::ostream& out) {
     out << "## action hash keys" << std::endl;
     for (unsigned int actionIndex = 0;
          actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
-        out << actionIndex << " " <<
-        rewardCPF->actionHashKeyMap[actionIndex] << std::endl;
+        out << actionIndex << " " << rewardCPF->actionHashKeyMap[actionIndex]
+            << std::endl;
     }
 
     out << std::endl << std::endl << "#####PRECONDITIONS#####" << std::endl;
@@ -805,11 +898,14 @@ void RDDLTask::print(std::ostream& out) {
         out << actionPreconds[index]->cachingType << std::endl;
         if (actionPreconds[index]->cachingType == "VECTOR") {
             out << "## precomputed results" << std::endl;
-            out << actionPreconds[index]->precomputedResults.size() << std::endl;
+            out << actionPreconds[index]->precomputedResults.size()
+                << std::endl;
             for (unsigned int res = 0;
-                 res < actionPreconds[index]->precomputedResults.size(); ++res) {
-                out << res << " " <<
-                actionPreconds[index]->precomputedResults[res] << std::endl;
+                 res < actionPreconds[index]->precomputedResults.size();
+                 ++res) {
+                out << res << " "
+                    << actionPreconds[index]->precomputedResults[res]
+                    << std::endl;
             }
         }
         out << "## kleene caching type" << std::endl;
@@ -823,8 +919,9 @@ void RDDLTask::print(std::ostream& out) {
         for (unsigned int actionIndex = 0;
              actionIndex < actionPreconds[index]->actionHashKeyMap.size();
              ++actionIndex) {
-            out << actionIndex << " " <<
-            actionPreconds[index]->actionHashKeyMap[actionIndex] << std::endl;
+            out << actionIndex << " "
+                << actionPreconds[index]->actionHashKeyMap[actionIndex]
+                << std::endl;
         }
 
         out << std::endl;
@@ -851,13 +948,15 @@ void RDDLTask::print(std::ostream& out) {
         out << std::endl;
     }
 
-    out << std::endl << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << std::endl;
+    out << std::endl
+        << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << std::endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << std::endl;
         out << index << std::endl;
         if (!stateHashKeys.empty()) {
-            out << "## state hash key (for each value in the domain)" << std::endl;
+            out << "## state hash key (for each value in the domain)"
+                << std::endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -873,8 +972,8 @@ void RDDLTask::print(std::ostream& out) {
             out << kleeneStateHashKeyBases[index] << std::endl;
         }
 
-        out <<
-        "## state fluent hash keys (first line is the number of keys)" << std::endl;
+        out << "## state fluent hash keys (first line is the number of keys)"
+            << std::endl;
         out << indexToStateFluentHashKeyMap[index].size() << std::endl;
         for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
              ++i) {
@@ -882,27 +981,29 @@ void RDDLTask::print(std::ostream& out) {
             out << indexToStateFluentHashKeyMap[index][i].second << std::endl;
         }
 
-        out <<
-        "## kleene state fluent hash keys (first line is the number of keys)"
-            <<
-        std::endl;
+        out << "## kleene state fluent hash keys (first line is the number of "
+               "keys)"
+            << std::endl;
         out << indexToKleeneStateFluentHashKeyMap[index].size() << std::endl;
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToKleeneStateFluentHashKeyMap[index][i].second << std::endl;
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second
+                << std::endl;
         }
         out << std::endl;
     }
 
-    out << std::endl << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << std::endl;
+    out << std::endl
+        << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << std::endl;
     for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
          ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << std::endl;
         out << (index - firstProbabilisticVarIndex) << std::endl;
         if (!stateHashKeys.empty()) {
-            out << "## state hash key (for each value in the domain)" << std::endl;
+            out << "## state hash key (for each value in the domain)"
+                << std::endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -918,8 +1019,8 @@ void RDDLTask::print(std::ostream& out) {
             out << kleeneStateHashKeyBases[index] << std::endl;
         }
 
-        out <<
-        "## state fluent hash keys (first line is the number of keys)" << std::endl;
+        out << "## state fluent hash keys (first line is the number of keys)"
+            << std::endl;
         out << indexToStateFluentHashKeyMap[index].size() << std::endl;
         for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
              ++i) {
@@ -927,23 +1028,23 @@ void RDDLTask::print(std::ostream& out) {
             out << indexToStateFluentHashKeyMap[index][i].second << std::endl;
         }
 
-        out <<
-        "## kleene state fluent hash keys (first line is the number of keys)"
-            <<
-        std::endl;
+        out << "## kleene state fluent hash keys (first line is the number of "
+               "keys)"
+            << std::endl;
         out << indexToKleeneStateFluentHashKeyMap[index].size() << std::endl;
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToKleeneStateFluentHashKeyMap[index][i].second << std::endl;
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second
+                << std::endl;
         }
         out << std::endl;
     }
 
     out << std::endl << std::endl << "#####TRAINING SET#####" << std::endl;
     out << trainingSet.size() << std::endl;
-    for (std::set<State>::iterator it = trainingSet.begin(); it != trainingSet.end();
-         ++it) {
+    for (std::set<State>::iterator it = trainingSet.begin();
+         it != trainingSet.end(); ++it) {
         for (unsigned int i = 0; i < it->state.size(); ++i) {
             out << it->state[i] << " ";
         }
@@ -951,7 +1052,7 @@ void RDDLTask::print(std::ostream& out) {
     }
 }
 
-void RDDLTask::execute(std::string td/*target dir*/) {
+void RDDLTask::execute(std::string td /*target dir*/) {
     std::cout << "Executing..." << std::endl << "Writing output.." << std::endl;
 
     Timer t, totalTime;
@@ -989,20 +1090,22 @@ void RDDLTask::execute(std::string td/*target dir*/) {
     std::cout << "total time: " << totalTime << std::endl;
 }
 
-
 /*****************************************************************
                            Helper Methods
 *****************************************************************/
 
 // This method is used to get the value of parametrized variable
 // Parametrized variable is stored with its definition in pVarDefinition and the
-// values of parameters used in the particular call of parametrized variable are stored in pVarExpression
-ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVarName) {
-
-    if (parametrizedVariableDefinitionsMap.find(pVarName) == parametrizedVariableDefinitionsMap.end())
+// values of parameters used in the particular call of parametrized variable are
+// stored in pVarExpression
+ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
+    std::string pVarName) {
+    if (parametrizedVariableDefinitionsMap.find(pVarName) ==
+        parametrizedVariableDefinitionsMap.end())
         return nullptr;
 
-    PvarDefinition* pVarDefinition = parametrizedVariableDefinitionsMap[pVarName];
+    PvarDefinition* pVarDefinition =
+        parametrizedVariableDefinitionsMap[pVarName];
     PvarExpression* pVarExpression = parametrizedVariableMap[pVarName];
 
     std::string name = pVarDefinition->getName();
@@ -1013,30 +1116,37 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
     double defaultVarValue;
 
     std::vector<Parameter*> params;
-    // Adding parameters from PvarExpression (those are the parameters that user set when he called parametrized variablea as an espression)
-    for(unsigned i = 0; i < pVarDefinition->getParameters()->size(); i++)
-        if (typeMap.find((*pVarDefinition->getParameters())[i]) == typeMap.end()) {
-            SystemUtils::abort("Undefined type " + (*pVarExpression->getParameters())[i] + " used as parameter in " + name + ".");
-        }
-        else {
-            params.push_back(new Parameter((*pVarExpression->getParameters())[i], typeMap[(*pVarDefinition->getParameters())[i]]));
+    // Adding parameters from PvarExpression (those are the parameters that user
+    // set when he called parametrized variablea as an espression)
+    for (unsigned i = 0; i < pVarDefinition->getParameters()->size(); i++)
+        if (typeMap.find((*pVarDefinition->getParameters())[i]) ==
+            typeMap.end()) {
+            SystemUtils::abort("Undefined type " +
+                               (*pVarExpression->getParameters())[i] +
+                               " used as parameter in " + name + ".");
+        } else {
+            params.push_back(
+                new Parameter((*pVarExpression->getParameters())[i],
+                              typeMap[(*pVarDefinition->getParameters())[i]]));
         }
 
-    // TODO: This initialization here is wrong but is put here to prevent warning during the compliation
+    // TODO: This initialization here is wrong but is put here to prevent
+    // warning during the compliation
     // setting it to nullptr doesn't help
-    ParametrizedVariable::VariableType varType = ParametrizedVariable::STATE_FLUENT;
+    ParametrizedVariable::VariableType varType =
+        ParametrizedVariable::STATE_FLUENT;
     if (varTypeName == "state-fluent") {
         varType = ParametrizedVariable::STATE_FLUENT;
-    }
-    else if (varTypeName == "action-fluent") {
+    } else if (varTypeName == "action-fluent") {
         varType = ParametrizedVariable::ACTION_FLUENT;
-    }
-    else if (varTypeName == "non-fluent") {
+    } else if (varTypeName == "non-fluent") {
         varType = ParametrizedVariable::NON_FLUENT;
     }
     // TODO: cover other types of parametrized variables
     else {
-        SystemUtils::abort("Parametrized variable: " + varTypeName + " not implemented. Implemented for now: state-fluent, action-fluent, non-fluent.");
+        SystemUtils::abort("Parametrized variable: " + varTypeName +
+                           " not implemented. Implemented for now: "
+                           "state-fluent, action-fluent, non-fluent.");
     }
 
     if (typeMap.find(defaultVarType) == typeMap.end()) {
@@ -1045,58 +1155,68 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(std::string pVar
     Type* valueType = typeMap[defaultVarType];
 
     switch (varType) {
-        case ParametrizedVariable::NON_FLUENT:
-        case ParametrizedVariable::STATE_FLUENT:
-        case ParametrizedVariable::ACTION_FLUENT:
-            if (satisfactionType != "default") {
-                SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'default'?");
-            }
+    case ParametrizedVariable::NON_FLUENT:
+    case ParametrizedVariable::STATE_FLUENT:
+    case ParametrizedVariable::ACTION_FLUENT:
+        if (satisfactionType != "default") {
+            SystemUtils::abort(
+                "Unknown satisfaction type for parametrized variable " +
+                varTypeName + ". Did you mean 'default'?");
+        }
 
-            if (valueType->name == "int" || valueType->name == "real" ) {// TODO: ?? -> || valueType->name == "bool")
-                defaultVarValue = std::atof(defaultVarValString.c_str());
+        if (valueType->name == "int" ||
+            valueType->name ==
+                "real") { // TODO: ?? -> || valueType->name == "bool")
+            defaultVarValue = std::atof(defaultVarValString.c_str());
+        } else {
+            if (objectMap.find(defaultVarValString) == objectMap.end()) {
+                SystemUtils::abort("Default value " + defaultVarValString +
+                                   " of variable " + name + " not defined.");
             }
-            else {
-                if (objectMap.find(defaultVarValString) == objectMap.end()) {
-                    SystemUtils::abort("Default value " + defaultVarValString + " of variable " + name + " not defined.");
-                }
-                Object* val = objectMap[defaultVarValString];
-                defaultVarValue = val->value;
-            }
-            break;
+            Object* val = objectMap[defaultVarValString];
+            defaultVarValue = val->value;
+        }
+        break;
 
-        // case ParametrizedVariable::INTERM_FLUENT:
-        // case ParametrizedVariable::DERIVED_FLUENT:
-        //     if (satisfactionType != "level")
-        //         SystemUtils::abort("Unknown satisfaction type for parametrized variable " + varTypeName + ". Did you mean 'level'?");
-        //
-        //     // TODO: implement this
-        //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
-        //     break;
+    // case ParametrizedVariable::INTERM_FLUENT:
+    // case ParametrizedVariable::DERIVED_FLUENT:
+    //     if (satisfactionType != "level")
+    //         SystemUtils::abort("Unknown satisfaction type for parametrized
+    //         variable " + varTypeName + ". Did you mean 'level'?");
+    //
+    //     // TODO: implement this
+    //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
+    //     break;
 
-        default:
-            SystemUtils::abort("Unknown var type: " + varTypeName);
-            break;
+    default:
+        SystemUtils::abort("Unknown var type: " + varTypeName);
+        break;
     }
-    ParametrizedVariable* var = new ParametrizedVariable(name, params, varType, valueType, defaultVarValue);
+    ParametrizedVariable* var = new ParametrizedVariable(
+        name, params, varType, valueType, defaultVarValue);
 
     return var;
 }
 
-void storeParametrizedVariableFromPvarDefinition(std::string pVarName, PvarDefinition* pVar) {
+void storeParametrizedVariableFromPvarDefinition(std::string pVarName,
+                                                 PvarDefinition* pVar) {
     parametrizedVariableDefinitionsMap[pVarName] = pVar;
 }
 
-void storeParametrizedVariableMap(std::string pVarName, PvarExpression* pVarExpression) {
+void storeParametrizedVariableMap(std::string pVarName,
+                                  PvarExpression* pVarExpression) {
     parametrizedVariableMap[pVarName] = pVarExpression;
 }
 
 bool storeObject(std::string objName, std::string objectType) {
-
     if (objectMap.find(objName) != objectMap.end()) {
         return false;
     }
 
-    objectMap[objName] = new Object(objName, typeMap[objectType]); // TODO: Should check if type exists. For some reason, simple check gives worng results.
+    objectMap[objName] = new Object(
+        objName, typeMap[objectType]); // TODO: Should check if type exists. For
+                                       // some reason, simple check gives worng
+                                       // results.
 
     return true;
 }
@@ -1104,18 +1224,15 @@ bool storeObject(std::string objName, std::string objectType) {
 Object* getObject(std::string objName) {
     if (objectMap.find(objName) != objectMap.end()) {
         return objectMap[objName];
+    } else {
+        return nullptr;
     }
-    else {
-       return nullptr;
-   }
 }
 
 bool storeType(std::string typeName, std::string superTypeName) {
-
     if (typeMap.find(superTypeName) != typeMap.end()) {
         typeMap[typeName] = new Type(typeName, typeMap[superTypeName]);
-    }
-    else {
+    } else {
         typeMap[typeName] = new Type(typeName);
     }
 
@@ -1125,10 +1242,7 @@ bool storeType(std::string typeName, std::string superTypeName) {
 Type* getType(std::string typeName) {
     if (typeMap.find(typeName) != typeMap.end()) {
         return typeMap[typeName];
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
-
-

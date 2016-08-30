@@ -19,8 +19,7 @@ void Evaluatable::initialize() {
     dependentActionFluents.clear();
 
     formula->collectInitialInfo(isProb, hasArithmeticFunction,
-                                dependentStateFluents,
-                                dependentActionFluents);
+                                dependentStateFluents, dependentActionFluents);
 }
 
 void ActionPrecondition::initialize() {
@@ -43,19 +42,22 @@ void RewardFunction::initialize() {
                                    negativeActionDependencies);
 
     // cout << "Action fluents: " << endl;
-    // for(set<ActionFluent*>::iterator it = dependentActionFluents.begin(); it != dependentActionFluents.end(); ++it) {
+    // for(set<ActionFluent*>::iterator it = dependentActionFluents.begin(); it
+    // != dependentActionFluents.end(); ++it) {
     //     cout << "  " << (*it)->fullName << endl;
     // }
     // cout << endl;
 
     // cout << "Positive action fluents: " << endl;
-    // for(set<ActionFluent*>::iterator it = positiveActionDependencies.begin(); it != positiveActionDependencies.end(); ++it) {
+    // for(set<ActionFluent*>::iterator it = positiveActionDependencies.begin();
+    // it != positiveActionDependencies.end(); ++it) {
     //     cout << "  " << (*it)->fullName << endl;
     // }
     // cout << endl;
 
     // cout << "Negative action fluents: " << endl;
-    // for(set<ActionFluent*>::iterator it = negativeActionDependencies.begin(); it != negativeActionDependencies.end(); ++it) {
+    // for(set<ActionFluent*>::iterator it = negativeActionDependencies.begin();
+    // it != negativeActionDependencies.end(); ++it) {
     //     cout << "  " << (*it)->fullName << endl;
     // }
     // cout << endl;
@@ -76,15 +78,14 @@ void Evaluatable::initializeHashKeys(PlanningTask* task) {
 }
 
 long Evaluatable::initializeActionHashKeys(
-        vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     long baseKey = 1;
     actionHashKeyMap = vector<long>(actionStates.size(), 0);
     bool dependsOnAllActions = true;
     for (unsigned int actionIndex = 0; actionIndex < actionStates.size();
          ++actionIndex) {
-        dependsOnAllActions &= calculateActionHashKey(actionStates,
-                                                      actionStates[actionIndex],
-                                                      baseKey);
+        dependsOnAllActions &= calculateActionHashKey(
+            actionStates, actionStates[actionIndex], baseKey);
     }
     if (dependsOnAllActions) {
         // If an action hash key is assigned to all actions, the key '0' is
@@ -101,8 +102,8 @@ long Evaluatable::initializeActionHashKeys(
 }
 
 bool Evaluatable::calculateActionHashKey(
-        vector<ActionState> const& actionStates, ActionState const& action,
-        long& nextKey) {
+    vector<ActionState> const& actionStates, ActionState const& action,
+    long& nextKey) {
     vector<ActionFluent*> depActs;
     for (unsigned int i = 0; i < action.scheduledActionFluents.size(); ++i) {
         if (dependentActionFluents.find(action.scheduledActionFluents[i]) !=
@@ -150,7 +151,7 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
     // depends on the variables tmpHashMap[i].first, and its StateFluentHashKey
     // is thereby increased by that variable's value multiplied with
     // tmpHashMap[i].second
-    vector<pair<int, long> > tmpHashMap;
+    vector<pair<int, long>> tmpHashMap;
 
     // We iterate over the CPFs instead of directly over the
     // dependentStateFluents vector as we have to access the CPF objects
@@ -160,15 +161,15 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
             tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if (!task->CPFs[index]->hasFiniteDomain() ||
-                !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                                                      task->CPFs[index]->getDomainSize())) {
+                !MathUtils::multiplyWithOverflowCheck(
+                    nextHashKeyBase, task->CPFs[index]->getDomainSize())) {
                 cachingType = "NONE";
                 return;
             }
         }
     }
 
-    vector<vector<pair<int, long> > >& hashMap =
+    vector<vector<pair<int, long>>>& hashMap =
         task->indexToStateFluentHashKeyMap;
 
     for (unsigned int index = 0; index < tmpHashMap.size(); ++index) {
@@ -182,7 +183,8 @@ void Evaluatable::initializeStateFluentHashKeys(PlanningTask* task,
         cachingType = "MAP";
     } else {
         cachingType = "VECTOR";
-        precomputedResults.resize(nextHashKeyBase, -numeric_limits<double>::max());
+        precomputedResults.resize(nextHashKeyBase,
+                                  -numeric_limits<double>::max());
         if (isProbabilistic()) {
             precomputedPDResults.resize(nextHashKeyBase);
         }
@@ -198,7 +200,7 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task,
     // depends on the variables tmpHashMap[i].first, and its
     // KleeneStateFluentHashKey is thereby increased by that variable's value
     // multiplied with tmpHashMap[i].second
-    vector<pair<int, long> > tmpHashMap;
+    vector<pair<int, long>> tmpHashMap;
 
     // We iterate over the CPFs instead of directly over the
     // dependentStateFluents vector as we have to access the CPF objects
@@ -208,15 +210,15 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(PlanningTask* task,
             tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if ((task->CPFs[index]->kleeneDomainSize == 0) ||
-                !MathUtils::multiplyWithOverflowCheck(nextHashKeyBase,
-                                                      task->CPFs[index]->kleeneDomainSize)) {
+                !MathUtils::multiplyWithOverflowCheck(
+                    nextHashKeyBase, task->CPFs[index]->kleeneDomainSize)) {
                 kleeneCachingType = "NONE";
                 return;
             }
         }
     }
 
-    vector<vector<pair<int, long> > >& hashMap =
+    vector<vector<pair<int, long>>>& hashMap =
         task->indexToKleeneStateFluentHashKeyMap;
 
     for (unsigned int index = 0; index < tmpHashMap.size(); ++index) {

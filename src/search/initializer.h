@@ -43,20 +43,19 @@ public:
     virtual void setMaxSearchDepth(int maxSearchDepth);
 
     // Print
-    virtual void printStats(std::ostream& out,
-                            bool const& printRoundStats,
+    virtual void printStats(std::ostream& out, bool const& printRoundStats,
                             std::string indent = "") const;
 
     // Initialize (or continue to initialize) node
     virtual void initialize(SearchNode* node, State const& current) = 0;
 
 protected:
-    Initializer(THTS* _thts, std::string _name) :
-        thts(_thts),
-        name(_name),
-        heuristic(nullptr),
-        heuristicWeight(0.5),
-        numberOfInitialVisits(1) {}
+    Initializer(THTS* _thts, std::string _name)
+        : thts(_thts),
+          name(_name),
+          heuristic(nullptr),
+          heuristicWeight(0.5),
+          numberOfInitialVisits(1) {}
 
     THTS* thts;
     std::string name;
@@ -69,16 +68,14 @@ protected:
 
 class ExpandNodeInitializer : public Initializer {
 public:
-    ExpandNodeInitializer(THTS* _thts) :
-        Initializer(_thts, "ExpandNode") {}
+    ExpandNodeInitializer(THTS* _thts) : Initializer(_thts, "ExpandNode") {}
 
     void initialize(SearchNode* node, State const& current) override;
 };
 
 class SingleChildInitializer : public Initializer {
 public:
-    SingleChildInitializer(THTS* _thts) :
-        Initializer(_thts, "SingleChild") {}
+    SingleChildInitializer(THTS* _thts) : Initializer(_thts, "SingleChild") {}
 
     void initialize(SearchNode* node, State const& current) override;
 };

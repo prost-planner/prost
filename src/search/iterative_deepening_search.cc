@@ -1,13 +1,13 @@
 #include "iterative_deepening_search.h"
 
-#include "prost_planner.h"
 #include "depth_first_search.h"
+#include "prost_planner.h"
 
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -17,18 +17,17 @@ using namespace std;
 
 IDS::HashMap IDS::rewardCache;
 
-IDS::IDS() :
-    DeterministicSearchEngine("IDS"),
-    isLearning(false),
-    timer(),
-    maxSearchDepthForThisStep(0),
-    ramLimitReached(false),
-    strictTerminationTimeout(0.1),
-    terminateWithReasonableAction(true),
-    accumulatedSearchDepth(0),
-    cacheHits(0),
-    numberOfRuns(0) {
-
+IDS::IDS()
+    : DeterministicSearchEngine("IDS"),
+      isLearning(false),
+      timer(),
+      maxSearchDepthForThisStep(0),
+      ramLimitReached(false),
+      strictTerminationTimeout(0.1),
+      terminateWithReasonableAction(true),
+      accumulatedSearchDepth(0),
+      cacheHits(0),
+      numberOfRuns(0) {
     setTimeout(0.005);
 
     if (rewardCache.bucket_count() < 520241) {
@@ -111,10 +110,10 @@ void IDS::learn() {
                 for (size_t j = 0; j < elapsedTime[index].size(); ++j) {
                     timeSum += elapsedTime[index][j];
                 }
-                double avgTime = timeSum / ((double) elapsedTime[index].size());
+                double avgTime = timeSum / ((double)elapsedTime[index].size());
                 cout << name << ": Search Depth " << index << ": " << timeSum
-                     << " / " << elapsedTime[index].size() << " = "
-                     << avgTime << endl;
+                     << " / " << elapsedTime[index].size() << " = " << avgTime
+                     << endl;
                 if (MathUtils::doubleIsSmaller(avgTime, timeout)) {
                     maxSearchDepth = index;
                 } else {
@@ -144,7 +143,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
         qValue = it->second[actionIndex] * (double)state.stepsToGo();
-    }  else {
+    } else {
         timer.reset();
 
         maxSearchDepthForThisStep = std::min(maxSearchDepth, state.stepsToGo());
@@ -154,9 +153,9 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         do {
             ++currentState.stepsToGo();
             dfs->estimateQValue(currentState, actionIndex, qValue);
-        }  while (moreIterations(currentState.stepsToGo()));
+        } while (moreIterations(currentState.stepsToGo()));
 
-        qValue /= ((double) currentState.stepsToGo());
+        qValue /= ((double)currentState.stepsToGo());
 
         // TODO: Currently, we cache every result, but we should only do so if
         // the result was achieved with a reasonable action, with a timeout or
@@ -200,8 +199,8 @@ void IDS::estimateQValues(State const& state,
         do {
             ++currentState.stepsToGo();
             dfs->estimateQValues(currentState, actionsToExpand, qValues);
-        }  while (moreIterations(currentState.stepsToGo(), actionsToExpand,
-                                 qValues));
+        } while (
+            moreIterations(currentState.stepsToGo(), actionsToExpand, qValues));
 
         double multiplier =
             (double)state.stepsToGo() / (double)currentState.stepsToGo();
@@ -243,8 +242,8 @@ bool IDS::moreIterations(int const& stepsToGo) {
                  << " Cannot decrease max search depth anymore." << endl;
         } else {
             cout << name << ": Timeout violated (" << time
-                 << "s). Setting max search depth to "
-                 << (stepsToGo - 1) << "!" << endl;
+                 << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
+                 << endl;
             setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
@@ -281,8 +280,8 @@ bool IDS::moreIterations(int const& stepsToGo,
                  << " Cannot decrease max search depth anymore." << endl;
         } else {
             cout << name << ": Timeout violated (" << time
-                 << "s). Setting max search depth to "
-                 << (stepsToGo - 1) << "!" << endl;
+                 << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
+                 << endl;
             setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
@@ -315,13 +314,12 @@ void IDS::resetStats() {
     numberOfRuns = 0;
 }
 
-void IDS::printStats(ostream& out,
-                     bool const& printRoundStats,
+void IDS::printStats(ostream& out, bool const& printRoundStats,
                      string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
     if (numberOfRuns > 0) {
         out << indent << "Average search depth: "
-            << ((double) accumulatedSearchDepth / (double) numberOfRuns)
+            << ((double)accumulatedSearchDepth / (double)numberOfRuns)
             << " (in " << numberOfRuns << " runs)" << endl;
     }
     out << indent << "Maximal search depth: " << maxSearchDepth << endl;

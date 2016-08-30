@@ -1,45 +1,40 @@
-void LogicalExpression::classifyActionFluents(
-        ActionFluentSet& /*positive*/,
-        ActionFluentSet& /*negative*/) {
+void LogicalExpression::classifyActionFluents(ActionFluentSet& /*positive*/,
+                                              ActionFluentSet& /*negative*/) {
     print(cout);
     assert(false);
     SystemUtils::abort(
-            "Error: classify action fluents called on logical expression that doesn't support it.");
+        "Error: classify action fluents called on logical expression that "
+        "doesn't support it.");
 }
 
 /*****************************************************************
                            Atomics
 *****************************************************************/
 
-void StateFluent::classifyActionFluents(
-        ActionFluentSet& /*positive*/,
-        ActionFluentSet& /*negative*/) {}
+void StateFluent::classifyActionFluents(ActionFluentSet& /*positive*/,
+                                        ActionFluentSet& /*negative*/) {}
 
-void ActionFluent::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& /*negative*/) {
+void ActionFluent::classifyActionFluents(ActionFluentSet& positive,
+                                         ActionFluentSet& /*negative*/) {
     positive.insert(this);
 }
 
-void NumericConstant::classifyActionFluents(
-        ActionFluentSet& /*positive*/,
-        ActionFluentSet& /*negative*/) {}
+void NumericConstant::classifyActionFluents(ActionFluentSet& /*positive*/,
+                                            ActionFluentSet& /*negative*/) {}
 
 /*****************************************************************
                            Connectives
 *****************************************************************/
 
-void Connective::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void Connective::classifyActionFluents(ActionFluentSet& positive,
+                                       ActionFluentSet& negative) {
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         exprs[i]->classifyActionFluents(positive, negative);
     }
 }
 
-void EqualsExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void EqualsExpression::classifyActionFluents(ActionFluentSet& positive,
+                                             ActionFluentSet& negative) {
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
@@ -48,9 +43,8 @@ void EqualsExpression::classifyActionFluents(
     negative.insert(fluents.begin(), fluents.end());
 }
 
-void GreaterExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void GreaterExpression::classifyActionFluents(ActionFluentSet& positive,
+                                              ActionFluentSet& negative) {
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
@@ -59,9 +53,8 @@ void GreaterExpression::classifyActionFluents(
     negative.insert(fluents.begin(), fluents.end());
 }
 
-void LowerExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void LowerExpression::classifyActionFluents(ActionFluentSet& positive,
+                                            ActionFluentSet& negative) {
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
@@ -70,9 +63,8 @@ void LowerExpression::classifyActionFluents(
     negative.insert(fluents.begin(), fluents.end());
 }
 
-void GreaterEqualsExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void GreaterEqualsExpression::classifyActionFluents(ActionFluentSet& positive,
+                                                    ActionFluentSet& negative) {
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
@@ -81,9 +73,8 @@ void GreaterEqualsExpression::classifyActionFluents(
     negative.insert(fluents.begin(), fluents.end());
 }
 
-void LowerEqualsExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void LowerEqualsExpression::classifyActionFluents(ActionFluentSet& positive,
+                                                  ActionFluentSet& negative) {
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 
@@ -92,9 +83,8 @@ void LowerEqualsExpression::classifyActionFluents(
     negative.insert(fluents.begin(), fluents.end());
 }
 
-void Subtraction::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void Subtraction::classifyActionFluents(ActionFluentSet& positive,
+                                        ActionFluentSet& negative) {
     exprs[0]->classifyActionFluents(positive, negative);
 
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -103,9 +93,8 @@ void Subtraction::classifyActionFluents(
     }
 }
 
-void Multiplication::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void Multiplication::classifyActionFluents(ActionFluentSet& positive,
+                                           ActionFluentSet& negative) {
     assert(exprs.size() == 2);
 
     ActionFluentSet tmpPos0;
@@ -119,13 +108,8 @@ void Multiplication::classifyActionFluents(
     NumericConstant* tmp0 = dynamic_cast<NumericConstant*>(exprs[0]);
     NumericConstant* tmp1 = dynamic_cast<NumericConstant*>(exprs[1]);
 
-    if ((tmp0 &&
-         tmp1) ||
-        (!tmp0 &&
-         !tmp1) ||
-        (tmp0 &&
-         MathUtils::doubleIsGreaterOrEqual(tmp0->value,
-                 0.0)) ||
+    if ((tmp0 && tmp1) || (!tmp0 && !tmp1) ||
+        (tmp0 && MathUtils::doubleIsGreaterOrEqual(tmp0->value, 0.0)) ||
         (tmp1 && MathUtils::doubleIsGreaterOrEqual(tmp1->value, 0.0))) {
         positive.insert(tmpPos0.begin(), tmpPos0.end());
         positive.insert(tmpPos1.begin(), tmpPos1.end());
@@ -145,9 +129,8 @@ void Multiplication::classifyActionFluents(
     }
 }
 
-void Division::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void Division::classifyActionFluents(ActionFluentSet& positive,
+                                     ActionFluentSet& negative) {
     assert(exprs.size() == 2);
 
     ActionFluentSet tmpPos0;
@@ -186,9 +169,8 @@ void Division::classifyActionFluents(
                           Unaries
 *****************************************************************/
 
-void Negation::classifyActionFluents(
-        ActionFluentSet& positive,
-        set <ActionFluent*>& negative) {
+void Negation::classifyActionFluents(ActionFluentSet& positive,
+                                     set<ActionFluent*>& negative) {
     ActionFluentSet pos;
     ActionFluentSet neg;
     expr->classifyActionFluents(neg, pos);
@@ -196,9 +178,8 @@ void Negation::classifyActionFluents(
     negative.insert(neg.begin(), neg.end());
 }
 
-void ExponentialFunction::classifyActionFluents(
-        ActionFluentSet& positive,
-        set <ActionFluent*>& negative) {
+void ExponentialFunction::classifyActionFluents(ActionFluentSet& positive,
+                                                set<ActionFluent*>& negative) {
     expr->classifyActionFluents(positive, negative);
 }
 
@@ -206,9 +187,8 @@ void ExponentialFunction::classifyActionFluents(
                          Conditionals
 *****************************************************************/
 
-void IfThenElseExpression::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void IfThenElseExpression::classifyActionFluents(ActionFluentSet& positive,
+                                                 ActionFluentSet& negative) {
     // TODO: For now, to simplify things, all action fluents that occur in the
     // condition are both positive and negative
     ActionFluentSet pos;
@@ -230,9 +210,8 @@ void IfThenElseExpression::classifyActionFluents(
     negative.insert(neg.begin(), neg.end());
 }
 
-void MultiConditionChecker::classifyActionFluents(
-        ActionFluentSet& positive,
-        ActionFluentSet& negative) {
+void MultiConditionChecker::classifyActionFluents(ActionFluentSet& positive,
+                                                  ActionFluentSet& negative) {
     for (unsigned int i = 0; i < conditions.size(); ++i) {
         // TODO: For now, to simplify things, all action fluents that occur in
         // the condition are both positive and negative

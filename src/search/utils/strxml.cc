@@ -14,16 +14,18 @@ struct PSink {
     void popNode(const std::string& name);
     void pushText(const std::string& text);
 
-    void formaterror() {error = 1; }
-    void streamerror() {error = 2; }
+    void formaterror() {
+        error = 1;
+    }
+    void streamerror() {
+        error = 2;
+    }
 
 private:
     std::stack<XMLParent*> s;
 };
 
-
 static const std::string EMPTY_STRING;
-
 
 static std::string next_token(int fd) {
     static char last_char = 0;
@@ -62,7 +64,6 @@ static std::string next_token(int fd) {
     return res;
 }
 
-
 static int token_type(char c) {
     if (c == '=')
         return 2;
@@ -74,7 +75,6 @@ static int token_type(char c) {
         return 0;
     return 1;
 }
-
 
 static str_vec tokenize_string(const std::string& str) {
     str_vec v;
@@ -98,16 +98,15 @@ static str_vec tokenize_string(const std::string& str) {
     return v;
 }
 
-
 static int do_node(const std::string& token, PSink& ps) {
     str_vec node_tokens = tokenize_string(token);
 
-    //cout << token << ":" << endl;
-    //for (int i=0; i<node_tokens.size(); i++)
+    // cout << token << ":" << endl;
+    // for (int i=0; i<node_tokens.size(); i++)
     //  cout << node_tokens[i] << endl;
 
     if (node_tokens.empty()) {
-        //cerr << "e1a" << endl;
+        // cerr << "e1a" << endl;
         return -2;
     }
 
@@ -123,11 +122,9 @@ static int do_node(const std::string& token, PSink& ps) {
             ps.popNode(name);
             return 0;
         }
-        if (i + 5 > node_tokens.size() ||
-            node_tokens[i + 1] != "=" ||
-            node_tokens[i + 2] != "\"" ||
-            node_tokens[i + 4] != "\"") {
-            //cerr << "e1b" << endl;
+        if (i + 5 > node_tokens.size() || node_tokens[i + 1] != "=" ||
+            node_tokens[i + 2] != "\"" || node_tokens[i + 4] != "\"") {
+            // cerr << "e1b" << endl;
             return -2;
         }
         str_pair p(node_tokens[i], node_tokens[i + 3]);
@@ -137,7 +134,6 @@ static int do_node(const std::string& token, PSink& ps) {
     return 1;
 }
 
-
 static bool parse_node(int fd, PSink& ps) {
     std::string token = next_token(fd);
     int depth = 0;
@@ -145,14 +141,14 @@ static bool parse_node(int fd, PSink& ps) {
         if (token == "<") {
             int delta = do_node(next_token(fd), ps);
             if (delta == -2) {
-                //cerr << "e1" << endl;
+                // cerr << "e1" << endl;
                 ps.formaterror();
                 return false;
             }
             depth += delta;
             token = next_token(fd);
             if (token != ">") {
-                //cerr << "e2" << endl;
+                // cerr << "e2" << endl;
                 ps.formaterror();
                 return false;
             }
@@ -168,9 +164,8 @@ static bool parse_node(int fd, PSink& ps) {
     return false;
 }
 
-
 void PSink::pushNode(const std::string& name, const str_pair_vec& params) {
-    //cout << "push: " << name << endl;
+    // cout << "push: " << name << endl;
     XMLParent* p = new XMLParent(name);
     for (size_t i = 0; i < params.size(); i++) {
         p->params[params[i].first] = params[i].second;
@@ -183,12 +178,10 @@ void PSink::pushNode(const std::string& name, const str_pair_vec& params) {
     s.push(p);
 }
 
-
 void PSink::popNode(const std::string& /*name*/) {
-    //cout << "pop: " << name << endl;
+    // cout << "pop: " << name << endl;
     s.pop();
 }
-
 
 void PSink::pushText(const std::string& text) {
     XMLText* t = new XMLText(text);
@@ -199,7 +192,6 @@ void PSink::pushText(const std::string& text) {
     }
 }
 
-
 /* ====================================================================== */
 /* XMLNode */
 
@@ -207,7 +199,7 @@ void PSink::pushText(const std::string& text) {
    destination string.  Returns false if no child node with the
    given name exists. */
 bool XMLNode::dissect(const std::string& child,
-        std::string& destination) const {
+                      std::string& destination) const {
     const XMLNode* c = getChild(child);
     if (c != 0) {
         destination = c->getText();
@@ -217,13 +209,11 @@ bool XMLNode::dissect(const std::string& child,
     }
 }
 
-
 /* Output operator for XML nodes. */
 std::ostream& operator<<(std::ostream& os, const XMLNode& xn) {
     xn.print(os);
     return os;
 }
-
 
 /* Output operator for XML node pointers. */
 std::ostream& operator<<(std::ostream& os, const XMLNode* xn) {
@@ -232,7 +222,6 @@ std::ostream& operator<<(std::ostream& os, const XMLNode* xn) {
     }
     return os;
 }
-
 
 /* Reads an XML node from the given file descriptor. */
 const XMLNode* XMLNode::readNode(int fd) {
@@ -244,7 +233,6 @@ const XMLNode* XMLNode::readNode(int fd) {
     }
 }
 
-
 /* ====================================================================== */
 /* XMLText */
 
@@ -253,49 +241,43 @@ std::string XMLText::getText() const {
     return text;
 }
 
-
 /* Returns the name for this XML node. */
 const std::string& XMLText::getName() const {
     return text;
 }
-
 
 /* Returns the parameter of this XML node with the given name. */
 const std::string& XMLText::getParam(std::string /*name*/) const {
     return EMPTY_STRING;
 }
 
-
 /* Prints this object on the given stream. */
 void XMLText::print(std::ostream& os) const {
     os << text;
 }
-
 
 /* ====================================================================== */
 /* XMLParent */
 
 /* Deletes this XML parent node. */
 XMLParent::~XMLParent() {
-    for (node_vec::const_iterator ni = children.begin();
-         ni != children.end(); ni++) {
+    for (node_vec::const_iterator ni = children.begin(); ni != children.end();
+         ni++) {
         if (*ni) {
             delete *ni;
         }
     }
 }
 
-
 /* Returns the ith child of this XML node. */
 const XMLNode* XMLParent::getChild(int i) const {
     return children[i];
 }
 
-
 /* Returns the child of this XML node with the given name. */
 const XMLNode* XMLParent::getChild(const std::string& name) const {
-    for (node_vec::const_iterator ni = children.begin();
-         ni != children.end(); ni++) {
+    for (node_vec::const_iterator ni = children.begin(); ni != children.end();
+         ni++) {
         const XMLParent* p = dynamic_cast<const XMLParent*>(*ni);
         if (p != 0 && p->name == name) {
             return p;
@@ -304,18 +286,16 @@ const XMLNode* XMLParent::getChild(const std::string& name) const {
     return 0;
 }
 
-
 /* Returns the size of this XML node. */
 int XMLParent::size() const {
-    return (int) children.size();
+    return (int)children.size();
 }
-
 
 /* Returns the text for this XML node. */
 std::string XMLParent::getText() const {
     std::ostringstream os;
-    for (node_vec::const_iterator ni = children.begin();
-         ni != children.end(); ni++) {
+    for (node_vec::const_iterator ni = children.begin(); ni != children.end();
+         ni++) {
         os << *ni;
     }
 #if !HAVE_SSTREAM
@@ -324,12 +304,10 @@ std::string XMLParent::getText() const {
     return os.str();
 }
 
-
 /* Returns the name for this XML node. */
 const std::string& XMLParent::getName() const {
     return name;
 }
-
 
 /* Returns the parameter of this XML node with the given name. */
 const std::string& XMLParent::getParam(std::string name) const {
@@ -337,17 +315,16 @@ const std::string& XMLParent::getParam(std::string name) const {
     return (pi != params.end()) ? (*pi).second : EMPTY_STRING;
 }
 
-
 /* prints this object on the given stream. */
 void XMLParent::print(std::ostream& os) const {
     os << "<" << name;
-    for (str_str_map::const_iterator itr = params.begin();
-         itr != params.end(); itr++) {
+    for (str_str_map::const_iterator itr = params.begin(); itr != params.end();
+         itr++) {
         os << " " << itr->first << "=\"" << itr->second << "\"";
     }
     os << ">";
-    for (node_vec::const_iterator ni = children.begin();
-         ni != children.end(); ni++) {
+    for (node_vec::const_iterator ni = children.begin(); ni != children.end();
+         ni++) {
         os << *ni;
     }
     os << "</" << name << ">";

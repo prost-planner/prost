@@ -3,8 +3,8 @@
 #include "thts.h"
 
 #include "utils/math_utils.h"
-#include "utils/system_utils.h"
 #include "utils/string_utils.h"
+#include "utils/system_utils.h"
 
 #include <iostream>
 
@@ -45,14 +45,13 @@ BackupFunction* BackupFunction::fromString(std::string& desc, THTS* thts) {
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
+                               value);
         }
     }
 
     return result;
 }
-
 
 /******************************************************************
                          Backup Function
@@ -89,8 +88,8 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
         if (child) {
             if (child->initialized) {
                 node->solved &= child->solved;
-                node->futureReward =
-                    std::max(node->futureReward, child->getExpectedRewardEstimate());
+                node->futureReward = std::max(
+                    node->futureReward, child->getExpectedRewardEstimate());
             } else {
                 node->solved = false;
             }
@@ -105,8 +104,9 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
         lockBackup = useBackupLock;
     }
 
-    // std::cout << "updated dec node with " << node->stepsToGo 
-    //           << " steps-to-go and immediate reward " << node->immediateReward << std::endl;
+    // std::cout << "updated dec node with " << node->stepsToGo
+    //           << " steps-to-go and immediate reward " <<
+    //           node->immediateReward << std::endl;
     // node->print(std::cout);
     // std::cout << std::endl;
 }
@@ -121,7 +121,8 @@ void BackupFunction::printStats(std::ostream& out, std::string indent) {
                        Monte-Carlo Backups
 ******************************************************************/
 
-bool MCBackupFunction::setValueFromString(std::string& param, std::string& value) {
+bool MCBackupFunction::setValueFromString(std::string& param,
+                                          std::string& value) {
     if (param == "-ilr") {
         setInitialLearningRate(atof(value.c_str()));
         return true;
@@ -132,12 +133,14 @@ bool MCBackupFunction::setValueFromString(std::string& param, std::string& value
     return false;
 }
 
-void MCBackupFunction::backupChanceNode(SearchNode* node, double const& futReward) {
+void MCBackupFunction::backupChanceNode(SearchNode* node,
+                                        double const& futReward) {
     ++node->numberOfVisits;
 
-    node->futureReward = node->futureReward +
-        initialLearningRate * (futReward - node->futureReward) / 
-        (1.0 + (learningRateDecay * (double)node->numberOfVisits));
+    node->futureReward =
+        node->futureReward +
+        initialLearningRate * (futReward - node->futureReward) /
+            (1.0 + (learningRateDecay * (double)node->numberOfVisits));
 
     // std::cout << "updated chance node:" << std::endl;
     // node->print(std::cout);
@@ -148,7 +151,8 @@ void MCBackupFunction::backupChanceNode(SearchNode* node, double const& futRewar
                    MaxMonte-Carlo Backups
 ******************************************************************/
 
-void MaxMCBackupFunction::backupChanceNode(SearchNode* node, double const& /*futReward*/) {
+void MaxMCBackupFunction::backupChanceNode(SearchNode* node,
+                                           double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
@@ -175,7 +179,8 @@ void MaxMCBackupFunction::backupChanceNode(SearchNode* node, double const& /*fut
                       Partial Bellman Backups
 ******************************************************************/
 
-void PBBackupFunction::backupChanceNode(SearchNode* node, double const& /*futReward*/) {
+void PBBackupFunction::backupChanceNode(SearchNode* node,
+                                        double const& /*futReward*/) {
     assert(MathUtils::doubleIsEqual(node->immediateReward, 0.0));
 
     ++node->numberOfVisits;
@@ -191,7 +196,8 @@ void PBBackupFunction::backupChanceNode(SearchNode* node, double const& /*futRew
 
     for (SearchNode* child : node->children) {
         if (child) {
-            node->futureReward += (child->prob * child->getExpectedRewardEstimate());
+            node->futureReward +=
+                (child->prob * child->getExpectedRewardEstimate());
             probSum += child->prob;
 
             if (child->solved) {
@@ -207,4 +213,3 @@ void PBBackupFunction::backupChanceNode(SearchNode* node, double const& /*futRew
     // node->print(std::cout);
     // std::cout << std::endl;
 }
-
