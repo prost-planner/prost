@@ -1,21 +1,20 @@
 #ifndef RDDL_CLIENT_H
 #define RDDL_CLIENT_H
 
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 class ProstPlanner;
 class XMLNode;
 
 class IPPCClient {
 public:
-    IPPCClient(ProstPlanner* _planner,
-               std::string _hostName,
-               unsigned short _port,
-               std::map<std::string, int> const& _stateVariableIndices,
-               std::vector<std::vector<std::string> > const& _stateVariableValues) :
-          planner(_planner),
+    IPPCClient(
+        ProstPlanner* _planner, std::string _hostName, unsigned short _port,
+        std::map<std::string, int> const& _stateVariableIndices,
+        std::vector<std::vector<std::string>> const& _stateVariableValues)
+        : planner(_planner),
           hostName(_hostName),
           port(_port),
           socket(-1),
@@ -38,11 +37,9 @@ private:
     void finishRound(XMLNode const* node, double& immediateReward);
 
     bool submitAction(std::vector<std::string>& action,
-                      std::vector<double>& nextState,
-                      double& immediateReward);
+                      std::vector<double>& nextState, double& immediateReward);
 
-    void readState(XMLNode const* node,
-                   std::vector<double>& nextState,
+    void readState(XMLNode const* node, std::vector<double>& nextState,
                    double& immediateReward);
     void readVariable(XMLNode const* node,
                       std::map<std::string, std::string>& result);
@@ -57,7 +54,7 @@ private:
     long remainingTime;
 
     std::map<std::string, int> stateVariableIndices;
-    std::vector<std::vector<std::string> > stateVariableValues;
+    std::vector<std::vector<std::string>> stateVariableValues;
 };
 
 #endif

@@ -10,10 +10,7 @@ class PlanningTask;
 
 class ProstPlanner {
 public:
-    enum TimeoutManagementMethod {
-        NONE,
-        UNIFORM
-    };
+    enum TimeoutManagementMethod { NONE, UNIFORM };
 
     ProstPlanner(std::string& plannerDesc);
 
@@ -29,7 +26,8 @@ public:
     void finishRound(double const& roundReward);
 
     // These are called at the beginning and end of a step
-    void initStep(std::vector<double> const& nextStateVec, long const& remainingTime);
+    void initStep(std::vector<double> const& nextStateVec,
+                  long const& remainingTime);
     void finishStep(double const& immediateReward);
 
     // This is the main function of the PROST planner that starts the search
@@ -81,8 +79,8 @@ private:
     int seed;
     TimeoutManagementMethod tmMethod;
 
-    std::vector<std::vector<double> > immediateRewards;
-    std::vector<std::vector<int> > chosenActionIndices;
+    std::vector<std::vector<double>> immediateRewards;
+    std::vector<std::vector<int>> chosenActionIndices;
 };
 
 #endif

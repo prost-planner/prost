@@ -1,6 +1,5 @@
-LogicalExpression*
-LogicalExpression::instantiate(PlanningTask* /*task*/,
-                               Instantiations& /*replace*/) {
+LogicalExpression* LogicalExpression::instantiate(PlanningTask* /*task*/,
+                                                  Instantiations& /*replace*/) {
     assert(false);
     return nullptr;
 }
@@ -119,9 +118,8 @@ LogicalExpression* LowerExpression::instantiate(PlanningTask* task,
     return new LowerExpression(newExpr);
 }
 
-LogicalExpression*
-GreaterEqualsExpression::instantiate(PlanningTask* task,
-                                     Instantiations& replace) {
+LogicalExpression* GreaterEqualsExpression::instantiate(
+    PlanningTask* task, Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         newExpr.push_back(exprs[i]->instantiate(task, replace));
@@ -129,9 +127,8 @@ GreaterEqualsExpression::instantiate(PlanningTask* task,
     return new GreaterEqualsExpression(newExpr);
 }
 
-LogicalExpression*
-LowerEqualsExpression::instantiate(PlanningTask* task,
-                                   Instantiations& replace) {
+LogicalExpression* LowerEqualsExpression::instantiate(PlanningTask* task,
+                                                      Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         newExpr.push_back(exprs[i]->instantiate(task, replace));
@@ -195,23 +192,20 @@ LogicalExpression* ExponentialFunction::instantiate(PlanningTask* task,
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression*
-KronDeltaDistribution::instantiate(PlanningTask* task,
-                                   Instantiations& replace) {
+LogicalExpression* KronDeltaDistribution::instantiate(PlanningTask* task,
+                                                      Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new KronDeltaDistribution(newExpr);
 }
 
-LogicalExpression*
-BernoulliDistribution::instantiate(PlanningTask* task,
-                                   Instantiations& replace) {
+LogicalExpression* BernoulliDistribution::instantiate(PlanningTask* task,
+                                                      Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new BernoulliDistribution(newExpr);
 }
 
-LogicalExpression*
-DiscreteDistribution::instantiate(PlanningTask* task,
-                                  Instantiations& replace) {
+LogicalExpression* DiscreteDistribution::instantiate(PlanningTask* task,
+                                                     Instantiations& replace) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
 
@@ -236,9 +230,8 @@ LogicalExpression* IfThenElseExpression::instantiate(PlanningTask* task,
                                     newValueIfFalse);
 }
 
-LogicalExpression*
-MultiConditionChecker::instantiate(PlanningTask* task,
-                                   Instantiations& replace) {
+LogicalExpression* MultiConditionChecker::instantiate(PlanningTask* task,
+                                                      Instantiations& replace) {
     std::vector<LogicalExpression*> newConditions;
     std::vector<LogicalExpression*> newEffects;
 

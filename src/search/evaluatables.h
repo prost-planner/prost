@@ -8,10 +8,11 @@
 class Evaluatable {
 public:
     enum CachingType {
-        NONE, // too many variables influence formula
-        MAP, // many variables influence formula
+        NONE,         // too many variables influence formula
+        MAP,          // many variables influence formula
         DISABLED_MAP, // as MAP, but after disableCaching() has been called
-        VECTOR // only few variables influence formula, so we use a vector for caching
+        VECTOR // only few variables influence formula, so we use a vector for
+               // caching
     };
 
     // This function is called for state transitions with KleeneStates. The
@@ -101,8 +102,8 @@ public:
     // KleeneCachingType describes which of the two (if any) datastructures is
     // used to cache computed values on Kleene states
     CachingType kleeneCachingType;
-    std::unordered_map<long, std::set<double> > kleeneEvaluationCacheMap;
-    std::vector<std::set<double> > kleeneEvaluationCacheVector;
+    std::unordered_map<long, std::set<double>> kleeneEvaluationCacheMap;
+    std::vector<std::set<double>> kleeneEvaluationCacheVector;
 
     // ActionHashKeyMap contains the hash keys of the actions that influence
     // this Evaluatable (these are added to the state fluent hash keys of a
@@ -115,33 +116,33 @@ public:
     long stateHashKey;
 
 protected:
-    Evaluatable(std::string _name, int _hashIndex) :
-        name(_name),
-        formula(nullptr),
-        hashIndex(_hashIndex),
-        cachingType(NONE),
-        kleeneCachingType(NONE) {}
+    Evaluatable(std::string _name, int _hashIndex)
+        : name(_name),
+          formula(nullptr),
+          hashIndex(_hashIndex),
+          cachingType(NONE),
+          kleeneCachingType(NONE) {}
 
-    Evaluatable(std::string _name, LogicalExpression* _formula,
-                int _hashIndex) :
-        name(_name),
-        formula(_formula),
-        hashIndex(_hashIndex),
-        cachingType(NONE),
-        kleeneCachingType(NONE) {}
+    Evaluatable(std::string _name, LogicalExpression* _formula, int _hashIndex)
+        : name(_name),
+          formula(_formula),
+          hashIndex(_hashIndex),
+          cachingType(NONE),
+          kleeneCachingType(NONE) {}
 };
 
 class DeterministicEvaluatable : public Evaluatable {
 public:
     DeterministicEvaluatable(std::string _name, LogicalExpression* _formula,
-                             int _hashIndex) :
-        Evaluatable(_name, _formula, _hashIndex) {}
+                             int _hashIndex)
+        : Evaluatable(_name, _formula, _hashIndex) {}
 
-    DeterministicEvaluatable(std::string _name, int _hashIndex) :
-        Evaluatable(_name, _hashIndex) {}
+    DeterministicEvaluatable(std::string _name, int _hashIndex)
+        : Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula (deterministically) to a double
-    void evaluate(double& res, State const& current, ActionState const& actions) {
+    void evaluate(double& res, State const& current,
+                  ActionState const& actions) {
         switch (cachingType) {
         case NONE:
             formula->evaluate(res, current, actions);
@@ -184,7 +185,8 @@ public:
                    (actionHashKeyMap[actions.index] >= 0) &&
                    (stateHashKey >= 0));
             assert(stateHashKey < evaluationCacheVector.size());
-            assert(!MathUtils::doubleIsMinusInfinity(evaluationCacheVector[stateHashKey]));
+            assert(!MathUtils::doubleIsMinusInfinity(
+                evaluationCacheVector[stateHashKey]));
 
             res = evaluationCacheVector[stateHashKey];
             break;
@@ -201,11 +203,12 @@ public:
 
 class ProbabilisticEvaluatable : public Evaluatable {
 public:
-    ProbabilisticEvaluatable(std::string _name, int _hashIndex) :
-        Evaluatable(_name, _hashIndex) {}
+    ProbabilisticEvaluatable(std::string _name, int _hashIndex)
+        : Evaluatable(_name, _hashIndex) {}
 
     // Evaluates the formula to a discrete probability distribution
-    void evaluate(DiscretePD& res, State const& current, ActionState const& actions) {
+    void evaluate(DiscretePD& res, State const& current,
+                  ActionState const& actions) {
         assert(res.isUndefined());
 
         switch (cachingType) {
@@ -266,12 +269,12 @@ public:
 
 class RewardFunction : public DeterministicEvaluatable {
 public:
-    RewardFunction(LogicalExpression* _formula, int _hashIndex,
-                   double _minVal, double _maxVal, bool _actionIndependent) :
-        DeterministicEvaluatable("Reward", _formula, _hashIndex),
-        minVal(_minVal),
-        maxVal(_maxVal),
-        actionIndependent(_actionIndependent) {}
+    RewardFunction(LogicalExpression* _formula, int _hashIndex, double _minVal,
+                   double _maxVal, bool _actionIndependent)
+        : DeterministicEvaluatable("Reward", _formula, _hashIndex),
+          minVal(_minVal),
+          maxVal(_maxVal),
+          actionIndependent(_actionIndependent) {}
 
     double const& getMinVal() const {
         return minVal;
@@ -293,9 +296,8 @@ private:
 
 class DeterministicCPF : public DeterministicEvaluatable {
 public:
-    DeterministicCPF(int _hashIndex, StateFluent* _head) :
-        DeterministicEvaluatable(_head->name, _hashIndex),
-        head(_head) {}
+    DeterministicCPF(int _hashIndex, StateFluent* _head)
+        : DeterministicEvaluatable(_head->name, _hashIndex), head(_head) {}
 
     int getDomainSize() const {
         return head->values.size();
@@ -307,9 +309,8 @@ public:
 
 class ProbabilisticCPF : public ProbabilisticEvaluatable {
 public:
-    ProbabilisticCPF(int _hashIndex, StateFluent* _head) :
-        ProbabilisticEvaluatable(_head->name, _hashIndex),
-        head(_head) {}
+    ProbabilisticCPF(int _hashIndex, StateFluent* _head)
+        : ProbabilisticEvaluatable(_head->name, _hashIndex), head(_head) {}
 
     int getDomainSize() const {
         return head->values.size();
@@ -318,6 +319,5 @@ public:
     // The state fluent that is updated by evaluating this
     StateFluent* head;
 };
-
 
 #endif

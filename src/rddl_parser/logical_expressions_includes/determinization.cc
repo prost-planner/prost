@@ -157,7 +157,8 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely() {
         // exclude it for now. (TODO!!!)
         if (!nc) {
             SystemUtils::abort(
-                    "NOT SUPPORTED: Discrete statement with conditional probability detected.");
+                "NOT SUPPORTED: Discrete statement with conditional "
+                "probability detected.");
         }
 
         if (MathUtils::doubleIsGreater(nc->value, highestProb)) {
@@ -176,7 +177,8 @@ LogicalExpression* IfThenElseExpression::determinizeMostLikely() {
     LogicalExpression* newCondition = condition->determinizeMostLikely();
     LogicalExpression* newValueIfTrue = valueIfTrue->determinizeMostLikely();
     LogicalExpression* newValueIfFalse = valueIfFalse->determinizeMostLikely();
-    return new IfThenElseExpression(newCondition, newValueIfTrue, newValueIfFalse);
+    return new IfThenElseExpression(newCondition, newValueIfTrue,
+                                    newValueIfFalse);
 }
 
 LogicalExpression* MultiConditionChecker::determinizeMostLikely() {

@@ -12,9 +12,10 @@ public:
 
     // Create an outcome selection component
     static OutcomeSelection* fromString(std::string& desc, THTS* thts);
-    
+
     // Set parameters from command line
-    virtual bool setValueFromString(std::string& /*param*/, std::string& /*value*/) {
+    virtual bool setValueFromString(std::string& /*param*/,
+                                    std::string& /*value*/) {
         return false;
     }
 
@@ -28,45 +29,35 @@ public:
     virtual void initTrial() {}
 
     // Outcome selection
-    virtual SearchNode* selectOutcome(SearchNode* node,
-                                      PDState& nextState,
-                                      int varIndex,
-                                      int lastProbVarIndex) = 0;
+    virtual SearchNode* selectOutcome(SearchNode* node, PDState& nextState,
+                                      int varIndex, int lastProbVarIndex) = 0;
 
     // Prints statistics
     virtual void printStats(std::ostream& /*out*/, std::string /*indent*/) {}
 
 protected:
-    OutcomeSelection(THTS* _thts) :
-        thts(_thts) {}
+    OutcomeSelection(THTS* _thts) : thts(_thts) {}
 
     THTS* thts;
 };
 
 class MCOutcomeSelection : public OutcomeSelection {
 public:
-    MCOutcomeSelection(THTS* _thts) :
-        OutcomeSelection(_thts) {}
+    MCOutcomeSelection(THTS* _thts) : OutcomeSelection(_thts) {}
 
-    SearchNode* selectOutcome(SearchNode* node,
-                              PDState& nextState,
-                              int varIndex,
-                              int lastProbVarIndex) override;
+    SearchNode* selectOutcome(SearchNode* node, PDState& nextState,
+                              int varIndex, int lastProbVarIndex) override;
 
-    virtual void computeBlacklist(SearchNode* /*node*/,
-                                  PDState& /*nextState*/,
+    virtual void computeBlacklist(SearchNode* /*node*/, PDState& /*nextState*/,
                                   int /*varIndex*/,
                                   std::vector<int>& /*blacklist*/) const {}
 };
 
 class UnsolvedMCOutcomeSelection : public MCOutcomeSelection {
 public:
-    UnsolvedMCOutcomeSelection(THTS* _thts) :
-        MCOutcomeSelection(_thts) {}
+    UnsolvedMCOutcomeSelection(THTS* _thts) : MCOutcomeSelection(_thts) {}
 
-    void computeBlacklist(SearchNode* node,
-                          PDState& nextState,
-                          int varIndex,
+    void computeBlacklist(SearchNode* node, PDState& nextState, int varIndex,
                           std::vector<int>& blacklist) const override;
 };
 

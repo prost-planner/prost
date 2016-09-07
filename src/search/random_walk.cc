@@ -15,7 +15,7 @@ bool RandomWalk::setValueFromString(std::string& param,
         setNumberOfIterations(atoi(value.c_str()));
         return true;
     }
-    
+
     return SearchEngine::setValueFromString(param, value);
 }
 
@@ -65,11 +65,13 @@ void RandomWalk::performRandomWalks(PDState const& root, int firstActionIndex,
     result /= (double)numberOfIterations;
 }
 
-void RandomWalk::sampleSuccessorState(PDState const& current, int const& actionIndex,
-                                      PDState& next, double& reward) const {
+void RandomWalk::sampleSuccessorState(PDState const& current,
+                                      int const& actionIndex, PDState& next,
+                                      double& reward) const {
     calcReward(current, actionIndex, reward);
     calcSuccessorState(current, actionIndex, next);
-    for (unsigned int varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
+    for (unsigned int varIndex = 0;
+         varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
         next.sample(varIndex);
     }
 }

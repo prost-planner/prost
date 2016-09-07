@@ -2,8 +2,8 @@
 
 #include "thts.h"
 
-#include "utils/system_utils.h"
 #include "utils/string_utils.h"
+#include "utils/system_utils.h"
 
 /******************************************************************
                      Action Selection Creation
@@ -39,8 +39,8 @@ RecommendationFunction* RecommendationFunction::fromString(std::string& desc,
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
+                               value);
         }
     }
 
