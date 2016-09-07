@@ -1,12 +1,12 @@
 #include "logical_expressions.h"
 
-#include "rddl_parser.h"
 #include "instantiator.h"
 #include "planning_task.h"
 #include "probability_distribution.h"
+#include "rddl_parser.h"
 
-#include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
 #include <iostream>
@@ -17,8 +17,8 @@ using namespace std;
                         Constructors
 *****************************************************************/
 
-Object::Object(std::string _name, Type* _type) :
-        Parameter(_name, _type), types() {
+Object::Object(std::string _name, Type* _type)
+    : Parameter(_name, _type), types() {
     Type* tmpType = type;
 
     while (tmpType) {
@@ -31,14 +31,14 @@ Object::Object(std::string _name, Type* _type) :
 
 // This constructor is used for instantiation
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
-                                           std::vector<Parameter*> _params) :
-    LogicalExpression(),
-    variableName(source.variableName),
-    fullName(source.variableName),
-    params(_params),
-    variableType(source.variableType),
-    valueType(source.valueType),
-    initialValue(source.initialValue) {
+                                           std::vector<Parameter*> _params)
+    : LogicalExpression(),
+      variableName(source.variableName),
+      fullName(source.variableName),
+      params(_params),
+      variableType(source.variableType),
+      valueType(source.valueType),
+      initialValue(source.initialValue) {
     assert(params.size() == source.params.size());
     for (unsigned int i = 0; i < params.size(); ++i) {
         if (!params[i]->type) {
@@ -62,14 +62,14 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
 
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
                                            std::vector<Parameter*> _params,
-                                           double _initialValue) :
-    LogicalExpression(),
-    variableName(source.variableName),
-    fullName(source.variableName),
-    params(_params),
-    variableType(source.variableType),
-    valueType(source.valueType),
-    initialValue(_initialValue) {
+                                           double _initialValue)
+    : LogicalExpression(),
+      variableName(source.variableName),
+      fullName(source.variableName),
+      params(_params),
+      variableType(source.variableType),
+      valueType(source.valueType),
+      initialValue(_initialValue) {
     assert(params.size() == source.params.size());
     for (unsigned int i = 0; i < params.size(); ++i) {
         if (!params[i]->type) {
@@ -102,15 +102,15 @@ bool Type::isSubtypeOf(Type* const& other) const {
     return false;
 }
 
-#include "logical_expressions_includes/instantiate.cc"
-#include "logical_expressions_includes/replace_quantifier.cc"
-#include "logical_expressions_includes/simplify.cc"
-#include "logical_expressions_includes/determinization.cc"
-#include "logical_expressions_includes/collect_initial_info.cc"
-#include "logical_expressions_includes/classify_action_fluents.cc"
 #include "logical_expressions_includes/calculate_domain.cc"
 #include "logical_expressions_includes/calculate_domain_as_interval.cc"
+#include "logical_expressions_includes/classify_action_fluents.cc"
+#include "logical_expressions_includes/collect_initial_info.cc"
+#include "logical_expressions_includes/determinization.cc"
 #include "logical_expressions_includes/evaluate.cc"
-#include "logical_expressions_includes/evaluate_to_pd.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
+#include "logical_expressions_includes/evaluate_to_pd.cc"
+#include "logical_expressions_includes/instantiate.cc"
 #include "logical_expressions_includes/print.cc"
+#include "logical_expressions_includes/replace_quantifier.cc"
+#include "logical_expressions_includes/simplify.cc"

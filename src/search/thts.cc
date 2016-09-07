@@ -1,9 +1,9 @@
 #include "thts.h"
 
 #include "action_selection.h"
-#include "outcome_selection.h"
 #include "backup_function.h"
 #include "initializer.h"
+#include "outcome_selection.h"
 #include "recommendation_function.h"
 
 #include "utils/system_utils.h"
@@ -12,33 +12,33 @@
                      Search Engine Creation
 ******************************************************************/
 
-THTS::THTS(std::string _name) :
-    ProbabilisticSearchEngine(_name),
-    actionSelection(nullptr),
-    outcomeSelection(nullptr),
-    backupFunction(nullptr),
-    initializer(nullptr),
-    recommendationFunction(nullptr),
-    currentRootNode(nullptr),
-    chosenOutcome(nullptr),
-    tipNodeOfTrial(nullptr),
-    states(SearchEngine::horizon + 1),
-    stepsToGoInCurrentState(SearchEngine::horizon),
-    stepsToGoInNextState(SearchEngine::horizon - 1),
-    appliedActionIndex(-1),
-    trialReward(0.0),
-    currentTrial(0),
-    initializedDecisionNodes(0),
-    lastUsedNodePoolIndex(0),
-    terminationMethod(THTS::TIME),
-    maxNumberOfTrials(0),
-    numberOfNewDecisionNodesPerTrial(1),
-    numberOfRuns(0),
-    cacheHits(0),
-    accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
-    firstSolvedFound(false),
-    accumulatedNumberOfTrialsInRootState(0),
-    accumulatedNumberOfSearchNodesInRootState(0) {
+THTS::THTS(std::string _name)
+    : ProbabilisticSearchEngine(_name),
+      actionSelection(nullptr),
+      outcomeSelection(nullptr),
+      backupFunction(nullptr),
+      initializer(nullptr),
+      recommendationFunction(nullptr),
+      currentRootNode(nullptr),
+      chosenOutcome(nullptr),
+      tipNodeOfTrial(nullptr),
+      states(SearchEngine::horizon + 1),
+      stepsToGoInCurrentState(SearchEngine::horizon),
+      stepsToGoInNextState(SearchEngine::horizon - 1),
+      appliedActionIndex(-1),
+      trialReward(0.0),
+      currentTrial(0),
+      initializedDecisionNodes(0),
+      lastUsedNodePoolIndex(0),
+      terminationMethod(THTS::TIME),
+      maxNumberOfTrials(0),
+      numberOfNewDecisionNodesPerTrial(1),
+      numberOfRuns(0),
+      cacheHits(0),
+      accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
+      firstSolvedFound(false),
+      accumulatedNumberOfTrialsInRootState(0),
+      accumulatedNumberOfSearchNodesInRootState(0) {
     setMaxNumberOfNodes(24000000);
     setTimeout(1.0);
     setRecommendationFunction(new ExpectedBestArmRecommendation(this));
@@ -62,7 +62,8 @@ bool THTS::setValueFromString(std::string& param, std::string& value) {
         setInitializer(Initializer::fromString(value, this));
         return true;
     } else if (param == "-rec") {
-        setRecommendationFunction(RecommendationFunction::fromString(value, this));
+        setRecommendationFunction(
+            RecommendationFunction::fromString(value, this));
         return true;
     }
 
@@ -125,7 +126,8 @@ void THTS::setInitializer(Initializer* _initializer) {
     initializer = _initializer;
 }
 
-void THTS::setRecommendationFunction(RecommendationFunction* _recommendationFunction) {
+void THTS::setRecommendationFunction(
+    RecommendationFunction* _recommendationFunction) {
     if (recommendationFunction) {
         delete recommendationFunction;
     }
@@ -149,9 +151,10 @@ void THTS::learn() {
     // All ingredients must have been specified
     if (!actionSelection || !outcomeSelection || !backupFunction ||
         !initializer || !recommendationFunction) {
-        SystemUtils::abort("Action selection, outcome selection, backup "
-                           "function, initializer, and recommendation function "
-                           "must be defined in a THTS search engine!");   
+        SystemUtils::abort(
+            "Action selection, outcome selection, backup "
+            "function, initializer, and recommendation function "
+            "must be defined in a THTS search engine!");
     }
 
     std::cout << name << ": learning..." << std::endl;
@@ -204,7 +207,8 @@ void THTS::initStep(State const& _rootState) {
     currentRootNode = createRootNode();
 
     std::cout << name << ": Maximal search depth set to "
-              << maxSearchDepthForThisStep << std::endl << std::endl;
+              << maxSearchDepthForThisStep << std::endl
+              << std::endl;
 }
 
 inline void THTS::initTrial() {
@@ -239,7 +243,7 @@ void THTS::estimateBestActions(State const& _rootState,
                                std::vector<int>& bestActions) {
     assert(bestActions.empty());
 
-    timer.reset();
+    stopwatch.reset();
 
     // Init round (if this is the first call in a round)
     if (_rootState.stepsToGo() == SearchEngine::horizon) {
@@ -268,9 +272,13 @@ void THTS::estimateBestActions(State const& _rootState,
     // Start the main loop that starts trials until some termination criterion
     // is fullfilled
     while (moreTrials()) {
-        // std::cout << "---------------------------------------------------------" << std::endl;
+        // std::cout <<
+        // "---------------------------------------------------------" <<
+        // std::endl;
         // std::cout << "TRIAL " << (currentTrial+1) << std::endl;
-        // std::cout << "---------------------------------------------------------" << std::endl;
+        // std::cout <<
+        // "---------------------------------------------------------" <<
+        // std::endl;
         visitDecisionNode(currentRootNode);
         ++currentTrial;
         // for(unsigned int i = 0; i < currentRootNode->children.size(); ++i) {
@@ -295,7 +303,8 @@ void THTS::estimateBestActions(State const& _rootState,
         // in this case) make sure that we keep the tree and simply follow the
         // optimal policy.
         firstSolvedFound = true;
-        accumulatedNumberOfStepsToGoInFirstSolvedRootState += _rootState.stepsToGo();
+        accumulatedNumberOfStepsToGoInFirstSolvedRootState +=
+            _rootState.stepsToGo();
     }
 
     if (_rootState.stepsToGo() == SearchEngine::horizon) {
@@ -304,7 +313,7 @@ void THTS::estimateBestActions(State const& _rootState,
     }
 
     // Print statistics
-    std::cout << "Search time: " << timer << std::endl;
+    std::cout << "Search time: " << stopwatch << std::endl;
     printStats(std::cout, (_rootState.stepsToGo() == 1));
 }
 
@@ -322,7 +331,7 @@ bool THTS::moreTrials() {
     // Check selected termination criterion
     switch (terminationMethod) {
     case THTS::TIME:
-        if (MathUtils::doubleIsGreater(timer(), timeout)) {
+        if (MathUtils::doubleIsGreater(stopwatch(), timeout)) {
             return false;
         }
         break;
@@ -332,7 +341,7 @@ bool THTS::moreTrials() {
         }
         break;
     case THTS::TIME_AND_NUMBER_OF_TRIALS:
-        if (MathUtils::doubleIsGreater(timer(), timeout) ||
+        if (MathUtils::doubleIsGreater(stopwatch(), timeout) ||
             (currentTrial == maxNumberOfTrials)) {
             return false;
         }
@@ -389,17 +398,23 @@ void THTS::visitDecisionNode(SearchNode* node) {
         // std::cout << std::endl;
 
         // Sample successor state
-        calcSuccessorState(states[stepsToGoInCurrentState], appliedActionIndex, states[stepsToGoInNextState]);
+        calcSuccessorState(states[stepsToGoInCurrentState], appliedActionIndex,
+                           states[stepsToGoInNextState]);
 
         // std::cout << "Sampled PDState is " << std::endl;
         // states[stepsToGoInNextState].printPDStateCompact(std::cout);
         // std::cout << std::endl;
 
-        lastProbabilisticVarIndex = - 1;
-        for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-            if (states[stepsToGoInNextState].probabilisticStateFluentAsPD(i).isDeterministic()) {
-                states[stepsToGoInNextState].probabilisticStateFluent(i) = 
-                    states[stepsToGoInNextState].probabilisticStateFluentAsPD(i).values[0];
+        lastProbabilisticVarIndex = -1;
+        for (unsigned int i = 0; i < State::numberOfProbabilisticStateFluents;
+             ++i) {
+            if (states[stepsToGoInNextState]
+                    .probabilisticStateFluentAsPD(i)
+                    .isDeterministic()) {
+                states[stepsToGoInNextState].probabilisticStateFluent(i) =
+                    states[stepsToGoInNextState]
+                        .probabilisticStateFluentAsPD(i)
+                        .values[0];
             } else {
                 lastProbabilisticVarIndex = i;
             }
@@ -424,10 +439,12 @@ void THTS::visitDecisionNode(SearchNode* node) {
         // else in the tree in the future
         if (node->solved) {
             if (cachingEnabled &&
-                ProbabilisticSearchEngine::stateValueCache.find(states[node->stepsToGo]) ==
-                ProbabilisticSearchEngine::stateValueCache.end()) {
-                ProbabilisticSearchEngine::stateValueCache[states[node->stepsToGo]] =
-                    node->getExpectedFutureRewardEstimate();
+                ProbabilisticSearchEngine::stateValueCache.find(
+                    states[node->stepsToGo]) ==
+                    ProbabilisticSearchEngine::stateValueCache.end()) {
+                ProbabilisticSearchEngine::stateValueCache
+                    [states[node->stepsToGo]] =
+                        node->getExpectedFutureRewardEstimate();
             }
         }
     } else {
@@ -446,30 +463,34 @@ bool THTS::currentStateIsSolved(SearchNode* node) {
         trialReward += node->immediateReward;
 
         return true;
-    } else if (ProbabilisticSearchEngine::stateValueCache.find(states[stepsToGoInCurrentState]) !=
+    } else if (ProbabilisticSearchEngine::stateValueCache.find(
+                   states[stepsToGoInCurrentState]) !=
                ProbabilisticSearchEngine::stateValueCache.end()) {
         // This state has already been solved before
-        trialReward =
-            ProbabilisticSearchEngine::stateValueCache[states[stepsToGoInCurrentState]];
+        trialReward = ProbabilisticSearchEngine::stateValueCache
+            [states[stepsToGoInCurrentState]];
         backupFunction->backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
 
         ++cacheHits;
         return true;
-    } else if (node->children.empty() && isARewardLock(states[stepsToGoInCurrentState])) {
+    } else if (node->children.empty() &&
+               isARewardLock(states[stepsToGoInCurrentState])) {
         // This state is a reward lock, i.e. a goal or a state that is such that
         // no matter which action is applied we'll always get the same reward
-        
+
         calcReward(states[stepsToGoInCurrentState], 0, trialReward);
         trialReward *= stepsToGoInCurrentState;
         backupFunction->backupDecisionNodeLeaf(node, trialReward);
         trialReward += node->immediateReward;
 
         if (cachingEnabled) {
-            assert(ProbabilisticSearchEngine::stateValueCache.find(states[stepsToGoInCurrentState]) ==
+            assert(ProbabilisticSearchEngine::stateValueCache.find(
+                       states[stepsToGoInCurrentState]) ==
                    ProbabilisticSearchEngine::stateValueCache.end());
-            ProbabilisticSearchEngine::stateValueCache[states[stepsToGoInCurrentState]] =
-                node->getExpectedFutureRewardEstimate();
+            ProbabilisticSearchEngine::stateValueCache
+                [states[stepsToGoInCurrentState]] =
+                    node->getExpectedFutureRewardEstimate();
         }
         return true;
     }
@@ -477,13 +498,16 @@ bool THTS::currentStateIsSolved(SearchNode* node) {
 }
 
 void THTS::visitChanceNode(SearchNode* node) {
-    while (states[stepsToGoInNextState].probabilisticStateFluentAsPD(chanceNodeVarIndex).isDeterministic()) {
+    while (states[stepsToGoInNextState]
+               .probabilisticStateFluentAsPD(chanceNodeVarIndex)
+               .isDeterministic()) {
         ++chanceNodeVarIndex;
     }
 
     chosenOutcome = outcomeSelection->selectOutcome(
-        node, states[stepsToGoInNextState], chanceNodeVarIndex, lastProbabilisticVarIndex);
-    
+        node, states[stepsToGoInNextState], chanceNodeVarIndex,
+        lastProbabilisticVarIndex);
+
     if (chanceNodeVarIndex == lastProbabilisticVarIndex) {
         State::calcStateFluentHashKeys(states[stepsToGoInNextState]);
         State::calcStateHashKey(states[stepsToGoInNextState]);
@@ -500,7 +524,7 @@ void THTS::visitDummyChanceNode(SearchNode* node) {
     State::calcStateFluentHashKeys(states[stepsToGoInNextState]);
     State::calcStateHashKey(states[stepsToGoInNextState]);
 
-    if(node->children.empty()) {
+    if (node->children.empty()) {
         node->children.resize(1, nullptr);
         node->children[0] = createDecisionNode(1.0);
     }
@@ -535,11 +559,13 @@ int THTS::getUniquePolicy() {
         assert(false);
     }
 
-    std::vector<int> applicableActionIndices = getIndicesOfApplicableActions(states[stepsToGoInCurrentState]);
+    std::vector<int> applicableActionIndices =
+        getIndicesOfApplicableActions(states[stepsToGoInCurrentState]);
     assert(!applicableActionIndices.empty());
 
     if (applicableActionIndices.size() == 1) {
-        std::cout << "Only one reasonable action in current root state!" << std::endl;
+        std::cout << "Only one reasonable action in current root state!"
+                  << std::endl;
         return applicableActionIndices[0];
     }
 
@@ -554,11 +580,11 @@ int THTS::getUniquePolicy() {
 SearchNode* THTS::createRootNode() {
     for (SearchNode* node : nodePool) {
         if (node) {
-            if(!node->children.empty()) {
-            	std::vector<SearchNode*> tmp;
-            	node->children.swap(tmp);
+            if (!node->children.empty()) {
+                std::vector<SearchNode*> tmp;
+                node->children.swap(tmp);
             }
-	} else {
+        } else {
             break;
         }
     }
@@ -588,7 +614,8 @@ SearchNode* THTS::createDecisionNode(double const& prob) {
         res = new SearchNode(prob, stepsToGoInNextState);
         nodePool[lastUsedNodePoolIndex] = res;
     }
-    calcReward(states[stepsToGoInCurrentState], appliedActionIndex, res->immediateReward);
+    calcReward(states[stepsToGoInCurrentState], appliedActionIndex,
+               res->immediateReward);
 
     ++lastUsedNodePoolIndex;
     return res;
@@ -626,15 +653,14 @@ void THTS::setMaxSearchDepth(int _maxSearchDepth) {
                             Print
 ******************************************************************/
 
-void THTS::printStats(std::ostream& out,
-                      bool const& printRoundStats,
+void THTS::printStats(std::ostream& out, bool const& printRoundStats,
                       std::string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
 
     if (currentTrial > 0) {
         out << indent << "Performed trials: " << currentTrial << std::endl;
-        out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex <<
-        std::endl;
+        out << indent << "Created SearchNodes: " << lastUsedNodePoolIndex
+            << std::endl;
         out << indent << "Cache Hits: " << cacheHits << std::endl;
         actionSelection->printStats(out, indent);
         outcomeSelection->printStats(out, indent);
@@ -660,13 +686,12 @@ void THTS::printStats(std::ostream& out,
 
     if (printRoundStats) {
         out << std::endl << indent << "ROUND FINISHED" << std::endl;
-        out << indent <<
-        "Accumulated number of remaining steps in first solved root state: " <<
-        accumulatedNumberOfStepsToGoInFirstSolvedRootState << std::endl;
-        out << indent << "Accumulated number of trials in root state: " <<
-        accumulatedNumberOfTrialsInRootState << std::endl;
-        out << indent <<
-        "Accumulated number of search nodes in root state: " <<
-        accumulatedNumberOfSearchNodesInRootState << std::endl;
+        out << indent << "Accumulated number of remaining steps in first "
+                         "solved root state: "
+            << accumulatedNumberOfStepsToGoInFirstSolvedRootState << std::endl;
+        out << indent << "Accumulated number of trials in root state: "
+            << accumulatedNumberOfTrialsInRootState << std::endl;
+        out << indent << "Accumulated number of search nodes in root state: "
+            << accumulatedNumberOfSearchNodesInRootState << std::endl;
     }
 }

@@ -2,12 +2,12 @@
 
 #include "prost_planner.h"
 
-#include "thts.h"
-#include "iterative_deepening_search.h"
 #include "depth_first_search.h"
+#include "iterative_deepening_search.h"
 #include "minimal_lookahead_search.h"
-#include "uniform_evaluation_search.h"
 #include "random_walk.h"
+#include "thts.h"
+#include "uniform_evaluation_search.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
@@ -25,17 +25,19 @@ int State::numberOfProbabilisticStateFluents = 0;
 int State::numberOfStateFluentHashKeys = 0;
 bool State::stateHashingPossible = true;
 
-vector<vector<long> > State::stateHashKeysOfDeterministicStateFluents;
-vector<vector<long> > State::stateHashKeysOfProbabilisticStateFluents;
+vector<vector<long>> State::stateHashKeysOfDeterministicStateFluents;
+vector<vector<long>> State::stateHashKeysOfProbabilisticStateFluents;
 
-vector<vector<pair<int, long> > > State::stateFluentHashKeysOfDeterministicStateFluents;
-vector<vector<pair<int, long> > > State::stateFluentHashKeysOfProbabilisticStateFluents;
+vector<vector<pair<int, long>>>
+    State::stateFluentHashKeysOfDeterministicStateFluents;
+vector<vector<pair<int, long>>>
+    State::stateFluentHashKeysOfProbabilisticStateFluents;
 
 int KleeneState::stateSize = 0;
 int KleeneState::numberOfStateFluentHashKeys = 0;
 bool KleeneState::stateHashingPossible = true;
 vector<long> KleeneState::hashKeyBases;
-vector<vector<pair<int,long> > > KleeneState::indexToStateFluentHashKeyMap;
+vector<vector<pair<int, long>>> KleeneState::indexToStateFluentHashKeyMap;
 
 string SearchEngine::taskName;
 vector<State> SearchEngine::trainingSet;
@@ -59,7 +61,8 @@ State SearchEngine::initialState;
 int SearchEngine::horizon = numeric_limits<int>::max();
 double SearchEngine::discountFactor = 1.0;
 int SearchEngine::numberOfActions = -1;
-SearchEngine::FinalRewardCalculationMethod SearchEngine::finalRewardCalculationMethod = NOOP;
+SearchEngine::FinalRewardCalculationMethod
+    SearchEngine::finalRewardCalculationMethod = NOOP;
 vector<int> SearchEngine::candidatesForOptimalFinalAction;
 
 bool SearchEngine::cacheApplicableActions = true;
@@ -71,11 +74,15 @@ bdd SearchEngine::cachedGoals = bddfalse;
 bool ProbabilisticSearchEngine::hasUnreasonableActions = true;
 bool DeterministicSearchEngine::hasUnreasonableActions = true;
 
-SearchEngine::ActionHashMap ProbabilisticSearchEngine::applicableActionsCache(520241);
-SearchEngine::ActionHashMap DeterministicSearchEngine::applicableActionsCache(520241);
+SearchEngine::ActionHashMap ProbabilisticSearchEngine::applicableActionsCache(
+    520241);
+SearchEngine::ActionHashMap DeterministicSearchEngine::applicableActionsCache(
+    520241);
 
-SearchEngine::StateValueHashMap ProbabilisticSearchEngine::stateValueCache(62233);
-SearchEngine::StateValueHashMap DeterministicSearchEngine::stateValueCache(520241);
+SearchEngine::StateValueHashMap ProbabilisticSearchEngine::stateValueCache(
+    62233);
+SearchEngine::StateValueHashMap DeterministicSearchEngine::stateValueCache(
+    520241);
 
 /******************************************************************
                      Search Engine Creation
@@ -88,7 +95,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     StringUtils::trim(desc);
 
     // Determines which search engine identifier is used
-    auto isConfig = [&] (string const& config) {
+    auto isConfig = [&](string const& config) {
         return (desc.find(config + " ") == 0) || (desc.compare(config) == 0);
     };
 
@@ -99,24 +106,29 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // contained, though)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd 15] -iv 5 -hw 1.0] -ndn H -sd 15" + desc;
+        desc =
+            "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd "
+            "15] -iv 5 -hw 1.0] -ndn H -sd 15" +
+            desc;
     } else if (isConfig("IPPC2014")) {
         // This is the configuration that was used at IPPC 2014 (without
         // consideration of the MDP-ESP problem that is described in our AAAI
         // 2015 paper, so it can be used for planner comparison)
 
         desc = desc.substr(8, desc.size());
-        desc = "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]]" + desc;
+        desc =
+            "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]]" +
+            desc;
     } else if (isConfig("UCT")) {
         // This is an implementation of the UCT algorithm as described by Kocsis
         // & Szepesvari (2006) within the THTS framework. To obtain the most
         // common UCT variant, combine it with -init [Single -h [RandomWalk]].
- 
+
         desc = desc.substr(3, desc.size());
         desc = "THTS -act [UCB1] -out [MC] -backup [MC]" + desc;
     } else if (isConfig("UCTStar")) {
         // This is the UCT* algorithm as described in our ICAPS 2013 paper
- 
+
         desc = desc.substr(7, desc.size());
         desc = "THTS -act [UCB1] -out [UMC] -backup [PB]" + desc;
     } else if (isConfig("DP-UCT")) {
@@ -172,8 +184,8 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
+                               value);
         }
     }
     return result;
@@ -189,10 +201,10 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     } else if (param == "-t") {
         setTimeout(atof(value.c_str()));
         return true;
-    } else if( param == "-rld") {
+    } else if (param == "-rld") {
         setUseRewardLockDetection(atoi(value.c_str()));
         return true;
-    } else if( param == "-crl") {
+    } else if (param == "-crl") {
         setCacheRewardLocks(atoi(value.c_str()));
         return true;
     }
@@ -317,7 +329,8 @@ bool ProbabilisticSearchEngine::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !MathUtils::doubleIsEqual(*reward.begin(), rewardCPF->getMinVal())) {
+            !MathUtils::doubleIsEqual(*reward.begin(),
+                                      rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -371,8 +384,8 @@ bool ProbabilisticSearchEngine::checkGoal(KleeneState const& state) const {
     return false;
 }
 
-inline bdd ProbabilisticSearchEngine::stateToBDD(KleeneState const& state)
-const {
+inline bdd ProbabilisticSearchEngine::stateToBDD(
+    KleeneState const& state) const {
     bdd res = bddtrue;
     for (size_t i = 0; i < KleeneState::stateSize; ++i) {
         bdd tmp = bddfalse;
@@ -391,16 +404,14 @@ inline bdd ProbabilisticSearchEngine::stateToBDD(State const& state) const {
         res &= fdd_ithvar(i, state.deterministicStateFluent(i));
     }
     for (size_t i = 0; i < State::numberOfProbabilisticStateFluents; ++i) {
-        res &=
-            fdd_ithvar(State::numberOfDeterministicStateFluents + i,
-                    state.probabilisticStateFluent(
-                            i));
+        res &= fdd_ithvar(State::numberOfDeterministicStateFluents + i,
+                          state.probabilisticStateFluent(i));
     }
     return res;
 }
 
-inline bool ProbabilisticSearchEngine::BDDIncludes(bdd BDD,
-        KleeneState const& state) const {
+inline bool ProbabilisticSearchEngine::BDDIncludes(
+    bdd BDD, KleeneState const& state) const {
     return (BDD & stateToBDD(state)) != bddfalse;
 }
 
@@ -409,7 +420,7 @@ inline bool ProbabilisticSearchEngine::BDDIncludes(bdd BDD,
 ******************************************************************/
 
 void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
-        State const& current, double& reward) const {
+    State const& current, double& reward) const {
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
 
@@ -423,8 +434,8 @@ void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
     assert(false);
 }
 
-void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(State const& current,
-                                                              double& reward) const {
+void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(
+    State const& current, double& reward) const {
     // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
 
@@ -480,17 +491,14 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     return optimalFinalActionIndex;
 }
 
-
 /******************************************************************
                    Statistics and Prints
 ******************************************************************/
 
-void SearchEngine::printStats(ostream& out,
-                              bool const& /*printRoundStats*/,
+void SearchEngine::printStats(ostream& out, bool const& /*printRoundStats*/,
                               string indent) const {
     out << indent << "Statistics of " << name << ":" << endl;
 }
-
 
 void SearchEngine::printTask(ostream& out) {
     out.unsetf(ios::floatfield);
@@ -510,12 +518,14 @@ void SearchEngine::printTask(ostream& out) {
     }
     out << endl;
     out << "-----------------CPFs-----------------" << endl << endl;
-    for (size_t index = 0; index < State::numberOfDeterministicStateFluents; ++index) {
+    for (size_t index = 0; index < State::numberOfDeterministicStateFluents;
+         ++index) {
         printDeterministicCPFInDetail(out, index);
         out << endl << "--------------" << endl;
     }
 
-    for (size_t index = 0; index < State::numberOfProbabilisticStateFluents; ++index) {
+    for (size_t index = 0; index < State::numberOfProbabilisticStateFluents;
+         ++index) {
         printProbabilisticCPFInDetail(out, index);
         out << endl << "--------------" << endl;
     }
@@ -526,46 +536,67 @@ void SearchEngine::printTask(ostream& out) {
 
     out << "------State Fluent Hash Key Map-------" << endl << endl;
 
-    for (size_t varIndex = 0; varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
-        out << "a change of deterministic state fluent " << varIndex <<
-        " influences variables ";
-        for (size_t influencedVarIndex = 0; influencedVarIndex < State::stateFluentHashKeysOfDeterministicStateFluents[varIndex].size(); ++influencedVarIndex) {
-            out <<
-            State::stateFluentHashKeysOfDeterministicStateFluents[varIndex][
-                influencedVarIndex].first << " (";
-            out <<
-            State::stateFluentHashKeysOfDeterministicStateFluents[varIndex][
-                influencedVarIndex].second << ") ";
+    for (size_t varIndex = 0;
+         varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
+        out << "a change of deterministic state fluent " << varIndex
+            << " influences variables ";
+        for (size_t influencedVarIndex = 0;
+             influencedVarIndex <
+             State::stateFluentHashKeysOfDeterministicStateFluents[varIndex]
+                 .size();
+             ++influencedVarIndex) {
+            out << State::stateFluentHashKeysOfDeterministicStateFluents
+                       [varIndex][influencedVarIndex]
+                           .first
+                << " (";
+            out << State::stateFluentHashKeysOfDeterministicStateFluents
+                       [varIndex][influencedVarIndex]
+                           .second
+                << ") ";
         }
         out << endl;
     }
     out << endl;
 
-    for (size_t varIndex = 0; varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
-        out << "a change of probabilistic state fluent " << varIndex <<
-        " influences variables ";
-        for (size_t influencedVarIndex = 0; influencedVarIndex < State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex].size(); ++influencedVarIndex) {
-            out <<
-            State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex][
-                influencedVarIndex].first << " (";
-            out <<
-            State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex][
-                influencedVarIndex].second << ") ";
+    for (size_t varIndex = 0;
+         varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
+        out << "a change of probabilistic state fluent " << varIndex
+            << " influences variables ";
+        for (size_t influencedVarIndex = 0;
+             influencedVarIndex <
+             State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex]
+                 .size();
+             ++influencedVarIndex) {
+            out << State::stateFluentHashKeysOfProbabilisticStateFluents
+                       [varIndex][influencedVarIndex]
+                           .first
+                << " (";
+            out << State::stateFluentHashKeysOfProbabilisticStateFluents
+                       [varIndex][influencedVarIndex]
+                           .second
+                << ") ";
         }
         out << endl;
     }
     out << endl << endl;
 
-    for (size_t varIndex = 0; varIndex < KleeneState::indexToStateFluentHashKeyMap.size(); ++varIndex) {
-        out << "a change of variable " << varIndex <<
-        " influences variables in Kleene states ";
-        for (size_t influencedVarIndex = 0; influencedVarIndex < KleeneState::indexToStateFluentHashKeyMap[varIndex].size(); ++influencedVarIndex) {
-            out <<
-            KleeneState::indexToStateFluentHashKeyMap[varIndex][
-                influencedVarIndex
-            ].first << " ("
-                    << KleeneState::indexToStateFluentHashKeyMap[varIndex][
-                influencedVarIndex].second << ") ";
+    for (size_t varIndex = 0;
+         varIndex < KleeneState::indexToStateFluentHashKeyMap.size();
+         ++varIndex) {
+        out << "a change of variable " << varIndex
+            << " influences variables in Kleene states ";
+        for (size_t influencedVarIndex = 0;
+             influencedVarIndex <
+             KleeneState::indexToStateFluentHashKeyMap[varIndex].size();
+             ++influencedVarIndex) {
+            out << KleeneState::indexToStateFluentHashKeyMap[varIndex]
+                                                            [influencedVarIndex]
+                                                                .first
+                << " ("
+                << KleeneState::indexToStateFluentHashKeyMap[varIndex]
+                                                            [influencedVarIndex]
+                                                                .second
+                << ") ";
         }
         out << endl;
     }
@@ -581,17 +612,20 @@ void SearchEngine::printTask(ostream& out) {
     initialState.print(out);
     out << endl;
 
-    out << "Hashing of States is " <<
-    (State::stateHashingPossible ? "" : "not ") << "possible." << endl;
-    out << "Hashing of KleeneStates is " <<
-    (KleeneState::stateHashingPossible ? "" : "not ") << "possible." << endl;
+    out << "Hashing of States is "
+        << (State::stateHashingPossible ? "" : "not ") << "possible." << endl;
+    out << "Hashing of KleeneStates is "
+        << (KleeneState::stateHashingPossible ? "" : "not ") << "possible."
+        << endl;
 
     if (rewardLockDetected) {
         if (goalTestActionIndex >= 0) {
-            out <<
-            "Both a goal and a dead end were found in the training phase." << endl;
+            out << "Both a goal and a dead end were found in the training "
+                   "phase."
+                << endl;
         } else {
-            out << "A dead end but no goal was found in the training phase." << endl;
+            out << "A dead end but no goal was found in the training phase."
+                << endl;
         }
     } else {
         out << "No reward locks detected in the training phase." << endl;
@@ -603,8 +637,8 @@ void SearchEngine::printTask(ostream& out) {
     } else if (ProbabilisticSearchEngine::hasUnreasonableActions) {
         assert(false);
     } else if (DeterministicSearchEngine::hasUnreasonableActions) {
-        out <<
-        "This task contains unreasonable actions only in the determinization."
+        out << "This task contains unreasonable actions only in the "
+               "determinization."
             << endl;
     } else {
         out << "This task does not contain unreasonable actions." << endl;
@@ -643,12 +677,14 @@ void SearchEngine::printDeterministicCPFInDetail(ostream& out,
 
     if (State::stateHashingPossible) {
         out << "  HashKeyBase: ";
-        for (size_t i = 0; i < State::stateHashKeysOfDeterministicStateFluents[index].size(); ++i) {
-            out << i << ": " <<
-            State::stateHashKeysOfDeterministicStateFluents[index][i];
+        for (size_t i = 0;
+             i < State::stateHashKeysOfDeterministicStateFluents[index].size();
+             ++i) {
+            out << i << ": "
+                << State::stateHashKeysOfDeterministicStateFluents[index][i];
             if (i !=
                 State::stateHashKeysOfDeterministicStateFluents[index].size() -
-                1) {
+                    1) {
                 out << ", ";
             } else {
                 out << endl;
@@ -657,13 +693,13 @@ void SearchEngine::printDeterministicCPFInDetail(ostream& out,
     }
 
     if (KleeneState::stateHashingPossible) {
-        out << "  KleeneHashKeyBase: " << KleeneState::hashKeyBases[index] <<
-        endl;
+        out << "  KleeneHashKeyBase: " << KleeneState::hashKeyBases[index]
+            << endl;
     }
 }
 
 void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
-        int const& index) {
+                                                 int const& index) {
     printEvaluatableInDetail(out, probabilisticCPFs[index]);
     out << "  Determinized formula: " << endl;
     determinizedCPFs[index]->formula->print(out);
@@ -677,12 +713,14 @@ void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
 
     if (State::stateHashingPossible) {
         out << "  HashKeyBase: ";
-        for (size_t i = 0; i < State::stateHashKeysOfProbabilisticStateFluents[index].size(); ++i) {
-            out << i << ": " <<
-            State::stateHashKeysOfProbabilisticStateFluents[index][i];
+        for (size_t i = 0;
+             i < State::stateHashKeysOfProbabilisticStateFluents[index].size();
+             ++i) {
+            out << i << ": "
+                << State::stateHashKeysOfProbabilisticStateFluents[index][i];
             if (i !=
                 State::stateHashKeysOfProbabilisticStateFluents[index].size() -
-                1) {
+                    1) {
                 out << ", ";
             } else {
                 out << endl;
@@ -691,10 +729,10 @@ void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
     }
 
     if (KleeneState::stateHashingPossible) {
-        out << "  KleeneHashKeyBase: " <<
-        KleeneState::hashKeyBases[index +
-                                  State::numberOfDeterministicStateFluents] <<
-        endl;
+        out << "  KleeneHashKeyBase: "
+            << KleeneState::hashKeyBases
+                   [index + State::numberOfDeterministicStateFluents]
+            << endl;
     }
 }
 
@@ -703,13 +741,14 @@ void SearchEngine::printRewardCPFInDetail(ostream& out) {
 
     out << "Minimal reward: " << rewardCPF->getMinVal() << endl;
     out << "Maximal reward: " << rewardCPF->getMaxVal() << endl;
-    out << "Is action independent: " << rewardCPF->isActionIndependent() << endl;
+    out << "Is action independent: " << rewardCPF->isActionIndependent()
+        << endl;
 
     out << endl;
 }
 
 void SearchEngine::printActionPreconditionInDetail(ostream& out,
-        int const& index) {
+                                                   int const& index) {
     printEvaluatableInDetail(out, actionPreconditions[index]);
 
     out << endl;
@@ -734,7 +773,8 @@ void SearchEngine::printEvaluatableInDetail(ostream& out, Evaluatable* eval) {
         out << " caching in maps,";
         break;
     case Evaluatable::VECTOR:
-        out << " caching in vectors,"; // << eval->evaluationCacheVector.size() << ",";
+        out << " caching in vectors,"; // << eval->evaluationCacheVector.size()
+                                       // << ",";
         break;
     }
 
@@ -747,8 +787,8 @@ void SearchEngine::printEvaluatableInDetail(ostream& out, Evaluatable* eval) {
         out << " Kleene caching in maps.";
         break;
     case Evaluatable::VECTOR:
-        out << " Kleene caching in vectors of size " <<
-        eval->kleeneEvaluationCacheVector.size() << ".";
+        out << " Kleene caching in vectors of size "
+            << eval->kleeneEvaluationCacheVector.size() << ".";
         break;
     }
 

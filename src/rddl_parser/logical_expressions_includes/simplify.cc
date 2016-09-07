@@ -8,8 +8,8 @@ LogicalExpression* LogicalExpression::simplify(Simplifications& /*replace*/) {
                            Atomics
 *****************************************************************/
 
-LogicalExpression*
-ParametrizedVariable::simplify(Simplifications& /*replace*/) {
+LogicalExpression* ParametrizedVariable::simplify(
+    Simplifications& /*replace*/) {
     return this;
 }
 
@@ -184,8 +184,7 @@ LogicalExpression* LowerExpression::simplify(Simplifications& replace) {
     return new LowerExpression(newExprs);
 }
 
-LogicalExpression*
-GreaterEqualsExpression::simplify(Simplifications& replace) {
+LogicalExpression* GreaterEqualsExpression::simplify(Simplifications& replace) {
     assert(exprs.size() == 2);
     LogicalExpression* expr0 = exprs[0]->simplify(replace);
     LogicalExpression* expr1 = exprs[1]->simplify(replace);
@@ -366,7 +365,7 @@ LogicalExpression* Multiplication::simplify(Simplifications& replace) {
         return newExprs[0];
     }
 
-    //TODO: check if there are multiplications in newExprs
+    // TODO: check if there are multiplications in newExprs
 
     return new Multiplication(newExprs);
 }
@@ -569,12 +568,10 @@ LogicalExpression* IfThenElseExpression::simplify(Simplifications& replace) {
             effects.push_back(elseIf->valueIfTrue);
             effects.push_back(elseIf->valueIfFalse);
         } else if (elseMCC) {
-            conditions.insert(conditions.end(),
-                              elseMCC->conditions.begin(),
+            conditions.insert(conditions.end(), elseMCC->conditions.begin(),
                               elseMCC->conditions.end());
 
-            effects.insert(effects.end(),
-                           elseMCC->effects.begin(),
+            effects.insert(effects.end(), elseMCC->effects.begin(),
                            elseMCC->effects.end());
         } else {
             conditions.push_back(new NumericConstant(1.0));

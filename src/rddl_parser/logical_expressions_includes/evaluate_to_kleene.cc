@@ -14,13 +14,15 @@ void StateFluent::evaluateToKleene(set<double>& res, KleeneState const& current,
     res.insert(current[index].begin(), current[index].end());
 }
 
-void ActionFluent::evaluateToKleene(set<double>& res, KleeneState const& /*current*/,
+void ActionFluent::evaluateToKleene(set<double>& res,
+                                    KleeneState const& /*current*/,
                                     ActionState const& actions) const {
     assert(res.empty());
     res.insert(actions[index]);
 }
 
-void NumericConstant::evaluateToKleene(set<double>& res, KleeneState const& /*current*/,
+void NumericConstant::evaluateToKleene(set<double>& res,
+                                       KleeneState const& /*current*/,
                                        ActionState const& /*actions*/) const {
     assert(res.empty());
     res.insert(value);
@@ -160,9 +162,9 @@ void LowerExpression::evaluateToKleene(set<double>& res,
     assert(res.size() == 1 || res.size() == 2);
 }
 
-void GreaterEqualsExpression::evaluateToKleene(set<double>& res,
-                                               KleeneState const& current,
-                                               ActionState const& actions) const {
+void GreaterEqualsExpression::evaluateToKleene(
+    set<double>& res, KleeneState const& current,
+    ActionState const& actions) const {
     assert(res.empty());
     assert(exprs.size() == 2);
 
@@ -228,7 +230,7 @@ void Addition::evaluateToKleene(set<double>& res, KleeneState const& current,
 }
 
 void Subtraction::evaluateToKleene(set<double>& res, KleeneState const& current,
-        ActionState const& actions) const {
+                                   ActionState const& actions) const {
     assert(res.empty());
     assert(exprs.size() == 2);
 
@@ -238,8 +240,7 @@ void Subtraction::evaluateToKleene(set<double>& res, KleeneState const& current,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it - *it2);
         }
     }
@@ -257,8 +258,7 @@ void Multiplication::evaluateToKleene(set<double>& res,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it * *it2);
         }
     }
@@ -275,8 +275,7 @@ void Division::evaluateToKleene(set<double>& res, KleeneState const& current,
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
-        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end();
-             ++it2) {
+        for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             res.insert(*it / *it2);
         }
     }
@@ -318,7 +317,8 @@ void ExponentialFunction::evaluateToKleene(set<double>& res,
 
     expr->evaluateToKleene(exprRes, current, actions);
 
-    for(set<double>::iterator it = exprRes.begin(); it != exprRes.end(); ++it) {
+    for (set<double>::iterator it = exprRes.begin(); it != exprRes.end();
+         ++it) {
         res.insert(std::exp(*it));
     }
 }
@@ -336,8 +336,8 @@ void BernoulliDistribution::evaluateToKleene(set<double>& res,
     expr->evaluateToKleene(tmp, current, actions);
 
     for (set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        if (MathUtils::doubleIsGreater(*it,
-                    0.0) && MathUtils::doubleIsSmaller(*it, 1.0)) {
+        if (MathUtils::doubleIsGreater(*it, 0.0) &&
+            MathUtils::doubleIsSmaller(*it, 1.0)) {
             res.insert(0.0);
             res.insert(1.0);
             return;
@@ -396,9 +396,9 @@ void IfThenElseExpression::evaluateToKleene(set<double>& res,
 void MultiConditionChecker::evaluateToKleene(set<double>& res,
                                              KleeneState const& current,
                                              ActionState const& actions) const {
-    //if we meet a condition that evaluates to unknown we must keep on
-    //checking conditions until we find one that is always true, and
-    //compare all potentially true ones with each other
+    // if we meet a condition that evaluates to unknown we must keep on
+    // checking conditions until we find one that is always true, and
+    // compare all potentially true ones with each other
     assert(res.empty());
 
     for (unsigned int i = 0; i < conditions.size(); ++i) {

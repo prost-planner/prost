@@ -1,8 +1,8 @@
 #include "logical_expressions.h"
 
 #include "search_engine.h"
-#include "utils/string_utils.h"
 #include "utils/math_utils.h"
+#include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
 #include <iostream>
@@ -154,6 +154,6 @@ LogicalExpressionPair LogicalExpression::splitExpressionPair(string& desc) {
 }
 
 #include "logical_expressions_includes/evaluate.cc"
-#include "logical_expressions_includes/evaluate_to_pd.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
+#include "logical_expressions_includes/evaluate_to_pd.cc"
 #include "logical_expressions_includes/print.cc"

@@ -2,8 +2,8 @@
 
 #include "thts.h"
 
-#include "utils/system_utils.h"
 #include "utils/string_utils.h"
+#include "utils/system_utils.h"
 
 #include <vector>
 
@@ -40,8 +40,8 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort(
-                    "Unused parameter value pair: " + param + " / " + value);
+            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
+                               value);
         }
     }
 
@@ -53,13 +53,13 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
 ******************************************************************/
 
 SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
-                                              PDState& nextState,
-                                              int varIndex,
+                                              PDState& nextState, int varIndex,
                                               int lastProbVarIndex) {
     std::vector<int> blacklist;
     if (node->children.empty()) {
         node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(), nullptr);
+            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
+            nullptr);
     } else {
         computeBlacklist(node, nextState, varIndex, blacklist);
     }
@@ -70,7 +70,8 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(sample.second);
+            node->children[childIndex] =
+                thts->createDecisionNode(sample.second);
         } else {
             node->children[childIndex] = thts->createChanceNode(sample.second);
         }
@@ -83,10 +84,9 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
              MC Outcome Selection with Solve Labeling
 ******************************************************************/
 
-void UnsolvedMCOutcomeSelection::computeBlacklist(SearchNode* node,
-                                                  PDState& nextState,
-                                                  int varIndex,
-                                                  std::vector<int>& blacklist) const {
+void UnsolvedMCOutcomeSelection::computeBlacklist(
+    SearchNode* node, PDState& nextState, int varIndex,
+    std::vector<int>& blacklist) const {
     // Determines the indices of all solved outcomes
     DiscretePD const& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     for (size_t i = 0; i < pd.size(); ++i) {
@@ -96,4 +96,3 @@ void UnsolvedMCOutcomeSelection::computeBlacklist(SearchNode* node,
         }
     }
 }
-
