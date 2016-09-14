@@ -7,6 +7,8 @@
 
 #include <vector>
 
+using std::vector;
+
 /******************************************************************
                   Outcome Selection Creation
 ******************************************************************/
@@ -55,14 +57,12 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
 SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
                                               PDState& nextState, int varIndex,
                                               int lastProbVarIndex) {
-    std::vector<int> blacklist;
     if (node->children.empty()) {
         node->children.resize(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
             nullptr);
-    } else {
-        computeBlacklist(node, nextState, varIndex, blacklist);
     }
+    vector<int> blacklist = computeBlacklist(node, nextState, varIndex);
 
     std::pair<double, double> sample = nextState.sample(varIndex, blacklist);
     int childIndex = static_cast<int>(sample.first);
@@ -84,9 +84,9 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
              MC Outcome Selection with Solve Labeling
 ******************************************************************/
 
-void UnsolvedMCOutcomeSelection::computeBlacklist(
-    SearchNode* node, PDState& nextState, int varIndex,
-    std::vector<int>& blacklist) const {
+vector<int> UnsolvedMCOutcomeSelection::computeBlacklist(
+    SearchNode* node, PDState const& nextState, int varIndex) const {
+    vector<int> blacklist;
     // Determines the indices of all solved outcomes
     DiscretePD const& pd = nextState.probabilisticStateFluentAsPD(varIndex);
     for (size_t i = 0; i < pd.size(); ++i) {
@@ -95,4 +95,5 @@ void UnsolvedMCOutcomeSelection::computeBlacklist(
             blacklist.push_back(i);
         }
     }
+    return blacklist;
 }
