@@ -48,17 +48,23 @@ public:
     SearchNode* selectOutcome(SearchNode* node, PDState& nextState,
                               int varIndex, int lastProbVarIndex) override;
 
-    virtual void computeBlacklist(SearchNode* /*node*/, PDState& /*nextState*/,
-                                  int /*varIndex*/,
-                                  std::vector<int>& /*blacklist*/) const {}
+    // A blacklist indicates which values are ignored for outcome selection.
+    // Basic MC Sampling does not ignore any values.
+    virtual std::vector<int> computeBlacklist(SearchNode* /*node*/,
+                                              PDState const& /*nextState*/,
+                                              int /*varIndex*/) const {
+        return std::vector<int>{};
+    }
 };
 
 class UnsolvedMCOutcomeSelection : public MCOutcomeSelection {
 public:
     UnsolvedMCOutcomeSelection(THTS* _thts) : MCOutcomeSelection(_thts) {}
 
-    void computeBlacklist(SearchNode* node, PDState& nextState, int varIndex,
-                          std::vector<int>& blacklist) const override;
+    // Unsolved outcome selection ignores values which are already solved.
+    std::vector<int> computeBlacklist(SearchNode* node,
+                                      PDState const& nextState,
+                                      int varIndex) const override;
 };
 
 #endif

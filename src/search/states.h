@@ -423,12 +423,12 @@ public:
           probabilisticStateFluentsAsPD(numberOfProbabilisticStateFluents,
                                         DiscretePD()) {}
 
-    DiscretePD& probabilisticStateFluentAsPD(int const& index) {
+    DiscretePD& probabilisticStateFluentAsPD(int index) {
         assert(index < probabilisticStateFluentsAsPD.size());
         return probabilisticStateFluentsAsPD[index];
     }
 
-    DiscretePD const& probabilisticStateFluentAsPD(int const& index) const {
+    DiscretePD const& probabilisticStateFluentAsPD(int index) const {
         assert(index < probabilisticStateFluentsAsPD.size());
         return probabilisticStateFluentsAsPD[index];
     }
