@@ -66,79 +66,47 @@ RDDLTask::RDDLTask()
 }
 
 void RDDLTask::addTypes(Domain* domain) {
-    if (domain->getDomainTypes() == nullptr) {
-        return;
-    }
-
-    // for (DefineType* type : domain->getDomainTypes()) {
-    //    if (type->getSuperTypeList().empty()) {
-    //        // Simple type definition (type_name : type)
-    //        addType(type->getName(), type->getSuperType());
-    //    } else {
-    //        // Type definition using enum values (type_name :
-    //        @enum1,...,@enumN)
-    //        addType(type->getName());
-    //        for (std::string const& objectName : type->getSuperTypeList()) {
-    //            addObject(type->getName(), objectName);
-    //        }
-    //    }
-    //}
-
-    // Adding TypeSection
-    for (std::vector<DefineType*>::iterator it =
-             domain->getDomainTypes()->begin();
-         it != domain->getDomainTypes()->end(); it++) {
-        // Simple type definition (type_name : type)
-        if ((*it)->getSuperTypeList() == nullptr) {
+    for (DefineType* type : domain->getDomainTypes()) {
+        if (type->getSuperTypeList().empty()) {
+            // Simple type definition (type_name : type)
             // std::cout << "Added type (from type section): " <<
-            // (*it)->getName() << " of type " << (*it)->getSuperType() <<
+            // type->getName() << " of type " << type->getSuperType() <<
             // std::endl;
-            addType((*it)->getName(), (*it)->getSuperType());
+            addType(type->getName(), type->getSuperType());
         } else {
-            // Definition of type using enum values (type_name : @enum1, @enum2,
-            // ... , @enumN)
-            addType((*it)->getName());
-            for (std::vector<std::string>::iterator jt =
-                     (*it)->getSuperTypeList()->begin();
-                 jt != (*it)->getSuperTypeList()->end(); jt++) {
+            // Type definition using enum values (type_name : @enum1,...,@enumN)
+            addType(type->getName());
+            for (std::string const& objectName : type->getSuperTypeList()) {
                 // std::cout << "Added object (from type section): " <<
-                // (*it)->getName() << " of type " << *jt << std::endl;
-                addObject((*it)->getName(), (*jt));
+                // type->getName() << " of type " << objectName << std::endl;
+                addObject(type->getName(), objectName);
             }
         }
     }
 }
 
 void RDDLTask::addPVars(Domain* domain) {
-    if (domain->getPvarDefinitions() == nullptr) {
-        return;
-    }
-
     // Adding PvarSection
-    for (std::vector<PvarDefinition*>::iterator it =
-             domain->getPvarDefinitions()->begin();
-         it != domain->getPvarDefinitions()->end(); it++) {
-        std::string name = (*it)->getName();
+    for (PvarDefinition* pVarDef : domain->getPvarDefinitions()) {
+        std::string name = pVarDef->getName();
         std::vector<Parameter*> params;
-        for (std::vector<std::string>::iterator jt =
-                 (*it)->getParameters()->begin();
-             jt != (*it)->getParameters()->end(); jt++) {
-            if (types.find((*jt)) == types.end()) {
-                SystemUtils::abort("Undefined type " + *jt +
+        for (std::string const& param : pVarDef->getParameters()) {
+            if (types.find(param) == types.end()) {
+                SystemUtils::abort("Undefined type " + param +
                                    " used as parameter in " + name + ".");
             } else {
-                params.push_back(new Parameter(types[*jt]->name, types[*jt]));
+                params.push_back(
+                    new Parameter(types[param]->name, types[param]));
             }
-            // std::cout << "Adding parameter: " << types[*jt]->name
-            // << " of type " << types[*jt]->name << std::endl;
+            // std::cout << "Adding parameter: " << types[param]->name
+            // << " of type " << types[param]->name << std::endl;
         }
 
         // TODO: This initialization here is wrong but is put here to prevent
-        // warning during the compliation
-        // setting it to nullptr doesn't help
+        // warning during the compliation. Setting it to nullptr doesn't help
         ParametrizedVariable::VariableType varType =
             ParametrizedVariable::STATE_FLUENT;
-        std::string varTypeName = (*it)->getVarType();
+        std::string varTypeName = pVarDef->getVarType();
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
         } else if (varTypeName == "action-fluent") {
@@ -153,7 +121,7 @@ void RDDLTask::addPVars(Domain* domain) {
                                "state-fluent, action-fluent, non-fluent.");
         }
 
-        std::string defaultVarType = (*it)->getDefaultVarType();
+        std::string defaultVarType = pVarDef->getDefaultVarType();
         if (types.find(defaultVarType) == types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
         }
@@ -165,13 +133,13 @@ void RDDLTask::addPVars(Domain* domain) {
         case ParametrizedVariable::NON_FLUENT:
         case ParametrizedVariable::STATE_FLUENT:
         case ParametrizedVariable::ACTION_FLUENT: {
-            std::string satisfactionType = (*it)->getSatisfactionType();
+            std::string satisfactionType = pVarDef->getSatisfactionType();
             if (satisfactionType != "default") {
                 SystemUtils::abort(
                     "Unknown satisfaction type for parametrized variable " +
                     varTypeName + ". Did you mean 'default'?");
             }
-            std::string defaultVarValString = (*it)->getDefaultVarValue();
+            std::string defaultVarValString = pVarDef->getDefaultVarValue();
 
             // TODO: ?? -> || valueType->name == "bool")
             if (valueType->name == "int" || valueType->name == "real") {
@@ -223,18 +191,13 @@ void RDDLTask::addPVars(Domain* domain) {
 }
 
 void RDDLTask::addCpfs(Domain* domain) {
-    if (domain->getCpfs() == nullptr) {
-        return;
-    }
-
     // std::cout << "########## Adding " << domain->getCpfs()->size() << " CPF
     // definitions" << std::endl;
 
     // Consists of Parametrized variable and logical expression
-    for (std::vector<CpfDefinition*>::iterator it = domain->getCpfs()->begin();
-         it != domain->getCpfs()->end(); it++) {
+    for (CpfDefinition* cpf : domain->getCpfs()) {
         // P Var
-        std::string name = (*it)->getPvar()->getName();
+        std::string name = cpf->getPvar()->getName();
 
         // std::cout << "Pvar name: " << name << std::endl;
 
@@ -248,27 +211,16 @@ void RDDLTask::addCpfs(Domain* domain) {
 
         ParametrizedVariable* head = variableDefinitions[name];
 
-        if ((*it)->getPvar()->getParameters() == nullptr) {
-            if (head->params.size() != 0)
-                SystemUtils::abort(
-                    "Wrong number of parameters for parametrized variable " +
-                    name + ".");
-        } else if (head->params.size() !=
-                   ((*it)->getPvar()->getParameters()->size())) {
+        if (cpf->getPvar()->getParameters().size() != head->params.size()) {
             SystemUtils::abort(
                 "Wrong number of parameters for parametrized variable " + name +
                 ".");
         }
 
-        if ((*it)->getPvar()->getParameters() != nullptr) {
-            unsigned i = 0;
-            for (std::vector<std::string>::iterator jt =
-                     (*it)->getPvar()->getParameters()->begin();
-                 jt != (*it)->getPvar()->getParameters()->end(); jt++) {
-                head->params[i++]->name = (*jt);
-                // std::cout << "\tparameter: " << *jt << " of type " <<
-                // head->params[i-1]->type->name << std::endl;
-            }
+        for (int i = 0; i < cpf->getPvar()->getParameters().size(); ++i) {
+            head->params[i]->name = cpf->getPvar()->getParameters()[i];
+            // std::cout << "\tparameter: " << head->params[i]->name << " of
+            // type " << head->params[i]->type->name << std::endl;
         }
 
         if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
@@ -277,7 +229,7 @@ void RDDLTask::addCpfs(Domain* domain) {
         }
 
         // Expression
-        CPFDefinitions[head] = (*it)->getLogicalExpression();
+        CPFDefinitions[head] = cpf->getLogicalExpression();
     }
 }
 
@@ -289,35 +241,21 @@ void RDDLTask::addReward(Domain* domain) {
 }
 
 void RDDLTask::addStateConstraints(Domain* domain) {
-    if (domain->getStateConstraints() == nullptr) {
-        return;
-    }
-
-    for (std::vector<LogicalExpression*>::iterator it =
-             domain->getStateConstraints()->begin();
-         it != domain->getStateConstraints()->end(); it++) {
-        SACs.push_back(*it);
+    for (LogicalExpression* expr : domain->getStateConstraints()) {
+        SACs.push_back(expr);
     }
 }
 
 void RDDLTask::addObjects(Domain* domain) {
-    if (domain->getObjects() == nullptr) {
-        return;
-    }
-
-    for (std::vector<ObjectDefine*>::iterator it =
-             domain->getObjects()->begin();
-         it != domain->getObjects()->end(); it++) {
-        std::string typeName = (*it)->getTypeName();
+    for (ObjectDefine* objDef : domain->getObjects()) {
+        std::string typeName = objDef->getTypeName();
         if (types.find(typeName) == types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
-        for (std::vector<std::string>::iterator jt =
-                 (*it)->getObjectNames()->begin();
-             jt != (*it)->getObjectNames()->end(); jt++) {
-            addObject(typeName, (*jt));
+        for (std::string const& objectName : objDef->getObjectNames()) {
+            addObject(typeName, objectName);
             std::cout << "Added object (from objects section): " << typeName
-                      << " : " << *jt << std::endl;
+                      << " : " << objectName << std::endl;
         }
     }
 }
@@ -351,49 +289,34 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
     }
 
     // Adding objects
-    for (std::vector<ObjectDefine*>::iterator it =
-             nonFluent->getObjects()->begin();
-         it != nonFluent->getObjects()->end(); it++) {
-        std::string typeName = (*it)->getTypeName();
-        if (types.find(typeName) == types.end()) {
-            SystemUtils::abort("Unknown object " + typeName);
-        }
-        for (std::vector<std::string>::iterator jt =
-                 (*it)->getObjectNames()->begin();
-             jt != (*it)->getObjectNames()->end(); jt++) {
-            addObject(typeName, (*jt));
-            // std::cout << "Added object (from non fluents): " << *jt << " of
-            // type " << typeName << std::endl;
+    for (ObjectDefine* objDef : nonFluent->getObjects()) {
+        std::string typeName = objDef->getTypeName();
+        for (std::string const& objectName : objDef->getObjectNames()) {
+            addObject(typeName, objectName);
+            // std::cout << "Added object (from non fluents): " << objectName <<
+            // " of type " << typeName << std::endl;
         }
     }
 
     // Adding non fluents
     std::vector<Parameter*> params;
-    for (std::vector<PvariablesInstanceDefine*>::iterator it =
-             nonFluent->getNonFluents()->begin();
-         it != nonFluent->getNonFluents()->end(); it++) {
-        std::string name = (*it)->getName();
-
+    for (PvariablesInstanceDefine* pVarDef : nonFluent->getNonFluents()) {
+        std::string name = pVarDef->getName();
         params.clear();
         // Set parameters
-        if ((*it)->getLConstList() != nullptr) {
-            for (std::vector<std::string>::iterator jt =
-                     (*it)->getLConstList()->begin();
-                 jt != (*it)->getLConstList()->end(); jt++) {
-                std::string paramName = (*jt);
-                if (objects.find(paramName) == objects.end()) {
-                    SystemUtils::abort("Unknown object: " + paramName);
-                }
-
-                // std::cout << "Added non fluent (from non fluents): " <<
-                // paramName << " of type " << objects[paramName]->type->name <<
-                // std::endl;
-                params.push_back(objects[paramName]); // TODO: this is wrong. It
-                                                      // only covers the case
-                                                      // that parametrized
-                                                      // variable is a Parameter
-                                                      // Expression
+        for (std::string const& paramName : pVarDef->getLConstList()) {
+            if (objects.find(paramName) == objects.end()) {
+                SystemUtils::abort("Unknown object: " + paramName);
             }
+
+            // std::cout << "Added non fluent (from non fluents): " <<
+            // paramName << " of type " << objects[paramName]->type->name <<
+            // std::endl;
+            //
+            // TODO: this is wrong. It only covers the case that
+            // parametrized variable is a Parameter Expression (see issue
+            // #15)
+            params.push_back(objects[paramName]);
         }
 
         if (variableDefinitions.find(name) == variableDefinitions.end()) {
@@ -401,7 +324,7 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
         }
 
         ParametrizedVariable* parent = variableDefinitions[name];
-        double initialVal = (*it)->getInitValue();
+        double initialVal = pVarDef->getInitValue();
 
         addParametrizedVariable(parent, params, initialVal);
 
@@ -432,48 +355,36 @@ void RDDLTask::addInstance(Instance* instance) {
     }
 
     // Add init states
-    if (instance->getPVariables() != nullptr) {
-        for (std::vector<PvariablesInstanceDefine*>::iterator it =
-                 instance->getPVariables()->begin();
-             it != instance->getPVariables()->end(); it++) {
-            std::string name = (*it)->getName();
-            std::vector<Parameter*> params;
-            // Set parameters
-            if ((*it)->getLConstList() != nullptr) {
-                for (std::vector<std::string>::iterator jt =
-                         (*it)->getLConstList()->begin();
-                     jt != (*it)->getLConstList()->end(); jt++) {
-                    std::string paramName = (*jt);
-                    if (objects.find(paramName) == objects.end()) {
-                        SystemUtils::abort("Unknown object: " + paramName);
-                    }
-
-                    params.push_back(objects[paramName]); // TODO: this is
-                                                          // wrong. It only
-                                                          // covers the case
-                                                          // that parametrized
-                                                          // variable is and
-                                                          // Parameter
-                                                          // Expression
-                }
+    // TODO: This is basically the same code as for non-fluents, think about
+    // helper method
+    for (PvariablesInstanceDefine* pVarDef : instance->getPVariables()) {
+        std::string name = pVarDef->getName();
+        std::vector<Parameter*> params;
+        // Set parameters
+        for (std::string const& paramName : pVarDef->getLConstList()) {
+            if (objects.find(paramName) == objects.end()) {
+                SystemUtils::abort("Unknown object: " + paramName);
             }
-
-            if (variableDefinitions.find(name) == variableDefinitions.end()) {
-                SystemUtils::abort("Variable " + name +
-                                   " used but not defined.");
-            }
-
-            ParametrizedVariable* parent = variableDefinitions[name];
-            double initialVal = (*it)->getInitValue();
-
-            addParametrizedVariable(parent, params, initialVal);
-
-            // std::cout << "###### Added parametrized (from addInstance) " <<
-            // name << " with parameters: " << std::endl;
-            // for (unsigned i = 0; i < params.size(); i++)
-            //     std::cout << "\t" << params[i]->name << std::endl;
-            // std::cout << "and value: " << initialVal << std::endl;
+            // TODO: this is wrong. It only covers the case that
+            // parametrized variable is a Parameter Expression (see issue
+            // #15)
+            params.push_back(objects[paramName]);
         }
+
+        if (variableDefinitions.find(name) == variableDefinitions.end()) {
+            SystemUtils::abort("Variable " + name + " used but not defined.");
+        }
+
+        ParametrizedVariable* parent = variableDefinitions[name];
+        double initialVal = pVarDef->getInitValue();
+
+        addParametrizedVariable(parent, params, initialVal);
+
+        // std::cout << "###### Added parametrized (from addInstance) " <<
+        // name << " with parameters: " << std::endl;
+        // for (unsigned i = 0; i < params.size(); i++)
+        //     std::cout << "\t" << params[i]->name << std::endl;
+        // std::cout << "and value: " << initialVal << std::endl;
     }
 
     // Set Max nondef actions
@@ -1127,16 +1038,16 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
     std::vector<Parameter*> params;
     // Adding parameters from PvarExpression (those are the parameters that user
     // set when he called parametrized variablea as an espression)
-    for (unsigned i = 0; i < pVarDefinition->getParameters()->size(); i++)
-        if (typeMap.find((*pVarDefinition->getParameters())[i]) ==
+    for (unsigned i = 0; i < pVarDefinition->getParameters().size(); i++)
+        if (typeMap.find((pVarDefinition->getParameters())[i]) ==
             typeMap.end()) {
             SystemUtils::abort("Undefined type " +
-                               (*pVarExpression->getParameters())[i] +
+                               (pVarExpression->getParameters())[i] +
                                " used as parameter in " + name + ".");
         } else {
             params.push_back(
-                new Parameter((*pVarExpression->getParameters())[i],
-                              typeMap[(*pVarDefinition->getParameters())[i]]));
+                new Parameter((pVarExpression->getParameters())[i],
+                              typeMap[(pVarDefinition->getParameters())[i]]));
         }
 
     // TODO: This initialization here is wrong but is put here to prevent
@@ -1222,10 +1133,9 @@ bool storeObject(std::string objName, std::string objectType) {
         return false;
     }
 
-    objectMap[objName] = new Object(
-        objName, typeMap[objectType]); // TODO: Should check if type exists. For
-                                       // some reason, simple check gives worng
-                                       // results.
+    // TODO: Should check if type exists. For some reason, simple check gives
+    // wrong results.
+    objectMap[objName] = new Object(objName, typeMap[objectType]);
 
     return true;
 }
