@@ -443,6 +443,14 @@ public:
         return nonFluentsName;
     }
 
+    // Sub-methods for domain parse
+    void addTypes(Domain* domain);
+    void addPVars(Domain* domain);
+    void addCpfs(Domain* domain);
+    void addReward(Domain* domain);
+    void addStateConstraints(Domain* domain);
+    void addObjects(Domain* domain);
+
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
 
