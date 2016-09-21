@@ -70,6 +70,20 @@ void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
         return;
     }
 
+    // for (DefineType* type : domain->getDomainTypes()) {
+    //    if (type->getSuperTypeList().empty()) {
+    //        // Simple type definition (type_name : type)
+    //        rddlTask->addType(type->getName(), type->getSuperType());
+    //    } else {
+    //        // Type definition using enum values (type_name :
+    //        @enum1,...,@enumN)
+    //        rddlTask->addType(type->getName());
+    //        for (std::string const& objectName : type->getSuperTypeList()) {
+    //            rddlTask->addObject(type->getName(), objectName);
+    //        }
+    //    }
+    //}
+
     // Adding TypeSection
     for (std::vector<DefineType*>::iterator it =
              domain->getDomainTypes()->begin();
@@ -105,12 +119,6 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
              domain->getPvarDefinitions()->begin();
          it != domain->getPvarDefinitions()->end(); it++) {
         std::string name = (*it)->getName();
-        std::string varTypeName = (*it)->getVarType();
-        std::string defaultVarType = (*it)->getDefaultVarType();
-        std::string satisfactionType = (*it)->getSatisfactionType();
-        std::string defaultVarValString = (*it)->getDefaultVarValue();
-        double defaultVarValue;
-
         std::vector<Parameter*> params;
         for (std::vector<std::string>::iterator jt =
                  (*it)->getParameters()->begin();
@@ -129,8 +137,9 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         // TODO: This initialization here is wrong but is put here to prevent
         // warning during the compliation
         // setting it to nullptr doesn't help
-        ParametrizedVariable::VariableType varType =
-            ParametrizedVariable::STATE_FLUENT;
+        ParametrizedVariable::VariableType
+            varType; // = ParametrizedVariable::STATE_FLUENT;
+        std::string varTypeName = (*it)->getVarType();
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
         } else if (varTypeName == "action-fluent") {
@@ -145,21 +154,25 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
                                "state-fluent, action-fluent, non-fluent.");
         }
 
+        std::string defaultVarType = (*it)->getDefaultVarType();
         if (rddlTask->types.find(defaultVarType) == rddlTask->types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
         }
 
         Type* valueType = rddlTask->types[defaultVarType];
+        double defaultVarValue;
 
         switch (varType) {
         case ParametrizedVariable::NON_FLUENT:
         case ParametrizedVariable::STATE_FLUENT:
         case ParametrizedVariable::ACTION_FLUENT: {
+            std::string satisfactionType = (*it)->getSatisfactionType();
             if (satisfactionType != "default") {
                 SystemUtils::abort(
                     "Unknown satisfaction type for parametrized variable " +
                     varTypeName + ". Did you mean 'default'?");
             }
+            std::string defaultVarValString = (*it)->getDefaultVarValue();
 
             // TODO: ?? -> || valueType->name == "bool")
             if (valueType->name == "int" || valueType->name == "real") {
