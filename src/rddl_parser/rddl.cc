@@ -65,7 +65,7 @@ RDDLTask::RDDLTask()
     addType("object");
 }
 
-void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addTypes(Domain* domain) {
     if (domain->getDomainTypes() == nullptr) {
         return;
     }
@@ -73,13 +73,13 @@ void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
     // for (DefineType* type : domain->getDomainTypes()) {
     //    if (type->getSuperTypeList().empty()) {
     //        // Simple type definition (type_name : type)
-    //        rddlTask->addType(type->getName(), type->getSuperType());
+    //        addType(type->getName(), type->getSuperType());
     //    } else {
     //        // Type definition using enum values (type_name :
     //        @enum1,...,@enumN)
-    //        rddlTask->addType(type->getName());
+    //        addType(type->getName());
     //        for (std::string const& objectName : type->getSuperTypeList()) {
-    //            rddlTask->addObject(type->getName(), objectName);
+    //            addObject(type->getName(), objectName);
     //        }
     //    }
     //}
@@ -93,23 +93,23 @@ void addTypeSection(RDDLTask* rddlTask, Domain* domain) {
             // std::cout << "Added type (from type section): " <<
             // (*it)->getName() << " of type " << (*it)->getSuperType() <<
             // std::endl;
-            rddlTask->addType((*it)->getName(), (*it)->getSuperType());
+            addType((*it)->getName(), (*it)->getSuperType());
         } else {
             // Definition of type using enum values (type_name : @enum1, @enum2,
             // ... , @enumN)
-            rddlTask->addType((*it)->getName());
+            addType((*it)->getName());
             for (std::vector<std::string>::iterator jt =
                      (*it)->getSuperTypeList()->begin();
                  jt != (*it)->getSuperTypeList()->end(); jt++) {
                 // std::cout << "Added object (from type section): " <<
                 // (*it)->getName() << " of type " << *jt << std::endl;
-                rddlTask->addObject((*it)->getName(), (*jt));
+                addObject((*it)->getName(), (*jt));
             }
         }
     }
 }
 
-void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addPVars(Domain* domain) {
     if (domain->getPvarDefinitions() == nullptr) {
         return;
     }
@@ -123,22 +123,21 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         for (std::vector<std::string>::iterator jt =
                  (*it)->getParameters()->begin();
              jt != (*it)->getParameters()->end(); jt++) {
-            if (rddlTask->types.find((*jt)) == rddlTask->types.end()) {
+            if (types.find((*jt)) == types.end()) {
                 SystemUtils::abort("Undefined type " + *jt +
                                    " used as parameter in " + name + ".");
             } else {
-                params.push_back(new Parameter(rddlTask->types[*jt]->name,
-                                               rddlTask->types[*jt]));
+                params.push_back(new Parameter(types[*jt]->name, types[*jt]));
             }
-            // std::cout << "Adding parameter: " << rddlTask->types[*jt]->name
-            // << " of type " << rddlTask->types[*jt]->name << std::endl;
+            // std::cout << "Adding parameter: " << types[*jt]->name
+            // << " of type " << types[*jt]->name << std::endl;
         }
 
         // TODO: This initialization here is wrong but is put here to prevent
         // warning during the compliation
         // setting it to nullptr doesn't help
-        ParametrizedVariable::VariableType
-            varType; // = ParametrizedVariable::STATE_FLUENT;
+        ParametrizedVariable::VariableType varType =
+            ParametrizedVariable::STATE_FLUENT;
         std::string varTypeName = (*it)->getVarType();
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
@@ -155,11 +154,11 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         }
 
         std::string defaultVarType = (*it)->getDefaultVarType();
-        if (rddlTask->types.find(defaultVarType) == rddlTask->types.end()) {
+        if (types.find(defaultVarType) == types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
         }
 
-        Type* valueType = rddlTask->types[defaultVarType];
+        Type* valueType = types[defaultVarType];
         double defaultVarValue;
 
         switch (varType) {
@@ -178,14 +177,13 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
             if (valueType->name == "int" || valueType->name == "real") {
                 defaultVarValue = std::atof(defaultVarValString.c_str());
             } else {
-                if (rddlTask->objects.find(defaultVarValString) ==
-                    rddlTask->objects.end()) {
+                if (objects.find(defaultVarValString) == objects.end()) {
                     SystemUtils::abort("Default value " + defaultVarValString +
                                        " of variable " + name +
                                        " not defined.");
                 }
 
-                Object* val = rddlTask->objects[defaultVarValString];
+                Object* val = objects[defaultVarValString];
                 defaultVarValue = val->value;
             }
             break;
@@ -220,11 +218,11 @@ void addPVarSection(RDDLTask* rddlTask, Domain* domain) {
         // for (unsigned i = 0; i < params.size(); i++)
         //     std::cout << "\t" << params[i]->name << std::endl;
 
-        rddlTask->addVariableDefinition(var);
+        addVariableDefinition(var);
     }
 }
 
-void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addCpfs(Domain* domain) {
     if (domain->getCpfs() == nullptr) {
         return;
     }
@@ -244,12 +242,11 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
             name = name.substr(0, name.length() - 1);
         }
 
-        if (rddlTask->variableDefinitions.find(name) ==
-            rddlTask->variableDefinitions.end()) {
+        if (variableDefinitions.find(name) == variableDefinitions.end()) {
             SystemUtils::abort("No according variable to CPF " + name + ".");
         }
 
-        ParametrizedVariable* head = rddlTask->variableDefinitions[name];
+        ParametrizedVariable* head = variableDefinitions[name];
 
         if ((*it)->getPvar()->getParameters() == nullptr) {
             if (head->params.size() != 0)
@@ -274,25 +271,24 @@ void addCpfSection(RDDLTask* rddlTask, Domain* domain) {
             }
         }
 
-        if (rddlTask->CPFDefinitions.find(head) !=
-            rddlTask->CPFDefinitions.end()) {
+        if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
             SystemUtils::abort("Error: Multiple definition of CPF " + name +
                                ".");
         }
 
         // Expression
-        rddlTask->CPFDefinitions[head] = (*it)->getLogicalExpression();
+        CPFDefinitions[head] = (*it)->getLogicalExpression();
     }
 }
 
-void addRewardSection(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addReward(Domain* domain) {
     if (domain->getReward() == nullptr)
         return;
 
-    rddlTask->setRewardCPF(domain->getReward());
+    setRewardCPF(domain->getReward());
 }
 
-void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addStateConstraints(Domain* domain) {
     if (domain->getStateConstraints() == nullptr) {
         return;
     }
@@ -300,11 +296,11 @@ void addStateConstraint(RDDLTask* rddlTask, Domain* domain) {
     for (std::vector<LogicalExpression*>::iterator it =
              domain->getStateConstraints()->begin();
          it != domain->getStateConstraints()->end(); it++) {
-        rddlTask->SACs.push_back(*it);
+        SACs.push_back(*it);
     }
 }
 
-void addObjectsSection(RDDLTask* rddlTask, Domain* domain) {
+void RDDLTask::addObjects(Domain* domain) {
     if (domain->getObjects() == nullptr) {
         return;
     }
@@ -313,13 +309,13 @@ void addObjectsSection(RDDLTask* rddlTask, Domain* domain) {
              domain->getObjects()->begin();
          it != domain->getObjects()->end(); it++) {
         std::string typeName = (*it)->getTypeName();
-        if (rddlTask->types.find(typeName) == rddlTask->types.end()) {
+        if (types.find(typeName) == types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
         for (std::vector<std::string>::iterator jt =
                  (*it)->getObjectNames()->begin();
              jt != (*it)->getObjectNames()->end(); jt++) {
-            rddlTask->addObject(typeName, (*jt));
+            addObject(typeName, (*jt));
             std::cout << "Added object (from objects section): " << typeName
                       << " : " << *jt << std::endl;
         }
@@ -331,12 +327,12 @@ void RDDLTask::addDomain(Domain* domain) {
 
     domainName = domain->getName();
 
-    addTypeSection(this, domain);
-    addPVarSection(this, domain);
-    addCpfSection(this, domain);
-    addRewardSection(this, domain);
-    addStateConstraint(this, domain);
-    addObjectsSection(this, domain);
+    addTypes(domain);
+    addPVars(domain);
+    addCpfs(domain);
+    addReward(domain);
+    addStateConstraints(domain);
+    addObjects(domain);
     // TODO: StateConstraintsSection
     // TODO: ActionPreconditionsSection
     // TODO: StateInvariantSection
