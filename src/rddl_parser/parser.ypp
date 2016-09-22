@@ -185,12 +185,10 @@ TypeList: DefineType             { $$ = new std::vector<DefineType*>(); $$->inse
 
 // TODO: RDDL2: enable defining types in following way: id_token, id_token, ..., id_token : [definition like below]
 DefineType: id_token ':' object_token ';'                                       { $$ = new DefineType(*$1, *$3);
-
                                                                                   storeType(*$1, *$3);
                                                                                   /*std::cout << " added type from parser.ypp: " << *$1 << " with super type" << typeMap[*$3]->name << std::endl;*/
                                                                                 } // TODO: chose if this is a duplicate
           | id_token ':' id_token ';'                                           { $$ = new DefineType(*$1, *$3);
-
                                                                                   storeType(*$1, *$3);
                                                                                   /*std::cout << " added type from parser.ypp: " << *$1 << " with super type" << typeMap[*$3]->name << std::endl;*/
                                                                                 }
@@ -238,9 +236,9 @@ PvarList: PvarDefinition             { $$ = new std::vector<PvarDefinition*>(); 
         | PvarDefinition PvarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-PvarDefinition: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10)); }
-            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10)); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10)); }
+PvarDefinition: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, $$); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, $$); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new PvarDefinition(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromPvarDefinition(*$1, $$); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
             | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); } // TODO: Implement
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); } // TODO: Implement
@@ -318,8 +316,8 @@ CpfList: CpfDefinition         { $$ = new std::vector<CpfDefinition*>(); $$->pus
 CpfDefinition: PvarExpression '=' Expression ';' { $$ = new CpfDefinition($1, $3); }
 ;
 
-PvarExpression: id_token                            { $$ = new PvarExpression(*$1); storeParametrizedVariableMap(*$1, new PvarExpression(*$1)); }
-            | id_token '(' TermList ')'             { $$ = new PvarExpression(*$1, *$3); storeParametrizedVariableMap(*$1, new PvarExpression(*$1, *$3)); }
+PvarExpression: id_token                            { $$ = new PvarExpression(*$1); storeParametrizedVariableMap(*$1, $$); }
+            | id_token '(' TermList ')'             { $$ = new PvarExpression(*$1, *$3); storeParametrizedVariableMap(*$1, $$); }
             | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
             | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
             | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); } // TODO: Not implemented
