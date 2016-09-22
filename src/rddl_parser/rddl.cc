@@ -234,7 +234,7 @@ void RDDLTask::addCpfs(Domain* domain) {
 }
 
 void RDDLTask::addReward(Domain* domain) {
-    if (domain->getReward() == nullptr)
+    if (!domain->getReward())
         return;
 
     setRewardCPF(domain->getReward());
@@ -1021,8 +1021,9 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
     std::string pVarName) {
     if (parametrizedVariableDefinitionsMap.find(pVarName) ==
-        parametrizedVariableDefinitionsMap.end())
+        parametrizedVariableDefinitionsMap.end()) {
         return nullptr;
+    }
 
     PvarDefinition* pVarDefinition =
         parametrizedVariableDefinitionsMap[pVarName];
@@ -1143,9 +1144,8 @@ bool storeObject(std::string objName, std::string objectType) {
 Object* getObject(std::string objName) {
     if (objectMap.find(objName) != objectMap.end()) {
         return objectMap[objName];
-    } else {
-        return nullptr;
     }
+    return nullptr;
 }
 
 bool storeType(std::string typeName, std::string superTypeName) {
@@ -1161,7 +1161,6 @@ bool storeType(std::string typeName, std::string superTypeName) {
 Type* getType(std::string typeName) {
     if (typeMap.find(typeName) != typeMap.end()) {
         return typeMap[typeName];
-    } else {
-        return nullptr;
     }
+    return nullptr;
 }
