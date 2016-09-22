@@ -353,7 +353,7 @@ Expression:
     | PvarExpression                                                                            {
                                                                                                   $$ = getParametrizedVariableFromPvarDefinition($1->getName());
 
-                                                                                                  if ($$ == nullptr) {
+                                                                                                  if (!$$) {
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
                                                                                                   }
                                                                                                 }
@@ -373,7 +373,7 @@ Expression:
 
                                                                                                     switchVar = getParametrizedVariableFromPvarDefinition(*$3);
 
-                                                                                                    if (switchVar == nullptr) {
+                                                                                                    if (!switchVar) {
                                                                                                         SystemUtils::abort("Unknown parametrized variable " + *$3 + ".");
                                                                                                     }
 
@@ -381,7 +381,7 @@ Expression:
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
                                                                                                     for (std::vector<CaseDefine*>::iterator it = $6->begin(); it != $6->end(); it++) {
-                                                                                                        if ((*it)->getCondition() == nullptr){
+                                                                                                        if (!(*it)->getCondition()) {
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
                                                                                                             conditions.push_back(new NumericConstant(1.0));
                                                                                                         }
@@ -471,7 +471,7 @@ CaseDefine: case_token Term ':' Expression        {
 
                                                     var = getParametrizedVariableFromPvarDefinition(*$2);
 
-                                                    if (var == nullptr) {
+                                                    if (!var) {
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
                                                     }
 
@@ -548,12 +548,12 @@ ObjectsList: ObjectsDefine             { $$ = new std::vector<ObjectDefine*>(); 
 
 ObjectsDefine: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectDefine(*$1, *$4);
                                                             /*TODO: hack, fix this*/
-                                                            if (getType(*$1) == nullptr) {
+                                                            if (!getType(*$1)) {
                                                                 SystemUtils::abort("Type " + *$1 + " not defined.");
                                                             }
                                                             for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
 
-                                                                if (storeObject(*it, *$1) == false) {
+                                                                if (!storeObject(*it, *$1)) {
                                                                     SystemUtils::abort("Object name " + *it + " is ambiguous.");
                                                                 }
                                                             }
@@ -760,27 +760,14 @@ PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
 %%
 
 bool CheckExtension(std::string s) {
-    if (s.length() < 6) {
-        return 0;
-    }
-
-    if (s.substr(s.length() - 5).compare(".rddl") != 0) {
-        return 0;
-    }
-
-    return 1;
-}
-
-void printUsage() {
-    std::cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem>" << std::endl << std::endl;
+     return ((s.length() > 5) &&  (s.substr(s.length() - 5).compare(".rddl") == 0));
 }
 
 int main (int argc, char** argv) {
     // Debuging on/off
     // yydebug = 1;
     if (argc < 4) {
-        printUsage();
-        return EXIT_FAILURE;
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");               
     }
 
     // Checking input file
@@ -797,8 +784,7 @@ int main (int argc, char** argv) {
     if (domain && nfAndInst) {
         combined << domain.rdbuf() << nfAndInst.rdbuf();
         combined.close();
-    }
-    else {
+    } else {
         SystemUtils::abort("Error opening files. Check the correctnes of files.");
     }
 
