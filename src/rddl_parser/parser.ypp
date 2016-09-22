@@ -499,7 +499,7 @@ RewardsSection: reward_token '=' Expression ';'        { $$ = $3; }
 // State Action Contraint section
 ////////////////////////
 StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { $$ = $3; }
-                    |     state_action_constraints_token '{' '}' ';'                           { $$ = nullptr; }
+                    |     state_action_constraints_token '{' '}' ';'                           { $$ = new std::vector<LogicalExpression*>(); }
 ;
 
 StateConstraintList: StateConstraintDefine                        { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
