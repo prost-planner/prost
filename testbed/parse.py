@@ -14,22 +14,22 @@ if __name__ == "__main__":
         exit()
 
     dirs = os.listdir(sys.argv[1])
-    if "rddl_prefix" not in dirs:
-        print >> sys.stderr, "The given directory must contain a directory called rddl_prefix."
+    if "rddl" not in dirs:
+        print >> sys.stderr, "The given directory must contain a directory called rddl."
         exit()
 
-    files = os.listdir(sys.argv[1]+"/rddl_prefix")
+    files = os.listdir(sys.argv[1]+"/rddl")
 
     domainFiles = list()
 
     for f in files:
-        if f.endswith("_mdp.rddl_prefix"):
+        if f.endswith("_mdp.rddl"):
             domainFiles.append(f)
 
     instances = dict()
     for f in files:
-        if not f.endswith("_mdp.rddl_prefix"):
-            domName = f.split("_inst_mdp")[0] + "_mdp.rddl_prefix"
+        if not f.endswith("_mdp.rddl"):
+            domName = f.split("_inst_mdp")[0] + "_mdp.rddl"
             if domName not in domainFiles:
                 print >> sys.stderr, ("No domain file for instance " + f + ".")
                 exit()
@@ -38,5 +38,5 @@ if __name__ == "__main__":
     os.system("rm -rf " + sys.argv[1] + "/prost")
     os.system("mkdir " + sys.argv[1] + "/prost")
     for inst in instances:
-        os.system("../src/rddl_prefix_parser/rddl-parser " + sys.argv[1] + "/rddl_prefix/" + instances[inst] + " " + sys.argv[1] + "/rddl_prefix/" + inst + " " + sys.argv[1] + "/prost/ -s 1")
+        os.system("../src/rddl_parser/rddl-parser " + sys.argv[1] + "/rddl/" + instances[inst] + " " + sys.argv[1] + "/rddl/" + inst + " " + sys.argv[1] + "/prost/ -s 1")
 
