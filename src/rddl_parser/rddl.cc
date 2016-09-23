@@ -68,17 +68,11 @@ RDDLTask::RDDLTask()
 void RDDLTask::addTypes(Domain* domain) {
     for (DefineType* type : domain->getDomainTypes()) {
         if (type->getSuperTypeList().empty()) {
-            // Simple type definition (type_name : type)
-            // std::cout << "Added type (from type section): " <<
-            // type->getName() << " of type " << type->getSuperType() <<
-            // std::endl;
             addType(type->getName(), type->getSuperType());
         } else {
             // Type definition using enum values (type_name : @enum1,...,@enumN)
             addType(type->getName());
             for (std::string const& objectName : type->getSuperTypeList()) {
-                // std::cout << "Added object (from type section): " <<
-                // type->getName() << " of type " << objectName << std::endl;
                 addObject(type->getName(), objectName);
             }
         }
@@ -98,8 +92,6 @@ void RDDLTask::addPVars(Domain* domain) {
                 params.push_back(
                     new Parameter(types[param]->name, types[param]));
             }
-            // std::cout << "Adding parameter: " << types[param]->name
-            // << " of type " << types[param]->name << std::endl;
         }
 
         // TODO: This initialization here is wrong but is put here to prevent
@@ -174,32 +166,18 @@ void RDDLTask::addPVars(Domain* domain) {
         }
         }
 
-        // std::cout << "Adding parametrized variable: " << name << " default
-        // var type " << defaultVarType  << " default value: " <<
-        // defaultVarValue << std::endl;
         ParametrizedVariable* var = new ParametrizedVariable(
             name, params, varType, valueType, defaultVarValue);
-
-        // std::cout << "Adding parametrized variable in addPvarSection: " <<
-        // name << " default var type " << defaultVarType  << " default value: "
-        // << defaultVarValue << std::endl;
-        // for (unsigned i = 0; i < params.size(); i++)
-        //     std::cout << "\t" << params[i]->name << std::endl;
 
         addVariableDefinition(var);
     }
 }
 
 void RDDLTask::addCpfs(Domain* domain) {
-    // std::cout << "########## Adding " << domain->getCpfs()->size() << " CPF
-    // definitions" << std::endl;
-
     // Consists of Parametrized variable and logical expression
     for (CpfDefinition* cpf : domain->getCpfs()) {
         // P Var
         std::string name = cpf->getPvar()->getName();
-
-        // std::cout << "Pvar name: " << name << std::endl;
 
         if (name[name.length() - 1] == '\'') {
             name = name.substr(0, name.length() - 1);
@@ -219,15 +197,12 @@ void RDDLTask::addCpfs(Domain* domain) {
 
         for (int i = 0; i < cpf->getPvar()->getParameters().size(); ++i) {
             head->params[i]->name = cpf->getPvar()->getParameters()[i];
-            // std::cout << "\tparameter: " << head->params[i]->name << " of
-            // type " << head->params[i]->type->name << std::endl;
         }
 
         if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
             SystemUtils::abort("Error: Multiple definition of CPF " + name +
                                ".");
         }
-
         // Expression
         CPFDefinitions[head] = cpf->getLogicalExpression();
     }
@@ -252,6 +227,7 @@ void RDDLTask::addObjects(Domain* domain) {
         if (types.find(typeName) == types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
         }
+
         for (std::string const& objectName : objDef->getObjectNames()) {
             addObject(typeName, objectName);
             std::cout << "Added object (from objects section): " << typeName
@@ -271,11 +247,7 @@ void RDDLTask::addDomain(Domain* domain) {
     addReward(domain);
     addStateConstraints(domain);
     addObjects(domain);
-    // TODO: StateConstraintsSection
-    // TODO: ActionPreconditionsSection
     // TODO: StateInvariantSection
-    // TODO: ObjectsSection -> this can be implemented already
-    // std::cout << "Domain added." << std::endl;
 }
 
 void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
@@ -309,10 +281,6 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
                 SystemUtils::abort("Unknown object: " + paramName);
             }
 
-            // std::cout << "Added non fluent (from non fluents): " <<
-            // paramName << " of type " << objects[paramName]->type->name <<
-            // std::endl;
-            //
             // TODO: this is wrong. It only covers the case that
             // parametrized variable is a Parameter Expression (see issue
             // #15)
@@ -327,18 +295,10 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
         double initialVal = pVarDef->getInitValue();
 
         addParametrizedVariable(parent, params, initialVal);
-
-        // std::cout << "###### Added parametrized variable (from addNonFluent)
-        // " << name << " with parameters: " << std::endl;
-        // for (unsigned i = 0; i < params.size(); i++)
-        //     std::cout << "\t" << params[i]->name << std::endl;
-        // std::cout << "and value: " << initialVal << std::endl;
     }
-    // std::cout << "NonFluents added." << std::endl;
 }
 
 void RDDLTask::addInstance(Instance* instance) {
-    // std::cout << "Adding instance" << std::endl;
     this->name = instance->getName();
 
     // Check domain name
@@ -379,12 +339,6 @@ void RDDLTask::addInstance(Instance* instance) {
         double initialVal = pVarDef->getInitValue();
 
         addParametrizedVariable(parent, params, initialVal);
-
-        // std::cout << "###### Added parametrized (from addInstance) " <<
-        // name << " with parameters: " << std::endl;
-        // for (unsigned i = 0; i < params.size(); i++)
-        //     std::cout << "\t" << params[i]->name << std::endl;
-        // std::cout << "and value: " << initialVal << std::endl;
     }
 
     // Set Max nondef actions
@@ -395,8 +349,6 @@ void RDDLTask::addInstance(Instance* instance) {
 
     // Set discount
     discountFactor = instance->getDiscount();
-
-    // std::cout << "Instance added." << std::endl;
 }
 
 void RDDLTask::addType(std::string const& name, std::string const& superType) {
