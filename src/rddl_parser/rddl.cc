@@ -15,10 +15,10 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-std::map<std::string, PvarDefinition*>
-    parametrizedVariableDefinitionsMap; // Map for storing definition of
+std::map<std::string, VariableSchematic*>
+    parametrizedVariableSchematicsMap; // Map for storing definition of
                                         // ParametrizedVariables
-std::map<std::string, PvarExpression*>
+std::map<std::string, VariableExpression*>
     parametrizedVariableMap; // Map for storing ParametrizedVariables as
                              // expressions
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
@@ -61,7 +61,7 @@ RDDLTask::RDDLTask()
 }
 
 void RDDLTask::addTypes(Domain* domain) {
-    for (DefineType* type : domain->getDomainTypes()) {
+    for (SchematicType* type : domain->getDomainTypes()) {
         if (type->getSuperTypeList().empty()) {
             addType(type->getName(), type->getSuperType());
         } else {
@@ -74,12 +74,12 @@ void RDDLTask::addTypes(Domain* domain) {
     }
 }
 
-void RDDLTask::addPVars(Domain* domain) {
-    // Adding PvarSection
-    for (PvarDefinition* pVarDef : domain->getPvarDefinitions()) {
-        std::string name = pVarDef->getName();
+void RDDLTask::addVariables(Domain* domain) {
+    // Adding VarSection
+    for (VariableSchematic* varDef : domain->getVariableSchematics()) {
+        std::string name = varDef->getName();
         std::vector<Parameter*> params;
-        for (std::string const& param : pVarDef->getParameters()) {
+        for (std::string const& param : varDef->getParameters()) {
             if (types.find(param) == types.end()) {
                 SystemUtils::abort("Undefined type " + param +
                                    " used as parameter in " + name + ".");
@@ -93,7 +93,7 @@ void RDDLTask::addPVars(Domain* domain) {
         // warning during the compliation. Setting it to nullptr doesn't help
         ParametrizedVariable::VariableType varType =
             ParametrizedVariable::STATE_FLUENT;
-        std::string varTypeName = pVarDef->getVarType();
+        std::string varTypeName = varDef->getVarType();
         if (varTypeName == "state-fluent") {
             varType = ParametrizedVariable::STATE_FLUENT;
         } else if (varTypeName == "action-fluent") {
@@ -108,7 +108,7 @@ void RDDLTask::addPVars(Domain* domain) {
                                "state-fluent, action-fluent, non-fluent.");
         }
 
-        std::string defaultVarType = pVarDef->getDefaultVarType();
+        std::string defaultVarType = varDef->getDefaultVarType();
         if (types.find(defaultVarType) == types.end()) {
             SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
         }
@@ -120,13 +120,13 @@ void RDDLTask::addPVars(Domain* domain) {
         case ParametrizedVariable::NON_FLUENT:
         case ParametrizedVariable::STATE_FLUENT:
         case ParametrizedVariable::ACTION_FLUENT: {
-            std::string satisfactionType = pVarDef->getSatisfactionType();
+            std::string satisfactionType = varDef->getSatisfactionType();
             if (satisfactionType != "default") {
                 SystemUtils::abort(
                     "Unknown satisfaction type for parametrized variable " +
                     varTypeName + ". Did you mean 'default'?");
             }
-            std::string defaultVarValString = pVarDef->getDefaultVarValue();
+            std::string defaultVarValString = varDef->getDefaultVarValue();
 
             // TODO: ?? -> || valueType->name == "bool")
             if (valueType->name == "int" || valueType->name == "real") {
@@ -152,11 +152,11 @@ void RDDLTask::addPVars(Domain* domain) {
         //         'level'?");
         //     }
         //     // TODO: implement this
-        //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
+        //     SystemUtils::abort("Not implemented. Variable type: " + varTypeName);
         //     break;
 
         default: {
-            SystemUtils::abort("Unknown var type: " + varTypeName);
+            SystemUtils::abort("Unknown variable type: " + varTypeName);
             break;
         }
         }
@@ -164,15 +164,15 @@ void RDDLTask::addPVars(Domain* domain) {
         ParametrizedVariable* var = new ParametrizedVariable(
             name, params, varType, valueType, defaultVarValue);
 
-        addVariableDefinition(var);
+        addVariableSchematic(var);
     }
 }
 
-void RDDLTask::addCpfs(Domain* domain) {
+void RDDLTask::addCPFs(Domain* domain) {
     // Consists of Parametrized variable and logical expression
-    for (CpfDefinition* cpf : domain->getCpfs()) {
-        // P Var
-        std::string name = cpf->getPvar()->getName();
+    for (CPFSchematic* cpf : domain->getCPFs()) {
+        // Variable
+        std::string name = cpf->getVariable()->getName();
 
         if (name[name.length() - 1] == '\'') {
             name = name.substr(0, name.length() - 1);
@@ -184,14 +184,14 @@ void RDDLTask::addCpfs(Domain* domain) {
 
         ParametrizedVariable* head = variableDefinitions[name];
 
-        if (cpf->getPvar()->getParameters().size() != head->params.size()) {
+        if (cpf->getVariable()->getParameters().size() != head->params.size()) {
             SystemUtils::abort(
                 "Wrong number of parameters for parametrized variable " + name +
                 ".");
         }
 
-        for (int i = 0; i < cpf->getPvar()->getParameters().size(); ++i) {
-            head->params[i]->name = cpf->getPvar()->getParameters()[i];
+        for (int i = 0; i < cpf->getVariable()->getParameters().size(); ++i) {
+            head->params[i]->name = cpf->getVariable()->getParameters()[i];
         }
 
         if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
@@ -203,10 +203,8 @@ void RDDLTask::addCpfs(Domain* domain) {
     }
 }
 
-void RDDLTask::addReward(Domain* domain) {
-    if (!domain->getReward())
-        return;
-
+void RDDLTask::setReward(Domain* domain) {
+    assert(!domain->getReward());
     setRewardCPF(domain->getReward());
 }
 
@@ -217,7 +215,7 @@ void RDDLTask::addStateConstraints(Domain* domain) {
 }
 
 void RDDLTask::addObjects(Domain* domain) {
-    for (ObjectDefine* objDef : domain->getObjects()) {
+    for (ObjectSchematic* objDef : domain->getObjects()) {
         std::string typeName = objDef->getTypeName();
         if (types.find(typeName) == types.end()) {
             SystemUtils::abort("Unknown object " + typeName);
@@ -237,9 +235,9 @@ void RDDLTask::addDomain(Domain* domain) {
     domainName = domain->getName();
 
     addTypes(domain);
-    addPVars(domain);
-    addCpfs(domain);
-    addReward(domain);
+    addVariables(domain);
+    addCPFs(domain);
+    setReward(domain);
     addStateConstraints(domain);
     addObjects(domain);
     // TODO: StateInvariantSection
@@ -256,7 +254,7 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
     }
 
     // Adding objects
-    for (ObjectDefine* objDef : nonFluent->getObjects()) {
+    for (ObjectSchematic* objDef : nonFluent->getObjects()) {
         std::string typeName = objDef->getTypeName();
         for (std::string const& objectName : objDef->getObjectNames()) {
             addObject(typeName, objectName);
@@ -267,11 +265,11 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
 
     // Adding non fluents
     std::vector<Parameter*> params;
-    for (PvariablesInstanceDefine* pVarDef : nonFluent->getNonFluents()) {
-        std::string name = pVarDef->getName();
+    for (VariablesInstanceSchematic* varDef : nonFluent->getNonFluents()) {
+        std::string name = varDef->getName();
         params.clear();
         // Set parameters
-        for (std::string const& paramName : pVarDef->getLConstList()) {
+        for (std::string const& paramName : varDef->getParameters()) {
             if (objects.find(paramName) == objects.end()) {
                 SystemUtils::abort("Unknown object: " + paramName);
             }
@@ -287,7 +285,7 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
         }
 
         ParametrizedVariable* parent = variableDefinitions[name];
-        double initialVal = pVarDef->getInitValue();
+        double initialVal = varDef->getInitValue();
 
         addParametrizedVariable(parent, params, initialVal);
     }
@@ -312,11 +310,11 @@ void RDDLTask::addInstance(Instance* instance) {
     // Add init states
     // TODO: This is basically the same code as for non-fluents, think about
     // helper method
-    for (PvariablesInstanceDefine* pVarDef : instance->getPVariables()) {
-        std::string name = pVarDef->getName();
+    for (VariablesInstanceSchematic* varDef : instance->getVariables()) {
+        std::string name = varDef->getName();
         std::vector<Parameter*> params;
         // Set parameters
-        for (std::string const& paramName : pVarDef->getLConstList()) {
+        for (std::string const& paramName : varDef->getParameters()) {
             if (objects.find(paramName) == objects.end()) {
                 SystemUtils::abort("Unknown object: " + paramName);
             }
@@ -331,7 +329,7 @@ void RDDLTask::addInstance(Instance* instance) {
         }
 
         ParametrizedVariable* parent = variableDefinitions[name];
-        double initialVal = pVarDef->getInitValue();
+        double initialVal = varDef->getInitValue();
 
         addParametrizedVariable(parent, params, initialVal);
     }
@@ -374,7 +372,7 @@ void RDDLTask::addObject(std::string const& typeName,
     objects[objectName] = new Object(objectName, types[typeName]);
 }
 
-void RDDLTask::addVariableDefinition(ParametrizedVariable* varDef) {
+void RDDLTask::addVariableSchematic(ParametrizedVariable* varDef) {
     if (variableDefinitions.find(varDef->fullName) !=
         variableDefinitions.end()) {
         SystemUtils::abort("Error: Ambiguous variable name: " +
@@ -962,40 +960,40 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 *****************************************************************/
 
 // This method is used to get the value of parametrized variable
-// Parametrized variable is stored with its definition in pVarDefinition and the
+// Parametrized variable is stored with its definition in VariableSchematic and the
 // values of parameters used in the particular call of parametrized variable are
-// stored in pVarExpression
-ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
-    std::string pVarName) {
-    if (parametrizedVariableDefinitionsMap.find(pVarName) ==
-        parametrizedVariableDefinitionsMap.end()) {
+// stored in varExpression
+ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
+    std::string varName) {
+    if (parametrizedVariableSchematicsMap.find(varName) ==
+        parametrizedVariableSchematicsMap.end()) {
         return nullptr;
     }
 
-    PvarDefinition* pVarDefinition =
-        parametrizedVariableDefinitionsMap[pVarName];
-    PvarExpression* pVarExpression = parametrizedVariableMap[pVarName];
+    VariableSchematic* varSchematic =
+        parametrizedVariableSchematicsMap[varName];
+    VariableExpression* varExpression = parametrizedVariableMap[varName];
 
-    std::string name = pVarDefinition->getName();
-    std::string varTypeName = pVarDefinition->getVarType();
-    std::string defaultVarType = pVarDefinition->getDefaultVarType();
-    std::string satisfactionType = pVarDefinition->getSatisfactionType();
-    std::string defaultVarValString = pVarDefinition->getDefaultVarValue();
+    std::string name = varSchematic->getName();
+    std::string varTypeName = varSchematic->getVarType();
+    std::string defaultVarType = varSchematic->getDefaultVarType();
+    std::string satisfactionType = varSchematic->getSatisfactionType();
+    std::string defaultVarValString = varSchematic->getDefaultVarValue();
     double defaultVarValue;
 
     std::vector<Parameter*> params;
-    // Adding parameters from PvarExpression (those are the parameters that user
+    // Adding parameters from VariableExpression (those are the parameters that user
     // set when he called parametrized variablea as an espression)
-    for (unsigned i = 0; i < pVarDefinition->getParameters().size(); i++)
-        if (typeMap.find((pVarDefinition->getParameters())[i]) ==
+    for (unsigned i = 0; i < varSchematic->getParameters().size(); i++)
+        if (typeMap.find((varSchematic->getParameters())[i]) ==
             typeMap.end()) {
             SystemUtils::abort("Undefined type " +
-                               (pVarExpression->getParameters())[i] +
+                               (varExpression->getParameters())[i] +
                                " used as parameter in " + name + ".");
         } else {
             params.push_back(
-                new Parameter((pVarExpression->getParameters())[i],
-                              typeMap[(pVarDefinition->getParameters())[i]]));
+                new Parameter((varExpression->getParameters())[i],
+                              typeMap[(varSchematic->getParameters())[i]]));
         }
 
     // TODO: This initialization here is wrong but is put here to prevent
@@ -1053,11 +1051,11 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
     //         variable " + varTypeName + ". Did you mean 'level'?");
     //
     //     // TODO: implement this
-    //     SystemUtils::abort("Not implemented. Var type: " + varTypeName);
+    //     SystemUtils::abort("Not implemented. Variable type: " + varTypeName);
     //     break;
 
     default:
-        SystemUtils::abort("Unknown var type: " + varTypeName);
+        SystemUtils::abort("Unknown variable type: " + varTypeName);
         break;
     }
     ParametrizedVariable* var = new ParametrizedVariable(
@@ -1066,14 +1064,14 @@ ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
     return var;
 }
 
-void storeParametrizedVariableFromPvarDefinition(std::string pVarName,
-                                                 PvarDefinition* pVar) {
-    parametrizedVariableDefinitionsMap[pVarName] = pVar;
+void storeParametrizedVariableFromVariableSchematic(std::string varName,
+                                                 VariableSchematic* var) {
+    parametrizedVariableSchematicsMap[varName] = var;
 }
 
-void storeParametrizedVariableMap(std::string pVarName,
-                                  PvarExpression* pVarExpression) {
-    parametrizedVariableMap[pVarName] = pVarExpression;
+void storeParametrizedVariableMap(std::string varName,
+                                  VariableExpression* varExpression) {
+    parametrizedVariableMap[varName] = varExpression;
 }
 
 bool storeObject(std::string objName, std::string objectType) {
