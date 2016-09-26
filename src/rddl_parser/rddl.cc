@@ -24,11 +24,6 @@ std::map<std::string, PvarExpression*>
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
 std::map<std::string, Type*> typeMap;     // Map for storing defined types
 
-CpfDefinition::~CpfDefinition() {
-    delete pVarExpression;
-    delete logicalExpression;
-}
-
 std::string Domain::validRequirement(std::string req) {
     if (validRequirements.find(req) == validRequirements.end()) {
         std::cerr << "Error! Invalid requirement: " << req << std::endl;
