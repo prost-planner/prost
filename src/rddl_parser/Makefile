@@ -80,7 +80,7 @@ all: covclear release debug test_build test
 
 release: $(TARGET_RELEASE)
 
-$(TARGET_RELEASE): $(OBJECTS_RELEASE)
+$(TARGET_RELEASE): $(OBJECTS_RELEASE) parser.ypp lexer.l
 	## Bison and flex generation rules
 	bison -d parser.ypp --output-file parser.tab.cc
 	flex lexer.l parser.tab.hh
@@ -97,7 +97,7 @@ $(OBJECTS_RELEASE): .obj/%$(OBJECT_SUFFIX_RELEASE).o: %.cc
 
 debug: $(TARGET_DEBUG) covclear
 
-$(TARGET_DEBUG): $(OBJECTS_DEBUG)
+$(TARGET_DEBUG): $(OBJECTS_DEBUG) parser.ypp lexer.l
 	## Bison and flex generation rules
 	bison -d parser.ypp --output-file parser.tab.cc
 	flex lexer.l parser.tab.hh
