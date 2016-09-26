@@ -15,15 +15,6 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-std::map<std::string, VariableSchematic*>
-    parametrizedVariableSchematicsMap; // Map for storing definition of
-                                        // ParametrizedVariables
-std::map<std::string, VariableExpression*>
-    parametrizedVariableMap; // Map for storing ParametrizedVariables as
-                             // expressions
-std::map<std::string, Object*> objectMap; // Map for storing defined objects
-std::map<std::string, Type*> typeMap;     // Map for storing defined types
-
 std::string Domain::validRequirement(RDDLTask rddlTask, std::string req) {
     if (rddlTask.validRequirements.find(req)
               == rddlTask.validRequirements.end()) {
@@ -229,9 +220,9 @@ void RDDLTask::addObjects(Domain* domain) {
         }
 
         for (std::string const& objectName : objDef->getObjectNames()) {
+          std::cout << "Added object (from objects section): " << typeName
+          << " : " << objectName << std::endl;
             addObject(typeName, objectName);
-            std::cout << "Added object (from objects section): " << typeName
-                      << " : " << objectName << std::endl;
         }
     }
 }
@@ -241,12 +232,12 @@ void RDDLTask::addDomain(Domain* domain) {
 
     domainName = domain->getName();
 
-    addTypes(domain);
+    //addTypes(domain);
     addVariables(domain);
     addCPFs(domain);
     setReward(domain);
     addStateConstraints(domain);
-    addObjects(domain);
+    //addObjects(domain);
     // TODO: StateInvariantSection
 }
 
@@ -260,15 +251,17 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
                            "  defined in Non fluent section");
     }
 
+    // NOTE: No need to add objects here, since they are added directly from parser.ypp
     // Adding objects
-    for (ObjectSchematic* objDef : nonFluent->getObjects()) {
-        std::string typeName = objDef->getTypeName();
-        for (std::string const& objectName : objDef->getObjectNames()) {
-            addObject(typeName, objectName);
-            // std::cout << "Added object (from non fluents): " << objectName <<
-            // " of type " << typeName << std::endl;
-        }
-    }
+    // for (ObjectSchematic* objDef : nonFluent->getObjects()) {
+    //     std::string typeName = objDef->getTypeName();
+    //
+    //     for (std::string const& objectName : objDef->getObjectNames()) {
+    //         addObject(typeName, objectName);
+    //         std::cout << "Added object (from non fluents): " << objectName <<
+    //         " of type " << typeName << std::endl;
+    //     }
+    // }
 
     // Adding non fluents
     std::vector<Parameter*> params;
@@ -970,7 +963,7 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 // Parametrized variable is stored with its definition in VariableSchematic
 // and the values of parameters used in the particular call of parametrized
 // variable are stored in varExpression
-ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
+ParametrizedVariable* RDDLTask::getParametrizedVariableFromVariableSchematic(
     std::string varName) {
     if (parametrizedVariableSchematicsMap.find(varName) ==
         parametrizedVariableSchematicsMap.end()) {
@@ -992,15 +985,15 @@ ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
     // Adding parameters from VariableExpression (those are the parameters
     // that user set when he called parametrized variablea as an espression)
     for (unsigned i = 0; i < varSchematic->getParameters().size(); i++)
-        if (typeMap.find((varSchematic->getParameters())[i]) ==
-            typeMap.end()) {
+        if (types.find((varSchematic->getParameters())[i]) ==
+            types.end()) {
             SystemUtils::abort("Undefined type " +
                                (varExpression->getParameters())[i] +
                                " used as parameter in " + name + ".");
         } else {
             params.push_back(
                 new Parameter((varExpression->getParameters())[i],
-                              typeMap[(varSchematic->getParameters())[i]]));
+                              types[(varSchematic->getParameters())[i]]));
         }
 
     // TODO: This initialization here is wrong but is put here to prevent
@@ -1022,10 +1015,10 @@ ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
                            "state-fluent, action-fluent, non-fluent.");
     }
 
-    if (typeMap.find(defaultVarType) == typeMap.end()) {
+    if (types.find(defaultVarType) == types.end()) {
         SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
     }
-    Type* valueType = typeMap[defaultVarType];
+    Type* valueType = types[defaultVarType];
 
     switch (varType) {
     case ParametrizedVariable::NON_FLUENT:
@@ -1042,11 +1035,11 @@ ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
                 "real") { // TODO: ?? -> || valueType->name == "bool")
             defaultVarValue = std::atof(defaultVarValString.c_str());
         } else {
-            if (objectMap.find(defaultVarValString) == objectMap.end()) {
+            if (objects.find(defaultVarValString) == objects.end()) {
                 SystemUtils::abort("Default value " + defaultVarValString +
                                    " of variable " + name + " not defined.");
             }
-            Object* val = objectMap[defaultVarValString];
+            Object* val = objects[defaultVarValString];
             defaultVarValue = val->value;
         }
         break;
@@ -1071,48 +1064,26 @@ ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
     return var;
 }
 
-void storeParametrizedVariableFromVariableSchematic(std::string varName,
+void RDDLTask::storeParametrizedVariableFromVariableSchematic(std::string varName,
                                                  VariableSchematic* var) {
     parametrizedVariableSchematicsMap[varName] = var;
 }
 
-void storeParametrizedVariableMap(std::string varName,
+void RDDLTask::storeParametrizedVariableMap(std::string varName,
                                   VariableExpression* varExpression) {
     parametrizedVariableMap[varName] = varExpression;
 }
 
-bool storeObject(std::string objName, std::string objectType) {
-    if (objectMap.find(objName) != objectMap.end()) {
-        return false;
-    }
-
-    // TODO: Should check if type exists. For some reason, simple check gives
-    // wrong results.
-    objectMap[objName] = new Object(objName, typeMap[objectType]);
-
-    return true;
-}
-
-Object* getObject(std::string objName) {
-    if (objectMap.find(objName) != objectMap.end()) {
-        return objectMap[objName];
+Object* RDDLTask::getObject(std::string objName) {
+    if (objects.find(objName) != objects.end()) {
+        return objects[objName];
     }
     return nullptr;
 }
 
-bool storeType(std::string typeName, std::string superTypeName) {
-    if (typeMap.find(superTypeName) != typeMap.end()) {
-        typeMap[typeName] = new Type(typeName, typeMap[superTypeName]);
-    } else {
-        typeMap[typeName] = new Type(typeName);
-    }
-
-    return true;
-}
-
-Type* getType(std::string typeName) {
-    if (typeMap.find(typeName) != typeMap.end()) {
-        return typeMap[typeName];
+Type* RDDLTask::getType(std::string typeName) {
+    if (types.find(typeName) != types.end()) {
+        return types[typeName];
     }
     return nullptr;
 }
