@@ -508,23 +508,28 @@ public:
     // Requirements section
     std::set<std::string> validRequirements;
 
+    // Helper Methods
+    std::map<std::string, VariableSchematic*>
+        parametrizedVariableSchematicsMap; // Map for storing definition of
+                                            // ParametrizedVariables
+    std::map<std::string, VariableExpression*>
+        parametrizedVariableMap; // Map for storing ParametrizedVariables as
+                                 // expressions
+
+    ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
+        std::string name);
+    void storeParametrizedVariableFromVariableSchematic(
+        std::string varName, VariableSchematic* varSchematic);
+    void storeParametrizedVariableMap(std::string varName,
+                                      VariableExpression* varExpression);
+    Object* getObject(std::string objName);
+    Type* getType(std::string typeName);
+
 private:
     std::string domainName;
     std::string nonFluentsName;
 };
 
-/*****************************************************************
-                           Helper Methods
-*****************************************************************/
-ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
-    std::string name);
-void storeParametrizedVariableFromVariableSchematic(
-    std::string varName, VariableSchematic* varSchematic);
-void storeParametrizedVariableMap(std::string varName,
-                                  VariableExpression* varExpression);
-bool storeObject(std::string objName, std::string objectType);
-Object* getObject(std::string objName);
-bool storeType(std::string typeName, std::string superTypeName);
-Type* getType(std::string typeName);
+
 
 #endif

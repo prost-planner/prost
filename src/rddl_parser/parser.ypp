@@ -186,10 +186,10 @@ TypeList: SchematicType             { $$ = new std::vector<SchematicType*>(); $$
 
 // TODO: RDDL2: enable defining types in following way: id_token, id_token, ..., id_token : [definition like below]
 SchematicType: id_token ':' object_token ';'                                       { $$ = new SchematicType(*$1, *$3);
-                                                                                  storeType(*$1, *$3);
+                                                                                  rddlTask->addType(*$1, *$3);
                                                                                 } // TODO: check if this is a duplicate
           | id_token ':' id_token ';'                                           { $$ = new SchematicType(*$1, *$3);
-                                                                                  storeType(*$1, *$3);
+                                                                                  rddlTask->addType(*$1, *$3);
                                                                                 }
           | id_token ':' '{' EnumList '}' ';'                                   { SystemUtils::abort("Defining types using EnumList error. Not implemented yet.") ;}
           | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
@@ -229,9 +229,9 @@ VarList: VariableSchematic             { $$ = new std::vector<VariableSchematic*
         | VariableSchematic VarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromVariableSchematic(*$1, $$); }
-            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromVariableSchematic(*$1, $$); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); storeParametrizedVariableFromVariableSchematic(*$1, $$); }
+VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); rddlTask->storeParametrizedVariableFromVariableSchematic(*$1, $$); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); rddlTask->storeParametrizedVariableFromVariableSchematic(*$1, $$); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstantString  '}' ';'  { $$ = new VariableSchematic(*$1, *$2, *$4, *$6, *$8, *$10); rddlTask->storeParametrizedVariableFromVariableSchematic(*$1, $$); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
             | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstantString    '}' ';'  { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                             { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
@@ -310,8 +310,8 @@ CPFList: CPFSchematic         { $$ = new std::vector<CPFSchematic*>(); $$->push_
 CPFSchematic: VariableExpression '=' Expression ';' { $$ = new CPFSchematic($1, $3); }
 ;
 
-VariableExpression: id_token                            { $$ = new VariableExpression(*$1); storeParametrizedVariableMap(*$1, $$); }
-            | id_token '(' TermList ')'             { $$ = new VariableExpression(*$1, *$3); storeParametrizedVariableMap(*$1, $$); }
+VariableExpression: id_token                            { $$ = new VariableExpression(*$1); rddlTask->storeParametrizedVariableMap(*$1, $$); }
+            | id_token '(' TermList ')'             { $$ = new VariableExpression(*$1, *$3); rddlTask->storeParametrizedVariableMap(*$1, $$); }
             | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); }
             | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); }
             | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet."); }
@@ -345,7 +345,7 @@ Expression:
     // Flow control expressions, variables, enums, loops
       variable_token                                                                                 { $$ = new Parameter(*$1); }
     | VariableExpression                                                                            {
-                                                                                                  $$ = getParametrizedVariableFromVariableSchematic($1->getName());
+                                                                                                  $$ = rddlTask->getParametrizedVariableFromVariableSchematic($1->getName());
 
                                                                                                   if (!$$) {
                                                                                                       SystemUtils::abort("Unknown parametrized variable " + $1->getName() + ".");
@@ -363,7 +363,7 @@ Expression:
     | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // TODO: Text switch case control
                                                                                                   // TODO: Problem with accessing variables defined by user. They do not exist in this scope and when being accessed, seg fault is produced.
-                                                                                                    LogicalExpression* switchVar = getParametrizedVariableFromVariableSchematic(*$3);
+                                                                                                    LogicalExpression* switchVar = rddlTask->getParametrizedVariableFromVariableSchematic(*$3);
 
                                                                                                     if (!switchVar) {
                                                                                                         SystemUtils::abort("Unknown parametrized variable " + *$3 + ".");
@@ -440,8 +440,8 @@ TypedVarList: TypedVariable                    { $$ = new ParameterList({}, {});
             | TypedVariable ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
-TypedVariable: variable_token ':' id_token { if (getType(*$3) != nullptr) {
-                                     $$ = new Parameter(*$1, getType(*$3));
+TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3) != nullptr) {
+                                     $$ = new Parameter(*$1, rddlTask->getType(*$3));
                                    }
                                    else {
                                         SystemUtils::abort("Type " + *$3 + " not defined");
@@ -456,7 +456,7 @@ CaseList: CaseSchematic                 { $$ = new std::vector<CaseSchematic*>()
 CaseSchematic: case_token Term ':' Expression        {
                                                     LogicalExpression* var;
 
-                                                    var = getParametrizedVariableFromVariableSchematic(*$2);
+                                                    var = rddlTask->getParametrizedVariableFromVariableSchematic(*$2);
 
                                                     if (!var) {
                                                         SystemUtils::abort("Unknown parametrized variable " + *$2 + ".");
@@ -535,14 +535,9 @@ ObjectsList: ObjectsSchematic             { $$ = new std::vector<ObjectSchematic
 
 ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectSchematic(*$1, *$4);
                                                             /*TODO: hack, fix this*/
-                                                            if (!getType(*$1)) {
-                                                                SystemUtils::abort("Type " + *$1 + " not defined.");
-                                                            }
                                                             for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
-
-                                                                if (!storeObject(*it, *$1)) {
-                                                                    SystemUtils::abort("Object name " + *it + " is ambiguous.");
-                                                                }
+                                                              /*std::cout << "Adding object (from objects section): " << *$1 << ":" << *it << std::endl;*/
+                                                              rddlTask->addObject(*$1, *it);
                                                             }
                                                          }
 ;
@@ -573,7 +568,7 @@ VariablesInstanceList: VariablesInstanceSchematic                        { $$ = 
                     | VariablesInstanceSchematic VariablesInstanceList   { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-VariablesInstanceSchematic: id_token '(' LConstListString ')' ';'                     { $$ = new VariablesInstanceSchematic(*$1, 1, *$3); }
+VariablesInstanceSchematic: id_token '(' LConstListString ')' ';'                   { $$ = new VariablesInstanceSchematic(*$1, 1, *$3); }
                         | id_token ';'                                              { $$ = new VariablesInstanceSchematic(*$1, 1); }
                         | '~' id_token '(' LConstListString ')' ';'                 { $$ = new VariablesInstanceSchematic(*$2, 0, *$4); }
                         | '~' id_token                                              { $$ = new VariablesInstanceSchematic(*$2, 0); }
@@ -769,16 +764,6 @@ int main (int argc, char** argv) {
 
     // Creating RDDLTask object
     rddlTask = new RDDLTask();
-
-    // Adding default types and objects
-    storeType("bool", "bool");
-    storeType("int", "int");
-    storeType("real", "real");
-    storeType("object", "object");
-
-    // Adding default objects
-    storeObject("true", "bool");
-    storeObject("false", "bool");
 
     yyin = fopen(".combined", "r");
     yyparse();
