@@ -19,6 +19,7 @@ class RewardFunction;
 
 class VariableSchematic;
 class VariableExpression;
+class RDDLTask;
 
 /*****************************************************************
                             Non Fluents
@@ -96,12 +97,6 @@ private:
 /*****************************************************************
                             Domain
 ******************************************************************/
-
-static const std::set<std::string> validRequirements = {
-    "continuous",         "multivalued",       "reward-deterministic",
-    "intermediate-nodes", "constrained-state", "partially-observed",
-    "concurrent",         "integer-valued",    "CPF-deterministic"};
-
 class CaseSchematic {
 public:
     CaseSchematic(LogicalExpression* _condition, LogicalExpression* _effect)
@@ -300,7 +295,7 @@ public:
            std::vector<std::string> _requirements = {})
         : name(_name), domainList(_domainList), requirements(_requirements) {}
 
-    static std::string validRequirement(std::string req);
+    static std::string validRequirement(RDDLTask rddlTask, std::string req);
 
     std::vector<ObjectSchematic*> const& getObjects() const {
         return domainList.getObjects();
@@ -509,6 +504,9 @@ public:
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;
+
+    // Requirements section
+    std::set<std::string> validRequirements;
 
 private:
     std::string domainName;

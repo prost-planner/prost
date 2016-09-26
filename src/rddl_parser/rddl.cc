@@ -24,8 +24,9 @@ std::map<std::string, VariableExpression*>
 std::map<std::string, Object*> objectMap; // Map for storing defined objects
 std::map<std::string, Type*> typeMap;     // Map for storing defined types
 
-std::string Domain::validRequirement(std::string req) {
-    if (validRequirements.find(req) == validRequirements.end()) {
+std::string Domain::validRequirement(RDDLTask rddlTask, std::string req) {
+    if (rddlTask.validRequirements.find(req)
+              == rddlTask.validRequirements.end()) {
         std::cerr << "Error! Invalid requirement: " << req << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -58,6 +59,12 @@ RDDLTask::RDDLTask()
 
     // Add object super type
     addType("object");
+
+
+    validRequirements = {
+        "continuous",         "multivalued",       "reward-deterministic",
+        "intermediate-nodes", "constrained-state", "partially-observed",
+        "concurrent",         "integer-valued",    "CPF-deterministic"};
 }
 
 void RDDLTask::addTypes(Domain* domain) {
@@ -960,9 +967,9 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 *****************************************************************/
 
 // This method is used to get the value of parametrized variable
-// Parametrized variable is stored with its definition in VariableSchematic and the
-// values of parameters used in the particular call of parametrized variable are
-// stored in varExpression
+// Parametrized variable is stored with its definition in VariableSchematic
+// and the values of parameters used in the particular call of parametrized
+// variable are stored in varExpression
 ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
     std::string varName) {
     if (parametrizedVariableSchematicsMap.find(varName) ==
@@ -982,8 +989,8 @@ ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
     double defaultVarValue;
 
     std::vector<Parameter*> params;
-    // Adding parameters from VariableExpression (those are the parameters that user
-    // set when he called parametrized variablea as an espression)
+    // Adding parameters from VariableExpression (those are the parameters
+    // that user set when he called parametrized variablea as an espression)
     for (unsigned i = 0; i < varSchematic->getParameters().size(); i++)
         if (typeMap.find((varSchematic->getParameters())[i]) ==
             typeMap.end()) {
