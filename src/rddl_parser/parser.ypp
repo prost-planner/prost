@@ -19,6 +19,7 @@ extern FILE* yyin; // Extern file, used for reading code from file
 extern void yyerror (std::string message); // Function for syntax error handling
 
 std::string targetDir;
+RDDLTask* rddlTask;
 %}
 
 %union {
@@ -124,9 +125,9 @@ Program: RddlBlock            { $1->execute(targetDir); }
 ////////////////////////
 // RDDL block
 ////////////////////////
-RddlBlock: DomainBlock              { $$ = new RDDLTask(); $$->addDomain($1); }
-        | InstanceBlock             { $$ = new RDDLTask(); $$->addInstance($1); }
-        | NonfluentBlock            { $$ = new RDDLTask(); $$->addNonFluent($1); }
+RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
+        | InstanceBlock             { $$ = rddlTask; $$->addInstance($1); }
+        | NonfluentBlock            { $$ = rddlTask; $$->addNonFluent($1); }
         | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
         | RddlBlock InstanceBlock   { $$ = $1; $$->addInstance($2); }
         | RddlBlock NonfluentBlock  { $$ = $1; $$->addNonFluent($2); }
@@ -148,8 +149,8 @@ RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { $$ = 
                 | requirements_token '=' '{' '}' ';'                     { $$ = new std::vector<std::string>(); }
 ;
 
-RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*$1)); }
-            | id_token ',' RequirementsList   { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*$1)); }
+RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
+            | id_token ',' RequirementsList   { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
 ;
 
 ////////////////////////
@@ -765,6 +766,9 @@ int main (int argc, char** argv) {
     } else {
         SystemUtils::abort("Error opening files. Check the correctnes of files.");
     }
+
+    // Creating RDDLTask object
+    rddlTask = new RDDLTask();
 
     // Adding default types and objects
     storeType("bool", "bool");
