@@ -17,24 +17,24 @@ class NonFluent;
 class StateFluent;
 class RewardFunction;
 
-class PvarDefinition;
-class PvarExpression;
+class VariableSchematic;
+class VariableExpression;
 
 /*****************************************************************
                             Non Fluents
 ******************************************************************/
 
-class PvariablesInstanceDefine {
+class VariablesInstanceSchematic {
 public:
-    PvariablesInstanceDefine(std::string _name, double _value,
-                             std::vector<std::string> _lConstList = {})
-        : name(_name), initValue(_value), lConstList(_lConstList) {}
+    VariablesInstanceSchematic(std::string _name, double _value,
+                             std::vector<std::string> _parameters = {})
+        : name(_name), initValue(_value), parameters(_parameters) {}
 
     std::string getName() const {
         return name;
     }
-    std::vector<std::string> const& getLConstList() const {
-        return lConstList;
+    std::vector<std::string> const& getParameters() const {
+        return parameters;
     }
     double getInitValue() const {
         return initValue;
@@ -43,12 +43,12 @@ public:
 private:
     std::string name;
     double initValue;
-    std::vector<std::string> lConstList;
+    std::vector<std::string> parameters;
 };
 
-class ObjectDefine {
+class ObjectSchematic {
 public:
-    ObjectDefine(std::string _typeName, std::vector<std::string> _objectNames)
+    ObjectSchematic(std::string _typeName, std::vector<std::string> _objectNames)
         : typeName(_typeName), objectNames(_objectNames) {}
 
     std::string getTypeName() const {
@@ -66,8 +66,8 @@ private:
 class NonFluentBlock {
 public:
     NonFluentBlock(std::string _name, std::string _domainName,
-                   std::vector<PvariablesInstanceDefine*> _nonFluents,
-                   std::vector<ObjectDefine*> _objects = {})
+                   std::vector<VariablesInstanceSchematic*> _nonFluents,
+                   std::vector<ObjectSchematic*> _objects = {})
         : name(_name),
           domainName(_domainName),
           nonFluents(_nonFluents),
@@ -79,18 +79,18 @@ public:
     std::string getDomainName() const {
         return domainName;
     }
-    std::vector<ObjectDefine*> const& getObjects() const {
+    std::vector<ObjectSchematic*> const& getObjects() const {
         return objects;
     }
-    std::vector<PvariablesInstanceDefine*> const& getNonFluents() const {
+    std::vector<VariablesInstanceSchematic*> const& getNonFluents() const {
         return nonFluents;
     }
 
 private:
     std::string name;
     std::string domainName;
-    std::vector<PvariablesInstanceDefine*> nonFluents;
-    std::vector<ObjectDefine*> objects;
+    std::vector<VariablesInstanceSchematic*> nonFluents;
+    std::vector<ObjectSchematic*> objects;
 };
 
 /*****************************************************************
@@ -100,13 +100,13 @@ private:
 static const std::set<std::string> validRequirements = {
     "continuous",         "multivalued",       "reward-deterministic",
     "intermediate-nodes", "constrained-state", "partially-observed",
-    "concurrent",         "integer-valued",    "cpf-deterministic"};
+    "concurrent",         "integer-valued",    "CPF-deterministic"};
 
-class CaseDefine {
+class CaseSchematic {
 public:
-    CaseDefine(LogicalExpression* _condition, LogicalExpression* _effect)
+    CaseSchematic(LogicalExpression* _condition, LogicalExpression* _effect)
         : condition(_condition), effect(_effect) {}
-    ~CaseDefine();
+    ~CaseSchematic();
 
     LogicalExpression* getCondition() const {
         return condition;
@@ -142,9 +142,9 @@ private:
     std::vector<LogicalExpression*> probabilites;
 };
 
-class PvarExpression {
+class VariableExpression {
 public:
-    PvarExpression(std::string _name, std::vector<std::string> _parameters = {})
+    VariableExpression(std::string _name, std::vector<std::string> _parameters = {})
         : name(_name), parameters(_parameters) {}
 
     std::string getName() const {
@@ -159,29 +159,28 @@ private:
     std::vector<std::string> parameters;
 };
 
-class CpfDefinition {
+class CPFSchematic {
 public:
-    CpfDefinition(PvarExpression* _pVarExpression,
+    CPFSchematic(VariableExpression* _variableExpression,
                   LogicalExpression* _logicalExpression)
-        : pVarExpression(_pVarExpression),
+        : variableExpression(_variableExpression),
           logicalExpression(_logicalExpression) {}
-    ~CpfDefinition();
 
-    PvarExpression* getPvar() const {
-        return pVarExpression;
+    VariableExpression* getVariable() const {
+        return variableExpression;
     }
     LogicalExpression* getLogicalExpression() const {
         return logicalExpression;
     }
 
 private:
-    PvarExpression* pVarExpression;
+    VariableExpression* variableExpression;
     LogicalExpression* logicalExpression;
 };
 
-class PvarDefinition {
+class VariableSchematic {
 public:
-    PvarDefinition(std::string _name, std::vector<std::string> _parameters,
+    VariableSchematic(std::string _name, std::vector<std::string> _parameters,
                    std::string _varType, std::string _defaultValueType,
                    std::string _satisfactionType = "",
                    std::string _defaultVarValue = "")
@@ -220,11 +219,11 @@ private:
     std::string defaultVarValue;
 };
 
-class DefineType {
+class SchematicType {
 public:
-    DefineType(std::string _name, std::string _superType)
+    SchematicType(std::string _name, std::string _superType)
         : name(_name), superType(_superType) {}
-    DefineType(std::string _name, std::vector<std::string> _superTypeList)
+    SchematicType(std::string _name, std::vector<std::string> _superTypeList)
         : name(_name), superTypeList(_superTypeList) {}
 
     std::string getName() const {
@@ -247,33 +246,33 @@ class DomainList {
 public:
     DomainList() = default;
 
-    std::vector<DefineType*> const& getTypes() const {
+    std::vector<SchematicType*> const& getTypes() const {
         return types;
     }
-    std::vector<PvarDefinition*> const& getPVars() const {
-        return pVariables;
+    std::vector<VariableSchematic*> const& getVariables() const {
+        return variables;
     }
-    std::vector<CpfDefinition*> const& getCpfs() const {
-        return cpfs;
+    std::vector<CPFSchematic*> const& getCPFs() const {
+        return CPFs;
     }
     LogicalExpression* getReward() const {
         return reward;
     }
-    std::vector<ObjectDefine*> const& getObjects() const {
+    std::vector<ObjectSchematic*> const& getObjects() const {
         return objects;
     }
     std::vector<LogicalExpression*> const& getStateConstraints() const {
         return stateConstraints;
     }
 
-    void setTypes(std::vector<DefineType*>& _types) {
+    void setTypes(std::vector<SchematicType*>& _types) {
         types = _types;
     }
-    void setPvar(std::vector<PvarDefinition*>& _pVariables) {
-        pVariables = _pVariables;
+    void setVariables(std::vector<VariableSchematic*>& _variables) {
+        variables = _variables;
     }
-    void setCPF(std::vector<CpfDefinition*>& _cpfs) {
-        cpfs = _cpfs;
+    void setCPF(std::vector<CPFSchematic*>& _CPFs) {
+        CPFs = _CPFs;
     }
     void setReward(LogicalExpression* _reward) {
         reward = _reward;
@@ -282,17 +281,17 @@ public:
         std::vector<LogicalExpression*>& _stateConstraints) {
         stateConstraints = _stateConstraints;
     }
-    void setObjects(std::vector<ObjectDefine*>& _objects) {
+    void setObjects(std::vector<ObjectSchematic*>& _objects) {
         objects = _objects;
     }
 
 private:
-    std::vector<DefineType*> types;
-    std::vector<PvarDefinition*> pVariables;
-    std::vector<CpfDefinition*> cpfs;
+    std::vector<SchematicType*> types;
+    std::vector<VariableSchematic*> variables;
+    std::vector<CPFSchematic*> CPFs;
     LogicalExpression* reward;
     std::vector<LogicalExpression*> stateConstraints;
-    std::vector<ObjectDefine*> objects;
+    std::vector<ObjectSchematic*> objects;
 };
 
 class Domain {
@@ -303,17 +302,17 @@ public:
 
     static std::string validRequirement(std::string req);
 
-    std::vector<ObjectDefine*> const& getObjects() const {
+    std::vector<ObjectSchematic*> const& getObjects() const {
         return domainList.getObjects();
     }
-    std::vector<DefineType*> const& getDomainTypes() const {
+    std::vector<SchematicType*> const& getDomainTypes() const {
         return domainList.getTypes();
     }
-    std::vector<PvarDefinition*> const& getPvarDefinitions() const {
-        return domainList.getPVars();
+    std::vector<VariableSchematic*> const& getVariableSchematics() const {
+        return domainList.getVariables();
     }
-    std::vector<CpfDefinition*> const& getCpfs() const {
-        return domainList.getCpfs();
+    std::vector<CPFSchematic*> const& getCPFs() const {
+        return domainList.getCPFs();
     }
     LogicalExpression* getReward() const {
         return domainList.getReward();
@@ -339,12 +338,12 @@ class Instance {
 public:
     Instance(std::string _name, std::string _domainName,
              std::string _nonFluentsName,
-             std::vector<PvariablesInstanceDefine*> _pVariables,
+             std::vector<VariablesInstanceSchematic*> _variables,
              int _maxNonDefActions, int _horizon, double _discount)
         : name(_name),
           domainName(_domainName),
           nonFluentsName(_nonFluentsName),
-          pVariables(_pVariables),
+          variables(_variables),
           maxNonDefActions(_maxNonDefActions),
           horizon(_horizon),
           discount(_discount) {}
@@ -358,8 +357,8 @@ public:
     std::string getNonFluentsName() const {
         return nonFluentsName;
     }
-    std::vector<PvariablesInstanceDefine*> const& getPVariables() const {
-        return pVariables;
+    std::vector<VariablesInstanceSchematic*> const& getVariables() const {
+        return variables;
     }
     int getMaxNonDefActions() const {
         return maxNonDefActions;
@@ -375,7 +374,7 @@ private:
     std::string name;
     std::string domainName;
     std::string nonFluentsName;
-    std::vector<PvariablesInstanceDefine*> pVariables;
+    std::vector<VariablesInstanceSchematic*> variables;
     int maxNonDefActions;
     int horizon;
     double discount;
@@ -405,9 +404,9 @@ public:
 
     // Sub-methods for domain parse
     void addTypes(Domain* domain);
-    void addPVars(Domain* domain);
-    void addCpfs(Domain* domain);
-    void addReward(Domain* domain);
+    void addVariables(Domain* domain);
+    void addCPFs(Domain* domain);
+    void setReward(Domain* domain);
     void addStateConstraints(Domain* domain);
     void addObjects(Domain* domain);
 
@@ -417,7 +416,7 @@ public:
     void addType(std::string const& name, std::string const& superType = "");
     void addObject(std::string const& typeName, std::string const& objectName);
 
-    void addVariableDefinition(ParametrizedVariable* varDef);
+    void addVariableSchematic(ParametrizedVariable* varDef);
 
     void addParametrizedVariable(ParametrizedVariable* parent,
                                  std::vector<Parameter*> const& params);
@@ -437,6 +436,7 @@ public:
     // The following are PlanningTask variables
 
     // This instance's name
+    // TODO: move this to the private members??
     std::string name;
 
     // (Trivial) properties
@@ -518,12 +518,12 @@ private:
 /*****************************************************************
                            Helper Methods
 *****************************************************************/
-ParametrizedVariable* getParametrizedVariableFromPvarDefinition(
+ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
     std::string name);
-void storeParametrizedVariableFromPvarDefinition(
-    std::string pVarName, PvarDefinition* pVarDefinition);
-void storeParametrizedVariableMap(std::string pVarName,
-                                  PvarExpression* pVarExpression);
+void storeParametrizedVariableFromVariableSchematic(
+    std::string varName, VariableSchematic* varSchematic);
+void storeParametrizedVariableMap(std::string varName,
+                                  VariableExpression* varExpression);
 bool storeObject(std::string objName, std::string objectType);
 Object* getObject(std::string objName);
 bool storeType(std::string typeName, std::string superTypeName);

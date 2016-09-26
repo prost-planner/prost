@@ -56,7 +56,7 @@ state-invariants                                        { return state_invariant
 max-nondef-actions                                      { return max_nondef_actions_token; }
 terminate-when                                          { return terminate_when_token; }
 types                                                   { return types_token; }
-pvariables                                              { return pvariables_token; }
+pvariables                                              { return variables_token; }
 cpfs                                                    { return cpfs_token; }
 cdfs                                                    { return cdfs_token; }
 reward                                                  { return reward_token; }
@@ -103,7 +103,7 @@ Dirichelt                                               { return dirichlet_token
 {DIGIT}*\.{DIGIT}+                                      { yylval.d = atof(yytext); return doubleNum_token;}
 {DIGIT}+                                                { yylval.i = atoi(yytext); return intNum_token;}
 {ALPHA}(({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT}))?(')?   { yylval.str = new std::string(yytext); return id_token; }
-"?"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return var_token; }
+"?"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return variable_token; }
 "@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { return enum_token; }
 \/\/[^\r\n]*                                            { /* Ignore comments. */}
 .                                                       { lex_error(*yytext); }
