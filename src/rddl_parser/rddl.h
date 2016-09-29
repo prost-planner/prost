@@ -25,9 +25,9 @@ class RDDLTask;
                             Non Fluents
 ******************************************************************/
 
-class VariablesInstanceSchematic {
+class VariableInstanceSchematic {
 public:
-    VariablesInstanceSchematic(std::string _name, double _value,
+    VariableInstanceSchematic(std::string _name, double _value,
                              std::vector<std::string> _parameters = {})
         : name(_name), initValue(_value), parameters(_parameters) {}
 
@@ -67,7 +67,7 @@ private:
 class NonFluentBlock {
 public:
     NonFluentBlock(std::string _name, std::string _domainName,
-                   std::vector<VariablesInstanceSchematic*> _nonFluents,
+                   std::vector<VariableInstanceSchematic*> _nonFluents,
                    std::vector<ObjectSchematic*> _objects = {})
         : name(_name),
           domainName(_domainName),
@@ -83,14 +83,14 @@ public:
     std::vector<ObjectSchematic*> const& getObjects() const {
         return objects;
     }
-    std::vector<VariablesInstanceSchematic*> const& getNonFluents() const {
+    std::vector<VariableInstanceSchematic*> const& getNonFluents() const {
         return nonFluents;
     }
 
 private:
     std::string name;
     std::string domainName;
-    std::vector<VariablesInstanceSchematic*> nonFluents;
+    std::vector<VariableInstanceSchematic*> nonFluents;
     std::vector<ObjectSchematic*> objects;
 };
 
@@ -333,7 +333,7 @@ class Instance {
 public:
     Instance(std::string _name, std::string _domainName,
              std::string _nonFluentsName,
-             std::vector<VariablesInstanceSchematic*> _variables,
+             std::vector<VariableInstanceSchematic*> _variables,
              int _maxNonDefActions, int _horizon, double _discount)
         : name(_name),
           domainName(_domainName),
@@ -352,7 +352,7 @@ public:
     std::string getNonFluentsName() const {
         return nonFluentsName;
     }
-    std::vector<VariablesInstanceSchematic*> const& getVariables() const {
+    std::vector<VariableInstanceSchematic*> const& getVariables() const {
         return variables;
     }
     int getMaxNonDefActions() const {
@@ -369,7 +369,7 @@ private:
     std::string name;
     std::string domainName;
     std::string nonFluentsName;
-    std::vector<VariablesInstanceSchematic*> variables;
+    std::vector<VariableInstanceSchematic*> variables;
     int maxNonDefActions;
     int horizon;
     double discount;

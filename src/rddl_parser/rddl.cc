@@ -265,7 +265,7 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
 
     // Adding non fluents
     std::vector<Parameter*> params;
-    for (VariablesInstanceSchematic* varDef : nonFluent->getNonFluents()) {
+    for (VariableInstanceSchematic* varDef : nonFluent->getNonFluents()) {
         std::string name = varDef->getName();
         params.clear();
         // Set parameters
@@ -310,7 +310,7 @@ void RDDLTask::addInstance(Instance* instance) {
     // Add init states
     // TODO: This is basically the same code as for non-fluents, think about
     // helper method
-    for (VariablesInstanceSchematic* varDef : instance->getVariables()) {
+    for (VariableInstanceSchematic* varDef : instance->getVariables()) {
         std::string name = varDef->getName();
         std::vector<Parameter*> params;
         // Set parameters
