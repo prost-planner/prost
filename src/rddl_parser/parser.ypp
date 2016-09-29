@@ -48,8 +48,8 @@ RDDLTask* rddlTask;
 
     ObjectSchematic* objectSchematic;
     std::vector<ObjectSchematic*>* objectsList;
-    VariablesInstanceSchematic* variablesInstanceSchematic;
-    std::vector<VariablesInstanceSchematic*>* variablesInstanceList;
+    VariableInstanceSchematic* variableInstanceSchematic;
+    std::vector<VariableInstanceSchematic*>* variablesInstanceList;
 
     Instance* instance;
     NonFluentBlock* nonFluentBlock;
@@ -97,7 +97,7 @@ RDDLTask* rddlTask;
 %type <objectSchematic> ObjectsSchematic
 %type <objectsList> ObjectsList ObjectsSection
 %type <vectorStr> ObjectsConstList
-%type <variablesInstanceSchematic> VariablesInstanceSchematic
+%type <variableInstanceSchematic> VariableInstanceSchematic
 %type <variablesInstanceList> VariablesInstanceList
 //%type <vectorLogicalExpression> LConstList
 
@@ -564,16 +564,16 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {  $$ = new NonFluentBlock(*$2, *$6, *$10); }
 ;
 
-VariablesInstanceList: VariablesInstanceSchematic                        { $$ = new std::vector<VariablesInstanceSchematic*>(); $$->push_back($1); }
-                    | VariablesInstanceSchematic VariablesInstanceList   { $$ = $2; $$->insert($$->begin(), $1); }
+VariablesInstanceList: VariableInstanceSchematic                        { $$ = new std::vector<VariableInstanceSchematic*>(); $$->push_back($1); }
+                    | VariableInstanceSchematic VariablesInstanceList   { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-VariablesInstanceSchematic: id_token '(' LConstListString ')' ';'                   { $$ = new VariablesInstanceSchematic(*$1, 1, *$3); }
-                        | id_token ';'                                              { $$ = new VariablesInstanceSchematic(*$1, 1); }
-                        | '~' id_token '(' LConstListString ')' ';'                 { $$ = new VariablesInstanceSchematic(*$2, 0, *$4); }
-                        | '~' id_token                                              { $$ = new VariablesInstanceSchematic(*$2, 0); }
-                        | id_token '(' LConstListString ')' '=' RangeConstant ';'   { $$ = new VariablesInstanceSchematic(*$1, $6, *$3); }
-                        | id_token '=' RangeConstant ';'                            { $$ = new VariablesInstanceSchematic(*$1, $3); }
+VariableInstanceSchematic: id_token '(' LConstListString ')' ';'                   { $$ = new VariableInstanceSchematic(*$1, 1, *$3); }
+                        | id_token ';'                                              { $$ = new VariableInstanceSchematic(*$1, 1); }
+                        | '~' id_token '(' LConstListString ')' ';'                 { $$ = new VariableInstanceSchematic(*$2, 0, *$4); }
+                        | '~' id_token                                              { $$ = new VariableInstanceSchematic(*$2, 0); }
+                        | id_token '(' LConstListString ')' '=' RangeConstant ';'   { $$ = new VariableInstanceSchematic(*$1, $6, *$3); }
+                        | id_token '=' RangeConstant ';'                            { $$ = new VariableInstanceSchematic(*$1, $3); }
 ;
 
 /*LConstList: LConst              { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
