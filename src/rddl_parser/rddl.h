@@ -237,10 +237,20 @@ private:
     std::vector<std::string> superTypeList;
 };
 
-class DomainList {
+class Domain {
 public:
-    DomainList() = default;
+    Domain() = default;
+    Domain(std::string _name)
+      :name(_name) {}
 
+    static std::string validRequirement(RDDLTask rddlTask, std::string req);
+
+    std::string getName() const {
+        return name;
+    }
+    std::vector<std::string> const& getRequirements() const {
+      return requirements;
+    }
     std::vector<SchematicType*> const& getTypes() const {
         return types;
     }
@@ -253,13 +263,20 @@ public:
     LogicalExpression* getReward() const {
         return reward;
     }
-    std::vector<ObjectSchematic*> const& getObjects() const {
-        return objects;
-    }
     std::vector<LogicalExpression*> const& getStateConstraints() const {
         return stateConstraints;
     }
+    std::vector<ObjectSchematic*> const& getObjects() const {
+        return objects;
+    }
 
+
+    void setName(std::string _name) {
+      name = _name;
+    }
+    void setRequirements(std::vector<std::string> _requirements) {
+      requirements = _requirements;
+    }
     void setTypes(std::vector<SchematicType*>& _types) {
         types = _types;
     }
@@ -279,8 +296,9 @@ public:
     void setObjects(std::vector<ObjectSchematic*>& _objects) {
         objects = _objects;
     }
-
 private:
+    std::string name;
+    std::vector<std::string> requirements;
     std::vector<SchematicType*> types;
     std::vector<VariableSchematic*> variables;
     std::vector<CPFSchematic*> CPFs;
@@ -288,43 +306,6 @@ private:
     std::vector<LogicalExpression*> stateConstraints;
     std::vector<ObjectSchematic*> objects;
 };
-
-class Domain {
-public:
-    Domain(std::string _name, DomainList _domainList,
-           std::vector<std::string> _requirements = {})
-        : name(_name), domainList(_domainList), requirements(_requirements) {}
-
-    static std::string validRequirement(RDDLTask rddlTask, std::string req);
-
-    std::vector<ObjectSchematic*> const& getObjects() const {
-        return domainList.getObjects();
-    }
-    std::vector<SchematicType*> const& getDomainTypes() const {
-        return domainList.getTypes();
-    }
-    std::vector<VariableSchematic*> const& getVariableSchematics() const {
-        return domainList.getVariables();
-    }
-    std::vector<CPFSchematic*> const& getCPFs() const {
-        return domainList.getCPFs();
-    }
-    LogicalExpression* getReward() const {
-        return domainList.getReward();
-    }
-    std::vector<LogicalExpression*> const& getStateConstraints() const {
-        return domainList.getStateConstraints();
-    }
-    std::string getName() const {
-        return name;
-    }
-
-private:
-    std::string name;
-    DomainList domainList;
-    std::vector<std::string> requirements;
-};
-
 /*****************************************************************
                              Instance
 ******************************************************************/

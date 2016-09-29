@@ -59,7 +59,7 @@ RDDLTask::RDDLTask()
 }
 
 void RDDLTask::addTypes(Domain* domain) {
-    for (SchematicType* type : domain->getDomainTypes()) {
+    for (SchematicType* type : domain->getTypes()) {
         if (type->getSuperTypeList().empty()) {
             addType(type->getName(), type->getSuperType());
         } else {
@@ -74,7 +74,7 @@ void RDDLTask::addTypes(Domain* domain) {
 
 void RDDLTask::addVariables(Domain* domain) {
     // Adding VarSection
-    for (VariableSchematic* varDef : domain->getVariableSchematics()) {
+    for (VariableSchematic* varDef : domain->getVariables()) {
         std::string name = varDef->getName();
         std::vector<Parameter*> params;
         for (std::string const& param : varDef->getParameters()) {

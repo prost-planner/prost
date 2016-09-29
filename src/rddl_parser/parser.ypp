@@ -32,7 +32,6 @@ RDDLTask* rddlTask;
     Domain* domain;
     SchematicType* defineType;
     std::vector<SchematicType*>* vectorSchematicType;
-    DomainList* domainList;
     std::vector<VariableSchematic*>* vectorVariableSchematic;
     VariableSchematic* variableSchematic;
     CPFSchematic* cpfSchematic;
@@ -75,11 +74,10 @@ RDDLTask* rddlTask;
 %token state_invariants_token instance_token non_fluents_token
 %token discount_token terminate_when_token horizon_token max_nondef_actions_token
 %type <rddlTask> RddlBlock
-%type <domain> DomainBlock
+%type <domain> DomainBlock DomainList
 %type <vectorStr> RequirementsSection RequirementsList ParametarListTypeSpecs EnumList ParametarList TermList LConstListString
 %type <defineType> SchematicType
 %type <vectorSchematicType> TypeList TypeSection
-%type <domainList> DomainList
 %type <str> TypeSpecification RangeConstantString BoolType Term
 %type <vectorVariableSchematic> VarSection VarList
 %type <variableSchematic> VariableSchematic
@@ -138,10 +136,31 @@ RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
 // Domain block
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-DomainBlock: domain_token id_token '{' RequirementsSection DomainList '}'  { $$ = new Domain(*$2, *$5, *$4); }
-        | domain_token id_token '{' DomainList '}'                         { $$ = new Domain(*$2, *$4); }
+DomainBlock: domain_token id_token '{' DomainList '}'     { $$ = $4; $$->setName(*$2); }
 ;
 
+////////////////////////
+// Domain list
+////////////////////////
+DomainList: TypeSection DomainList                      { $$ = $2; $$->setTypes(*$1); }
+          | VarSection DomainList                       { $$ = $2; $$->setVariables(*$1); }
+          | CPFSection DomainList                       { $$ = $2; $$->setCPF(*$1); }
+          | RewardsSection DomainList                   { $$ = $2; $$->setReward($1); }
+          | StateConstraintsSection DomainList          { $$ = $2; $$->setStateConstraint(*$1); }
+          | ObjectsSection DomainList                   { $$ = $2; $$->setObjects(*$1); }
+          | RequirementsSection DomainList              { $$ = $2; $$->setRequirements(*$1); }
+          | ActionPreconditionsSection DomainList       { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | TypeSection                       { $$ = new Domain(); $$->setTypes(*$1); }
+          | VarSection                        { $$ = new Domain(); $$->setVariables(*$1); }
+          | CPFSection                        { $$ = new Domain(); $$->setCPF(*$1); }
+          | RewardsSection                    { $$ = new Domain(); $$->setReward($1); }
+          | StateConstraintsSection           { $$ = new Domain(); $$->setStateConstraint(*$1); }
+          | ObjectsSection                    { $$ = new Domain(); $$->setObjects(*$1); }
+          | RequirementsSection               { $$ = new Domain(); $$->setRequirements(*$1); }
+          | ActionPreconditionsSection        { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+;
 ////////////////////////
 // Requirements section
 ////////////////////////
@@ -151,27 +170,6 @@ RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { $$ = 
 
 RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
             | id_token ',' RequirementsList   { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
-;
-
-////////////////////////
-// Domain list
-////////////////////////
-DomainList: TypeSection DomainList               { $$ = $2; $$->setTypes(*$1); }
-        | VarSection DomainList                 { $$ = $2; $$->setVariables(*$1); }
-        | CPFSection DomainList                  { $$ = $2; $$->setCPF(*$1); }
-        | RewardsSection DomainList              { $$ = $2; $$->setReward($1); }
-        | StateConstraintsSection DomainList     { $$ = $2; $$->setStateConstraint(*$1); }
-        | ObjectsSection DomainList              { $$ = $2; $$->setObjects(*$1); }
-        | ActionPreconditionsSection DomainList  { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
-        | StateInvariantSection    DomainList    { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
-        | TypeSection                            { $$ = new DomainList(); $$->setTypes(*$1); }
-        | VarSection                            { $$ = new DomainList(); $$->setVariables(*$1); }
-        | CPFSection                             { $$ = new DomainList(); $$->setCPF(*$1); }
-        | RewardsSection                         { $$ = new DomainList(); $$->setReward($1); }
-        | StateConstraintsSection                { $$ = new DomainList(); $$->setStateConstraint(*$1); }
-        | ObjectsSection                         { $$ = new DomainList(); $$->setObjects(*$1); }
-        | ActionPreconditionsSection             { SystemUtils::abort("Action precondition section not implemented yet.");  }//$$ = new DomainList(); $$->setActionPrecondition($1); }
-        | StateInvariantSection                  { SystemUtils::abort("State invariant section not implemented yet."); }//$$ = new DomainList(); $$->setStateInvariant($1); }
 ;
 
 ////////////////////////
