@@ -18,8 +18,9 @@ class StateFluent;
 class RewardFunction;
 
 class VariableSchematic;
-class VariableExpression;
 class RDDLTask;
+
+void foobar(std::initializer_list<std::string> values);
 
 /*****************************************************************
                             Non Fluents
@@ -29,7 +30,7 @@ class VariableInstanceSchematic {
 public:
     VariableInstanceSchematic(std::string _name, double _value,
                              std::vector<std::string> _parameters = {})
-        : name(_name), initValue(_value), parameters(_parameters) {}
+        : name(_name), initValue(_value), parameters(_parameters) { }
 
     std::string getName() const {
         return name;
@@ -137,105 +138,26 @@ private:
     std::vector<LogicalExpression*> probabilites;
 };
 
-class VariableExpression {
-public:
-    VariableExpression(std::string _name, std::vector<std::string> _parameters = {})
-        : name(_name), parameters(_parameters) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::vector<std::string> const& getParameters() const {
-        return parameters;
-    }
-
-private:
-    std::string name;
-    std::vector<std::string> parameters;
-};
 
 class CPFSchematic {
 public:
-    CPFSchematic(VariableExpression* _variableExpression,
+    CPFSchematic(ParametrizedVariable* _parametrizedExpression,
                   LogicalExpression* _logicalExpression)
-        : variableExpression(_variableExpression),
-          logicalExpression(_logicalExpression) {}
+        : parametrizedExpression(_parametrizedExpression),
+          logicalExpression(_logicalExpression) { }
 
-    VariableExpression* getVariable() const {
-        return variableExpression;
+    ParametrizedVariable* getVariable() const {
+        return parametrizedExpression;
     }
     LogicalExpression* getLogicalExpression() const {
         return logicalExpression;
     }
 
 private:
-    VariableExpression* variableExpression;
+    ParametrizedVariable* parametrizedExpression;
     LogicalExpression* logicalExpression;
 };
 
-class VariableSchematic {
-public:
-    VariableSchematic(std::string _name, std::vector<std::string> _parameters,
-                   std::string _varType, std::string _defaultValueType,
-                   std::string _satisfactionType = "",
-                   std::string _defaultVarValue = "")
-        : name(_name),
-          parameters(_parameters),
-          varType(_varType),
-          defaultVarType(_defaultValueType),
-          satisfactionType(_satisfactionType),
-          defaultVarValue(_defaultVarValue) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::vector<std::string> const& getParameters() const {
-        return parameters;
-    }
-    std::string getVarType() const {
-        return varType;
-    }
-    std::string getDefaultVarType() const {
-        return defaultVarType;
-    }
-    std::string getSatisfactionType() const {
-        return satisfactionType;
-    }
-    std::string getDefaultVarValue() const {
-        return defaultVarValue;
-    }
-
-private:
-    std::string name;
-    std::vector<std::string> parameters;
-    std::string varType;
-    std::string defaultVarType;
-    std::string satisfactionType;
-    std::string defaultVarValue;
-};
-
-class SchematicType {
-public:
-    SchematicType(std::string _name, std::string _superType)
-        : name(_name), superType(_superType) {}
-    SchematicType(std::string _name, std::vector<std::string> _superTypeList)
-        : name(_name), superTypeList(_superTypeList) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::string getSuperType() const {
-        return superType;
-    }
-    std::vector<std::string> const& getSuperTypeList() const {
-        return superTypeList;
-    }
-
-private:
-    std::string name;
-    std::string superType;
-    std::vector<std::string> superTypeList;
-};
 
 class Domain {
 public:
@@ -251,10 +173,7 @@ public:
     std::vector<std::string> const& getRequirements() const {
       return requirements;
     }
-    std::vector<SchematicType*> const& getTypes() const {
-        return types;
-    }
-    std::vector<VariableSchematic*> const& getVariables() const {
+    std::vector<ParametrizedVariable*> const& getVariables() const {
         return variables;
     }
     std::vector<CPFSchematic*> const& getCPFs() const {
@@ -266,10 +185,6 @@ public:
     std::vector<LogicalExpression*> const& getStateConstraints() const {
         return stateConstraints;
     }
-    std::vector<ObjectSchematic*> const& getObjects() const {
-        return objects;
-    }
-
 
     void setName(std::string _name) {
       name = _name;
@@ -277,10 +192,7 @@ public:
     void setRequirements(std::vector<std::string> _requirements) {
       requirements = _requirements;
     }
-    void setTypes(std::vector<SchematicType*>& _types) {
-        types = _types;
-    }
-    void setVariables(std::vector<VariableSchematic*>& _variables) {
+    void setVariables(std::vector<ParametrizedVariable*>& _variables) {
         variables = _variables;
     }
     void setCPF(std::vector<CPFSchematic*>& _CPFs) {
@@ -293,18 +205,13 @@ public:
         std::vector<LogicalExpression*>& _stateConstraints) {
         stateConstraints = _stateConstraints;
     }
-    void setObjects(std::vector<ObjectSchematic*>& _objects) {
-        objects = _objects;
-    }
 private:
     std::string name;
     std::vector<std::string> requirements;
-    std::vector<SchematicType*> types;
-    std::vector<VariableSchematic*> variables;
+    std::vector<ParametrizedVariable*> variables;
     std::vector<CPFSchematic*> CPFs;
     LogicalExpression* reward;
     std::vector<LogicalExpression*> stateConstraints;
-    std::vector<ObjectSchematic*> objects;
 };
 /*****************************************************************
                              Instance
@@ -379,12 +286,10 @@ public:
     }
 
     // Sub-methods for domain parse
-    void addTypes(Domain* domain);
     void addVariables(Domain* domain);
     void addCPFs(Domain* domain);
     void setReward(Domain* domain);
     void addStateConstraints(Domain* domain);
-    void addObjects(Domain* domain);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
@@ -489,20 +394,6 @@ public:
     // Requirements section
     std::set<std::string> validRequirements;
 
-    // Helper Methods
-    std::map<std::string, VariableSchematic*>
-        parametrizedVariableSchematicsMap; // Map for storing definition of
-                                            // ParametrizedVariables
-    std::map<std::string, VariableExpression*>
-        parametrizedVariableMap; // Map for storing ParametrizedVariables as
-                                 // expressions
-
-    ParametrizedVariable* getParametrizedVariableFromVariableSchematic(
-        std::string name);
-    void storeParametrizedVariableFromVariableSchematic(
-        std::string varName, VariableSchematic* varSchematic);
-    void storeParametrizedVariableMap(std::string varName,
-                                      VariableExpression* varExpression);
     Object* getObject(std::string objName);
     Type* getType(std::string typeName);
 
