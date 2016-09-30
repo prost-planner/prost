@@ -3,6 +3,16 @@
 #include <fstream>
 #include <iostream>
 
+#include <cstdarg>
+void foobar(std::initializer_list<std::string> values)
+{
+    for (auto& value : values) {
+        // do something with value
+        std::cout << value << ' ';
+    }
+    std::cout << std::endl;
+}
+
 #include "logical_expressions.h"
 
 #include "evaluatables.h"
@@ -58,111 +68,10 @@ RDDLTask::RDDLTask()
         "concurrent",         "integer-valued",    "CPF-deterministic"};
 }
 
-void RDDLTask::addTypes(Domain* domain) {
-    for (SchematicType* type : domain->getTypes()) {
-        if (type->getSuperTypeList().empty()) {
-            addType(type->getName(), type->getSuperType());
-        } else {
-            // Type definition using enum values (type_name : @enum1,...,@enumN)
-            addType(type->getName());
-            for (std::string const& objectName : type->getSuperTypeList()) {
-                addObject(type->getName(), objectName);
-            }
-        }
-    }
-}
-
 void RDDLTask::addVariables(Domain* domain) {
     // Adding VarSection
-    for (VariableSchematic* varDef : domain->getVariables()) {
-        std::string name = varDef->getName();
-        std::vector<Parameter*> params;
-        for (std::string const& param : varDef->getParameters()) {
-            if (types.find(param) == types.end()) {
-                SystemUtils::abort("Undefined type " + param +
-                                   " used as parameter in " + name + ".");
-            } else {
-                params.push_back(
-                    new Parameter(types[param]->name, types[param]));
-            }
-        }
-
-        // TODO: This initialization here is wrong but is put here to prevent
-        // warning during the compliation. Setting it to nullptr doesn't help
-        ParametrizedVariable::VariableType varType =
-            ParametrizedVariable::STATE_FLUENT;
-        std::string varTypeName = varDef->getVarType();
-        if (varTypeName == "state-fluent") {
-            varType = ParametrizedVariable::STATE_FLUENT;
-        } else if (varTypeName == "action-fluent") {
-            varType = ParametrizedVariable::ACTION_FLUENT;
-        } else if (varTypeName == "non-fluent") {
-            varType = ParametrizedVariable::NON_FLUENT;
-        }
-        // TODO: cover other types of parametrized variables
-        else {
-            SystemUtils::abort("Parametrized variable: " + varTypeName +
-                               " not implemented. Implemented for now: "
-                               "state-fluent, action-fluent, non-fluent.");
-        }
-
-        std::string defaultVarType = varDef->getDefaultVarType();
-        if (types.find(defaultVarType) == types.end()) {
-            SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
-        }
-
-        Type* valueType = types[defaultVarType];
-        double defaultVarValue;
-
-        switch (varType) {
-        case ParametrizedVariable::NON_FLUENT:
-        case ParametrizedVariable::STATE_FLUENT:
-        case ParametrizedVariable::ACTION_FLUENT: {
-            std::string satisfactionType = varDef->getSatisfactionType();
-            if (satisfactionType != "default") {
-                SystemUtils::abort(
-                    "Unknown satisfaction type for parametrized variable " +
-                    varTypeName + ". Did you mean 'default'?");
-            }
-            std::string defaultVarValString = varDef->getDefaultVarValue();
-
-            // TODO: ?? -> || valueType->name == "bool")
-            if (valueType->name == "int" || valueType->name == "real") {
-                defaultVarValue = std::atof(defaultVarValString.c_str());
-            } else {
-                if (objects.find(defaultVarValString) == objects.end()) {
-                    SystemUtils::abort("Default value " + defaultVarValString +
-                                       " of variable " + name +
-                                       " not defined.");
-                }
-
-                Object* val = objects[defaultVarValString];
-                defaultVarValue = val->value;
-            }
-            break;
-        }
-
-        // case ParametrizedVariable::INTERM_FLUENT:
-        // case ParametrizedVariable::DERIVED_FLUENT:
-        //     if (satisfactionType != "level") {
-        //         SystemUtils::abort("Unknown satisfaction type for
-        //         parametrized variable " + varTypeName + ". Did you mean
-        //         'level'?");
-        //     }
-        //     // TODO: implement this
-        //     SystemUtils::abort("Not implemented. Variable type: " + varTypeName);
-        //     break;
-
-        default: {
-            SystemUtils::abort("Unknown variable type: " + varTypeName);
-            break;
-        }
-        }
-
-        ParametrizedVariable* var = new ParametrizedVariable(
-            name, params, varType, valueType, defaultVarValue);
-
-        addVariableSchematic(var);
+    for (ParametrizedVariable* varDef : domain->getVariables()) {
+        addVariableSchematic(varDef);
     }
 }
 
@@ -170,8 +79,7 @@ void RDDLTask::addCPFs(Domain* domain) {
     // Consists of Parametrized variable and logical expression
     for (CPFSchematic* cpf : domain->getCPFs()) {
         // Variable
-        std::string name = cpf->getVariable()->getName();
-
+        std::string name = cpf->getVariable()->variableName;
         if (name[name.length() - 1] == '\'') {
             name = name.substr(0, name.length() - 1);
         }
@@ -182,14 +90,14 @@ void RDDLTask::addCPFs(Domain* domain) {
 
         ParametrizedVariable* head = variableDefinitions[name];
 
-        if (cpf->getVariable()->getParameters().size() != head->params.size()) {
+        if (cpf->getVariable()->params.size() != head->params.size()) {
             SystemUtils::abort(
                 "Wrong number of parameters for parametrized variable " + name +
                 ".");
         }
 
-        for (int i = 0; i < cpf->getVariable()->getParameters().size(); ++i) {
-            head->params[i]->name = cpf->getVariable()->getParameters()[i];
+        for (int i = 0; i < cpf->getVariable()->params.size(); ++i) {
+            head->params[i]->name = cpf->getVariable()->params[i]->name;
         }
 
         if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
@@ -212,32 +120,14 @@ void RDDLTask::addStateConstraints(Domain* domain) {
     }
 }
 
-void RDDLTask::addObjects(Domain* domain) {
-    for (ObjectSchematic* objDef : domain->getObjects()) {
-        std::string typeName = objDef->getTypeName();
-        if (types.find(typeName) == types.end()) {
-            SystemUtils::abort("Unknown object " + typeName);
-        }
-
-        for (std::string const& objectName : objDef->getObjectNames()) {
-          std::cout << "Added object (from objects section): " << typeName
-          << " : " << objectName << std::endl;
-            addObject(typeName, objectName);
-        }
-    }
-}
-
 void RDDLTask::addDomain(Domain* domain) {
     // TODO: requirements section is stored and prepared, implementation is left
 
     domainName = domain->getName();
 
-    //addTypes(domain);
-    addVariables(domain);
     addCPFs(domain);
     setReward(domain);
     addStateConstraints(domain);
-    //addObjects(domain);
     // TODO: StateInvariantSection
 }
 
@@ -250,18 +140,6 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
         SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() +
                            "  defined in Non fluent section");
     }
-
-    // NOTE: No need to add objects here, since they are added directly from parser.ypp
-    // Adding objects
-    // for (ObjectSchematic* objDef : nonFluent->getObjects()) {
-    //     std::string typeName = objDef->getTypeName();
-    //
-    //     for (std::string const& objectName : objDef->getObjectNames()) {
-    //         addObject(typeName, objectName);
-    //         std::cout << "Added object (from non fluents): " << objectName <<
-    //         " of type " << typeName << std::endl;
-    //     }
-    // }
 
     // Adding non fluents
     std::vector<Parameter*> params;
@@ -958,121 +836,6 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 /*****************************************************************
                            Helper Methods
 *****************************************************************/
-
-// This method is used to get the value of parametrized variable
-// Parametrized variable is stored with its definition in VariableSchematic
-// and the values of parameters used in the particular call of parametrized
-// variable are stored in varExpression
-ParametrizedVariable* RDDLTask::getParametrizedVariableFromVariableSchematic(
-    std::string varName) {
-    if (parametrizedVariableSchematicsMap.find(varName) ==
-        parametrizedVariableSchematicsMap.end()) {
-        return nullptr;
-    }
-
-    VariableSchematic* varSchematic =
-        parametrizedVariableSchematicsMap[varName];
-    VariableExpression* varExpression = parametrizedVariableMap[varName];
-
-    std::string name = varSchematic->getName();
-    std::string varTypeName = varSchematic->getVarType();
-    std::string defaultVarType = varSchematic->getDefaultVarType();
-    std::string satisfactionType = varSchematic->getSatisfactionType();
-    std::string defaultVarValString = varSchematic->getDefaultVarValue();
-    double defaultVarValue;
-
-    std::vector<Parameter*> params;
-    // Adding parameters from VariableExpression (those are the parameters
-    // that user set when he called parametrized variablea as an espression)
-    for (unsigned i = 0; i < varSchematic->getParameters().size(); i++)
-        if (types.find((varSchematic->getParameters())[i]) ==
-            types.end()) {
-            SystemUtils::abort("Undefined type " +
-                               (varExpression->getParameters())[i] +
-                               " used as parameter in " + name + ".");
-        } else {
-            params.push_back(
-                new Parameter((varExpression->getParameters())[i],
-                              types[(varSchematic->getParameters())[i]]));
-        }
-
-    // TODO: This initialization here is wrong but is put here to prevent
-    // warning during the compliation
-    // setting it to nullptr doesn't help
-    ParametrizedVariable::VariableType varType =
-        ParametrizedVariable::STATE_FLUENT;
-    if (varTypeName == "state-fluent") {
-        varType = ParametrizedVariable::STATE_FLUENT;
-    } else if (varTypeName == "action-fluent") {
-        varType = ParametrizedVariable::ACTION_FLUENT;
-    } else if (varTypeName == "non-fluent") {
-        varType = ParametrizedVariable::NON_FLUENT;
-    }
-    // TODO: cover other types of parametrized variables
-    else {
-        SystemUtils::abort("Parametrized variable: " + varTypeName +
-                           " not implemented. Implemented for now: "
-                           "state-fluent, action-fluent, non-fluent.");
-    }
-
-    if (types.find(defaultVarType) == types.end()) {
-        SystemUtils::abort("Unknown type " + defaultVarType + " defined.");
-    }
-    Type* valueType = types[defaultVarType];
-
-    switch (varType) {
-    case ParametrizedVariable::NON_FLUENT:
-    case ParametrizedVariable::STATE_FLUENT:
-    case ParametrizedVariable::ACTION_FLUENT:
-        if (satisfactionType != "default") {
-            SystemUtils::abort(
-                "Unknown satisfaction type for parametrized variable " +
-                varTypeName + ". Did you mean 'default'?");
-        }
-
-        if (valueType->name == "int" ||
-            valueType->name ==
-                "real") { // TODO: ?? -> || valueType->name == "bool")
-            defaultVarValue = std::atof(defaultVarValString.c_str());
-        } else {
-            if (objects.find(defaultVarValString) == objects.end()) {
-                SystemUtils::abort("Default value " + defaultVarValString +
-                                   " of variable " + name + " not defined.");
-            }
-            Object* val = objects[defaultVarValString];
-            defaultVarValue = val->value;
-        }
-        break;
-
-    // case ParametrizedVariable::INTERM_FLUENT:
-    // case ParametrizedVariable::DERIVED_FLUENT:
-    //     if (satisfactionType != "level")
-    //         SystemUtils::abort("Unknown satisfaction type for parametrized
-    //         variable " + varTypeName + ". Did you mean 'level'?");
-    //
-    //     // TODO: implement this
-    //     SystemUtils::abort("Not implemented. Variable type: " + varTypeName);
-    //     break;
-
-    default:
-        SystemUtils::abort("Unknown variable type: " + varTypeName);
-        break;
-    }
-    ParametrizedVariable* var = new ParametrizedVariable(
-        name, params, varType, valueType, defaultVarValue);
-
-    return var;
-}
-
-void RDDLTask::storeParametrizedVariableFromVariableSchematic(std::string varName,
-                                                 VariableSchematic* var) {
-    parametrizedVariableSchematicsMap[varName] = var;
-}
-
-void RDDLTask::storeParametrizedVariableMap(std::string varName,
-                                  VariableExpression* varExpression) {
-    parametrizedVariableMap[varName] = varExpression;
-}
 
 Object* RDDLTask::getObject(std::string objName) {
     if (objects.find(objName) != objects.end()) {
