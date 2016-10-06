@@ -42,11 +42,10 @@ RDDLTask* rddlTask;
     Parameter* parameter;
     std::vector<Parameter*>* vectorParameter;
     Type* type;
+
     std::vector<Type*>* vectorType;
     ParameterList* parameterList;
 
-    ObjectSchematic* objectSchematic;
-    std::vector<ObjectSchematic*>* objectsList;
     VariableInstanceSchematic* variableInstanceSchematic;
     std::vector<VariableInstanceSchematic*>* variablesInstanceList;
 
@@ -92,8 +91,6 @@ RDDLTask* rddlTask;
 %type <vectorLogicalExpression> StateConstraintsSection StateConstraintList
 
 %type <nonFluentBlock> NonfluentBlock
-%type <objectSchematic> ObjectsSchematic
-%type <objectsList> ObjectsList ObjectsSection
 %type <vectorStr> ObjectsConstList
 %type <variableInstanceSchematic> VariableInstanceSchematic
 %type <variablesInstanceList> VariablesInstanceList
@@ -244,7 +241,7 @@ ParametarListTypeSpecs: TypeSpecification                                { $$ = 
 RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 : 0; }
              | DoubleType                            { $$ = $1; }
              | IntType                               { $$ = $1; }
-             | id_token                              { SystemUtils::abort("Range constant variable definition implemented yet."); }
+             | id_token                              { Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
              | '$' id_token                          { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
              | enum_token                            { SystemUtils::abort("Enums not implemented yet."); }
              | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
@@ -530,20 +527,19 @@ StateInvariantSchematic: Expression ';'
 ////////////////////////
 // Objects Section
 ////////////////////////
-ObjectsSection: objects_token '{' ObjectsList '}' ';' { $$ = $3; }
+ObjectsSection: objects_token '{' ObjectsList '}' ';' { }
 ;
 
 // This section is required in Non-fluents and Instance section
-ObjectsList: ObjectsSchematic             { $$ = new std::vector<ObjectSchematic*>(); $$->push_back($1); }
-        | ObjectsSchematic ObjectsList    { $$ = $2; $$->insert($$->begin(), $1); }
+ObjectsList: ObjectsSchematic             { }
+        | ObjectsSchematic ObjectsList    { }
 ;
 
-ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' { $$ = new ObjectSchematic(*$1, *$4);
-                                                            /*TODO: hack, fix this*/
-                                                            for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
-                                                              rddlTask->addObject(*$1, *it);
-                                                              /*foobar({"Added object: ", *$1, *it});*/
-                                                            }
+ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
+                                                              for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
+                                                                rddlTask->addObject(*$1, *it);
+                                                                /*foobar({"Added object: ", *$1, *it});*/
+                                                              }
                                                          }
 ;
 
@@ -562,7 +558,7 @@ NonfluentBlock: non_fluents_token id_token '{'
                 domain_token '=' id_token ';'
                 objects_token '{' ObjectsList  '}' ';'
                 non_fluents_token '{' VariablesInstanceList  '}' ';'
-            '}' { $$ = new NonFluentBlock(*$2, *$6, *$15, *$10); }
+            '}' { $$ = new NonFluentBlock(*$2, *$6, *$15); }
             | non_fluents_token id_token '{'
                 domain_token '=' id_token ';'
                 non_fluents_token '{' VariablesInstanceList  '}' ';'
