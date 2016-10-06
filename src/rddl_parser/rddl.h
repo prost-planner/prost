@@ -17,7 +17,6 @@ class NonFluent;
 class StateFluent;
 class RewardFunction;
 
-class VariableSchematic;
 class RDDLTask;
 
 void foobar(std::initializer_list<std::string> values);
