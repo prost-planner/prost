@@ -48,41 +48,20 @@ private:
     std::vector<std::string> parameters;
 };
 
-class ObjectSchematic {
-public:
-    ObjectSchematic(std::string _typeName, std::vector<std::string> _objectNames)
-        : typeName(_typeName), objectNames(_objectNames) {}
-
-    std::string getTypeName() const {
-        return typeName;
-    }
-    std::vector<std::string> const& getObjectNames() const {
-        return objectNames;
-    }
-
-private:
-    std::string typeName;
-    std::vector<std::string> objectNames;
-};
-
 class NonFluentBlock {
 public:
     NonFluentBlock(std::string _name, std::string _domainName,
-                   std::vector<VariableInstanceSchematic*> _nonFluents,
-                   std::vector<ObjectSchematic*> _objects = {})
+                   std::vector<VariableInstanceSchematic*> _nonFluents)
         : name(_name),
           domainName(_domainName),
-          nonFluents(_nonFluents),
-          objects(_objects) {}
+          nonFluents(_nonFluents)
+         {}
 
     std::string getName() const {
         return name;
     }
     std::string getDomainName() const {
         return domainName;
-    }
-    std::vector<ObjectSchematic*> const& getObjects() const {
-        return objects;
     }
     std::vector<VariableInstanceSchematic*> const& getNonFluents() const {
         return nonFluents;
@@ -92,7 +71,6 @@ private:
     std::string name;
     std::string domainName;
     std::vector<VariableInstanceSchematic*> nonFluents;
-    std::vector<ObjectSchematic*> objects;
 };
 
 /*****************************************************************
