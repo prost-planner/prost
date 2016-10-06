@@ -15,6 +15,7 @@ extern FILE* yyin; // Extern file, used for reading code from file
 #include "logical_expressions.h"
 #include "rddl.h"
 #include "utils/system_utils.h"
+#include "utils/timer.h"
 
 extern void yyerror (std::string message); // Function for syntax error handling
 
@@ -114,7 +115,7 @@ RDDLTask* rddlTask;
 
 %%
 
-Program: RddlBlock            { $1->execute(targetDir); }
+Program: RddlBlock            { } //$1->execute(targetDir); }
 ;
 
 ////////////////////////
@@ -361,7 +362,6 @@ Expression:
     | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new Product($4, $6); }
     | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // TODO: Text switch case control
-                                                                                                  // TODO: Problem with accessing variables defined by user. They do not exist in this scope and when being accessed, seg fault is produced.
                                                                                                     LogicalExpression* switchVar = nullptr;
 
                                                                                                     if (rddlTask->variableDefinitions.find($3->name) != rddlTask->variableDefinitions.end()) {
@@ -373,18 +373,18 @@ Expression:
 
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
-                                                                                                    for (std::vector<CaseSchematic*>::iterator it = $6->begin(); it != $6->end(); it++) {
-                                                                                                        if (!(*it)->getCondition()) {
+                                                                                                    for (CaseSchematic* cs : *$6) {
+                                                                                                        if (!cs->getCondition()) {
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
                                                                                                             conditions.push_back(new NumericConstant(1.0));
                                                                                                         }
                                                                                                         else {
                                                                                                             std::vector<LogicalExpression*> switchVarEquality;
                                                                                                             switchVarEquality.push_back(switchVar);
-                                                                                                            switchVarEquality.push_back((*it)->getCondition());
+                                                                                                            switchVarEquality.push_back(cs->getCondition());
                                                                                                             conditions.push_back(new EqualsExpression(switchVarEquality));
                                                                                                         }
-                                                                                                        effects.push_back((*it)->getEffect());
+                                                                                                        effects.push_back(cs->getEffect());
                                                                                                     }
                                                                                                     $$ = new MultiConditionChecker(conditions, effects);
                                                                                                 }
@@ -536,8 +536,8 @@ ObjectsList: ObjectsSchematic             { }
 ;
 
 ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
-                                                              for (std::vector<std::string>::iterator it = $4->begin(); it != $4->end(); it++) {
-                                                                rddlTask->addObject(*$1, *it);
+                                                              for (std::string str : *$4) {
+                                                                rddlTask->addObject(*$1, str);
                                                                 /*foobar({"Added object: ", *$1, *it});*/
                                                               }
                                                          }
@@ -767,10 +767,16 @@ int main (int argc, char** argv) {
     rddlTask = new RDDLTask();
 
     yyin = fopen(".combined", "r");
+    Timer t, totalTime;
+    std::cout << "Parsing..." << std::endl;
     yyparse();
+    std::cout << "...finished (" << t << ")." << std::endl;
     fclose(yyin);
     combined.close();
     std::remove(".combined");
+
+    rddlTask->execute(targetDir);
+    std::cout << "total time: " << totalTime << std::endl;
 
     return EXIT_SUCCESS;
 }

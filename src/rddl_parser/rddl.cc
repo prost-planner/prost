@@ -786,20 +786,19 @@ void RDDLTask::print(std::ostream& out) {
 
     out << std::endl << std::endl << "#####TRAINING SET#####" << std::endl;
     out << trainingSet.size() << std::endl;
-    for (std::set<State>::iterator it = trainingSet.begin();
-         it != trainingSet.end(); ++it) {
-        for (unsigned int i = 0; i < it->state.size(); ++i) {
-            out << it->state[i] << " ";
+    for (State st : trainingSet) {
+        for (unsigned int i = 0; i < st.state.size(); ++i) {
+            out << st.state[i] << " ";
         }
         out << std::endl;
     }
 }
 
 void RDDLTask::execute(std::string td /*target dir*/) {
-    std::cout << "Executing..." << std::endl << "Writing output.." << std::endl;
+    // std::cout << "Executing..." << std::endl << "Writing output.." << std::endl;
 
     Timer t, totalTime;
-    std::cout << "Parsing...finished" << std::endl;
+    // std::cout << "Parsing...finished" << std::endl;
 
     t.reset();
     std::cout << "instantiating..." << std::endl;
@@ -830,7 +829,7 @@ void RDDLTask::execute(std::string td /*target dir*/) {
     // print(std::cout);
     std::cout << "...finished (" << t << ")." << name << std::endl;
 
-    std::cout << "total time: " << totalTime << std::endl;
+    // std::cout << "total time: " << totalTime << std::endl;
 }
 
 /*****************************************************************
