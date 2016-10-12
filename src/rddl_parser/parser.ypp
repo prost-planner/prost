@@ -221,9 +221,9 @@ VarList: VariableSchematic             { $$ = new std::vector<ParametrizedVariab
         | VariableSchematic VarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }// foobar({"Defined parametrized variable: ", *$1, std::to_string((*$2).size())}); }
-            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }// foobar({"Defined parametrized variable: ", *$1, std::to_string((*$2).size())}); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); } // foobar({"Defined parametrized variable: ", *$1, std::to_string((*$2).size())}); }
+VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
             | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
             | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
@@ -235,8 +235,8 @@ ParametarList: ':'                                { $$ = new std::vector<Paramet
         | '(' ParametarListTypeSpecs ')' ':'      { $$ = $2; }
 ;
 
-ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<Parameter*>(); $$->push_back(new Parameter($1->name, $1)); }// foobar({"\tType specification of parameter: ", $1->name}); }
-                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), new Parameter($1->name, $1)); }// foobar({"\tType specification of parameter: ", $1->name}); }
+ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<Parameter*>(); $$->push_back(new Parameter($1->name, $1)); }
+                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), new Parameter($1->name, $1)); }
 ;
 
 RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 : 0; }
@@ -538,7 +538,6 @@ ObjectsList: ObjectsSchematic             { }
 ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
                                                               for (std::string str : *$4) {
                                                                 rddlTask->addObject(*$1, str);
-                                                                /*foobar({"Added object: ", *$1, *it});*/
                                                               }
                                                          }
 ;

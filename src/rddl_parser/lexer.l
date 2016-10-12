@@ -11,16 +11,16 @@
 #include "logical_expressions.h"
 #include "rddl.h"
 
-void lex_error(char c)
-{
-    std::cerr << "\033[1;31mLexical ERROR! \033[0m Unknown char " << c << std::endl;
+void lex_error(char c) {
+    std::cerr << "\033[1;31mLexical ERROR! \033[0m Unknown char " << c
+              << std::endl;
     exit(EXIT_FAILURE);
 }
 
-void yyerror (std::string message)
-{
+void yyerror (std::string message) {
     extern int yylineno;
-    std::cerr << "\033[1;31mERROR! \033[0m Unknown token: " << yytext << " at line " << yylineno << ": "  << message << std::endl;
+    std::cerr << "\033[1;31mERROR! \033[0m Unknown token: " << yytext
+              << " at line " << yylineno << ": "  << message << std::endl;
     exit(EXIT_FAILURE);
 }
 
@@ -79,7 +79,6 @@ forall                                                  { return forall_token; }
 exists                                                  { return exists_token; }
 sum                                                     { return sum_token; }
 product                                                 { return product_token; }
-prod                                                    { return product_token; } /* TODO: two ways of defining product, 'product' according to Scott, 'prod' according to Thomas */
 if                                                      { return if_token; }
 then                                                    { return then_token; }
 else                                                    { return else_token; }
@@ -93,8 +92,7 @@ Bernoulli                                               { return bernoulli_token
 Discrete                                                { return discrete_token; }
 Normal                                                  { return normal_token; }
 Poisson                                                 { return poisson_token; }
-Exponential                                             { return exponential_token; } /* TODO: two ways to define exp? Scott's 'Exponential' and Thomas's 'exp' */
-exp                                                     { return exponential_token; }
+Exponential                                             { return exponential_token; }
 Weibull                                                 { return weibull_token; }
 Gama                                                    { return gama_token; }
 Multinomial                                             { return multinomial_token; }
