@@ -3,17 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-#include <cstdarg>
-void foobar(std::initializer_list<std::string> values)
-{
-    for (auto& value : values) {
-        // do something with value
-        std::cout << value << ' ';
-    }
-    std::cout << std::endl;
-}
-
 #include "logical_expressions.h"
+#include <cstdarg>
 
 #include "evaluatables.h"
 #include "instantiator.h"
@@ -26,8 +17,8 @@ void foobar(std::initializer_list<std::string> values)
 #include "utils/timer.h"
 
 std::string Domain::validRequirement(RDDLTask rddlTask, std::string req) {
-    if (rddlTask.validRequirements.find(req)
-              == rddlTask.validRequirements.end()) {
+    if (rddlTask.validRequirements.find(req) ==
+        rddlTask.validRequirements.end()) {
         std::cerr << "Error! Invalid requirement: " << req << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -60,7 +51,6 @@ RDDLTask::RDDLTask()
 
     // Add object super type
     addType("object");
-
 
     validRequirements = {
         "continuous",         "multivalued",       "reward-deterministic",
@@ -795,7 +785,8 @@ void RDDLTask::print(std::ostream& out) {
 }
 
 void RDDLTask::execute(std::string td /*target dir*/) {
-    // std::cout << "Executing..." << std::endl << "Writing output.." << std::endl;
+    // std::cout << "Executing..." << std::endl << "Writing output.." <<
+    // std::endl;
 
     Timer t, totalTime;
     // std::cout << "Parsing...finished" << std::endl;

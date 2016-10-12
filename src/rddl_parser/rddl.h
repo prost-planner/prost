@@ -2,24 +2,19 @@
 #define RDDL_H
 
 #include <map>
-#include <set>
 #include <string>
-#include <vector>
 
 #include "states.h"
 
-class Type;
-class Parameter;
-class Object;
-class ParametrizedVariable;
 class LogicalExpression;
 class NonFluent;
-class StateFluent;
-class RewardFunction;
-
+class Object;
+class Parameter;
+class ParametrizedVariable;
 class RDDLTask;
-
-void foobar(std::initializer_list<std::string> values);
+class RewardFunction;
+class StateFluent;
+class Type;
 
 /*****************************************************************
                             Non Fluents
@@ -28,8 +23,8 @@ void foobar(std::initializer_list<std::string> values);
 class VariableInstanceSchematic {
 public:
     VariableInstanceSchematic(std::string _name, double _value,
-                             std::vector<std::string> _parameters = {})
-        : name(_name), initValue(_value), parameters(_parameters) { }
+                              std::vector<std::string> _parameters = {})
+        : name(_name), initValue(_value), parameters(_parameters) {}
 
     std::string getName() const {
         return name;
@@ -51,10 +46,7 @@ class NonFluentBlock {
 public:
     NonFluentBlock(std::string _name, std::string _domainName,
                    std::vector<VariableInstanceSchematic*> _nonFluents)
-        : name(_name),
-          domainName(_domainName),
-          nonFluents(_nonFluents)
-         {}
+        : name(_name), domainName(_domainName), nonFluents(_nonFluents) {}
 
     std::string getName() const {
         return name;
@@ -75,6 +67,7 @@ private:
 /*****************************************************************
                             Domain
 ******************************************************************/
+
 class CaseSchematic {
 public:
     CaseSchematic(LogicalExpression* _condition, LogicalExpression* _effect)
@@ -115,13 +108,12 @@ private:
     std::vector<LogicalExpression*> probabilites;
 };
 
-
 class CPFSchematic {
 public:
     CPFSchematic(ParametrizedVariable* _parametrizedExpression,
-                  LogicalExpression* _logicalExpression)
+                 LogicalExpression* _logicalExpression)
         : parametrizedExpression(_parametrizedExpression),
-          logicalExpression(_logicalExpression) { }
+          logicalExpression(_logicalExpression) {}
 
     ParametrizedVariable* getVariable() const {
         return parametrizedExpression;
@@ -135,12 +127,10 @@ private:
     LogicalExpression* logicalExpression;
 };
 
-
 class Domain {
 public:
     Domain() = default;
-    Domain(std::string _name)
-      :name(_name) {}
+    Domain(std::string _name) : name(_name) {}
 
     static std::string validRequirement(RDDLTask rddlTask, std::string req);
 
@@ -148,7 +138,7 @@ public:
         return name;
     }
     std::vector<std::string> const& getRequirements() const {
-      return requirements;
+        return requirements;
     }
     std::vector<ParametrizedVariable*> const& getVariables() const {
         return variables;
@@ -164,10 +154,10 @@ public:
     }
 
     void setName(std::string _name) {
-      name = _name;
+        name = _name;
     }
     void setRequirements(std::vector<std::string> _requirements) {
-      requirements = _requirements;
+        requirements = _requirements;
     }
     void setVariables(std::vector<ParametrizedVariable*>& _variables) {
         variables = _variables;
@@ -182,6 +172,7 @@ public:
         std::vector<LogicalExpression*>& _stateConstraints) {
         stateConstraints = _stateConstraints;
     }
+
 private:
     std::string name;
     std::vector<std::string> requirements;
@@ -378,7 +369,5 @@ private:
     std::string domainName;
     std::string nonFluentsName;
 };
-
-
 
 #endif
