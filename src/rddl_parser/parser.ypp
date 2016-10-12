@@ -30,11 +30,8 @@ RDDLTask* rddlTask;
     std::vector<std::string>* vectorStr;
 
     RDDLTask* rddlTask;
-    Domain* domain;
     std::vector<ParametrizedVariable*>* vectorParametrizedVariable;
     ParametrizedVariable* parametrizedVariable;
-    CPFSchematic* cpfSchematic;
-    std::vector<CPFSchematic*>* vectorCPFSchematic;
     LogicalExpression* logicalExpression;
     std::vector<LogicalExpression*>* vectorLogicalExpression;
     LConstCaseList* lConstCaseList;
@@ -78,8 +75,7 @@ RDDLTask* rddlTask;
 %type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
 %type <d> IntType DoubleType RangeConstant
 %type <cpfSchematic> CPFSchematic
-%type <vectorCPFSchematic> CPFSection CPFList
-%type <logicalExpression> Expression LConst RewardsSection StateConstraintSchematic
+%type <logicalExpression> Expression LConst StateConstraintSchematic
 %type <lConstCaseList> LConstCaseList
 %type <caseSchematic> CaseSchematic
 %type <vectorCaseList> CaseList
@@ -111,10 +107,10 @@ Program: RddlBlock            { } //$1->execute(targetDir); }
 ////////////////////////
 // RDDL block
 ////////////////////////
-RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
+RddlBlock: DomainBlock              { $$ = rddlTask; }
         | InstanceBlock             { $$ = rddlTask; }
         | NonfluentBlock            { $$ = rddlTask; }
-        | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
+        | RddlBlock DomainBlock     { $$ = $1; }
         | RddlBlock InstanceBlock   { $$ = $1; }
         | RddlBlock NonfluentBlock  { $$ = $1; }
 ;
@@ -124,40 +120,40 @@ RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
 // Domain block
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-DomainBlock: domain_token id_token '{' DomainList '}'     { $$ = $4; $$->setName(*$2); }
+DomainBlock: domain_token id_token '{' DomainList '}'     {  rddlTask->domainName = *$2; }
 ;
 
 ////////////////////////
 // Domain list
 ////////////////////////
-DomainList: TypeSection DomainList                      { $$ = $2; }
-          | VarSection DomainList                       { $$ = $2; $$->setVariables(*$1); }
-          | CPFSection DomainList                       { $$ = $2; $$->setCPF(*$1); }
-          | RewardsSection DomainList                   { $$ = $2; $$->setReward($1); }
-          | StateConstraintsSection DomainList          { $$ = $2; $$->setStateConstraint(*$1); }
-          | ObjectsSection DomainList                   { $$ = $2; }
-          | RequirementsSection DomainList              { $$ = $2; $$->setRequirements(*$1); }
+DomainList: TypeSection DomainList                      { }
+          | VarSection DomainList                       { }
+          | CPFSection DomainList                       { }
+          | RewardsSection DomainList                   { }
+          | StateConstraintsSection DomainList          { }
+          | ObjectsSection DomainList                   { }
+          | RequirementsSection DomainList              { }
           | ActionPreconditionsSection DomainList       { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
           | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
-          | TypeSection                       { $$ = new Domain(); }
-          | VarSection                        { $$ = new Domain(); $$->setVariables(*$1); }
-          | CPFSection                        { $$ = new Domain(); $$->setCPF(*$1); }
-          | RewardsSection                    { $$ = new Domain(); $$->setReward($1); }
-          | StateConstraintsSection           { $$ = new Domain(); $$->setStateConstraint(*$1); }
-          | ObjectsSection                    { $$ = new Domain(); }
-          | RequirementsSection               { $$ = new Domain(); $$->setRequirements(*$1); }
+          | TypeSection                       { }
+          | VarSection                        { }
+          | CPFSection                        { }
+          | RewardsSection                    { }
+          | StateConstraintsSection           { }
+          | ObjectsSection                    { }
+          | RequirementsSection               { }
           | ActionPreconditionsSection        { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
           | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
 ;
 ////////////////////////
 // Requirements section
 ////////////////////////
-RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { $$ = $4; }
-                | requirements_token '=' '{' '}' ';'                     { $$ = new std::vector<std::string>(); }
+RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { }
+                | requirements_token '=' '{' '}' ';'                     { }
 ;
 
-RequirementsList: id_token                    { $$ = new std::vector<std::string>(); $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
-            | id_token ',' RequirementsList   { $$ = $3; $$->insert($$->begin(), Domain::validRequirement(*rddlTask, *$1)); }
+RequirementsList: id_token                    { }
+            | id_token ',' RequirementsList   { }
 ;
 
 ////////////////////////
@@ -267,18 +263,18 @@ IntType: intNum_token     { $$ = $1;  }
 // CPF section
 ////////////////////////
 // TODO: CPFHeader is ignored for now, implement proper behavior for it
-CPFSection: CPFHeader '{' CPFList '}' ';'    { $$ =  $3; }
+CPFSection: CPFHeader '{' CPFList '}' ';'    { }
 ;
 
 CPFHeader: cpfs_token { } // Ok like this, no action here
         | cdfs_token  { } // Ok like this, no action here
 ;
 
-CPFList: CPFSchematic         { $$ = new std::vector<CPFSchematic*>(); $$->push_back($1); }
-    | CPFSchematic CPFList    { $$ = $2; $$->insert($$->begin(), $1); }
+CPFList: CPFSchematic         { }
+    | CPFSchematic CPFList    { }
 ;
 
-CPFSchematic: VariableExpression '=' Expression ';' { $$ = new CPFSchematic($1, $3); }
+CPFSchematic: VariableExpression '=' Expression ';' { rddlTask->addCPF(*$1, $3); }
 ;
 
 VariableExpression: id_token                        {
@@ -468,22 +464,22 @@ LConstCaseList: LConst ':' Expression                     { $$ = new LConstCaseL
 ////////////////////////
 // Rewards section
 ////////////////////////
-RewardsSection: reward_token '=' Expression ';'        { $$ = $3; }
+RewardsSection: reward_token '=' Expression ';'        { rddlTask->setRewardCPF($3); }
 ;
 
 
 ////////////////////////
 // State Action Contraint section
 ////////////////////////
-StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { $$ = $3; }
-                    |     state_action_constraints_token '{' '}' ';'                           { $$ = new std::vector<LogicalExpression*>(); }
+StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { }
+                    |     state_action_constraints_token '{' '}' ';'                           { }
 ;
 
-StateConstraintList: StateConstraintSchematic                        { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
-                |     StateConstraintSchematic StateConstraintList   { $$ = $2; $$->insert($$->begin(), $1); }
+StateConstraintList: StateConstraintSchematic                        { }
+                |     StateConstraintSchematic StateConstraintList   { }
 ;
 
-StateConstraintSchematic: Expression ';' { $$ = $1; }
+StateConstraintSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ;
 
 ////////////////////////
@@ -649,7 +645,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->addInstance(*$2, *$6, *$10, $19, $21, $25); }
+                            '}' { rddlTask->setInstance(*$2, *$6, *$10, $19, $21, $25); }
         // 1.4 No nonfluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -657,7 +653,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->addInstance(*$2, *$6, "", $15, $17, $21); }
+                            '}' { rddlTask->setInstance(*$2, *$6, "", $15, $17, $21); }
         // 1.5 No Init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -682,14 +678,14 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' {  rddlTask->addInstance(*$2, *$6, *$10, $14, $16, $20);  }
+                            '}' {  rddlTask->setInstance(*$2, *$6, *$10, $14, $16, $20);  }
         // 1.8 No non fluents, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->addInstance(*$2, *$6, "", $10, $12, $16); }
+                            '}' { rddlTask->setInstance(*$2, *$6, "", $10, $12, $16); }
 
         // Omitting Max Non Def Actions and ..
         // 2.1 All
@@ -716,14 +712,14 @@ InstanceBlock:
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->addInstance(*$2, *$6, *$10, -1, $17, $21); }
+                            '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $17, $21); }
         // 2.4 No non fluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->addInstance(*$2, *$6, "", -1, $13, $17); }
+                            '}' { rddlTask->setInstance(*$2, *$6, "", -1, $13, $17); }
         // 2.5 No init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -745,13 +741,13 @@ InstanceBlock:
                                 non_fluents_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { rddlTask->addInstance(*$2, *$6, *$10, -1, $12, $16); }
+                                '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $12, $16); }
         // 2.8 No non fluetnts, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { rddlTask->addInstance(*$2, *$6, "", -1, $8, $12); }
+                                '}' { rddlTask->setInstance(*$2, *$6, "", -1, $8, $12); }
 ;
 
 

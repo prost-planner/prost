@@ -16,15 +16,6 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-std::string Domain::validRequirement(RDDLTask rddlTask, std::string req) {
-    if (rddlTask.validRequirements.find(req) ==
-        rddlTask.validRequirements.end()) {
-        std::cerr << "Error! Invalid requirement: " << req << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    return req;
-}
-
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
@@ -51,77 +42,41 @@ RDDLTask::RDDLTask()
 
     // Add object super type
     addType("object");
-
-    validRequirements = {
-        "continuous",         "multivalued",       "reward-deterministic",
-        "intermediate-nodes", "constrained-state", "partially-observed",
-        "concurrent",         "integer-valued",    "CPF-deterministic"};
 }
 
-void RDDLTask::addVariables(Domain* domain) {
-    // Adding VarSection
-    for (ParametrizedVariable* varDef : domain->getVariables()) {
-        addVariableSchematic(varDef);
+void RDDLTask::addCPF(ParametrizedVariable variable,
+             LogicalExpression* logicalExpression) {
+    // Variable
+    std::string name = variable.variableName;
+    if (name[name.length() - 1] == '\'') {
+        name = name.substr(0, name.length() - 1);
     }
-}
 
-void RDDLTask::addCPFs(Domain* domain) {
-    // Consists of Parametrized variable and logical expression
-    for (CPFSchematic* cpf : domain->getCPFs()) {
-        // Variable
-        std::string name = cpf->getVariable()->variableName;
-        if (name[name.length() - 1] == '\'') {
-            name = name.substr(0, name.length() - 1);
-        }
-
-        if (variableDefinitions.find(name) == variableDefinitions.end()) {
-            SystemUtils::abort("No according variable to CPF " + name + ".");
-        }
-
-        ParametrizedVariable* head = variableDefinitions[name];
-
-        if (cpf->getVariable()->params.size() != head->params.size()) {
-            SystemUtils::abort(
-                "Wrong number of parameters for parametrized variable " + name +
-                ".");
-        }
-
-        for (int i = 0; i < cpf->getVariable()->params.size(); ++i) {
-            head->params[i]->name = cpf->getVariable()->params[i]->name;
-        }
-
-        if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
-            SystemUtils::abort("Error: Multiple definition of CPF " + name +
-                               ".");
-        }
-        // Expression
-        CPFDefinitions[head] = cpf->getLogicalExpression();
+    if (variableDefinitions.find(name) == variableDefinitions.end()) {
+        SystemUtils::abort("No according variable to CPF " + name + ".");
     }
-}
 
-void RDDLTask::setReward(Domain* domain) {
-    assert(!domain->getReward());
-    setRewardCPF(domain->getReward());
-}
+    ParametrizedVariable* head = variableDefinitions[name];
 
-void RDDLTask::addStateConstraints(Domain* domain) {
-    for (LogicalExpression* expr : domain->getStateConstraints()) {
-        SACs.push_back(expr);
+    if (variable.params.size() != head->params.size()) {
+        SystemUtils::abort(
+            "Wrong number of parameters for parametrized variable " + name +
+            ".");
     }
+
+    for (int i = 0; i < variable.params.size(); ++i) {
+        head->params[i]->name = variable.params[i]->name;
+    }
+
+    if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
+        SystemUtils::abort("Error: Multiple definition of CPF " + name +
+                           ".");
+    }
+    // Expression
+    CPFDefinitions[head] = logicalExpression;
 }
 
-void RDDLTask::addDomain(Domain* domain) {
-    // TODO: requirements section is stored and prepared, implementation is left
-
-    domainName = domain->getName();
-
-    addCPFs(domain);
-    setReward(domain);
-    addStateConstraints(domain);
-    // TODO: StateInvariantSection
-}
-
-void RDDLTask::addInstance(std::string name, std::string domainName,
+void RDDLTask::setInstance(std::string name, std::string domainName,
          std::string nonFluentsName,
          int maxNonDefActions, int horizon, double discount) {
 
