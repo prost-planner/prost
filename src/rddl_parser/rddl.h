@@ -58,80 +58,6 @@ private:
     std::vector<LogicalExpression*> values;
     std::vector<LogicalExpression*> probabilites;
 };
-
-class CPFSchematic {
-public:
-    CPFSchematic(ParametrizedVariable* _parametrizedExpression,
-                 LogicalExpression* _logicalExpression)
-        : parametrizedExpression(_parametrizedExpression),
-          logicalExpression(_logicalExpression) {}
-
-    ParametrizedVariable* getVariable() const {
-        return parametrizedExpression;
-    }
-    LogicalExpression* getLogicalExpression() const {
-        return logicalExpression;
-    }
-
-private:
-    ParametrizedVariable* parametrizedExpression;
-    LogicalExpression* logicalExpression;
-};
-
-class Domain {
-public:
-    Domain() = default;
-    Domain(std::string _name) : name(_name) {}
-
-    static std::string validRequirement(RDDLTask rddlTask, std::string req);
-
-    std::string getName() const {
-        return name;
-    }
-    std::vector<std::string> const& getRequirements() const {
-        return requirements;
-    }
-    std::vector<ParametrizedVariable*> const& getVariables() const {
-        return variables;
-    }
-    std::vector<CPFSchematic*> const& getCPFs() const {
-        return CPFs;
-    }
-    LogicalExpression* getReward() const {
-        return reward;
-    }
-    std::vector<LogicalExpression*> const& getStateConstraints() const {
-        return stateConstraints;
-    }
-
-    void setName(std::string _name) {
-        name = _name;
-    }
-    void setRequirements(std::vector<std::string> _requirements) {
-        requirements = _requirements;
-    }
-    void setVariables(std::vector<ParametrizedVariable*>& _variables) {
-        variables = _variables;
-    }
-    void setCPF(std::vector<CPFSchematic*>& _CPFs) {
-        CPFs = _CPFs;
-    }
-    void setReward(LogicalExpression* _reward) {
-        reward = _reward;
-    }
-    void setStateConstraint(
-        std::vector<LogicalExpression*>& _stateConstraints) {
-        stateConstraints = _stateConstraints;
-    }
-
-private:
-    std::string name;
-    std::vector<std::string> requirements;
-    std::vector<ParametrizedVariable*> variables;
-    std::vector<CPFSchematic*> CPFs;
-    LogicalExpression* reward;
-    std::vector<LogicalExpression*> stateConstraints;
-};
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
@@ -141,25 +67,16 @@ public:
     RDDLTask();
     ~RDDLTask() {}
 
-    void addDomain(Domain* d);
-    void addInstance(std::string name, std::string domainName,
+    std::string validateRequirement(std::string req);
+
+    void setInstance(std::string name, std::string domainName,
              std::string nonFluentsName,
              int maxNonDefActions, int horizon, double discount);
+     void addCPF(ParametrizedVariable variable,
+              LogicalExpression* logicalExpression);
 
     void execute(std::string targetDir);
 
-    std::string getDomainName() const {
-        return domainName;
-    }
-    std::string getNonFluentsName() const {
-        return nonFluentsName;
-    }
-
-    // Sub-methods for domain parse
-    void addVariables(Domain* domain);
-    void addCPFs(Domain* domain);
-    void setReward(Domain* domain);
-    void addStateConstraints(Domain* domain);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
@@ -260,9 +177,6 @@ public:
 
     // Random training set of reachable states
     std::set<State, State::StateSort> trainingSet;
-
-    // Requirements section
-    std::set<std::string> validRequirements;
 
     Object* getObject(std::string objName);
     Type* getType(std::string typeName);
