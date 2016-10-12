@@ -19,34 +19,10 @@ class Type;
 /*****************************************************************
                             Non Fluents
 ******************************************************************/
-
-class VariableInstanceSchematic {
-public:
-    VariableInstanceSchematic(std::string _name, double _value,
-                              std::vector<std::string> _parameters = {})
-        : name(_name), initValue(_value), parameters(_parameters) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::vector<std::string> const& getParameters() const {
-        return parameters;
-    }
-    double getInitValue() const {
-        return initValue;
-    }
-
-private:
-    std::string name;
-    double initValue;
-    std::vector<std::string> parameters;
-};
-
 class NonFluentBlock {
 public:
-    NonFluentBlock(std::string _name, std::string _domainName,
-                   std::vector<VariableInstanceSchematic*> _nonFluents)
-        : name(_name), domainName(_domainName), nonFluents(_nonFluents) {}
+    NonFluentBlock(std::string _name, std::string _domainName)
+        : name(_name), domainName(_domainName) {}
 
     std::string getName() const {
         return name;
@@ -54,14 +30,10 @@ public:
     std::string getDomainName() const {
         return domainName;
     }
-    std::vector<VariableInstanceSchematic*> const& getNonFluents() const {
-        return nonFluents;
-    }
 
 private:
     std::string name;
     std::string domainName;
-    std::vector<VariableInstanceSchematic*> nonFluents;
 };
 
 /*****************************************************************
@@ -189,12 +161,10 @@ class Instance {
 public:
     Instance(std::string _name, std::string _domainName,
              std::string _nonFluentsName,
-             std::vector<VariableInstanceSchematic*> _variables,
              int _maxNonDefActions, int _horizon, double _discount)
         : name(_name),
           domainName(_domainName),
           nonFluentsName(_nonFluentsName),
-          variables(_variables),
           maxNonDefActions(_maxNonDefActions),
           horizon(_horizon),
           discount(_discount) {}
@@ -207,9 +177,6 @@ public:
     }
     std::string getNonFluentsName() const {
         return nonFluentsName;
-    }
-    std::vector<VariableInstanceSchematic*> const& getVariables() const {
-        return variables;
     }
     int getMaxNonDefActions() const {
         return maxNonDefActions;
@@ -225,7 +192,6 @@ private:
     std::string name;
     std::string domainName;
     std::string nonFluentsName;
-    std::vector<VariableInstanceSchematic*> variables;
     int maxNonDefActions;
     int horizon;
     double discount;
@@ -364,6 +330,7 @@ public:
 
     Object* getObject(std::string objName);
     Type* getType(std::string typeName);
+    ParametrizedVariable* getParametrizedVariable(std::string varName);
 
 private:
     std::string domainName;

@@ -130,33 +130,6 @@ void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
         SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() +
                            "  defined in Non fluent section");
     }
-
-    // Adding non fluents
-    std::vector<Parameter*> params;
-    for (VariableInstanceSchematic* varDef : nonFluent->getNonFluents()) {
-        std::string name = varDef->getName();
-        params.clear();
-        // Set parameters
-        for (std::string const& paramName : varDef->getParameters()) {
-            if (objects.find(paramName) == objects.end()) {
-                SystemUtils::abort("Unknown object: " + paramName);
-            }
-
-            // TODO: this is wrong. It only covers the case that
-            // parametrized variable is a Parameter Expression (see issue
-            // #15)
-            params.push_back(objects[paramName]);
-        }
-
-        if (variableDefinitions.find(name) == variableDefinitions.end()) {
-            SystemUtils::abort("Variable " + name + " used but not defined.");
-        }
-
-        ParametrizedVariable* parent = variableDefinitions[name];
-        double initialVal = varDef->getInitValue();
-
-        addParametrizedVariable(parent, params, initialVal);
-    }
 }
 
 void RDDLTask::addInstance(Instance* instance) {
@@ -173,33 +146,6 @@ void RDDLTask::addInstance(Instance* instance) {
         SystemUtils::abort("Unknown non fluents " +
                            instance->getNonFluentsName() +
                            "defined in Non fluent section");
-    }
-
-    // Add init states
-    // TODO: This is basically the same code as for non-fluents, think about
-    // helper method
-    for (VariableInstanceSchematic* varDef : instance->getVariables()) {
-        std::string name = varDef->getName();
-        std::vector<Parameter*> params;
-        // Set parameters
-        for (std::string const& paramName : varDef->getParameters()) {
-            if (objects.find(paramName) == objects.end()) {
-                SystemUtils::abort("Unknown object: " + paramName);
-            }
-            // TODO: this is wrong. It only covers the case that
-            // parametrized variable is a Parameter Expression (see issue
-            // #15)
-            params.push_back(objects[paramName]);
-        }
-
-        if (variableDefinitions.find(name) == variableDefinitions.end()) {
-            SystemUtils::abort("Variable " + name + " used but not defined.");
-        }
-
-        ParametrizedVariable* parent = variableDefinitions[name];
-        double initialVal = varDef->getInitValue();
-
-        addParametrizedVariable(parent, params, initialVal);
     }
 
     // Set Max nondef actions
@@ -226,6 +172,13 @@ void RDDLTask::addType(std::string const& name, std::string const& superType) {
     }
 }
 
+Type* RDDLTask::getType(std::string typeName) {
+    if (types.find(typeName) != types.end()) {
+        return types[typeName];
+    }
+    return nullptr;
+}
+
 void RDDLTask::addObject(std::string const& typeName,
                          std::string const& objectName) {
     if (types.find(typeName) == types.end()) {
@@ -238,6 +191,13 @@ void RDDLTask::addObject(std::string const& typeName,
     }
 
     objects[objectName] = new Object(objectName, types[typeName]);
+}
+
+Object* RDDLTask::getObject(std::string objName) {
+    if (objects.find(objName) != objects.end()) {
+        return objects[objName];
+    }
+    return nullptr;
 }
 
 void RDDLTask::addVariableSchematic(ParametrizedVariable* varDef) {
@@ -307,6 +267,15 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
         // assert(false);
         // break;
     }
+}
+
+ParametrizedVariable* RDDLTask::getParametrizedVariable(std::string varName) {
+  if (variableDefinitions.find(varName) != variableDefinitions.end()) {
+    return variableDefinitions[varName];
+  } else {
+    SystemUtils::abort("Unknown variable: " + varName + ".");
+  }
+  return nullptr;
 }
 
 StateFluent* RDDLTask::getStateFluent(std::string const& name) {
@@ -821,22 +790,4 @@ void RDDLTask::execute(std::string td /*target dir*/) {
     std::cout << "...finished (" << t << ")." << name << std::endl;
 
     // std::cout << "total time: " << totalTime << std::endl;
-}
-
-/*****************************************************************
-                           Helper Methods
-*****************************************************************/
-
-Object* RDDLTask::getObject(std::string objName) {
-    if (objects.find(objName) != objects.end()) {
-        return objects[objName];
-    }
-    return nullptr;
-}
-
-Type* RDDLTask::getType(std::string typeName) {
-    if (types.find(typeName) != types.end()) {
-        return types[typeName];
-    }
-    return nullptr;
 }
