@@ -121,30 +121,33 @@ void RDDLTask::addDomain(Domain* domain) {
     // TODO: StateInvariantSection
 }
 
-void RDDLTask::addInstance(Instance* instance) {
-    this->name = instance->getName();
+void RDDLTask::addInstance(std::string name, std::string domainName,
+         std::string nonFluentsName,
+         int maxNonDefActions, int horizon, double discount) {
+
+    this->name = name;
 
     // Check domain name
-    if (this->getDomainName() != instance->getDomainName()) {
-        SystemUtils::abort("Unknown domain " + instance->getDomainName() +
+    if (this->domainName != domainName) {
+        SystemUtils::abort("Unknown domain " + domainName +
                            " defined in Instance section");
     }
 
     // Check Non fluents name
-    if (this->getNonFluentsName() != instance->getNonFluentsName()) {
+    if (this->nonFluentsName != nonFluentsName) {
         SystemUtils::abort("Unknown non fluents " +
-                           instance->getNonFluentsName() +
+                           nonFluentsName +
                            "defined in Non fluent section");
     }
 
     // Set Max nondef actions
-    numberOfConcurrentActions = instance->getMaxNonDefActions();
+    this->numberOfConcurrentActions = maxNonDefActions;
 
     // Set horizon
-    horizon = instance->getHorizon();
+    this->horizon = horizon;
 
     // Set discount
-    discountFactor = instance->getDiscount();
+    this->discountFactor = discount;
 }
 
 void RDDLTask::addType(std::string const& name, std::string const& superType) {
