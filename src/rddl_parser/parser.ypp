@@ -46,8 +46,6 @@ RDDLTask* rddlTask;
 
     std::vector<Type*>* vectorType;
     ParameterList* parameterList;
-
-    Instance* instance;
 }
 
 // Expression tokens
@@ -90,7 +88,6 @@ RDDLTask* rddlTask;
 %type <vectorStr> ObjectsConstList
 %type <vectorLogicalExpression> LConstList
 
-%type <instance> InstanceBlock
 %type <i> PositiveIntOrPositiveInfinity HorizonSpecification
 
 // Priority and associativity, highest bottom
@@ -115,10 +112,10 @@ Program: RddlBlock            { } //$1->execute(targetDir); }
 // RDDL block
 ////////////////////////
 RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
-        | InstanceBlock             { $$ = rddlTask; $$->addInstance($1); }
+        | InstanceBlock             { $$ = rddlTask; }
         | NonfluentBlock            { $$ = rddlTask; }
         | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
-        | RddlBlock InstanceBlock   { $$ = $1; $$->addInstance($2); }
+        | RddlBlock InstanceBlock   { $$ = $1; }
         | RddlBlock NonfluentBlock  { $$ = $1; }
 ;
 
@@ -652,7 +649,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { $$ = new Instance(*$2, *$6, *$10, $19, $21, $25); }
+                            '}' { rddlTask->addInstance(*$2, *$6, *$10, $19, $21, $25); }
         // 1.4 No nonfluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -660,7 +657,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { $$ = new Instance(*$2, *$6, "", $15, $17, $21); }
+                            '}' { rddlTask->addInstance(*$2, *$6, "", $15, $17, $21); }
         // 1.5 No Init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -685,14 +682,14 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' {  $$ = new Instance(*$2, *$6, *$10, $14, $16, $20);  }
+                            '}' {  rddlTask->addInstance(*$2, *$6, *$10, $14, $16, $20);  }
         // 1.8 No non fluents, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { $$ = new Instance(*$2, *$6, "", $10, $12, $16); }
+                            '}' { rddlTask->addInstance(*$2, *$6, "", $10, $12, $16); }
 
         // Omitting Max Non Def Actions and ..
         // 2.1 All
@@ -719,14 +716,14 @@ InstanceBlock:
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { $$ = new Instance(*$2, *$6, *$10, -1, $17, $21); }
+                            '}' { rddlTask->addInstance(*$2, *$6, *$10, -1, $17, $21); }
         // 2.4 No non fluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { $$ = new Instance(*$2, *$6, "", -1, $13, $17); }
+                            '}' { rddlTask->addInstance(*$2, *$6, "", -1, $13, $17); }
         // 2.5 No init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -748,17 +745,17 @@ InstanceBlock:
                                 non_fluents_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { $$ = new Instance(*$2, *$6, *$10, -1, $12, $16); }
+                                '}' { rddlTask->addInstance(*$2, *$6, *$10, -1, $12, $16); }
         // 2.8 No non fluetnts, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { $$ = new Instance(*$2, *$6, "", -1, $8, $12); }
+                                '}' { rddlTask->addInstance(*$2, *$6, "", -1, $8, $12); }
 ;
 
 
-HorizonSpecification: horizon_token '=' PositiveIntOrPositiveInfinity            { $$ = $3; }
+HorizonSpecification: horizon_token '=' PositiveIntOrPositiveInfinity           { $$ = $3; }
                     | horizon_token '=' terminate_when_token '(' Expression ')' { SystemUtils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
 ;
 

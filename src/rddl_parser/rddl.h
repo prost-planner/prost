@@ -133,50 +133,6 @@ private:
     std::vector<LogicalExpression*> stateConstraints;
 };
 /*****************************************************************
-                             Instance
-******************************************************************/
-
-class Instance {
-public:
-    Instance(std::string _name, std::string _domainName,
-             std::string _nonFluentsName,
-             int _maxNonDefActions, int _horizon, double _discount)
-        : name(_name),
-          domainName(_domainName),
-          nonFluentsName(_nonFluentsName),
-          maxNonDefActions(_maxNonDefActions),
-          horizon(_horizon),
-          discount(_discount) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::string getDomainName() const {
-        return domainName;
-    }
-    std::string getNonFluentsName() const {
-        return nonFluentsName;
-    }
-    int getMaxNonDefActions() const {
-        return maxNonDefActions;
-    }
-    int getHorizon() const {
-        return horizon;
-    }
-    double getDiscount() const {
-        return discount;
-    }
-
-private:
-    std::string name;
-    std::string domainName;
-    std::string nonFluentsName;
-    int maxNonDefActions;
-    int horizon;
-    double discount;
-};
-
-/*****************************************************************
                            RDDL Block
 *****************************************************************/
 
@@ -186,7 +142,9 @@ public:
     ~RDDLTask() {}
 
     void addDomain(Domain* d);
-    void addInstance(Instance* i);
+    void addInstance(std::string name, std::string domainName,
+             std::string nonFluentsName,
+             int maxNonDefActions, int horizon, double discount);
 
     void execute(std::string targetDir);
 
