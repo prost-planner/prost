@@ -48,7 +48,6 @@ RDDLTask* rddlTask;
     ParameterList* parameterList;
 
     Instance* instance;
-    NonFluentBlock* nonFluentBlock;
 }
 
 // Expression tokens
@@ -88,7 +87,6 @@ RDDLTask* rddlTask;
 %type <vectorCaseList> CaseList
 %type <vectorLogicalExpression> StateConstraintsSection StateConstraintList
 
-%type <nonFluentBlock> NonfluentBlock
 %type <vectorStr> ObjectsConstList
 %type <vectorLogicalExpression> LConstList
 
@@ -118,10 +116,10 @@ Program: RddlBlock            { } //$1->execute(targetDir); }
 ////////////////////////
 RddlBlock: DomainBlock              { $$ = rddlTask; $$->addDomain($1); }
         | InstanceBlock             { $$ = rddlTask; $$->addInstance($1); }
-        | NonfluentBlock            { $$ = rddlTask; $$->addNonFluent($1); }
+        | NonfluentBlock            { $$ = rddlTask; }
         | RddlBlock DomainBlock     { $$ = $1; $$->addDomain($2); }
         | RddlBlock InstanceBlock   { $$ = $1; $$->addInstance($2); }
-        | RddlBlock NonfluentBlock  { $$ = $1; $$->addNonFluent($2); }
+        | RddlBlock NonfluentBlock  { $$ = $1; }
 ;
 
 ////////////////////////////////////////////////
@@ -552,15 +550,27 @@ NonfluentBlock: non_fluents_token id_token '{'
                 domain_token '=' id_token ';'
                 objects_token '{' ObjectsList  '}' ';'
                 non_fluents_token '{' VariablesInstanceList  '}' ';'
-            '}' { $$ = new NonFluentBlock(*$2, *$6); }
+            '}' {
+                    rddlTask->nonFluentsName = *$2;
+                    if (rddlTask->domainName != *$6) {
+                        SystemUtils::abort("Unknown domain " + *$6 +
+                                           "  defined in Non fluent section");
+                    }
+                }
             | non_fluents_token id_token '{'
                 domain_token '=' id_token ';'
                 non_fluents_token '{' VariablesInstanceList  '}' ';'
-            '}' {  $$ = new NonFluentBlock(*$2, *$6); }
+            '}' {
+                    rddlTask->nonFluentsName = *$2;
+                    if (rddlTask->domainName != *$6) {
+                        SystemUtils::abort("Unknown domain " + *$6 +
+                                           "  defined in Non fluent section");
+                    }
+                }
 ;
 
-VariablesInstanceList: VariableInstanceSchematic                        { $$ = new std::vector<ParametrizedVariable*>(); $$->push_back($1); }
-                    | VariableInstanceSchematic VariablesInstanceList   { $$ = $2; $$->insert($$->begin(), $1); }
+VariablesInstanceList: VariableInstanceSchematic                        { }
+                    | VariableInstanceSchematic VariablesInstanceList   { }
 ;
 
 // TODO: Refactor this piece of code once pasing LogicalExpressions to ParametrizedVariable is possbile
@@ -605,8 +615,8 @@ VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
                         | id_token '=' RangeConstant ';'                      { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, $3);}
 ;
 
-LConstList: LConst              { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
-        | LConst ',' LConstList   { $$ = $3; $$->insert($$->begin(), $1); }
+LConstList: LConst                  { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+          | LConst ',' LConstList   { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
 ///////////////////////////////////////////////

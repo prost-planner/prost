@@ -17,29 +17,8 @@ class StateFluent;
 class Type;
 
 /*****************************************************************
-                            Non Fluents
-******************************************************************/
-class NonFluentBlock {
-public:
-    NonFluentBlock(std::string _name, std::string _domainName)
-        : name(_name), domainName(_domainName) {}
-
-    std::string getName() const {
-        return name;
-    }
-    std::string getDomainName() const {
-        return domainName;
-    }
-
-private:
-    std::string name;
-    std::string domainName;
-};
-
-/*****************************************************************
                             Domain
 ******************************************************************/
-
 class CaseSchematic {
 public:
     CaseSchematic(LogicalExpression* _condition, LogicalExpression* _effect)
@@ -208,7 +187,6 @@ public:
 
     void addDomain(Domain* d);
     void addInstance(Instance* i);
-    void addNonFluent(NonFluentBlock* nf);
 
     void execute(std::string targetDir);
 
@@ -332,7 +310,6 @@ public:
     Type* getType(std::string typeName);
     ParametrizedVariable* getParametrizedVariable(std::string varName);
 
-private:
     std::string domainName;
     std::string nonFluentsName;
 };

@@ -121,17 +121,6 @@ void RDDLTask::addDomain(Domain* domain) {
     // TODO: StateInvariantSection
 }
 
-void RDDLTask::addNonFluent(NonFluentBlock* nonFluent) {
-    // Set nonFluentsName
-    nonFluentsName = nonFluent->getName();
-
-    // Check if domain name is corresponding
-    if (nonFluent->getDomainName() != this->getDomainName()) {
-        SystemUtils::abort("Unknown domain " + nonFluent->getDomainName() +
-                           "  defined in Non fluent section");
-    }
-}
-
 void RDDLTask::addInstance(Instance* instance) {
     this->name = instance->getName();
 
