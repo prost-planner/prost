@@ -21,6 +21,7 @@ extern void yyerror (std::string message); // Function for syntax error handling
 
 std::string targetDir;
 RDDLTask* rddlTask;
+
 %}
 
 %union {
@@ -35,8 +36,10 @@ RDDLTask* rddlTask;
     LogicalExpression* logicalExpression;
     std::vector<LogicalExpression*>* vectorLogicalExpression;
     LConstCaseList* lConstCaseList;
-    CaseSchematic* caseSchematic;
-    std::vector<CaseSchematic*>* vectorCaseList;
+    
+    ConditionEffect* conditionEffect;
+    std::vector<ConditionEffect*>* conditionEffectVector;
+  
     Parameter* parameter;
     std::vector<Parameter*>* vectorParameter;
     Type* type;
@@ -77,8 +80,8 @@ RDDLTask* rddlTask;
 %type <cpfSchematic> CPFSchematic
 %type <logicalExpression> Expression LConst StateConstraintSchematic
 %type <lConstCaseList> LConstCaseList
-%type <caseSchematic> CaseSchematic
-%type <vectorCaseList> CaseList
+%type <conditionEffect> CaseSchematic
+%type <conditionEffectVector> CaseList
 %type <vectorLogicalExpression> StateConstraintsSection StateConstraintList
 
 %type <vectorStr> ObjectsConstList
@@ -348,29 +351,22 @@ Expression:
     | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new Product($4, $6); }
     | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // TODO: Text switch case control
-                                                                                                    LogicalExpression* switchVar = nullptr;
-
-                                                                                                    if (rddlTask->variableDefinitions.find($3->name) != rddlTask->variableDefinitions.end()) {
-                                                                                                      switchVar = rddlTask->variableDefinitions[$3->name];
-                                                                                                    }
-                                                                                                    else {
-                                                                                                        SystemUtils::abort("Unknown parametrized variable " + $3->name + ".");
-                                                                                                    }
+                                                                                                   LogicalExpression* switchVar = rddlTask->getParametrizedVariable($3->name);
 
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
-                                                                                                    for (CaseSchematic* cs : *$6) {
-                                                                                                        if (!cs->getCondition()) {
+                                                                                                    for (ConditionEffect* cs : *$6) {
+                                                                                                        if (!cs->first) {
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
                                                                                                             conditions.push_back(new NumericConstant(1.0));
                                                                                                         }
                                                                                                         else {
                                                                                                             std::vector<LogicalExpression*> switchVarEquality;
                                                                                                             switchVarEquality.push_back(switchVar);
-                                                                                                            switchVarEquality.push_back(cs->getCondition());
+                                                                                                            switchVarEquality.push_back(cs->first);
                                                                                                             conditions.push_back(new EqualsExpression(switchVarEquality));
                                                                                                         }
-                                                                                                        effects.push_back(cs->getEffect());
+                                                                                                        effects.push_back(cs->second);
                                                                                                     }
                                                                                                     $$ = new MultiConditionChecker(conditions, effects);
                                                                                                 }
@@ -437,22 +433,12 @@ TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3) != nullp
                                  }
 ;
 
-CaseList: CaseSchematic                 { $$ = new std::vector<CaseSchematic*>(); $$->push_back($1); }
+CaseList: CaseSchematic                 { $$ = new std::vector<ConditionEffect*>(); $$->push_back($1); }
         | CaseSchematic ',' CaseList    { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
-CaseSchematic: case_token Term ':' Expression        {
-                                                    LogicalExpression* var;
-                                                    if (rddlTask->variableDefinitions.find($2->name) != rddlTask->variableDefinitions.end()) {
-                                                      var = rddlTask->variableDefinitions[$2->name];
-                                                    }
-                                                    else {
-                                                        SystemUtils::abort("Unknown parametrized variable " + $2->name + ".");
-                                                    }
-
-                                                    $$ = new CaseSchematic(var, $4);
-                                                  }
-        | default_token ':' Expression            { $$ = new CaseSchematic(nullptr, $3); }
+CaseSchematic: case_token Term ':' Expression      { LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new ConditionEffect(var, $4); }
+         | default_token ':' Expression            { $$ = new ConditionEffect(nullptr, $3); }
 ;
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
