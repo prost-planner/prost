@@ -16,27 +16,11 @@ class RewardFunction;
 class StateFluent;
 class Type;
 
+using ConditionEffect = std::pair<LogicalExpression*, LogicalExpression*>;
+
 /*****************************************************************
                             Domain
 ******************************************************************/
-class CaseSchematic {
-public:
-    CaseSchematic(LogicalExpression* _condition, LogicalExpression* _effect)
-        : condition(_condition), effect(_effect) {}
-    ~CaseSchematic();
-
-    LogicalExpression* getCondition() const {
-        return condition;
-    }
-    LogicalExpression* getEffect() const {
-        return effect;
-    }
-
-private:
-    LogicalExpression* condition;
-    LogicalExpression* effect;
-};
-
 class LConstCaseList {
 public:
     LConstCaseList() = default;
@@ -61,7 +45,6 @@ private:
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
-
 class RDDLTask {
 public:
     RDDLTask();
