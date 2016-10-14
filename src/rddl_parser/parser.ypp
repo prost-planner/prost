@@ -40,9 +40,9 @@ RDDLTask* rddlTask;
     Type* type;
     std::vector<Type*>* types;
     std::vector<LogicalExpression*>* logicalExpressions;
-    ConditionEffect* conditionEffect;
-    std::vector<ConditionEffect*>* conditionEffects;
-    LConstCaseList* lConstCaseList;
+    ConditionEffectPair* conditionEffect;
+    std::vector<ConditionEffectPair*>* conditionEffects;
+    DiscreteDistribution* lConstCaseList;
 }
 
 // Tokens
@@ -161,13 +161,16 @@ TypeList: SchematicType             { }
 // TODO: RDDL2: enable defining types in following way: id_token, id_token, ..., id_token : [definition like below]
 SchematicType: id_token ':' object_token ';'                                    { rddlTask->addType(*$1, *$3); } // TODO: check if this is a duplicate
           | id_token ':' id_token ';'                                           { rddlTask->addType(*$1, *$3); }
-          | id_token ':' '{' EnumList '}' ';'                                   { SystemUtils::abort("Defining types using EnumList error. Not implemented yet.") ;}
+          | id_token ':' '{' EnumList '}' ';'                                   { rddlTask->addType(*$1);
+                                                                                  for (const std::string& s : *$4) {
+                                                                                      rddlTask->addObject(*$1, s);
+                                                                                  }}
           | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
           | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
           | id_token ':' '<' StructMemberList '>' ';'                           { SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
 ;
 
-EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->insert($$->begin(), *$1); }
+EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
         | enum_token ',' EnumList   { $$ = $3; $$->insert($$->begin(), *$1); }
 ;
 
@@ -186,7 +189,7 @@ LConst: doubleNum_token { $$ = new NumericConstant($1);  }
     | id_token          { $$ = new Parameter(*$1);       }
     | true_token        { $$ = new NumericConstant(1.0); }
     | false_token       { $$ = new NumericConstant(0.0); }
-    | enum_token        { SystemUtils::abort("Enums not implemnted;"); }
+    | enum_token        { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
 ;
 
 ////////////////////////
@@ -222,7 +225,7 @@ RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 
              | IntType                               { $$ = $1; }
              | id_token                              { Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
              | '$' id_token                          { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
-             | enum_token                            { SystemUtils::abort("Enums not implemented yet."); }
+             | enum_token                            { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]->value; }
              | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
              | '(' '<' StructRangeConsant '>' ')'    { SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
              | '[' '<' StructRangeConsant '>' ']'    { SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
@@ -307,7 +310,7 @@ TermList: Term                 { $$ = new std::vector<Parameter*>(); $$->push_ba
 
 Term: variable_token         { $$ = new Parameter(*$1); }
     | VariableExpression     { SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); }
-    | enum_token             { SystemUtils::abort("Enum definition of Term not implemented yet."); }
+    | enum_token             { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
     | '$' id_token           { SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
 ;
 
@@ -329,7 +332,7 @@ Expression:
     // Flow control expressions, variables, enums, loops
       variable_token                                                                            { $$ = new Parameter(*$1); }
     | VariableExpression                                                                        { $$ = $1; }
-    | enum_token                                                                                { SystemUtils::abort("Enum expressions not implemented yet."); }
+    | enum_token                                                                                { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
     | '$' id_token                                                                              { SystemUtils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
     | '<' StructExpressionList                                                                  { SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
         // TODO: for now there are only sum, exists, product and forall. All of those are implemted and this part is left for purposes of further development of RDDL (definition of special functions)
@@ -344,7 +347,7 @@ Expression:
 
                                                                                                     std::vector<LogicalExpression*> conditions;
                                                                                                     std::vector<LogicalExpression*> effects;
-                                                                                                    for (ConditionEffect* cs : *$6) {
+                                                                                                    for (ConditionEffectPair* cs : *$6) {
                                                                                                         if (!cs->first) {
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
                                                                                                             conditions.push_back(new NumericConstant(1.0));
@@ -390,7 +393,7 @@ Expression:
     // Probability Distributions
     | bernoulli_token '(' Expression ')'                                    { $$ = new BernoulliDistribution($3); }
     | kronDelta_token '(' Expression ')'                                    { $$ = new KronDeltaDistribution($3); }
-    | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = new DiscreteDistribution($5->getValues(), $5->getProbabilities()); } // TODO: The return value (id_token) is optional in RDDL2.0
+    | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = $5; } // TODO: The return value (id_token) is optional in RDDL2.0
     | diracDelta_token '(' Expression ')'                                   { SystemUtils::abort("DiracDelta not implemtend."); }
     | uniform_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Uniform not implemtend."); }
     | normal_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Normal not implemtend."); }
@@ -413,7 +416,7 @@ TypedVarList: TypedVariable                    { $$ = new ParameterList({}, {});
             | TypedVariable ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
-TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3) != nullptr) {
+TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3)) {
                                      $$ = new Parameter(*$1, rddlTask->getType(*$3));
                                    }
                                    else {
@@ -422,18 +425,18 @@ TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3) != nullp
                                  }
 ;
 
-CaseList: CaseSchematic                 { $$ = new std::vector<ConditionEffect*>(); $$->push_back($1); }
+CaseList: CaseSchematic                 { $$ = new std::vector<ConditionEffectPair*>(); $$->push_back($1); }
         | CaseSchematic ',' CaseList    { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
-CaseSchematic: case_token Term ':' Expression      { LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new ConditionEffect(var, $4); }
-         | default_token ':' Expression            { $$ = new ConditionEffect(nullptr, $3); }
+CaseSchematic: case_token Term ':' Expression      { LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new ConditionEffectPair(var, $4); }
+         | default_token ':' Expression            { $$ = new ConditionEffectPair(nullptr, $3); }
 ;
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
-LConstCaseList: LConst ':' Expression                     { $$ = new LConstCaseList(); $$->addValue($1); $$->addProbability($3); }
+LConstCaseList: LConst ':' Expression                     { $$ = new DiscreteDistribution(); $$->values.push_back($1); $$->probabilities.push_back($3); }
             | LConst ':' otherwise_token                  { SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
-            | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->addValue($1); $$->addProbability($3); }
+            | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->values.insert($$->values.begin(), $1); $$->probabilities.insert($$->probabilities.begin(), $3); }
 ;
 
 ////////////////////////

@@ -79,6 +79,7 @@ forall                                                  { return forall_token; }
 exists                                                  { return exists_token; }
 sum                                                     { return sum_token; }
 product                                                 { return product_token; }
+prod                                                    { return product_token; }
 if                                                      { return if_token; }
 then                                                    { return then_token; }
 else                                                    { return else_token; }
@@ -102,7 +103,7 @@ Dirichelt                                               { return dirichlet_token
 {DIGIT}+                                                { yylval.i = atoi(yytext); return intNum_token;}
 {ALPHA}(({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT}))?(')?   { yylval.str = new std::string(yytext); return id_token; }
 "?"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return variable_token; }
-"@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { return enum_token; }
+"@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return enum_token; }
 \/\/[^\r\n]*                                            { /* Ignore comments. */}
 .                                                       { lex_error(*yytext); }
 %%

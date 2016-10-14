@@ -1,0 +1,18 @@
+non-fluents nf_discrete_test_inst_mdp__1 {
+	domain = discrete_test_mdp; 
+	objects { 
+		obj_t : {o1, o2, o3, o4};
+	}; 
+	non-fluents {
+                DUMMY(o1);
+        };
+}
+
+instance discrete_test_inst_mdp__1 { 
+	domain = discrete_test_mdp; 
+ 	non-fluents = nf_discrete_test_inst_mdp__1;
+	// init-state { };
+	max-nondef-actions = 1;
+	horizon = 40;
+	discount = 1.0;
+} 
