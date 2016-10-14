@@ -102,7 +102,7 @@ Dirichelt                                               { return dirichlet_token
 {DIGIT}+                                                { yylval.i = atoi(yytext); return intNum_token;}
 {ALPHA}(({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT}))?(')?   { yylval.str = new std::string(yytext); return id_token; }
 "?"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return variable_token; }
-"@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { return enum_token; }
+"@"({ALPHA}|{DIGIT}|-|_)*({ALPHA}|{DIGIT})              { yylval.str = new std::string(yytext); return enum_token; }
 \/\/[^\r\n]*                                            { /* Ignore comments. */}
 .                                                       { lex_error(*yytext); }
 %%

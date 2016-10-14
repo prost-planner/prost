@@ -16,35 +16,12 @@ class RewardFunction;
 class StateFluent;
 class Type;
 
-using ConditionEffect = std::pair<LogicalExpression*, LogicalExpression*>;
+using ConditionEffectPair = std::pair<LogicalExpression*, LogicalExpression*>;
 
-/*****************************************************************
-                            Domain
-******************************************************************/
-class LConstCaseList {
-public:
-    LConstCaseList() = default;
-
-    void addValue(LogicalExpression* expr) {
-        values.push_back(expr);
-    }
-    void addProbability(LogicalExpression* expr) {
-        probabilites.push_back(expr);
-    }
-    std::vector<LogicalExpression*> const& getValues() const {
-        return values;
-    }
-    std::vector<LogicalExpression*> const& getProbabilities() const {
-        return probabilites;
-    }
-
-private:
-    std::vector<LogicalExpression*> values;
-    std::vector<LogicalExpression*> probabilites;
-};
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
+
 class RDDLTask {
 public:
     RDDLTask();
@@ -53,13 +30,12 @@ public:
     std::string validateRequirement(std::string req);
 
     void setInstance(std::string name, std::string domainName,
-             std::string nonFluentsName,
-             int maxNonDefActions, int horizon, double discount);
-     void addCPF(ParametrizedVariable variable,
-              LogicalExpression* logicalExpression);
+                     std::string nonFluentsName, int maxNonDefActions,
+                     int horizon, double discount);
+    void addCPF(ParametrizedVariable variable,
+                LogicalExpression* logicalExpression);
 
     void execute(std::string targetDir);
-
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
