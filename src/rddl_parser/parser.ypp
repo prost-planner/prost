@@ -28,65 +28,54 @@ RDDLTask* rddlTask;
     double d;
     int i;
     std::string* str;
-    std::vector<std::string>* vectorStr;
+    std::vector<std::string>* strs;
 
     RDDLTask* rddlTask;
-    std::vector<ParametrizedVariable*>* vectorParametrizedVariable;
-    ParametrizedVariable* parametrizedVariable;
-    LogicalExpression* logicalExpression;
-    std::vector<LogicalExpression*>* vectorLogicalExpression;
-    LConstCaseList* lConstCaseList;
-    
-    ConditionEffect* conditionEffect;
-    std::vector<ConditionEffect*>* conditionEffectVector;
-  
     Parameter* parameter;
-    std::vector<Parameter*>* vectorParameter;
-    Type* type;
-
-    std::vector<Type*>* vectorType;
+    std::vector<Parameter*>* parameters;
     ParameterList* parameterList;
+    ParametrizedVariable* parametrizedVariable;
+    std::vector<ParametrizedVariable*>* parametrizedVariables;
+    LogicalExpression* logicalExpression;
+    Type* type;
+    std::vector<Type*>* types;
+    std::vector<LogicalExpression*>* logicalExpressions;
+    ConditionEffect* conditionEffect;
+    std::vector<ConditionEffect*>* conditionEffects;
+    LConstCaseList* lConstCaseList;
 }
 
-// Expression tokens
+// Tokens
 %token lessOrEqual_token greaterOrEqual_token negative_infinity_token
 %token equivalent_token imply_token equal_token nonEqual_token positive_infinity_token
 %token forall_token exists_token case_token if_token switch_token then_token else_token otherwise_token sum_token product_token
 %token kronDelta_token diracDelta_token uniform_token bernoulli_token discrete_token normal_token
 %token poisson_token exponential_token weibull_token gama_token dirichlet_token multinomial_token
-%token <d> doubleNum_token
-%token <str> id_token variable_token enum_token object_token integer_token real_token bool_token true_token false_token
-%token <i> intNum_token
-%token <str> default_token level_token observ_fluent_token action_fluent_token
-%token <str> state_fluent_token intermediate_token derived_fluent_token non_fluent_token
-%type <parameter> TypedVariable Term
-%type <parameterList> TypedVarList
-
-// Domain. instance and non fluents tokens
 %token types_token variables_token cpfs_token cdfs_token reward_token domain_token requirements_token
 %token objects_token init_state_token state_action_constraints_token action_preconditions_token
 %token state_invariants_token instance_token non_fluents_token
 %token discount_token terminate_when_token horizon_token max_nondef_actions_token
+%token <d> doubleNum_token
+%token <str> id_token variable_token enum_token object_token integer_token real_token bool_token true_token false_token default_token level_token observ_fluent_token action_fluent_token state_fluent_token intermediate_token derived_fluent_token non_fluent_token
+%token <i> intNum_token
+
+// Non-terminals
 %type <rddlTask> RddlBlock
-%type <domain> DomainBlock DomainList
-%type <vectorStr> RequirementsSection RequirementsList EnumList
-%type <vectorParameter> ParametarList ParametarListTypeSpecs TermList
-%type <str> BoolType
-%type <type> TypeSpecification SchematicType
-%type <vectorType> TypeList TypeSection
-%type <vectorParametrizedVariable> VarSection VarList VariablesInstanceList
+%type <parameter> TypedVariable Term
+%type <parameters> ParametarList ParametarListTypeSpecs TermList
+%type <parameterList> TypedVarList
 %type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
-%type <d> IntType DoubleType RangeConstant
-%type <cpfSchematic> CPFSchematic
+%type <parametrizedVariables> VarSection VarList VariablesInstanceList
 %type <logicalExpression> Expression LConst StateConstraintSchematic
-%type <lConstCaseList> LConstCaseList
+%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList
+%type <type> TypeSpecification SchematicType
+%type <types> TypeList TypeSection
 %type <conditionEffect> CaseSchematic
-%type <conditionEffectVector> CaseList
-%type <vectorLogicalExpression> StateConstraintsSection StateConstraintList
-
-%type <vectorStr> ObjectsConstList
-%type <vectorLogicalExpression> LConstList
-
+%type <conditionEffects> CaseList
+%type <lConstCaseList> LConstCaseList
+%type <str> BoolType
+%type <strs> RequirementsSection RequirementsList EnumList ObjectsConstList
+%type <d> IntType DoubleType RangeConstant
 %type <i> PositiveIntOrPositiveInfinity HorizonSpecification
 
 // Priority and associativity, highest bottom
