@@ -1,0 +1,36 @@
+////////////////////////////////////////////////////////////////////
+// Discrete Disctribution Test Domain
+//
+// Author: Thomas Keller
+//
+////////////////////////////////////////////////////////////////////
+
+domain discrete_test_mdp {
+	
+	types {
+  		obj_t  : object;
+ 	  	enum_t : { @a, @b, @c };
+	}; 
+	
+	pvariables {
+	        DUMMY(obj_t) : { non-fluent, bool, default = false };
+		// Vars
+		v1(obj_t)   : { state-fluent, enum_t, default = @a };
+
+		// Actions
+		act1(obj_t)     : { action-fluent, bool, default = false };
+	};
+  
+	cpfs {
+             v1'(?o) =
+               if (act1(?o)) then Discrete(enum_t,
+                                             @a : 0.5,
+                                             @b : 0.3,
+                                             @c : 0.2
+                                           )
+               else v1(?o);
+                        
+	};
+  
+	reward = sum_{?o : obj_t} [v1(?o) == @c] + sum_{?o : obj_t} [0.4 * (v1(?o) == @b)];
+}
