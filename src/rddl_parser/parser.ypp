@@ -67,7 +67,7 @@ RDDLTask* rddlTask;
 %type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
 %type <parametrizedVariables> VarSection VarList VariablesInstanceList
 %type <logicalExpression> Expression LConst StateConstraintSchematic
-%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList
+%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList ExpressionList
 %type <type> TypeSpecification SchematicType
 %type <types> TypeList TypeSection
 %type <conditionEffect> CaseSchematic
@@ -408,8 +408,8 @@ StructExpressionList: LConst ':' Expression '>'                          { Syste
                     | LConst ':' Expression ',' StructExpressionList     { SystemUtils::abort("StructExpressionList not implemented yet."); }
 ;
 
-ExpressionList: Expression                    { SystemUtils::abort("ExpressionList not implemented yet."); }
-              | Expression ',' ExpressionList { SystemUtils::abort("ExpressionList not implemented yet."); }
+ExpressionList: Expression                    { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+              | Expression ',' ExpressionList { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
 TypedVarList: TypedVariable                    { $$ = new ParameterList({}, {}); $$->params.push_back(new Parameter($1->name, $1->type)); $$->types.push_back($1->type); }
