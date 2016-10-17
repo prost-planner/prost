@@ -94,6 +94,7 @@ Discrete                                                { return discrete_token;
 Normal                                                  { return normal_token; }
 Poisson                                                 { return poisson_token; }
 Exponential                                             { return exponential_token; }
+exp                                                     { return exponential_token; }
 Weibull                                                 { return weibull_token; }
 Gama                                                    { return gama_token; }
 Multinomial                                             { return multinomial_token; }
