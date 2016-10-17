@@ -5,6 +5,10 @@
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
+#include <vector>
+
+using std::vector;
+
 /******************************************************************
                   Outcome Selection Creation
 ******************************************************************/
@@ -51,22 +55,25 @@ OutcomeSelection* OutcomeSelection::fromString(std::string& desc, THTS* thts) {
 ******************************************************************/
 
 SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
-                                              PDState& nextState,
-                                              int const& varIndex,
-                                              int const& lastProbVarIndex) {
+                                              PDState& nextState, int varIndex,
+                                              int lastProbVarIndex) {
     if (node->children.empty()) {
         node->children.resize(
             SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
             nullptr);
     }
+    vector<int> blacklist = computeBlacklist(node, nextState, varIndex);
 
-    int childIndex = (int)nextState.sample(varIndex);
+    std::pair<double, double> sample = nextState.sample(varIndex, blacklist);
+    int childIndex = static_cast<int>(sample.first);
+    assert((childIndex >= 0) && childIndex < node->children.size());
 
     if (!node->children[childIndex]) {
         if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(1.0);
+            node->children[childIndex] =
+                thts->createDecisionNode(sample.second);
         } else {
-            node->children[childIndex] = thts->createChanceNode(1.0);
+            node->children[childIndex] = thts->createChanceNode(sample.second);
         }
     }
 
@@ -77,67 +84,16 @@ SearchNode* MCOutcomeSelection::selectOutcome(SearchNode* node,
              MC Outcome Selection with Solve Labeling
 ******************************************************************/
 
-SearchNode* UnsolvedMCOutcomeSelection::selectOutcome(
-    SearchNode* node, PDState& nextState, int const& varIndex,
-    int const& lastProbVarIndex) {
-    DiscretePD& pd = nextState.probabilisticStateFluentAsPD(varIndex);
-    assert(pd.isWellDefined());
-
-    double probSum = 1.0;
-    int childIndex = 0;
-
-    if (node->children.empty()) {
-        node->children.resize(
-            SearchEngine::probabilisticCPFs[varIndex]->getDomainSize(),
-            nullptr);
-    } else {
-        // Determine the sum of the probabilities of unsolved outcomes
-        for (unsigned int i = 0; i < pd.size(); ++i) {
-            childIndex = pd.values[i];
-            if (node->children[childIndex] &&
-                node->children[childIndex]->solved) {
-                probSum -= pd.probabilities[i];
-            }
+vector<int> UnsolvedMCOutcomeSelection::computeBlacklist(
+    SearchNode* node, PDState const& nextState, int varIndex) const {
+    vector<int> blacklist;
+    // Determines the indices of all solved outcomes
+    DiscretePD const& pd = nextState.probabilisticStateFluentAsPD(varIndex);
+    for (size_t i = 0; i < pd.size(); ++i) {
+        int childIndex = pd.values[i];
+        if (node->children[childIndex] && node->children[childIndex]->solved) {
+            blacklist.push_back(i);
         }
     }
-
-    assert(MathUtils::doubleIsGreater(probSum, 0.0) &&
-           MathUtils::doubleIsSmallerOrEqual(probSum, 1.0));
-
-    double randNum = MathUtils::generateRandomNumber() * probSum;
-    // cout << "ProbSum is " << probSum << endl;
-    // cout << "RandNum is " << randNum << endl;
-
-    probSum = 0.0;
-    double childProb = 0.0;
-
-    for (unsigned int i = 0; i < pd.size(); ++i) {
-        childIndex = pd.values[i];
-        if (!node->children[childIndex] ||
-            !node->children[childIndex]->solved) {
-            probSum += pd.probabilities[i];
-            if (MathUtils::doubleIsSmaller(randNum, probSum)) {
-                childProb = pd.probabilities[i];
-                break;
-            }
-        }
-    }
-
-    // cout << "Chosen child is " << childIndex << " and prob is " << childProb
-    // << endl;
-
-    assert((childIndex >= 0) && childIndex < node->children.size());
-
-    if (!node->children[childIndex]) {
-        if (varIndex == lastProbVarIndex) {
-            node->children[childIndex] = thts->createDecisionNode(childProb);
-        } else {
-            node->children[childIndex] = thts->createChanceNode(childProb);
-        }
-    }
-
-    assert(!node->children[childIndex]->solved);
-
-    nextState.probabilisticStateFluent(varIndex) = childIndex;
-    return node->children[childIndex];
+    return blacklist;
 }

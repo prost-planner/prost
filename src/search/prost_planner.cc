@@ -74,8 +74,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
 }
 
 void ProstPlanner::setSeed(int _seed) {
-    seed = _seed;
-    srand(seed);
+    MathUtils::rnd->seed(_seed);
 }
 
 void ProstPlanner::init() {
@@ -110,7 +109,7 @@ vector<string> ProstPlanner::plan() {
     vector<int> bestActions;
     searchEngine->estimateBestActions(currentState, bestActions);
     chosenActionIndices[currentRound][currentStep] =
-        bestActions[rand() % bestActions.size()];
+        MathUtils::rnd->randomElement(bestActions);
 
     // PROST's communication with the environment works with strings, so we
     // collect the names of all true action fluents of the chosen action
