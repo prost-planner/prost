@@ -4,10 +4,13 @@
                      Search Engine Creation
 ******************************************************************/
 
-RandomWalk::RandomWalk()
-    : ProbabilisticSearchEngine("RandomWalk"), numberOfIterations(1) {}
+RandomWalk::RandomWalk() :
+    ProbabilisticSearchEngine("RandomWalk"),
+    numberOfIterations(1) {}
 
-bool RandomWalk::setValueFromString(std::string& param, std::string& value) {
+bool RandomWalk::setValueFromString(std::string& param,
+                                    std::string& value) {
+
     if (param == "-it") {
         setNumberOfIterations(atoi(value.c_str()));
         return true;
@@ -51,13 +54,10 @@ void RandomWalk::performRandomWalks(PDState const& root, int firstActionIndex,
         result += reward;
 
         while (current.stepsToGo() > 0) {
-            std::vector<int> applicableActions =
-                getIndicesOfApplicableActions(current);
+            int rndActionIndex = MathUtils::rnd->randomElement(
+                getIndicesOfApplicableActions(current));
             next.reset(current.stepsToGo() - 1);
-
-            int actIndex = std::rand() % applicableActions.size();
-            sampleSuccessorState(current, applicableActions[actIndex], next,
-                                 reward);
+            sampleSuccessorState(current, rndActionIndex, next, reward);
             result += reward;
             current = next;
         }
