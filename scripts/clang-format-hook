@@ -1,5 +1,5 @@
 #!/bin/sh
-files="`hg status -n -m -a --include re:.*\.cc$ --include re:.*\.h$`"
+files="`hg status -n -m -a --include re:.*\.cc$ --include re:.*\.h$ --exclude re:.*gtest`"
 all_files_match=true
 for FILE in $files
 do
