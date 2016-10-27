@@ -32,6 +32,6 @@ if __name__ == "__main__":
     parserOut = instance.split("/")
     parserOut = parserOut[len(parserOut)-1].split(".")[0]
 
-    os.system("../src/rddl_prefix_parser/rddl-parser " + domain + " " + instance + " ./ -s 1")
+    os.system("../src/rddl_parser/rddl-parser " + domain + " " + instance + " ./ -s 1")
     os.system("../src/search/prost " + parserOut + " -h " + hostname + " -p " + port + " [PROST -s 1 -se [" + config + "]]")
     os.system("rm -rf " + parserOut)
