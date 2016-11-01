@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.0)
-project(search)
+project(prost)
 
 include_directories("logical_expressions_includes")
 include_directories("utils")
