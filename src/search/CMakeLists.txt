@@ -8,17 +8,16 @@ if(NOT PROST_MAIN_CMAKELISTS_READ)
     "and CMakeFiles/ from the current directory and restart cmake.")
 endif()
 
-# TODO: Solve this with modules - that would enable user to install BuDDy where ever
-# TODO: Check if the OS is Windows - in that case, do not include BuDDy
-if (NOT EXISTS "/usr/include/bdd.h")
+project(prost)
+prost_set_compiler_flags()
+prost_set_linker_flags_search()
+
+find_package(BDD REQUIRED)
+if(NOT BDD_FOUND)
   message(FATAL_ERROR "BuDDy lib was not found. Please install it using "
   "sudo apt-get install libbdd-dev "
   " and re-run the build process.")
 endif()
-
-project(prost)
-prost_set_compiler_flags()
-prost_set_linker_flags_search()
 
 include_directories("logical_expressions_includes")
 include_directories("utils")
