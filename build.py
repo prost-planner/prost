@@ -15,7 +15,7 @@ for config_file in sorted(glob.glob(os.path.join(script_dir, "*build_configs.py"
 
 DEFAULT_CONFIG_NAME = CONFIGS.pop("DEFAULT")
 DEBUG_CONFIG_NAME = CONFIGS.pop("DEBUG")
-                            
+TEST_CONFIG_NAME = CONFIGS.pop("TEST")                            
 
 
 CMAKE = "cmake"
@@ -28,6 +28,8 @@ elif os.name == "nt":
 else:
     print("Unsupported OS: " + os.name)
     sys.exit(1)
+
+# TODO: Print usage
 
 def get_project_root_path():
     import __main__
@@ -58,12 +60,13 @@ def build(config_name, cmake_parameters, make_parameters):
         else:
             raise
 
-    subprocess.check_call([CMAKE, "-G", CMAKE_GENERATOR]
-                          + cmake_parameters
-                          + [rel_src_path],
-                          cwd=build_path)
-    subprocess.check_call([MAKE] + make_parameters, cwd=build_path)
-    print("Built configuration " + config_name + " successfully")
+    try:
+        subprocess.check_call([CMAKE, "-G", CMAKE_GENERATOR] + cmake_parameters + [rel_src_path], cwd=build_path)
+
+        subprocess.check_call([MAKE] + make_parameters, cwd=build_path)
+        print("Built configuration " + config_name + " successfully")
+    except subprocess.CalledProcessError as sCPE:
+        print("Built configuration " + config_name + " failed due to CalledProcessError")
 
 
 def main():
@@ -75,6 +78,8 @@ def main():
             sys.exit(0)
         elif arg == "--debug":
             config_names.add(DEBUG_CONFIG_NAME)
+        elif arg == "--test":
+            config_names.add(TEST_CONFIG_NAME)
         elif arg == "--all":
             config_names |= set(CONFIGS.keys())
         elif arg in CONFIGS:

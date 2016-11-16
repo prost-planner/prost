@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 2.8.0)
+
+if(NOT PROST_MAIN_CMAKELISTS_READ)
+  message(
+    FATAL_ERROR
+    "Run cmake on the CMakeLists.txt in the 'src' directory, "
+    "not the one in 'src/rddl_parser'. Please delete CMakeCache.txt "
+    "and CMakeFiles/ from the current directory and restart cmake.")
+endif()
+
 project(rddl-parser)
+prost_set_compiler_flags()
+prost_set_linker_flags_rddl_parser()
 
 include_directories("logical_expressions_includes")
 include_directories("utils")
@@ -19,9 +30,6 @@ set(RDDL_PARSER_SOURCES
   utils/timer
  )
 
-set(GPP_COMPILE_FLAGS "-g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror -std=c++0x") #-Wconversion"
-set(GPP_LINK_FLAGS "-g")
-
 set(FlexInput "lexer.l") #${CMAKE_CURRENT_BINARY_DIR}/parser.tab.hh")
 set(BisonInput "parser.ypp")
 
@@ -32,7 +40,6 @@ BISON_TARGET(parser ${BisonInput} ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.cc COMP
 FLEX_TARGET(scanner ${FlexInput} ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 ADD_FLEX_BISON_DEPENDENCY(scanner parser)
 
