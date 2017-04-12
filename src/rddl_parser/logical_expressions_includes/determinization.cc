@@ -147,26 +147,41 @@ LogicalExpression* BernoulliDistribution::determinizeMostLikely() {
 }
 
 LogicalExpression* DiscreteDistribution::determinizeMostLikely() {
-    int highestIndex = 0;
-    double highestProb = 0.0;
-
-    for (unsigned int i = 0; i < probabilities.size(); ++i) {
-        LogicalExpression* prob = probabilities[i]->determinizeMostLikely();
-        NumericConstant* nc = dynamic_cast<NumericConstant*>(prob);
-        // Determinization with conditional probabilities is a lot harder so we
-        // exclude it for now. (TODO!!!)
-        if (!nc) {
-            SystemUtils::abort(
-                "NOT SUPPORTED: Discrete statement with conditional "
-                "probability detected.");
-        }
-
-        if (MathUtils::doubleIsGreater(nc->value, highestProb)) {
-            highestProb = nc->value;
-            highestIndex = i;
-        }
+    // print(std::cout);
+    // std::cout << std::endl;
+    // Determinize each discrete probability only once:
+    vector<LogicalExpression*> determinizedProbs;
+    for (LogicalExpression* expr : probabilities) {
+        determinizedProbs.push_back(expr->determinizeMostLikely());
     }
-    return values[highestIndex];
+
+    // Determinization of a discrete distribution returns the value which
+    // corresponds to the highest probability. Therefore this returns a multi
+    // condition checker, where for each value a condition checks if
+    // the probability is higher than ALL probabilities of other values
+    vector<LogicalExpression*> conditions;
+    vector<LogicalExpression*> effects;
+    Simplifications dummy;
+    for (size_t i = 0; i < probabilities.size(); ++i) {
+        vector<LogicalExpression*> comparisons;
+        for (size_t j = 0; j < probabilities.size(); ++j) {
+            if (i == j) {
+                continue;
+            }
+            vector<LogicalExpression*> compareParts{determinizedProbs[i],
+                                                    determinizedProbs[j]};
+            auto geq = new GreaterEqualsExpression(compareParts);
+            comparisons.push_back(geq->simplify(dummy));
+        }
+        auto conjunction = new Conjunction(comparisons);
+        conditions.push_back(conjunction->simplify(dummy));
+        effects.push_back(values[i]);
+    }
+    LogicalExpression* mcc = new MultiConditionChecker(conditions, effects);
+    mcc = mcc->simplify(dummy);
+    // mcc->print(std::cout);
+    // std::cout << std::endl;
+    return mcc;
 }
 
 /*****************************************************************
