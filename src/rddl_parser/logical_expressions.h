@@ -34,7 +34,7 @@ public:
                                            Instantiations& replace);
     virtual LogicalExpression* simplify(Simplifications& replace);
 
-    virtual LogicalExpression* determinizeMostLikely();
+    virtual LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     virtual void collectInitialInfo(bool& isProbabilistic,
                                     bool& containsArithmeticFunction,
@@ -56,6 +56,9 @@ public:
     virtual void evaluateToKleene(std::set<double>& res,
                                   KleeneState const& current,
                                   ActionState const& action) const;
+    
+    void determineBounds(std::vector<ActionState> const& actionStates, double& minRes, double& maxRes) const;
+    virtual void determineBounds(ActionState const& action, double& minRes, double& maxRes) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -156,7 +159,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void print(std::ostream& out) const;
 };
@@ -175,6 +178,7 @@ public:
         : ParametrizedVariable(source, _params), index(-1) {}
 
     int index;
+    int domainSize;
 
     LogicalExpression* simplify(Simplifications& replace);
 
@@ -197,6 +201,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -229,6 +235,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 
@@ -263,7 +271,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -284,6 +292,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -386,7 +396,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -404,6 +414,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -417,7 +429,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -435,6 +447,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -449,7 +463,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -469,6 +483,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -483,7 +499,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -503,6 +519,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -517,7 +535,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -537,6 +555,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -551,7 +571,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -571,6 +591,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -585,7 +607,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -605,6 +627,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -618,7 +642,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -637,6 +661,8 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
 
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
+
     void print(std::ostream& out) const;
 };
 
@@ -649,7 +675,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -669,6 +695,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -683,7 +711,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -703,6 +731,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -716,7 +746,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -736,6 +766,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -755,7 +787,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -775,6 +807,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -790,7 +824,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -810,6 +844,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -843,7 +879,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -862,6 +898,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 
@@ -883,7 +921,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -901,6 +939,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -927,7 +967,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -947,6 +987,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
@@ -965,7 +1007,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
-    LogicalExpression* determinizeMostLikely();
+    LogicalExpression* determinizeMostLikely(std::vector<ActionState> const& actionStates);
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -985,6 +1027,8 @@ public:
                       ActionState const& action) const;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const;
+
+    void determineBounds(ActionState const& action, double& minRes, double& maxRes) const override;
 
     void print(std::ostream& out) const;
 };
