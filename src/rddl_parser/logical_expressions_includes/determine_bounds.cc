@@ -1,6 +1,5 @@
-void LogicalExpression::determineBounds(
-    std::vector<ActionState> const& actionStates, double& minRes,
-    double& maxRes) const {
+void LogicalExpression::determineBounds(vector<ActionState> const& actionStates,
+                                        double& minRes, double& maxRes) const {
     assert(minRes == numeric_limits<double>::max());
     assert(maxRes == -numeric_limits<double>::max());
 
