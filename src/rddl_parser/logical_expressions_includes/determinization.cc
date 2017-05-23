@@ -181,10 +181,12 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely(
     // Determinize each discrete probability only once:
     vector<LogicalExpression*> determinizedProbs;
     vector<double> upperBounds;
+    Simplifications dummy;
+    
     double maxLowerBound = -numeric_limits<double>::max();
     for (LogicalExpression* expr : probabilities) {
         // Determinize all probabilities
-        determinizedProbs.push_back(expr->determinizeMostLikely(actionStates));
+        determinizedProbs.push_back(expr->determinizeMostLikely(actionStates)->simplify(dummy));
         // Compute the bounds for all determinized probabilities
         double lower = numeric_limits<double>::max();
         double upper = -numeric_limits<double>::max();
@@ -199,27 +201,34 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely(
     // the probability is higher than ALL probabilities of other values
     vector<LogicalExpression*> conditions;
     vector<LogicalExpression*> effects;
-    Simplifications dummy;
+
+    std::vector<LogicalExpression*> newValues;
+    std::vector<LogicalExpression*> newProbabilities;
+
     for (size_t i = 0; i < probabilities.size(); ++i) {
         // Do not consider conditions which maxRes is smaller than another
         // conditions minRes (their conjunction can never evaluate to true)
-        if (upperBounds[i] < maxLowerBound) {
-            continue;
+        if (upperBounds[i] >= maxLowerBound) {
+            newValues.push_back(values[i]->determinizeMostLikely(actionStates)->simplify(dummy));
+            newProbabilities.push_back(determinizedProbs[i]);
         }
+    }
+    
+    for (size_t i = 0; i < newProbabilities.size(); ++i) {
         vector<LogicalExpression*> comparisons;
-        for (size_t j = 0; j < probabilities.size(); ++j) {
+        for (size_t j = 0; j < newProbabilities.size(); ++j) {
             if (i == j) {
                 continue;
             }
 
-            vector<LogicalExpression*> compareParts{determinizedProbs[i],
-                                                    determinizedProbs[j]};
+            vector<LogicalExpression*> compareParts{newProbabilities[i],
+                                                    newProbabilities[j]};
             auto geq = new GreaterEqualsExpression(compareParts);
             comparisons.push_back(geq->simplify(dummy));
         }
         auto conjunction = new Conjunction(comparisons);
         conditions.push_back(conjunction->simplify(dummy));
-        effects.push_back(values[i]);
+        effects.push_back(newValues[i]);
     }
     LogicalExpression* mcc = new MultiConditionChecker(conditions, effects);
     mcc = mcc->simplify(dummy);
