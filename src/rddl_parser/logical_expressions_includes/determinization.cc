@@ -1,5 +1,5 @@
 LogicalExpression* LogicalExpression::determinizeMostLikely(
-    std::vector<ActionState> const& /*actionStates*/) {
+    vector<ActionState> const& /*actionStates*/) {
     assert(false);
     return nullptr;
 }
@@ -9,12 +9,12 @@ LogicalExpression* LogicalExpression::determinizeMostLikely(
 *****************************************************************/
 
 LogicalExpression* ParametrizedVariable::determinizeMostLikely(
-    std::vector<ActionState> const& /*actionStates*/) {
+    vector<ActionState> const& /*actionStates*/) {
     return this;
 }
 
 LogicalExpression* NumericConstant::determinizeMostLikely(
-    std::vector<ActionState> const& /*actionStates*/) {
+    vector<ActionState> const& /*actionStates*/) {
     return this;
 }
 
@@ -23,7 +23,7 @@ LogicalExpression* NumericConstant::determinizeMostLikely(
 *****************************************************************/
 
 LogicalExpression* Conjunction::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -34,7 +34,7 @@ LogicalExpression* Conjunction::determinizeMostLikely(
 }
 
 LogicalExpression* Disjunction::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -45,7 +45,7 @@ LogicalExpression* Disjunction::determinizeMostLikely(
 }
 
 LogicalExpression* EqualsExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -56,7 +56,7 @@ LogicalExpression* EqualsExpression::determinizeMostLikely(
 }
 
 LogicalExpression* GreaterExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -67,7 +67,7 @@ LogicalExpression* GreaterExpression::determinizeMostLikely(
 }
 
 LogicalExpression* LowerExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -78,7 +78,7 @@ LogicalExpression* LowerExpression::determinizeMostLikely(
 }
 
 LogicalExpression* GreaterEqualsExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -89,7 +89,7 @@ LogicalExpression* GreaterEqualsExpression::determinizeMostLikely(
 }
 
 LogicalExpression* LowerEqualsExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -100,7 +100,7 @@ LogicalExpression* LowerEqualsExpression::determinizeMostLikely(
 }
 
 LogicalExpression* Addition::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -111,7 +111,7 @@ LogicalExpression* Addition::determinizeMostLikely(
 }
 
 LogicalExpression* Subtraction::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -122,7 +122,7 @@ LogicalExpression* Subtraction::determinizeMostLikely(
 }
 
 LogicalExpression* Multiplication::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -133,7 +133,7 @@ LogicalExpression* Multiplication::determinizeMostLikely(
 }
 
 LogicalExpression* Division::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newExprs;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         LogicalExpression* newExpr =
@@ -148,13 +148,13 @@ LogicalExpression* Division::determinizeMostLikely(
 *****************************************************************/
 
 LogicalExpression* Negation::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     LogicalExpression* newExpr = expr->determinizeMostLikely(actionStates);
     return new Negation(newExpr);
 }
 
 LogicalExpression* ExponentialFunction::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     LogicalExpression* newExpr = expr->determinizeMostLikely(actionStates);
     return new ExponentialFunction(newExpr);
 }
@@ -164,7 +164,7 @@ LogicalExpression* ExponentialFunction::determinizeMostLikely(
 *****************************************************************/
 
 LogicalExpression* BernoulliDistribution::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     LogicalExpression* newExpr = expr->determinizeMostLikely(actionStates);
 
     vector<LogicalExpression*> newExprs;
@@ -175,24 +175,36 @@ LogicalExpression* BernoulliDistribution::determinizeMostLikely(
 }
 
 LogicalExpression* DiscreteDistribution::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
-    // print(std::cout);
-    // std::cout << std::endl;
+    vector<ActionState> const& actionStates) {
     // Determinize each discrete probability only once:
     vector<LogicalExpression*> determinizedProbs;
     vector<double> upperBounds;
     Simplifications dummy;
-    
     double maxLowerBound = -numeric_limits<double>::max();
+
     for (LogicalExpression* expr : probabilities) {
         // Determinize all probabilities
-        determinizedProbs.push_back(expr->determinizeMostLikely(actionStates)->simplify(dummy));
+        determinizedProbs.push_back(
+            expr->determinizeMostLikely(actionStates)->simplify(dummy));
         // Compute the bounds for all determinized probabilities
         double lower = numeric_limits<double>::max();
         double upper = -numeric_limits<double>::max();
         determinizedProbs.back()->determineBounds(actionStates, lower, upper);
         maxLowerBound = std::max(maxLowerBound, lower);
         upperBounds.push_back(upper);
+    }
+
+    // Do not consider conditions which maxRes is smaller than another
+    // conditions minRes (their conjunction can never evaluate to true)
+    vector<LogicalExpression*> newValues;
+    vector<LogicalExpression*> newProbabilities;
+    for (size_t i = 0; i < probabilities.size(); ++i) {
+        if (upperBounds[i] >= maxLowerBound) {
+            newValues.push_back(values[i]
+                                    ->determinizeMostLikely(actionStates)
+                                    ->simplify(dummy));
+            newProbabilities.push_back(determinizedProbs[i]);
+        }
     }
 
     // Determinization of a discrete distribution returns the value which
@@ -202,25 +214,12 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely(
     vector<LogicalExpression*> conditions;
     vector<LogicalExpression*> effects;
 
-    std::vector<LogicalExpression*> newValues;
-    std::vector<LogicalExpression*> newProbabilities;
-
-    for (size_t i = 0; i < probabilities.size(); ++i) {
-        // Do not consider conditions which maxRes is smaller than another
-        // conditions minRes (their conjunction can never evaluate to true)
-        if (upperBounds[i] >= maxLowerBound) {
-            newValues.push_back(values[i]->determinizeMostLikely(actionStates)->simplify(dummy));
-            newProbabilities.push_back(determinizedProbs[i]);
-        }
-    }
-    
     for (size_t i = 0; i < newProbabilities.size(); ++i) {
         vector<LogicalExpression*> comparisons;
         for (size_t j = 0; j < newProbabilities.size(); ++j) {
             if (i == j) {
                 continue;
             }
-
             vector<LogicalExpression*> compareParts{newProbabilities[i],
                                                     newProbabilities[j]};
             auto geq = new GreaterEqualsExpression(compareParts);
@@ -232,8 +231,6 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely(
     }
     LogicalExpression* mcc = new MultiConditionChecker(conditions, effects);
     mcc = mcc->simplify(dummy);
-    // mcc->print(std::cout);
-    // std::cout << std::endl;
     return mcc;
 }
 
@@ -242,7 +239,7 @@ LogicalExpression* DiscreteDistribution::determinizeMostLikely(
 *****************************************************************/
 
 LogicalExpression* IfThenElseExpression::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     LogicalExpression* newCondition =
         condition->determinizeMostLikely(actionStates);
     LogicalExpression* newValueIfTrue =
@@ -254,7 +251,7 @@ LogicalExpression* IfThenElseExpression::determinizeMostLikely(
 }
 
 LogicalExpression* MultiConditionChecker::determinizeMostLikely(
-    std::vector<ActionState> const& actionStates) {
+    vector<ActionState> const& actionStates) {
     vector<LogicalExpression*> newConds;
     vector<LogicalExpression*> newEffs;
     for (unsigned int i = 0; i < conditions.size(); ++i) {
