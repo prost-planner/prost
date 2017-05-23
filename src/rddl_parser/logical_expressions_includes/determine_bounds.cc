@@ -1,7 +1,9 @@
-void LogicalExpression::determineBounds(std::vector<ActionState> const& actionStates, double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
-    
+void LogicalExpression::determineBounds(
+    std::vector<ActionState> const& actionStates, double& minRes,
+    double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
+
     for (ActionState const& actionState : actionStates) {
         double min = numeric_limits<double>::max();
         double max = -numeric_limits<double>::max();
@@ -21,28 +23,27 @@ void LogicalExpression::determineBounds(ActionState const& /*action*/,
                            Atomics
 *****************************************************************/
 
-void StateFluent::determineBounds(ActionState const& /*action*/,
-                                  double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void StateFluent::determineBounds(ActionState const& /*action*/, double& minRes,
+                                  double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
     minRes = 0.0;
     maxRes = domainSize - 1.0;
 }
 
-void ActionFluent::determineBounds(ActionState const& action,
-                                   double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void ActionFluent::determineBounds(ActionState const& action, double& minRes,
+                                   double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
     assert(index < action.state.size());
     minRes = action[index];
     maxRes = action[index];
 }
 
 void NumericConstant::determineBounds(ActionState const& /*action*/,
-                                      double& minRes,
-                                      double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+                                      double& minRes, double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
     minRes = value;
     maxRes = value;
 }
@@ -51,10 +52,10 @@ void NumericConstant::determineBounds(ActionState const& /*action*/,
                            Connectives
 *****************************************************************/
 
-void Conjunction::determineBounds(ActionState const& action,
-                                  double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void Conjunction::determineBounds(ActionState const& action, double& minRes,
+                                  double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     // This must be false if all variables are true
     bool minIsFalse = false;
@@ -83,10 +84,10 @@ void Conjunction::determineBounds(ActionState const& action,
     }
 }
 
-void Disjunction::determineBounds(ActionState const& action,
-                                  double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void Disjunction::determineBounds(ActionState const& action, double& minRes,
+                                  double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     // This must be false if all variables are false
     bool maxIsTrue = false;
@@ -116,11 +117,10 @@ void Disjunction::determineBounds(ActionState const& action,
 }
 
 void EqualsExpression::determineBounds(ActionState const& action,
-                                       double& minRes,
-                                       double& maxRes) const {
+                                       double& minRes, double& maxRes) const {
     assert(exprs.size() == 2);
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
@@ -151,10 +151,9 @@ void EqualsExpression::determineBounds(ActionState const& action,
 }
 
 void GreaterExpression::determineBounds(ActionState const& action,
-                                        double& minRes,
-                                        double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+                                        double& minRes, double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     assert(exprs.size() == 2);
 
@@ -185,11 +184,10 @@ void GreaterExpression::determineBounds(ActionState const& action,
     maxRes = 1.0;
 }
 
-void LowerExpression::determineBounds(ActionState const& action,
-                                      double& minRes,
+void LowerExpression::determineBounds(ActionState const& action, double& minRes,
                                       double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     assert(exprs.size() == 2);
 
@@ -220,10 +218,11 @@ void LowerExpression::determineBounds(ActionState const& action,
     maxRes = 1.0;
 }
 
-void GreaterEqualsExpression::determineBounds(
-    ActionState const& action, double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void GreaterEqualsExpression::determineBounds(ActionState const& action,
+                                              double& minRes,
+                                              double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     assert(exprs.size() == 2);
 
@@ -258,8 +257,8 @@ void GreaterEqualsExpression::determineBounds(
 void LowerEqualsExpression::determineBounds(ActionState const& action,
                                             double& minRes,
                                             double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     assert(exprs.size() == 2);
 
@@ -289,10 +288,10 @@ void LowerEqualsExpression::determineBounds(ActionState const& action,
     maxRes = 1.0;
 }
 
-void Addition::determineBounds(ActionState const& action,
-                               double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void Addition::determineBounds(ActionState const& action, double& minRes,
+                               double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     // Addition on Intervals:
     // [x1,x2] + [y1,y2] = [x1+y1, x2+y2]
@@ -309,10 +308,10 @@ void Addition::determineBounds(ActionState const& action,
     }
 }
 
-void Subtraction::determineBounds(ActionState const& action,
-                                  double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void Subtraction::determineBounds(ActionState const& action, double& minRes,
+                                  double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     // Subtraction on Intervals:
     // [x1,x2] - [y1,y2] = [x1-y2, x2-y1]
@@ -329,10 +328,10 @@ void Subtraction::determineBounds(ActionState const& action,
     }
 }
 
-void Multiplication::determineBounds(ActionState const& action,
-                                     double& minRes, double& maxRes) const {
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+void Multiplication::determineBounds(ActionState const& action, double& minRes,
+                                     double& maxRes) const {
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     // Multiplication on Intervals:
     // [x1,x2] * [y1,y2] = [min(x1*y1, x1*y2, x2*y1, x2*y2), max(x1*y1, x1*y2,
@@ -353,11 +352,11 @@ void Multiplication::determineBounds(ActionState const& action,
     }
 }
 
-void Division::determineBounds(ActionState const& action,
-                               double& minRes, double& maxRes) const {
+void Division::determineBounds(ActionState const& action, double& minRes,
+                               double& maxRes) const {
     assert(exprs.size() == 2);
-    assert(minRes = numeric_limits<double>::max());
-    assert(maxRes = -numeric_limits<double>::max());
+    assert(minRes == numeric_limits<double>::max());
+    assert(maxRes == -numeric_limits<double>::max());
 
     double lhsMin = numeric_limits<double>::max();
     double lhsMax = -numeric_limits<double>::max();
@@ -402,8 +401,8 @@ void Division::determineBounds(ActionState const& action,
   Unaries
  *****************************************************************/
 
-void Negation::determineBounds(ActionState const& action,
-                               double& minRes, double& maxRes) const {
+void Negation::determineBounds(ActionState const& action, double& minRes,
+                               double& maxRes) const {
     double tmpMin = numeric_limits<double>::max();
     double tmpMax = -numeric_limits<double>::max();
     expr->determineBounds(action, tmpMin, tmpMax);
@@ -491,27 +490,31 @@ void IfThenElseExpression::determineBounds(ActionState const& action,
     double condMax = -numeric_limits<double>::max();
 
     condition->determineBounds(action, condMin, condMax);
-    if (!MathUtils::doubleIsEqual(condMin, condMax)) {
-        // cond has more than one value, one of which must represent 'true'
-        valueIfTrue->determineBounds(action, minRes, maxRes);
-        if (MathUtils::doubleIsEqual(0.0, minRes)) {
-            // and false is also possible
-            double tmpMin = numeric_limits<double>::max();
-            double tmpMax = -numeric_limits<double>::max();
 
-            valueIfFalse->determineBounds(action, tmpMin, tmpMax);
-            if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
-                minRes = tmpMin;
-            }
-            if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
-                maxRes = tmpMax;
-            }
+    if (MathUtils::doubleIsEqual(condMin, 0.0)) {
+        // Condition may be false, valueIfFalse can fire
+        double effMin = numeric_limits<double>::max();
+        double effMax = -numeric_limits<double>::max();
+        valueIfFalse->determineBounds(action, effMin, effMax);
+        if (MathUtils::doubleIsSmaller(effMin, minRes)) {
+            minRes = effMin;
         }
-    } else if (MathUtils::doubleIsEqual(minRes, 0.0)) {
-        // there is only one value in cond which is 'false'
-        valueIfFalse->determineBounds(action, minRes, maxRes);
-    } else {
-        valueIfTrue->determineBounds(action, minRes, maxRes);
+        if (MathUtils::doubleIsGreater(effMax, maxRes)) {
+            maxRes = effMax;
+        }
+    }
+    if (MathUtils::doubleIsGreater(condMax, 0.0)) {
+        // Condition may be true, valueIfTrue can fire
+        double effMin = numeric_limits<double>::max();
+        double effMax = -numeric_limits<double>::max();
+        // Condition may be false, valueIfFalse can fire
+        valueIfTrue->determineBounds(action, effMin, effMax);
+        if (MathUtils::doubleIsSmaller(effMin, minRes)) {
+            minRes = effMin;
+        }
+        if (MathUtils::doubleIsGreater(effMax, maxRes)) {
+            maxRes = effMax;
+        }
     }
 }
 
@@ -523,8 +526,8 @@ void MultiConditionChecker::determineBounds(ActionState const& action,
         double condMax = -numeric_limits<double>::max();
 
         conditions[i]->determineBounds(action, condMin, condMax);
-        if (!MathUtils::doubleIsEqual(condMin, condMax)) {
-            // cond has more than one value, one of which must represent 'true'
+        if (MathUtils::doubleIsGreater(condMax, 0.0)) {
+            // condition fires in at least one case
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
 
@@ -535,22 +538,10 @@ void MultiConditionChecker::determineBounds(ActionState const& action,
             if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
                 maxRes = tmpMax;
             }
-            if (!MathUtils::doubleIsEqual(condMin, 0.0)) {
-                // all values in cond represent 'true'
+            if (MathUtils::doubleIsGreater(condMin, 0.0)) {
+                // condition always fires, other conditions won't be evaluated
                 return;
             }
-        } else if (!MathUtils::doubleIsEqual(condMin, 0.0)) {
-            // there is only one value in cond, and it is true
-            double tmpMin = numeric_limits<double>::max();
-            double tmpMax = -numeric_limits<double>::max();
-            effects[i]->determineBounds(action, tmpMin, tmpMax);
-            if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
-                minRes = tmpMin;
-            }
-            if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
-                maxRes = tmpMax;
-            }
-            return;
         }
     }
 }
