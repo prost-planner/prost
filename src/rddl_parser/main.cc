@@ -40,8 +40,13 @@ int main(int argc, char** argv) {
         string nextOption = string(argv[i]);
         if (nextOption == "-s") {
             seed = atoi(string(argv[++i]).c_str());
-        } else if (nextOption == "-simulations") {
+            cout << "Setting seed to " << seed << endl;
+        } else if (nextOption == "-trainingSimulations") {
             numSimulations = atoi(string(argv[++i]).c_str());
+            cout << "Setting number of simulations for training set creation to " << numSimulations << endl;
+        } else if (nextOption == "-trainingSetSize") {
+            numStates = atoi(string(argv[++i]).c_str());
+            cout << "Setting target training set size to " << numStates << endl;
         } else {
             assert(false);
         }
