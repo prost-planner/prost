@@ -91,9 +91,11 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     }
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
-    // Check if this is a rewward lock
+    // Check if this is a reward lock
     if (task->rewardFormulaAllowsRewardLockDetection &&
-        !task->rewardLockDetected && isARewardLock(current, reward)) {
+        !task->rewardLockDetected &&
+        (encounteredStates.find(current) == encounteredStates.end()) &&
+        isARewardLock(current, reward)) {
         task->rewardLockDetected = true;
     }
 }
