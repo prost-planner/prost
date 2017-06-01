@@ -32,8 +32,8 @@ int main(int argc, char** argv) {
     string targetDir = string(argv[3]);
 
     double seed = time(nullptr);
-    int numStates = 200;
-    int numSimulations = 20;
+    int numStates = 250;
+    int numSimulations = 25;
 
     // Read optinals
     for (unsigned int i = 4; i < argc; ++i) {
