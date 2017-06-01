@@ -7,7 +7,7 @@
 #include <vector>
 
 class Instantiator;
-class PlanningTask;
+class RDDLTask;
 class StateFluent;
 class ActionFluent;
 class NumericConstant;
@@ -18,11 +18,11 @@ class ActionState;
 class DiscretePD;
 class ParametrizedVariable;
 
-typedef std::map<std::string, Object*> Instantiations;
-typedef std::map<ParametrizedVariable*, double> Simplifications;
-typedef std::set<StateFluent*> StateFluentSet;
-typedef std::set<ActionFluent*> ActionFluentSet;
-typedef std::vector<std::set<double>> Domains;
+using Instantiations = std::map<std::string, Object*>;
+using Simplifications = std::map<ParametrizedVariable*, double>;
+using StateFluentSet = std::set<StateFluent*>;
+using ActionFluentSet = std::set<ActionFluent*>;
+using Domains = std::vector<std::set<double>>;
 
 class LogicalExpression {
 public:
@@ -30,7 +30,7 @@ public:
 
     virtual LogicalExpression* replaceQuantifier(Instantiations& replace,
                                                  Instantiator* inst);
-    virtual LogicalExpression* instantiate(PlanningTask* task,
+    virtual LogicalExpression* instantiate(RDDLTask* task,
                                            Instantiations& replace);
     virtual LogicalExpression* simplify(Simplifications& replace);
 
@@ -98,7 +98,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
 
     void print(std::ostream& out) const;
 };
@@ -113,7 +113,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
 
     void print(std::ostream& out) const;
 };
@@ -153,7 +153,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -260,7 +260,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -383,7 +383,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -414,7 +414,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -446,7 +446,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -480,7 +480,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -514,7 +514,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -548,7 +548,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -582,7 +582,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -615,7 +615,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -646,7 +646,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -680,7 +680,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -713,7 +713,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -752,7 +752,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -787,7 +787,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -825,7 +825,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* expr;
@@ -840,7 +840,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -873,13 +873,14 @@ public:
     std::vector<LogicalExpression*> values;
     std::vector<LogicalExpression*> probabilities;
 
+    DiscreteDistribution() = default;
     DiscreteDistribution(std::vector<LogicalExpression*> _values,
                          std::vector<LogicalExpression*> _probabilities)
         : LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -923,7 +924,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();
@@ -961,7 +962,7 @@ public:
 
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst);
-    LogicalExpression* instantiate(PlanningTask* task, Instantiations& replace);
+    LogicalExpression* instantiate(RDDLTask* task, Instantiations& replace);
     LogicalExpression* simplify(Simplifications& replace);
 
     LogicalExpression* determinizeMostLikely();

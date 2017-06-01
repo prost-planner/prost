@@ -1,4 +1,4 @@
-LogicalExpression* LogicalExpression::instantiate(PlanningTask* /*task*/,
+LogicalExpression* LogicalExpression::instantiate(RDDLTask* /*task*/,
                                                   Instantiations& /*replace*/) {
     assert(false);
     return nullptr;
@@ -8,7 +8,7 @@ LogicalExpression* LogicalExpression::instantiate(PlanningTask* /*task*/,
                          Schematics
 *****************************************************************/
 
-LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task,
+LogicalExpression* ParametrizedVariable::instantiate(RDDLTask* task,
                                                      Instantiations& replace) {
     vector<Object*> newParams;
     for (unsigned int i = 0; i < params.size(); ++i) {
@@ -52,12 +52,12 @@ LogicalExpression* ParametrizedVariable::instantiate(PlanningTask* task,
                            Atomics
 *****************************************************************/
 
-LogicalExpression* NumericConstant::instantiate(PlanningTask* /*task*/,
+LogicalExpression* NumericConstant::instantiate(RDDLTask* /*task*/,
                                                 Instantiations& /*replace*/) {
     return this;
 }
 
-LogicalExpression* Parameter::instantiate(PlanningTask* task,
+LogicalExpression* Parameter::instantiate(RDDLTask* task,
                                           Instantiations& replace) {
     // This is only called if this parameter is not a fluent's parameter but to
     // compare parameters and/or objects
@@ -65,7 +65,7 @@ LogicalExpression* Parameter::instantiate(PlanningTask* task,
     return replace[name]->instantiate(task, replace);
 }
 
-LogicalExpression* Object::instantiate(PlanningTask* /*task*/,
+LogicalExpression* Object::instantiate(RDDLTask* /*task*/,
                                        Instantiations& /*replace*/) {
     return new NumericConstant(value);
 }
@@ -74,7 +74,7 @@ LogicalExpression* Object::instantiate(PlanningTask* /*task*/,
                            Connectives
 *****************************************************************/
 
-LogicalExpression* Conjunction::instantiate(PlanningTask* task,
+LogicalExpression* Conjunction::instantiate(RDDLTask* task,
                                             Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -82,7 +82,7 @@ LogicalExpression* Conjunction::instantiate(PlanningTask* task,
     }
     return new Conjunction(newExpr);
 }
-LogicalExpression* Disjunction::instantiate(PlanningTask* task,
+LogicalExpression* Disjunction::instantiate(RDDLTask* task,
                                             Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -91,7 +91,7 @@ LogicalExpression* Disjunction::instantiate(PlanningTask* task,
     return new Disjunction(newExpr);
 }
 
-LogicalExpression* EqualsExpression::instantiate(PlanningTask* task,
+LogicalExpression* EqualsExpression::instantiate(RDDLTask* task,
                                                  Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -100,7 +100,7 @@ LogicalExpression* EqualsExpression::instantiate(PlanningTask* task,
     return new EqualsExpression(newExpr);
 }
 
-LogicalExpression* GreaterExpression::instantiate(PlanningTask* task,
+LogicalExpression* GreaterExpression::instantiate(RDDLTask* task,
                                                   Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -109,7 +109,7 @@ LogicalExpression* GreaterExpression::instantiate(PlanningTask* task,
     return new GreaterExpression(newExpr);
 }
 
-LogicalExpression* LowerExpression::instantiate(PlanningTask* task,
+LogicalExpression* LowerExpression::instantiate(RDDLTask* task,
                                                 Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -119,7 +119,7 @@ LogicalExpression* LowerExpression::instantiate(PlanningTask* task,
 }
 
 LogicalExpression* GreaterEqualsExpression::instantiate(
-    PlanningTask* task, Instantiations& replace) {
+    RDDLTask* task, Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         newExpr.push_back(exprs[i]->instantiate(task, replace));
@@ -127,7 +127,7 @@ LogicalExpression* GreaterEqualsExpression::instantiate(
     return new GreaterEqualsExpression(newExpr);
 }
 
-LogicalExpression* LowerEqualsExpression::instantiate(PlanningTask* task,
+LogicalExpression* LowerEqualsExpression::instantiate(RDDLTask* task,
                                                       Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -136,7 +136,7 @@ LogicalExpression* LowerEqualsExpression::instantiate(PlanningTask* task,
     return new LowerEqualsExpression(newExpr);
 }
 
-LogicalExpression* Addition::instantiate(PlanningTask* task,
+LogicalExpression* Addition::instantiate(RDDLTask* task,
                                          Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -145,7 +145,7 @@ LogicalExpression* Addition::instantiate(PlanningTask* task,
     return new Addition(newExpr);
 }
 
-LogicalExpression* Subtraction::instantiate(PlanningTask* task,
+LogicalExpression* Subtraction::instantiate(RDDLTask* task,
                                             Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -154,7 +154,7 @@ LogicalExpression* Subtraction::instantiate(PlanningTask* task,
     return new Subtraction(newExpr);
 }
 
-LogicalExpression* Multiplication::instantiate(PlanningTask* task,
+LogicalExpression* Multiplication::instantiate(RDDLTask* task,
                                                Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -163,7 +163,7 @@ LogicalExpression* Multiplication::instantiate(PlanningTask* task,
     return new Multiplication(newExpr);
 }
 
-LogicalExpression* Division::instantiate(PlanningTask* task,
+LogicalExpression* Division::instantiate(RDDLTask* task,
                                          Instantiations& replace) {
     vector<LogicalExpression*> newExpr;
     for (unsigned int i = 0; i < exprs.size(); ++i) {
@@ -176,13 +176,13 @@ LogicalExpression* Division::instantiate(PlanningTask* task,
                           Unaries
 *****************************************************************/
 
-LogicalExpression* Negation::instantiate(PlanningTask* task,
+LogicalExpression* Negation::instantiate(RDDLTask* task,
                                          Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new Negation(newExpr);
 }
 
-LogicalExpression* ExponentialFunction::instantiate(PlanningTask* task,
+LogicalExpression* ExponentialFunction::instantiate(RDDLTask* task,
                                                     Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new ExponentialFunction(newExpr);
@@ -192,19 +192,19 @@ LogicalExpression* ExponentialFunction::instantiate(PlanningTask* task,
                    Probability Distributions
 *****************************************************************/
 
-LogicalExpression* KronDeltaDistribution::instantiate(PlanningTask* task,
+LogicalExpression* KronDeltaDistribution::instantiate(RDDLTask* task,
                                                       Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new KronDeltaDistribution(newExpr);
 }
 
-LogicalExpression* BernoulliDistribution::instantiate(PlanningTask* task,
+LogicalExpression* BernoulliDistribution::instantiate(RDDLTask* task,
                                                       Instantiations& replace) {
     LogicalExpression* newExpr = expr->instantiate(task, replace);
     return new BernoulliDistribution(newExpr);
 }
 
-LogicalExpression* DiscreteDistribution::instantiate(PlanningTask* task,
+LogicalExpression* DiscreteDistribution::instantiate(RDDLTask* task,
                                                      Instantiations& replace) {
     vector<LogicalExpression*> newValues;
     vector<LogicalExpression*> newProbs;
@@ -220,7 +220,7 @@ LogicalExpression* DiscreteDistribution::instantiate(PlanningTask* task,
                          Conditionals
 *****************************************************************/
 
-LogicalExpression* IfThenElseExpression::instantiate(PlanningTask* task,
+LogicalExpression* IfThenElseExpression::instantiate(RDDLTask* task,
                                                      Instantiations& replace) {
     LogicalExpression* newCondition = condition->instantiate(task, replace);
     LogicalExpression* newValueIfTrue = valueIfTrue->instantiate(task, replace);
@@ -230,7 +230,7 @@ LogicalExpression* IfThenElseExpression::instantiate(PlanningTask* task,
                                     newValueIfFalse);
 }
 
-LogicalExpression* MultiConditionChecker::instantiate(PlanningTask* task,
+LogicalExpression* MultiConditionChecker::instantiate(RDDLTask* task,
                                                       Instantiations& replace) {
     std::vector<LogicalExpression*> newConditions;
     std::vector<LogicalExpression*> newEffects;

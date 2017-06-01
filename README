@@ -1,21 +1,11 @@
 Guide to set up and run the PROST planner. If you have any questions
 that are not answered by this file or under
 http://prost.informatik.uni-freiburg.de/installation.html, please do
-not hesitate to contact tkeller [@] informatik.uni-freiburg.de.
-
-Author:   Joris Scharpff
-Date:     September 9, 2013
-Contact:  joris [@] almende.org
-
-Updated by Thomas Keller (tkeller [@] informatik.uni-freiburg.de) on
-September 27, 2013.
-Updated by Florian Geißer (geisserf [@] informatik.uni-freiburg.de) on
-July 27, 2014.
-
+not hesitate to contact tho.keller [@] unibas.ch.
 
 ===[ Prerequisites ]===
 
-Libraries: Boost (libboost),  BuDDy (http://sourceforge.net/projects/buddy/)
+Libraries: BuDDy (http://sourceforge.net/projects/buddy/)
 
 NOTE: make sure to install BuDDy in /lib or update the PROST makefile
 so that it finds the buddy library, otherwise it will compile fine but
@@ -41,22 +31,18 @@ the PROST solver using:
 
 	prost <rddldir> <instance-name> [<solver> <solveroptions>]
 
-in which <rddldir> is the directory that contains your rddl models
-(using prefix notation), <instance-name> the name of the instance to
-solve, <solver> the solver you want to use and <solveroptions> the
-options for the chosen solver. Note that there are several solvers
-available, type
+in which <rddldir> is the directory that contains your rddl models,
+<instance-name> the name of the instance to solve, <solver> the solver
+you want to use and <solveroptions> the options for the chosen solver.
+Note that there are several solvers available, type
 
 	prost --help
 
 for an overview of all available solvers and their options.
 
 The current version of PROST requires the domain file name to end with
-rddl.prefix and the instance with mdp__#.rddl where # is the instance
-number. Also, the RDDL files should be in prefix notation. You can use
-the RDDL2Prefix tool of the RDDLSim package to convert your files in
-the correct format (see further in the guide).
-
+_mdp.rddl and the instance with mdp__#.rddl where # is the instance
+number.
 
 ===[ Installing the IPPC Server ]===
 
@@ -69,23 +55,6 @@ server from the rddlsim main directory with the following command:
 	run rddl.competition.Server <rddldir>
 
 where <rddldir> is the folder that contains your rddl model(s).
-
-
-===[ Translate to prefix notation ]===
-
-PROST requires its input files to be in prefix notational form. To
-convert your RDDL files into the correct format, you can use the
-RDDL2Prefix tool that is part of Scott Sanner's RDDLSim package (see
-above for RDDLSim installation instructions). If you have installed
-the tools, simply run:
-
-	run rddl.translate.RDDL2Prefix <rddldir> <outdir>
-
-where <rddldir> is the RDDL source directory or single source file and
-<outdir> is the output directory. Do not end the <outdir> argument
-with a path separator as this causes the RDDL2Prefix tool to throw a
-NullPointerException.
-
 
 ===[ Create your own search engine ]===
 

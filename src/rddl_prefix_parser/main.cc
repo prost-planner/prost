@@ -14,7 +14,7 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>"
+    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir> [options]"
          << endl
          << endl;
 }

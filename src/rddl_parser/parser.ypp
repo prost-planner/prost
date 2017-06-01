@@ -1,0 +1,809 @@
+%{
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <cstdio>
+#include <vector>
+#include <string>
+#include <limits>
+
+#define YYDEBUG 1
+
+extern int yylex(); // Lexic analisys function
+extern FILE* yyin; // Extern file, used for reading code from file
+
+#include "logical_expressions.h"
+#include "rddl.h"
+#include "utils/system_utils.h"
+#include "utils/timer.h"
+
+extern void yyerror (std::string message); // Function for syntax error handling
+
+std::string targetDir;
+RDDLTask* rddlTask;
+
+%}
+
+%union {
+    double d;
+    int i;
+    std::string* str;
+    std::vector<std::string>* strs;
+
+    RDDLTask* rddlTask;
+    Parameter* parameter;
+    std::vector<Parameter*>* parameters;
+    ParameterList* parameterList;
+    ParametrizedVariable* parametrizedVariable;
+    std::vector<ParametrizedVariable*>* parametrizedVariables;
+    LogicalExpression* logicalExpression;
+    Type* type;
+    std::vector<Type*>* types;
+    std::vector<LogicalExpression*>* logicalExpressions;
+    ConditionEffectPair* conditionEffect;
+    std::vector<ConditionEffectPair*>* conditionEffects;
+    DiscreteDistribution* lConstCaseList;
+}
+
+// Tokens
+%token lessOrEqual_token greaterOrEqual_token negative_infinity_token
+%token equivalent_token imply_token equal_token nonEqual_token positive_infinity_token
+%token forall_token exists_token case_token if_token switch_token then_token else_token otherwise_token sum_token product_token
+%token kronDelta_token diracDelta_token uniform_token bernoulli_token discrete_token normal_token
+%token poisson_token exponential_token weibull_token gama_token dirichlet_token multinomial_token
+%token types_token variables_token cpfs_token cdfs_token reward_token domain_token requirements_token
+%token objects_token init_state_token state_action_constraints_token action_preconditions_token
+%token state_invariants_token instance_token non_fluents_token
+%token discount_token terminate_when_token horizon_token max_nondef_actions_token
+%token <d> doubleNum_token
+%token <str> id_token variable_token enum_token object_token integer_token real_token bool_token true_token false_token default_token level_token observ_fluent_token action_fluent_token state_fluent_token intermediate_token derived_fluent_token non_fluent_token
+%token <i> intNum_token
+
+// Non-terminals
+%type <rddlTask> RddlBlock
+%type <parameter> TypedVariable Term
+%type <parameters> ParametarList ParametarListTypeSpecs TermList
+%type <parameterList> TypedVarList
+%type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
+%type <parametrizedVariables> VarSection VarList VariablesInstanceList
+%type <logicalExpression> Expression LConst StateConstraintSchematic
+%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList ExpressionList
+%type <type> TypeSpecification SchematicType
+%type <types> TypeList TypeSection
+%type <conditionEffect> CaseSchematic
+%type <conditionEffects> CaseList
+%type <lConstCaseList> LConstCaseList
+%type <str> BoolType
+%type <strs> RequirementsSection RequirementsList EnumList ObjectsConstList
+%type <d> IntType DoubleType RangeConstant
+%type <i> PositiveIntOrPositiveInfinity HorizonSpecification
+
+// Priority and associativity, highest bottom
+%nonassoc if_token
+%nonassoc AgregateOperator
+%left equivalent_token
+%left imply_token
+%left '|'
+%left '^' '&'
+%left '~'
+%left equal_token '<' '>' nonEqual_token lessOrEqual_token greaterOrEqual_token
+%left '+' '-'
+%left '*' '/'
+%nonassoc NEGATIVE
+
+%%
+
+Program: RddlBlock            { } //$1->execute(targetDir); }
+;
+
+////////////////////////
+// RDDL block
+////////////////////////
+RddlBlock: DomainBlock              { $$ = rddlTask; }
+        | InstanceBlock             { $$ = rddlTask; }
+        | NonfluentBlock            { $$ = rddlTask; }
+        | RddlBlock DomainBlock     { $$ = $1; }
+        | RddlBlock InstanceBlock   { $$ = $1; }
+        | RddlBlock NonfluentBlock  { $$ = $1; }
+;
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// Domain block
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+DomainBlock: domain_token id_token '{' DomainList '}'     {  rddlTask->domainName = *$2; }
+;
+
+////////////////////////
+// Domain list
+////////////////////////
+DomainList: TypeSection DomainList                      { }
+          | VarSection DomainList                       { }
+          | CPFSection DomainList                       { }
+          | RewardsSection DomainList                   { }
+          | StateConstraintsSection DomainList          { }
+          | ObjectsSection DomainList                   { }
+          | RequirementsSection DomainList              { }
+          | ActionPreconditionsSection DomainList       { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | TypeSection                       { }
+          | VarSection                        { }
+          | CPFSection                        { }
+          | RewardsSection                    { }
+          | StateConstraintsSection           { }
+          | ObjectsSection                    { }
+          | RequirementsSection               { }
+          | ActionPreconditionsSection        { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+;
+////////////////////////
+// Requirements section
+////////////////////////
+RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { }
+                | requirements_token '=' '{' '}' ';'                     { }
+;
+
+RequirementsList: id_token                    { }
+            | id_token ',' RequirementsList   { }
+;
+
+////////////////////////
+// Type section
+////////////////////////
+TypeSection: types_token '{' TypeList '}' ';' { }
+;
+
+TypeList: SchematicType             { }
+        | SchematicType TypeList    { }
+;
+
+// TODO: RDDL2: enable defining types in following way: id_token, id_token, ..., id_token : [definition like below]
+SchematicType: id_token ':' object_token ';'                                    { rddlTask->addType(*$1, *$3); } // TODO: check if this is a duplicate
+          | id_token ':' id_token ';'                                           { rddlTask->addType(*$1, *$3); }
+          | id_token ':' '{' EnumList '}' ';'                                   { rddlTask->addType(*$1);
+                                                                                  for (const std::string& s : *$4) {
+                                                                                      rddlTask->addObject(*$1, s);
+                                                                                  }}
+          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
+          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
+          | id_token ':' '<' StructMemberList '>' ';'                           { SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
+;
+
+EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
+        | enum_token ',' EnumList   { $$ = $3; $$->insert($$->begin(), *$1); }
+;
+
+TypeSpecification: id_token      { $$ = rddlTask->getType(*$1); }
+                | integer_token  { $$ = rddlTask->getType(*$1); }
+                | real_token     { $$ = rddlTask->getType(*$1); }
+                | bool_token     { $$ = rddlTask->getType(*$1); }
+;
+
+StructMemberList: LConst ':' TypeSpecification                      { SystemUtils::abort("StructMemberList not implemented yet."); }
+                | LConst ':' TypeSpecification ',' StructMemberList { SystemUtils::abort("StructMemberList not implemented yet."); }
+;
+
+LConst: doubleNum_token { $$ = new NumericConstant($1);  }
+    | intNum_token      { $$ = new NumericConstant($1);  }
+    | id_token          { $$ = new Parameter(*$1);       }
+    | true_token        { $$ = new NumericConstant(1.0); }
+    | false_token       { $$ = new NumericConstant(0.0); }
+    | enum_token        { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
+;
+
+////////////////////////
+// Variables section
+////////////////////////
+VarSection: variables_token '{' VarList '}' ';' { $$ = $3; }
+;
+
+VarList: VariableSchematic             { $$ = new std::vector<ParametrizedVariable*>(); $$->push_back($1); }
+        | VariableSchematic VarList    { $$ = $2; $$->insert($$->begin(), $1); }
+;
+
+VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("observ-fluent parametrized variables definition not implemented. "); }
+;
+
+ParametarList: ':'                                { $$ = new std::vector<Parameter*>(); }
+        | '(' ParametarListTypeSpecs ')' ':'      { $$ = $2; }
+;
+
+ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<Parameter*>(); $$->push_back(new Parameter($1->name, $1)); }
+                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), new Parameter($1->name, $1)); }
+;
+
+RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 : 0; }
+             | DoubleType                            { $$ = $1; }
+             | IntType                               { $$ = $1; }
+             | id_token                              { Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
+             | '$' id_token                          { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
+             | enum_token                            { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]->value; }
+             | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
+             | '(' '<' StructRangeConsant '>' ')'    { SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
+             | '[' '<' StructRangeConsant '>' ']'    { SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
+;
+
+
+StructRangeConsant: '?' ':' RangeConstant  { SystemUtils::abort("StructRangeConsant not implemented yet."); }
+                | StructRangeConsantList   { SystemUtils::abort("StructRangeConsant not implemented yet."); }
+;
+
+StructRangeConsantList: LConst ':' RangeConstant                           { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+                    | LConst ':' RangeConstant ',' StructRangeConsantList  { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+;
+
+BoolType: true_token  { $$ = $1; }
+    | false_token     { $$ = $1; }
+;
+
+DoubleType: doubleNum_token           { $$ = $1; }
+        | '-' doubleNum_token         { $$ = -$2; }
+        | positive_infinity_token     { $$ = std::numeric_limits<double>::infinity(); }
+        | negative_infinity_token     { $$ = -std::numeric_limits<double>::infinity();}
+;
+
+IntType: intNum_token     { $$ = $1;  }
+    | '-' intNum_token    { $$ = -$2; }
+;
+
+////////////////////////
+// CPF section
+////////////////////////
+// TODO: CPFHeader is ignored for now, implement proper behavior for it
+CPFSection: CPFHeader '{' CPFList '}' ';'    { }
+;
+
+CPFHeader: cpfs_token { } // Ok like this, no action here
+        | cdfs_token  { } // Ok like this, no action here
+;
+
+CPFList: CPFSchematic         { }
+    | CPFSchematic CPFList    { }
+;
+
+CPFSchematic: VariableExpression '=' Expression ';' { rddlTask->addCPF(*$1, $3); }
+;
+
+VariableExpression: id_token                        {
+                                                      std::string varName;
+                                                      if ((*$1)[$1->length() - 1] == '\'')
+                                                        varName = $1->substr(0, $1->length() - 1);
+                                                      else
+                                                        varName = *$1;
+
+                                                      if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
+                                                        $$ = rddlTask->variableDefinitions[varName];
+                                                      } else {
+                                                        SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                      }
+                                                      $$ = new ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), std::vector<Parameter*>());
+                                                    }
+            | id_token '(' TermList ')'             {
+                                                      std::string varName;
+                                                      if ((*$1)[$1->length() - 1] == '\'')
+                                                        varName = $1->substr(0, $1->length() - 1);
+                                                      else
+                                                        varName = *$1;
+                                                      if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
+                                                        $$ = rddlTask->variableDefinitions[varName];
+                                                      } else {
+                                                        SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                      }
+                                                      $$ = new ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), *$3);
+                                                    }
+            | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+;
+
+TermList: Term                 { $$ = new std::vector<Parameter*>(); $$->push_back($1); }
+        | Term ',' TermList    { $$ = $3; $$->insert($$->begin(), $1); }
+;
+
+Term: variable_token         { $$ = new Parameter(*$1); }
+    | VariableExpression     { SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); }
+    | enum_token             { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
+    | '$' id_token           { SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
+;
+
+MemberList: '.' Pterm          { SystemUtils::abort("MemberList not implemented yet."); }
+        | '.' Pterm MemberList { SystemUtils::abort("MemberList not implemented yet."); }
+;
+
+Pterm: variable_token            { SystemUtils::abort("Pterm not implemented yet."); }
+    | '(' VariableExpression ')' { SystemUtils::abort("Pterm not implemented yet."); }
+    | '[' VariableExpression ']' { SystemUtils::abort("Pterm not implemented yet."); }
+    | enum_token                 { SystemUtils::abort("Pterm not implemented yet."); }
+    | '$' id_token               { SystemUtils::abort("Pterm not implemented yet."); }
+;
+
+////////////////////////
+// Expressions
+////////////////////////
+Expression:
+    // Flow control expressions, variables, enums, loops
+      variable_token                                                                            { $$ = new Parameter(*$1); }
+    | VariableExpression                                                                        { $$ = $1; }
+    | enum_token                                                                                { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
+    | '$' id_token                                                                              { SystemUtils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
+    | '<' StructExpressionList                                                                  { SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
+        // TODO: for now there are only sum, exists, product and forall. All of those are implemted and this part is left for purposes of further development of RDDL (definition of special functions)
+    | id_token '[' ExpressionList ']'                                                           { SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
+    | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new UniversalQuantification($4, $6); }
+    | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new ExistentialQuantification($4, $6);}
+    | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                      { $$ = new Sumation($4, $6); }
+    | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new Product($4, $6); }
+    | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
+    | switch_token '(' Term ')' '{' CaseList '}'                                                { // TODO: Text switch case control
+                                                                                                   LogicalExpression* switchVar = rddlTask->getParametrizedVariable($3->name);
+
+                                                                                                    std::vector<LogicalExpression*> conditions;
+                                                                                                    std::vector<LogicalExpression*> effects;
+                                                                                                    for (ConditionEffectPair* cs : *$6) {
+                                                                                                        if (!cs->first) {
+                                                                                                            // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
+                                                                                                            conditions.push_back(new NumericConstant(1.0));
+                                                                                                        }
+                                                                                                        else {
+                                                                                                            std::vector<LogicalExpression*> switchVarEquality;
+                                                                                                            switchVarEquality.push_back(switchVar);
+                                                                                                            switchVarEquality.push_back(cs->first);
+                                                                                                            conditions.push_back(new EqualsExpression(switchVarEquality));
+                                                                                                        }
+                                                                                                        effects.push_back(cs->second);
+                                                                                                    }
+                                                                                                    $$ = new MultiConditionChecker(conditions, effects);
+                                                                                                }
+    // Arithmetic & logical expressions
+    | Expression '+' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Addition(exprs); }
+    | '-' Expression    %prec NEGATIVE                 { std::vector<LogicalExpression*> exprs; exprs.push_back(new NumericConstant(0.0)); exprs.push_back($2); $$ = new Subtraction(exprs); }
+    | '+' Expression  %prec NEGATIVE                   { $$ = $2; }
+    | Expression '-' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Subtraction(exprs); }
+    | Expression '*' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Multiplication(exprs); }
+    | Expression '/' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Division(exprs); }
+    | Expression '>' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterExpression(exprs); }
+    | Expression '<' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerExpression(exprs); }
+    | Expression lessOrEqual_token Expression          { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerEqualsExpression(exprs); }
+    | Expression greaterOrEqual_token Expression       { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterEqualsExpression(exprs); }
+    | Expression equal_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new EqualsExpression(exprs); }
+    | Expression nonEqual_token Expression             { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Negation(new EqualsExpression(exprs)); }
+    | '(' Expression ')'                               { $$ = $2; }
+    | '[' Expression ']'                               { $$ = $2; }
+    | Expression '^' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
+    | Expression '&' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
+    | Expression '|' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Disjunction(exprs); }
+    | '~' Expression    %prec NEGATIVE                 { $$ = new Negation($2); }
+    | Expression equivalent_token Expression           { std::vector<LogicalExpression*> posExprs, negExprs, exprs; posExprs.push_back($1); negExprs.push_back($3); exprs.push_back(new Conjunction(posExprs)); exprs.push_back(new Conjunction(posExprs)); $$ = new Disjunction(exprs); }
+    | Expression imply_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back(new Negation($1)); exprs.push_back($3); $$ = new Disjunction(exprs); }
+    | doubleNum_token                                  { $$ = new NumericConstant($1); }
+    | intNum_token                                     { $$ = new NumericConstant($1); }
+    | true_token                                       { $$ = new NumericConstant(1.0); }
+    | false_token                                      { $$ = new NumericConstant(0.0); }
+    | exponential_token '(' Expression ')'             { $$ = new ExponentialFunction($3); }
+    | exponential_token '[' Expression ']'             { $$ = new ExponentialFunction($3); }
+
+    // Probability Distributions
+    | bernoulli_token '(' Expression ')'                                    { $$ = new BernoulliDistribution($3); }
+    | kronDelta_token '(' Expression ')'                                    { $$ = new KronDeltaDistribution($3); }
+    | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = $5; } // TODO: The return value (id_token) is optional in RDDL2.0
+    | diracDelta_token '(' Expression ')'                                   { SystemUtils::abort("DiracDelta not implemtend."); }
+    | uniform_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Uniform not implemtend."); }
+    | normal_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Normal not implemtend."); }
+    | dirichlet_token '(' id_token ',' Expression ')'                       { SystemUtils::abort("Dirichelt not implemtend."); }
+    | poisson_token '(' Expression ')'                                      { SystemUtils::abort("Poisson not implemtend."); }
+    | weibull_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Weibull not implemtend."); }
+    | gama_token '(' Expression ',' Expression ')'                          { SystemUtils::abort("Gama not implemtend.");  }
+    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { SystemUtils::abort("Multinomial not implemtend."); }
+;
+
+StructExpressionList: LConst ':' Expression '>'                          { SystemUtils::abort("StructExpressionList not implemented yet."); }
+                    | LConst ':' Expression ',' StructExpressionList     { SystemUtils::abort("StructExpressionList not implemented yet."); }
+;
+
+ExpressionList: Expression                    { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+              | Expression ',' ExpressionList { $$ = $3; $$->insert($$->begin(), $1); }
+;
+
+TypedVarList: TypedVariable                    { $$ = new ParameterList({}, {}); $$->params.push_back(new Parameter($1->name, $1->type)); $$->types.push_back($1->type); }
+            | TypedVariable ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
+;
+
+TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3)) {
+                                     $$ = new Parameter(*$1, rddlTask->getType(*$3));
+                                   }
+                                   else {
+                                        SystemUtils::abort("Type " + *$3 + " not defined");
+                                   }
+                                 }
+;
+
+CaseList: CaseSchematic                 { $$ = new std::vector<ConditionEffectPair*>(); $$->push_back($1); }
+        | CaseSchematic ',' CaseList    { $$ = $3; $$->insert($$->begin(), $1); }
+;
+
+CaseSchematic: case_token Term ':' Expression      { LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new ConditionEffectPair(var, $4); }
+         | default_token ':' Expression            { $$ = new ConditionEffectPair(nullptr, $3); }
+;
+
+// TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
+LConstCaseList: LConst ':' Expression                     { $$ = new DiscreteDistribution(); $$->values.push_back($1); $$->probabilities.push_back($3); }
+            | LConst ':' otherwise_token                  { SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
+            | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->values.insert($$->values.begin(), $1); $$->probabilities.insert($$->probabilities.begin(), $3); }
+;
+
+////////////////////////
+// Rewards section
+////////////////////////
+RewardsSection: reward_token '=' Expression ';'        { rddlTask->setRewardCPF($3); }
+;
+
+
+////////////////////////
+// State Action Contraint section
+////////////////////////
+StateConstraintsSection: state_action_constraints_token '{' StateConstraintList '}' ';'        { }
+                    |     state_action_constraints_token '{' '}' ';'                           { }
+;
+
+StateConstraintList: StateConstraintSchematic                        { }
+                |     StateConstraintSchematic StateConstraintList   { }
+;
+
+StateConstraintSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
+;
+
+////////////////////////
+// Action Prediction section
+////////////////////////
+ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { SystemUtils::abort("Action prediction not implemented yet."); }
+                        | action_preconditions_token '{' '}' ';'                            { SystemUtils::abort("Action prediction not implemented yet."); }
+;
+
+ActionPreconditionsList: ActionPreconditionsSchematic
+                    | ActionPreconditionsSchematic ',' ActionPreconditionsList
+;
+
+ActionPreconditionsSchematic: Expression ';'
+;
+
+////////////////////////
+// State Invariant Section
+////////////////////////
+StateInvariantSection: state_invariants_token '{' StateInvariantList '}' ';' { SystemUtils::abort("State invariant not implemented yet."); }
+                    | state_invariants_token '{' '}' ';'                     { SystemUtils::abort("State invariant not implemented yet."); }
+;
+
+StateInvariantList: StateInvariantSchematic
+                | StateInvariantSchematic ',' StateInvariantList
+;
+
+StateInvariantSchematic: Expression ';'
+;
+
+////////////////////////
+// Objects Section
+////////////////////////
+ObjectsSection: objects_token '{' ObjectsList '}' ';' { }
+;
+
+// This section is required in Non-fluents and Instance section
+ObjectsList: ObjectsSchematic             { }
+        | ObjectsSchematic ObjectsList    { }
+;
+
+ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
+                                                              for (std::string str : *$4) {
+                                                                rddlTask->addObject(*$1, str);
+                                                              }
+                                                         }
+;
+
+ObjectsConstList: id_token                        { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
+            | id_token ',' ObjectsConstList       { $$ = $3; $$->insert($$->begin(), *$1); }
+            | '$' id_token                        { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token ',' ObjectsConstList   { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+;
+
+///////////////////////////////////////////////
+////////////////////////////////////////////////
+// NonFluent block
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+NonfluentBlock: non_fluents_token id_token '{'
+                domain_token '=' id_token ';'
+                objects_token '{' ObjectsList  '}' ';'
+                non_fluents_token '{' VariablesInstanceList  '}' ';'
+            '}' {
+                    rddlTask->nonFluentsName = *$2;
+                    if (rddlTask->domainName != *$6) {
+                        SystemUtils::abort("Unknown domain " + *$6 +
+                                           "  defined in Non fluent section");
+                    }
+                }
+            | non_fluents_token id_token '{'
+                domain_token '=' id_token ';'
+                non_fluents_token '{' VariablesInstanceList  '}' ';'
+            '}' {
+                    rddlTask->nonFluentsName = *$2;
+                    if (rddlTask->domainName != *$6) {
+                        SystemUtils::abort("Unknown domain " + *$6 +
+                                           "  defined in Non fluent section");
+                    }
+                }
+;
+
+VariablesInstanceList: VariableInstanceSchematic                        { }
+                    | VariableInstanceSchematic VariablesInstanceList   { }
+;
+
+// TODO: Refactor this piece of code once pasing LogicalExpressions to ParametrizedVariable is possbile
+VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
+                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
+                                                                                std::vector<Parameter*> params;
+                                                                                for (LogicalExpression* le : *$3) {
+                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                    if (!param) {
+                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                    }
+                                                                                    params.push_back(rddlTask->getObject(param->name));
+                                                                                }
+                                                                                rddlTask->addParametrizedVariable(parent, params, 1);
+                                                                              }
+                        | id_token ';'                                        { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, 1); }
+                        | '~' id_token '(' LConstList ')' ';'                 {
+                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2);
+                                                                                std::vector<Parameter*> params;
+                                                                                for (LogicalExpression* le : *$4) {
+                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                    if (!param) {
+                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                    }
+                                                                                    params.push_back(rddlTask->getObject(param->name));
+                                                                                }
+                                                                                rddlTask->addParametrizedVariable(parent, params, 0);
+                                                                              }
+                        | '~' id_token                                        { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2); rddlTask->addParametrizedVariable(parent,  {}, 0); }
+                        | id_token '(' LConstList ')' '=' RangeConstant ';'   {
+                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
+                                                                                std::vector<Parameter*> params;
+                                                                                for (LogicalExpression* le : *$3) {
+                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                    if (!param) {
+                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                    }
+                                                                                    params.push_back(rddlTask->getObject(param->name));
+                                                                                }
+                                                                                rddlTask->addParametrizedVariable(parent, params, $6);
+                                                                              }
+                        | id_token '=' RangeConstant ';'                      { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, $3);}
+;
+
+LConstList: LConst                  { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+          | LConst ',' LConstList   { $$ = $3; $$->insert($$->begin(), $1); }
+;
+
+///////////////////////////////////////////////
+////////////////////////////////////////////////
+// Instance block
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+InstanceBlock:
+        // 1.1 All
+        instance_token id_token '{'
+                                    domain_token '=' id_token ';'
+                                    non_fluents_token '=' id_token ';'
+                                    objects_token '{' ObjectsList '}' ';'
+                                    init_state_token '{' VariablesInstanceList '}' ';'
+                                    max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                    HorizonSpecification ';'
+                                    discount_token '=' doubleNum_token ';'
+                                '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 1.2 No nonfluents
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 1.3 No objects
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { rddlTask->setInstance(*$2, *$6, *$10, $19, $21, $25); }
+        // 1.4 No nonfluents, no objects
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { rddlTask->setInstance(*$2, *$6, "", $15, $17, $21); }
+        // 1.5 No Init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 1.6 No nonfluents, no init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                                '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 1.7 No objects, no inti state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' {  rddlTask->setInstance(*$2, *$6, *$10, $14, $16, $20);  }
+        // 1.8 No non fluents, no objects, no init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { rddlTask->setInstance(*$2, *$6, "", $10, $12, $16); }
+
+        // Omitting Max Non Def Actions and ..
+        // 2.1 All
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 2.2 No non fluents
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 2.3 No objects
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $17, $21); }
+        // 2.4 No non fluents, no objects
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                            '}' { rddlTask->setInstance(*$2, *$6, "", -1, $13, $17); }
+        // 2.5 No init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 2.6 No non fluents, no init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+        // 2.7 No objects, no init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                                '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $12, $16); }
+        // 2.8 No non fluetnts, no objects, no init state
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                                '}' { rddlTask->setInstance(*$2, *$6, "", -1, $8, $12); }
+;
+
+
+HorizonSpecification: horizon_token '=' PositiveIntOrPositiveInfinity           { $$ = $3; }
+                    | horizon_token '=' terminate_when_token '(' Expression ')' { SystemUtils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
+;
+
+PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
+                            |  positive_infinity_token    { $$ = std::numeric_limits<int>::max(); }
+;
+
+%%
+
+bool CheckExtension(std::string s) {
+     return ((s.length() > 5) &&  (s.substr(s.length() - 5).compare(".rddl") == 0));
+}
+
+int main (int argc, char** argv) {
+    // Debuging on/off
+    // yydebug = 1;
+    if (argc < 4) {
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir> [options]");
+    }
+
+    // Checking input file
+    if (!CheckExtension(argv[1]) || !CheckExtension(argv[2])) {
+        SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
+    }
+
+    // Read non-optionals
+    std::ifstream domain(argv[1], std::ifstream::in);
+    std::ifstream nfAndInst(argv[2], std::ifstream::in);
+    std::ofstream combined(".combined", std::ifstream::out);
+
+    if (domain && nfAndInst) {
+        combined << domain.rdbuf() << nfAndInst.rdbuf();
+        combined.close();
+    } else {
+        SystemUtils::abort("Error opening files. Check the correctnes of files.");
+    }
+
+    std::string targetDir = std::string(argv[3]);
+
+    double seed = time(nullptr);
+    int numStates = 250;
+    int numSimulations = 25;
+
+    // Read optinals
+    for (unsigned int i = 4; i < argc; ++i) {
+        std::string nextOption = std::string(argv[i]);
+        if (nextOption == "-s") {
+            seed = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting seed to " << seed << std::endl;
+        } else if (nextOption == "-trainingSimulations") {
+            numSimulations = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting number of simulations for training set creation to " << numSimulations << std::endl;
+        } else if (nextOption == "-trainingSetSize") {
+            numStates = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting target training set size to " << numStates << std::endl;
+        } else {
+            assert(false);
+        }
+    }
+
+    // Creating RDDLTask object
+    rddlTask = new RDDLTask();
+
+    yyin = fopen(".combined", "r");
+    Timer t, totalTime;
+    std::cout << "Parsing..." << std::endl;
+    yyparse();
+    std::cout << "...finished (" << t << ")." << std::endl;
+    fclose(yyin);
+    combined.close();
+    std::remove(".combined");
+
+    rddlTask->execute(targetDir, seed, numStates, numSimulations);
+    std::cout << "total time: " << totalTime << std::endl;
+
+    return EXIT_SUCCESS;
+}
