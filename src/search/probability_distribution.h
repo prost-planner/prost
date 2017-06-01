@@ -8,6 +8,8 @@
 #include <iostream>
 #include <map>
 
+#include <random>
+
 #include "utils/math_utils.h"
 
 class DiscretePD {
@@ -138,6 +140,10 @@ public:
 
     bool isWellDefined() const;
     void print(std::ostream& out) const;
+
+    // Sample a value which is not blacklisted. Probability of blackisted values
+    // is ignored
+    std::pair<double, double> sample(std::vector<int> const& blacklist = {}) const;
 
     std::vector<double> values;
     std::vector<double> probabilities;

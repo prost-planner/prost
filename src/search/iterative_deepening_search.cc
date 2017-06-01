@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 
 using namespace std;
 
@@ -89,9 +90,7 @@ void IDS::learn() {
     for (size_t i = 0; i < trainingSet.size(); ++i) {
         State copy(trainingSet[i]);
         vector<double> res(numberOfActions);
-
         vector<int> actionsToExpand = getApplicableActions(copy);
-
         estimateQValues(copy, actionsToExpand, res);
     }
 
@@ -105,23 +104,19 @@ void IDS::learn() {
         maxSearchDepth = 0;
 
         for (size_t index = 2; index < elapsedTime.size(); ++index) {
-            if (elapsedTime[index].size() > (trainingSet.size() / 2)) {
-                double timeSum = 0.0;
-                for (size_t j = 0; j < elapsedTime[index].size(); ++j) {
-                    timeSum += elapsedTime[index][j];
-                }
-                double avgTime = timeSum / ((double)elapsedTime[index].size());
-                cout << name << ": Search Depth " << index << ": " << timeSum
-                     << " / " << elapsedTime[index].size() << " = " << avgTime
-                     << endl;
-                if (MathUtils::doubleIsSmaller(avgTime, timeout)) {
-                    maxSearchDepth = index;
-                } else {
-                    break;
-                }
-            } else {
+            vector<double> const& times = elapsedTime[index];
+            if (times.size() <= (trainingSet.size() / 2)) {
                 break;
             }
+            double timeSum = std::accumulate(times.begin(), times.end(), 0.0);
+            double avgTime = timeSum / static_cast<double>(times.size());
+
+            cout << name << ": Search Depth " << index << ": " << timeSum
+                 << " / " << times.size() << " = " << avgTime << endl;
+            if (MathUtils::doubleIsGreaterOrEqual(avgTime, timeout)) {
+                break;
+            }
+            maxSearchDepth = index;
         }
     } else {
         maxSearchDepth = 1;
@@ -142,7 +137,8 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
         ++cacheHits;
-        qValue = it->second[actionIndex] * (double)state.stepsToGo();
+        qValue =
+            it->second[actionIndex] * static_cast<double>(state.stepsToGo());
     } else {
         stopwatch.reset();
 
@@ -155,7 +151,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
             dfs->estimateQValue(currentState, actionIndex, qValue);
         } while (moreIterations(currentState.stepsToGo()));
 
-        qValue /= ((double)currentState.stepsToGo());
+        qValue /= static_cast<double>(currentState.stepsToGo());
 
         // TODO: Currently, we cache every result, but we should only do so if
         // the result was achieved with a reasonable action, with a timeout or
@@ -168,7 +164,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
             }
             rewardCache[currentState][actionIndex] = qValue;
         }
-        qValue *= (double)state.stepsToGo();
+        qValue *= static_cast<double>(state.stepsToGo());
 
         accumulatedSearchDepth += currentState.stepsToGo();
         ++numberOfRuns;
@@ -184,7 +180,8 @@ void IDS::estimateQValues(State const& state,
         assert(qValues.size() == it->second.size());
         for (size_t index = 0; index < qValues.size(); ++index) {
             if (actionsToExpand[index] == index) {
-                qValues[index] = it->second[index] * (double)state.stepsToGo();
+                qValues[index] =
+                    it->second[index] * static_cast<double>(state.stepsToGo());
             } else {
                 qValues[index] = -std::numeric_limits<double>::max();
             }
@@ -202,8 +199,8 @@ void IDS::estimateQValues(State const& state,
         } while (
             moreIterations(currentState.stepsToGo(), actionsToExpand, qValues));
 
-        double multiplier =
-            (double)state.stepsToGo() / (double)currentState.stepsToGo();
+        double multiplier = static_cast<double>(state.stepsToGo()) /
+                            static_cast<double>(currentState.stepsToGo());
         // TODO: Currently, we cache every result, but we should only do so if
         // the result was achieved with a reasonable action, with a timeout or
         // on a state with sufficient depth
@@ -213,7 +210,7 @@ void IDS::estimateQValues(State const& state,
                 if (actionsToExpand[index] == index) {
                     qValues[index] *= multiplier;
                     rewardCache[currentState][index] /=
-                        (double)currentState.stepsToGo();
+                        static_cast<double>(currentState.stepsToGo());
                 }
             }
         } else {
@@ -260,10 +257,13 @@ bool IDS::moreIterations(int const& stepsToGo,
 
     // 0. If we are learning, we apply different termination criteria
     if (isLearning) {
+        assert(elapsedTime.size() > stepsToGo);
         elapsedTime[stepsToGo].push_back(time);
 
         if (MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-            elapsedTime.resize(stepsToGo);
+            // We require at least 3 entries in elapsedTime, since DFS always
+            // begins with 2 stepsToGo.
+            elapsedTime.resize(std::max(3, stepsToGo));
             maxSearchDepth = std::max(stepsToGo - 1, 1);
             return false;
         }
@@ -319,7 +319,8 @@ void IDS::printStats(ostream& out, bool const& printRoundStats,
     SearchEngine::printStats(out, printRoundStats, indent);
     if (numberOfRuns > 0) {
         out << indent << "Average search depth: "
-            << ((double)accumulatedSearchDepth / (double)numberOfRuns)
+            << static_cast<double>(accumulatedSearchDepth) /
+                   static_cast<double>(numberOfRuns)
             << " (in " << numberOfRuns << " runs)" << endl;
     }
     out << indent << "Maximal search depth: " << maxSearchDepth << endl;

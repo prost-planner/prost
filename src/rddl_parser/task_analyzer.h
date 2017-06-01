@@ -6,16 +6,16 @@
 #include <set>
 #include <vector>
 
-class PlanningTask;
+class RDDLTask;
 
 class TaskAnalyzer {
 public:
-    TaskAnalyzer(PlanningTask* _task) : task(_task) {}
+    TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
     void analyzeTask(int numStates, int numSimulations);
 
 protected:
-    PlanningTask* task;
+    RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
 

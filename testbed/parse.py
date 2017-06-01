@@ -9,14 +9,12 @@ import os
 import sys
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print >> sys.stderr, "Usage: ./parse.py <targetDir> [options]"
+    if len(sys.argv) <2 or len(sys.argv) > 3:
+        print >> sys.stderr, "Usage: ./parse.py <directory> [options]"
         exit()
 
-    targetDir = sys.argv[1]
-    dirs = os.listdir(targetDir)
-    if "rddl_prefix" not in dirs:
-        print >> sys.stderr, "Directory targetDir must contain a directory called rddl_prefix."
+    if "rddl" not in os.listdir(sys.argv[1]):
+        print >> sys.stderr, "The given directory must contain a directory called rddl."
         exit()
 
     if len(sys.argv) == 3:
@@ -24,23 +22,25 @@ if __name__ == "__main__":
     else:
         parserArgs = "-s 1"
 
-    files = os.listdir(targetDir+"/rddl_prefix")
+    files = os.listdir(sys.argv[1]+"/rddl")
+
     domainFiles = list()
+
     for f in files:
-        if f.endswith("_mdp.rddl_prefix"):
+        if f.endswith("_mdp.rddl"):
             domainFiles.append(f)
 
     instances = dict()
     for f in files:
-        if not f.endswith("_mdp.rddl_prefix"):
-            domName = f.split("_inst_mdp")[0] + "_mdp.rddl_prefix"
+        if not f.endswith("_mdp.rddl"):
+            domName = f.split("_inst_mdp")[0] + "_mdp.rddl"
             if domName not in domainFiles:
                 print >> sys.stderr, ("No domain file for instance " + f + ".")
                 exit()
             instances[f] = domName
 
-    os.system("rm -rf " + targetDir + "/prost")
-    os.system("mkdir " + targetDir + "/prost")
+    os.system("rm -rf " + sys.argv[1] + "/prost")
+    os.system("mkdir " + sys.argv[1] + "/prost")
     for inst in instances:
-        os.system("../src/rddl_parser/rddl-parser " + targetDir + "/rddl_prefix/" + instances[inst] + " " + targetDir + "/rddl_prefix/" + inst + " " + targetDir + "/prost/ " + parserArgs)
+        os.system("../src/rddl_parser/rddl-parser " + sys.argv[1] + "/rddl/" + instances[inst] + " " + sys.argv[1] + "/rddl/" + inst + " " + sys.argv[1] + "/prost/ " + parserArgs)
 

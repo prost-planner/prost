@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: latin-1 -*-
 
-# Starts both the rddl_parser and the search component for the given problem.
-# Note that the parser output is only temporary and removed at the end of this
-# script's runtime. Therefore, if you are interested in debugging / developing
-# the search component of PROST, it might be better to create all rddl_parser
-# output files once with the preprocess-all.py scripts that is also in this
-# folder.
+# Starts both the rddl_prefix_parser and the search component for the given
+# problem. Note that the parser output is only temporary and removed at the end
+# of this script's runtime. Therefore, if you are interested in debugging /
+# developing the search component of PROST, it might be better to create all
+# rddl_prefix_parser output files once with the parse.py script that is also in
+# this folder.
 
 import os
 import sys

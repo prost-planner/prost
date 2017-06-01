@@ -1,7 +1,7 @@
 #include "task_analyzer.h"
 
 #include "evaluatables.h"
-#include "planning_task.h"
+#include "rddl.h"
 
 #include "utils/system_utils.h"
 #include "utils/timer.h"
