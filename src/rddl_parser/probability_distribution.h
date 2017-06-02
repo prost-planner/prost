@@ -5,7 +5,6 @@
 // used for the RDDL KronDelta, Bernoulli and Discrete statements (TODO: maybe
 // it is more efficient to distinguish these by using different classes.)
 
-#include <cassert>
 #include <iostream>
 #include <map>
 
@@ -128,10 +127,7 @@ public:
         return values.empty();
     }
 
-    int getNumberOfOutcomes() const {
-        assert(isWellDefined());
-        return values.size();
-    }
+    int getNumberOfOutcomes() const;
 
     int size() const {
         return values.size();

@@ -82,6 +82,7 @@ int main(int argc, char** argv) {
     t.reset();
     cout << "writing output..." << endl;
     ofstream resultFile;
+    std::cout << "Task name " << task->name << std::endl;
     targetDir = targetDir + "/" + task->name;
     resultFile.open(targetDir.c_str());
     task->print(resultFile);
