@@ -30,14 +30,14 @@ timeout = None
 # None, then there is no memory bound.
 memout = None
 
-revision = "rev157"
+revision = "rev325"
 
 configs = [
     "[IPPC2011]",
     "[IPPC2014]",
     "[UCT -init [Single -h [RandomWalk]]]",
     "[MaxUCT -init [Expand -h [MLS]] -rec [MPA]]",
-    "[UCTStar -init [Single -h [Uniform]] -rec [EBA]]",
+    "[UCTStar -init [Single -h [Uniform]] -rec [EBA]]"
 ]
 
 host = "localhost"

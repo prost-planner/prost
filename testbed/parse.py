@@ -9,14 +9,18 @@ import os
 import sys
 
 if __name__ == "__main__":
-    if len(sys.argv) <2:
-        print >> sys.stderr, "Usage: ./parse.py <directory>"
+    if len(sys.argv) <2 or len(sys.argv) > 3:
+        print >> sys.stderr, "Usage: ./parse.py <directory> [options]"
         exit()
 
-    dirs = os.listdir(sys.argv[1])
-    if "rddl" not in dirs:
+    if "rddl" not in os.listdir(sys.argv[1]):
         print >> sys.stderr, "The given directory must contain a directory called rddl."
         exit()
+
+    if len(sys.argv) == 3:
+        parserArgs = sys.argv[2]
+    else:
+        parserArgs = "-s 1"
 
     files = os.listdir(sys.argv[1]+"/rddl")
 
@@ -38,5 +42,5 @@ if __name__ == "__main__":
     os.system("rm -rf " + sys.argv[1] + "/prost")
     os.system("mkdir " + sys.argv[1] + "/prost")
     for inst in instances:
-        os.system("../src/rddl_parser/rddl-parser " + sys.argv[1] + "/rddl/" + instances[inst] + " " + sys.argv[1] + "/rddl/" + inst + " " + sys.argv[1] + "/prost/ -s 1")
+        os.system("../src/rddl_parser/rddl-parser " + sys.argv[1] + "/rddl/" + instances[inst] + " " + sys.argv[1] + "/rddl/" + inst + " " + sys.argv[1] + "/prost/ " + parserArgs)
 

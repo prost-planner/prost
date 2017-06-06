@@ -11,14 +11,11 @@
 
 using namespace std;
 
-void TaskAnalyzer::analyzeTask(int const& numberOfStates,
-                               double const& maxTimeout) {
-    Timer t;
-
+void TaskAnalyzer::analyzeTask(int numStates, int numSimulations) {
     State currentState(task->CPFs);
     int remainingSteps = task->horizon;
 
-    while (MathUtils::doubleIsSmaller(t(), maxTimeout)) {
+    for (int simCounter = 0; simCounter < numSimulations;) {
         State nextState(task->CPFs.size());
         double reward = 0.0;
         analyzeStateAndApplyAction(currentState, nextState, reward);
@@ -33,12 +30,13 @@ void TaskAnalyzer::analyzeTask(int const& numberOfStates,
         } else {
             currentState = State(task->CPFs);
             remainingSteps = task->horizon;
+            ++simCounter;
         }
     }
 
     task->numberOfUniqueEncounteredStates = encounteredStates.size();
 
-    createTrainingSet(numberOfStates);
+    createTrainingSet(numStates);
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
@@ -93,9 +91,11 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     }
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
-    // Check if this is a rewward lock
+    // Check if this is a reward lock
     if (task->rewardFormulaAllowsRewardLockDetection &&
-        !task->rewardLockDetected && isARewardLock(current, reward)) {
+        !task->rewardLockDetected &&
+        (encounteredStates.find(current) == encounteredStates.end()) &&
+        isARewardLock(current, reward)) {
         task->rewardLockDetected = true;
     }
 }

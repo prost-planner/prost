@@ -14,7 +14,7 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir>"
+    cout << "Usage: ./rddl-parser <rddlDomain> <rddlProblem> <targetDir> [options]"
          << endl
          << endl;
 }
@@ -32,12 +32,21 @@ int main(int argc, char** argv) {
     string targetDir = string(argv[3]);
 
     double seed = time(nullptr);
+    int numStates = 250;
+    int numSimulations = 25;
 
     // Read optinals
     for (unsigned int i = 4; i < argc; ++i) {
         string nextOption = string(argv[i]);
         if (nextOption == "-s") {
             seed = atoi(string(argv[++i]).c_str());
+            cout << "Setting seed to " << seed << endl;
+        } else if (nextOption == "-trainingSimulations") {
+            numSimulations = atoi(string(argv[++i]).c_str());
+            cout << "Setting number of simulations for training set creation to " << numSimulations << endl;
+        } else if (nextOption == "-trainingSetSize") {
+            numStates = atoi(string(argv[++i]).c_str());
+            cout << "Setting target training set size to " << numStates << endl;
         } else {
             assert(false);
         }
@@ -67,12 +76,13 @@ int main(int argc, char** argv) {
     t.reset();
     cout << "analyzing task..." << endl;
     TaskAnalyzer analyzer(task);
-    analyzer.analyzeTask();
+    analyzer.analyzeTask(numStates, numSimulations);
     cout << "...finished (" << t << ")." << endl;
 
     t.reset();
     cout << "writing output..." << endl;
     ofstream resultFile;
+    std::cout << "Task name " << task->name << std::endl;
     targetDir = targetDir + "/" + task->name;
     resultFile.open(targetDir.c_str());
     task->print(resultFile);

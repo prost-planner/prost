@@ -25,7 +25,7 @@ bool SystemUtils::clockRunning = false;
 bool SystemUtils::CPUMeasurementOfProcessRunning = false;
 
 void SystemUtils::abort(std::string msg) {
-    std::cerr << msg << std::endl;
+    std::cerr << "\033[1;31mERROR! \033[0m" << msg << std::endl;
     exit(0);
 }
 

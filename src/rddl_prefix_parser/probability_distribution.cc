@@ -1,6 +1,13 @@
 #include "probability_distribution.h"
 
+#include <cassert>
+
 using namespace std;
+
+inline int DiscretePD::getNumberOfOutcomes() const {
+    assert(isWellDefined());
+    return values.size();
+}
 
 bool DiscretePD::isWellDefined() const {
     // Only use this funciton in assertions, it's quite inefficient!

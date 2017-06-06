@@ -5,8 +5,6 @@
 
 #include "utils/timer.h"
 
-#include <iostream>
-
 using namespace std;
 
 void Instantiator::instantiate(bool const& output) {

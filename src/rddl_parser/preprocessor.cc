@@ -1,7 +1,6 @@
 #include "preprocessor.h"
 
 #include "evaluatables.h"
-
 #include "rddl.h"
 
 #include "utils/math_utils.h"

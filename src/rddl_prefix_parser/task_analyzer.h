@@ -12,8 +12,7 @@ class TaskAnalyzer {
 public:
     TaskAnalyzer(PlanningTask* _task) : task(_task) {}
 
-    void analyzeTask(int const& numberOfStates = 200,
-                     double const& maxTimeout = 2.0);
+    void analyzeTask(int numStates, int numSimulations);
 
 protected:
     PlanningTask* task;
