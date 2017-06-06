@@ -747,7 +747,7 @@ int main (int argc, char** argv) {
     // Debuging on/off
     // yydebug = 1;
     if (argc < 4) {
-        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir> [options]");
     }
 
     // Checking input file
@@ -755,17 +755,39 @@ int main (int argc, char** argv) {
         SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
     }
 
+    // Read non-optionals
     std::ifstream domain(argv[1], std::ifstream::in);
     std::ifstream nfAndInst(argv[2], std::ifstream::in);
     std::ofstream combined(".combined", std::ifstream::out);
-
-    targetDir = argv[3];
 
     if (domain && nfAndInst) {
         combined << domain.rdbuf() << nfAndInst.rdbuf();
         combined.close();
     } else {
         SystemUtils::abort("Error opening files. Check the correctnes of files.");
+    }
+
+    std::string targetDir = std::string(argv[3]);
+
+    double seed = time(nullptr);
+    int numStates = 250;
+    int numSimulations = 25;
+
+    // Read optinals
+    for (unsigned int i = 4; i < argc; ++i) {
+        std::string nextOption = std::string(argv[i]);
+        if (nextOption == "-s") {
+            seed = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting seed to " << seed << std::endl;
+        } else if (nextOption == "-trainingSimulations") {
+            numSimulations = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting number of simulations for training set creation to " << numSimulations << std::endl;
+        } else if (nextOption == "-trainingSetSize") {
+            numStates = atoi(std::string(argv[++i]).c_str());
+            std::cout << "Setting target training set size to " << numStates << std::endl;
+        } else {
+            assert(false);
+        }
     }
 
     // Creating RDDLTask object
@@ -780,7 +802,7 @@ int main (int argc, char** argv) {
     combined.close();
     std::remove(".combined");
 
-    rddlTask->execute(targetDir);
+    rddlTask->execute(targetDir, seed, numStates, numSimulations);
     std::cout << "total time: " << totalTime << std::endl;
 
     return EXIT_SUCCESS;

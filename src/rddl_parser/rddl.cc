@@ -700,12 +700,14 @@ void RDDLTask::print(std::ostream& out) {
     }
 }
 
-void RDDLTask::execute(std::string td /*target dir*/) {
+void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations) {
     // std::cout << "Executing..." << std::endl << "Writing output.." <<
     // std::endl;
 
     Timer t, totalTime;
     // std::cout << "Parsing...finished" << std::endl;
+
+    srand(seed);
 
     t.reset();
     std::cout << "instantiating..." << std::endl;
@@ -722,7 +724,7 @@ void RDDLTask::execute(std::string td /*target dir*/) {
     t.reset();
     std::cout << "analyzing task..." << std::endl;
     TaskAnalyzer analyzer(this);
-    analyzer.analyzeTask();
+    analyzer.analyzeTask(numStates, numSimulations);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 
+
 #include "utils/math_utils.h"
 
 class DiscretePD {
@@ -127,10 +128,7 @@ public:
         return values.empty();
     }
 
-    int getNumberOfOutcomes() const {
-        assert(isWellDefined());
-        return values.size();
-    }
+    int getNumberOfOutcomes() const;
 
     int size() const {
         return values.size();
