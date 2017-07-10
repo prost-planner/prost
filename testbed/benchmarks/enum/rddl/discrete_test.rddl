@@ -16,6 +16,7 @@ domain discrete_test_mdp {
 	        DUMMY(obj_t) : { non-fluent, bool, default = false };
 		// Vars
 		v1(obj_t)   : { state-fluent, enum_t, default = @a };
+                v2(obj_t)   : { state-fluent, bool, default = false };
 
 		// Actions
 		act1(obj_t)     : { action-fluent, bool, default = false };
@@ -24,11 +25,12 @@ domain discrete_test_mdp {
 	cpfs {
              v1'(?o) =
                if (act1(?o)) then Discrete(enum_t,
-                                             @a : 0.5,
-                                             @b : 0.3,
-                                             @c : 0.2
+                                             @a : 1.0 - (0.7 * v2(?o)),
+                                             @b : (0.2 * v2(?o)),
+                                             @c : (0.5 * v2(?o))
                                            )
                else v1(?o);
+             v2'(?o) = Bernoulli(0.75);
                         
 	};
   
