@@ -596,7 +596,7 @@ void Preprocessor::calculateCPFDomains() {
 
     // Set domains
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        task->CPFs[index]->domain = domains[index];
+        task->CPFs[index]->setDomain(domains[index]);
     }
 }
 
@@ -670,7 +670,7 @@ void Preprocessor::determinize() {
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =
-                task->CPFs[index]->formula->determinizeMostLikely();
+                task->CPFs[index]->formula->determinizeMostLikely(task->actionStates);
             task->CPFs[index]->determinization =
                 task->CPFs[index]->determinization->simplify(replacementsDummy);
         }

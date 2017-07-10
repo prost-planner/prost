@@ -158,6 +158,11 @@ struct ConditionalProbabilityFunction : public Evaluatable {
         return !domain.empty();
     }
 
+    void setDomain(std::set<double> _domain) {
+        domain = _domain;
+        head->domainSize = domain.size();
+    }
+
     void setIndex(int _index) {
         head->index = _index;
     }
