@@ -1,7 +1,8 @@
-===================================================================
---- src/rddl/competition/Server.java	(revision 250)
-+++ src/rddl/competition/Server.java	(working copy)
-@@ -118,11 +118,13 @@
+diff --git a/src/rddl/competition/Server.java b/src/rddl/competition/Server.java
+index c447755..c3c6eea 100755
+--- a/src/rddl/competition/Server.java
++++ b/src/rddl/competition/Server.java
+@@ -118,11 +118,13 @@ public class Server implements Runnable {
  	private static int ID = 0;
  	private static int DEFAULT_NUM_ROUNDS = 30;
      private static long DEFAULT_TIME_ALLOWED = 1080000; // milliseconds = 18 minutes
@@ -15,7 +16,7 @@
  	
  	public State      state;
  	public INSTANCE   instance;
-@@ -145,10 +147,10 @@
+@@ -145,10 +147,10 @@ public class Server implements Runnable {
  		ArrayList<RDDL> rddls = new ArrayList<RDDL>();
  		int port = PORT_NUMBER;
  		if ( args.length < 1 ) {
@@ -28,7 +29,7 @@
  			System.exit(1);
  		}
  				
-@@ -163,14 +165,19 @@
+@@ -163,14 +165,19 @@ public class Server implements Runnable {
  			if (args.length > 2) {
  				DEFAULT_NUM_ROUNDS = Integer.valueOf(args[2]);
  			}
@@ -52,7 +53,7 @@
  			}
  			System.out.println("RDDL Server Initialized");
  			while (true) {
-@@ -356,7 +363,7 @@
+@@ -356,7 +363,7 @@ public class Server implements Runnable {
  					//        an early round end
  					// TODO: check that this works
  					round_elapsed_time = (System.currentTimeMillis() - start_round_time);
@@ -61,7 +62,7 @@
  				}
  				accum_total_reward += accum_reward;
  				session_elapsed_time += round_elapsed_time;
-@@ -397,7 +404,7 @@
+@@ -397,7 +404,7 @@ public class Server implements Runnable {
  	}
  	
  	public void writeToLog(String msg) throws IOException {
