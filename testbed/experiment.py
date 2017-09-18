@@ -168,11 +168,19 @@ def create_tasks(filename, instances):
         jobs += "    " + task + "\n"
         jobs += "    exit $?\n"
         jobs += "fi\n"
-
+        
     f = file(filename, 'w')
     f.write(str(jobs))
     f.close()
 
+def run_experiments(filename):
+    if grid_engine == "slurm":
+        os.system("sbatch " + filename + " &")
+    elif grid_engine == "sge":
+        os.system("qsub " + filename + " &")
+    else:
+        print "Invalid grid engine!"
+        exit() 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -180,4 +188,7 @@ if __name__ == '__main__':
         exit()
     instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/rddl/"))
     instances = [instance.split(".")[0] for instance in instances]
-    create_tasks("../testbed/experiment_"+revision, instances)
+    os.system("mkdir -p " + resultsDir)
+    filename = resultsDir + "experiment_"+revision
+    create_tasks(filename, instances)
+    run_experiments(filename)
