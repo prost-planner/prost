@@ -18,7 +18,7 @@ email = "tho.keller@unibas.ch"
 # "athlon.q" and "athlon_core.q". The former value configures the use
 # of a whole cpu, while the latter option configures the use of a
 # single cpu core.
-queue = "athlon.q"
+queue = "meta_core.q"
 
 # defines the priority of the task. Possible values are [-1023,0], but the
 # maximum of 0 should only be used for very urgent jobs.
@@ -68,6 +68,9 @@ name = "prost_"+revision
 # Directory results are written to
 resultsDir = "results/"+revision+"/"
 
+# Directory server logs are written to
+serverLogDir = resultsDir+"serverLogs/"
+
 # The file where stderr is directed to
 errfile = "stderr.log"
 
@@ -77,7 +80,7 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s %(serverLogDir)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
 " ../src/search/prost benchmarks/%(benchmark)s/prost/%(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
@@ -137,7 +140,8 @@ def create_tasks(filename, instances):
                                         instance=instance,
                                         port=port,
                                         numRuns = numRuns,
-                                        resultsDir=resultsDir+config.replace(" ","_"))
+                                        resultsDir=resultsDir+config.replace(" ","_"),
+                                        serverLogDir=serverLogDir)
             tasks.append(task)
             port = port + 1
 
@@ -151,6 +155,12 @@ def create_tasks(filename, instances):
                                     timeout=timeout,
                                     num_tasks=str(len(tasks)),
                                     email=email)
+        
+        for task_id,task in zip(range(1, len(tasks)+1), tasks):
+            jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
+            jobs += "    " + task + "\n"
+            jobs += "    exit $?\n"
+            jobs += "fi\n"
     elif grid_engine == "sge":
         jobs = SGE_TEMPLATE %dict(errfile=errfile,
                                   logfile=logfile,
@@ -159,16 +169,16 @@ def create_tasks(filename, instances):
                                   queue=queue,
                                   num_tasks=str(len(tasks)),
                                   priority=str(priority))
+        
+        for task_id,task in zip(range(1, len(tasks)+1), tasks):
+            jobs += "if [ " + str(task_id) + " -eq $SGE_TASK_ID ]; then\n"
+            jobs += "    " + task + "\n"
+            jobs += "    exit $?\n"
+            jobs += "fi\n"
     else:
         print "Invalid grid engine!"
         exit()
 
-    for task_id,task in zip(range(1, len(tasks)+1), tasks):
-        jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
-        jobs += "    " + task + "\n"
-        jobs += "    exit $?\n"
-        jobs += "fi\n"
-        
     f = file(filename, 'w')
     f.write(str(jobs))
     f.close()
@@ -189,6 +199,7 @@ if __name__ == '__main__':
     instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/rddl/"))
     instances = [instance.split(".")[0] for instance in instances]
     os.system("mkdir -p " + resultsDir)
+    os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
     create_tasks(filename, instances)
     run_experiments(filename)
