@@ -63,16 +63,16 @@ memout = "3872M"
 ############ (USUALLY) NO NEED TO CHANGE THE FOLLOWING ############
 
 # The experiment's name
-name = "prost-"+revision
+name = "prost_"+revision
 
 # Directory results are written to
 resultsDir = "results/"+revision+"/"
 
 # The file where stderr is directed to
-errfile = resultsDir + "stderr.log"
+errfile = "stderr.log"
 
 # The file where stdout is directed to
-logfile = resultsDir + "stdout.log"
+logfile = "stdout.log"
 
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
@@ -96,7 +96,7 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set timeout\n"\
                  "#SBATCH -t %(timeout)s\n"\
                  "### Number of tasks.\n"\
-                 "#SBATCH --array=%(num_tasks)s\n"\
+                 "#SBATCH --array=1-%(num_tasks)s\n"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
                  "#SBATCH --mail-user=%(email)s\n"\
@@ -180,4 +180,4 @@ if __name__ == '__main__':
         exit()
     instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/rddl/"))
     instances = [instance.split(".")[0] for instance in instances]
-    create_tasks("../testbed/experiment-"+revision, instances)
+    create_tasks("../testbed/experiment_"+revision, instances)
