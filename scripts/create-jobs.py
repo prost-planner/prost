@@ -79,7 +79,7 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
-" ./prost benchmarks/%(benchmark)s/prost/%(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ../src/search/prost benchmarks/%(benchmark)s/prost/%(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
