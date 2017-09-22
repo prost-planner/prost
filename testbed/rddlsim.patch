@@ -1,22 +1,32 @@
 diff --git a/src/rddl/competition/Server.java b/src/rddl/competition/Server.java
-index c447755..c3c6eea 100755
+index c447755..b7a8099 100755
 --- a/src/rddl/competition/Server.java
 +++ b/src/rddl/competition/Server.java
-@@ -118,11 +118,13 @@ public class Server implements Runnable {
+@@ -56,7 +56,6 @@ public class Server implements Runnable {
+ 	public static final boolean SHOW_MSG = false;
+ 	public static final boolean SHOW_TIMING = false;
+ 	
+-	private static final String LOG_FILE = "rddl";
+ 	/**
+ 	 * following is XML definitions
+ 	 */
+@@ -117,12 +116,14 @@ public class Server implements Runnable {
+ 	private RDDL rddl = null;
  	private static int ID = 0;
  	private static int DEFAULT_NUM_ROUNDS = 30;
-     private static long DEFAULT_TIME_ALLOWED = 1080000; // milliseconds = 18 minutes
-+    private static boolean USE_TIMEOUT = false;
+-    private static long DEFAULT_TIME_ALLOWED = 1080000; // milliseconds = 18 minutes
++	private static long DEFAULT_TIME_ALLOWED = 1080000; // milliseconds = 18 minutes
++	private static boolean USE_TIMEOUT = false;
  	public int port;
  	public int id;
  	public String clientName = null;
  	public String requestedInstance = null;
  	public RandomDataGenerator rand;
-+    public static String logFolder = null;
++	private static String logFile = "rddl";
  	
  	public State      state;
  	public INSTANCE   instance;
-@@ -145,10 +147,10 @@ public class Server implements Runnable {
+@@ -145,10 +146,10 @@ public class Server implements Runnable {
  		ArrayList<RDDL> rddls = new ArrayList<RDDL>();
  		int port = PORT_NUMBER;
  		if ( args.length < 1 ) {
@@ -29,14 +39,12 @@ index c447755..c3c6eea 100755
  			System.exit(1);
  		}
  				
-@@ -163,14 +165,19 @@ public class Server implements Runnable {
+@@ -163,14 +164,17 @@ public class Server implements Runnable {
  			if (args.length > 2) {
  				DEFAULT_NUM_ROUNDS = Integer.valueOf(args[2]);
  			}
 +                        if (args.length > 3) {
-+                            logFolder = args[3];
-+                        } else {
-+                            logFolder = new String("");
++                            logFile = args[3] + "/rddl";
 +                        }
  			int rand_seed = -1;
 -			if ( args.length > 3) {
@@ -53,7 +61,7 @@ index c447755..c3c6eea 100755
  			}
  			System.out.println("RDDL Server Initialized");
  			while (true) {
-@@ -356,7 +363,7 @@ public class Server implements Runnable {
+@@ -356,7 +360,7 @@ public class Server implements Runnable {
  					//        an early round end
  					// TODO: check that this works
  					round_elapsed_time = (System.currentTimeMillis() - start_round_time);
@@ -62,12 +70,12 @@ index c447755..c3c6eea 100755
  				}
  				accum_total_reward += accum_reward;
  				session_elapsed_time += round_elapsed_time;
-@@ -397,7 +404,7 @@ public class Server implements Runnable {
+@@ -397,7 +401,7 @@ public class Server implements Runnable {
  	}
  	
  	public void writeToLog(String msg) throws IOException {
 -		BufferedWriter bw = new BufferedWriter(new FileWriter(LOG_FILE + "-" + this.port + ".log" , true));
-+		BufferedWriter bw = new BufferedWriter(new FileWriter(logFolder + "/" + LOG_FILE + "-" + this.port + ".log" , true));
++		BufferedWriter bw = new BufferedWriter(new FileWriter(logFile + "-" + this.port + ".log" , true));
  		bw.write(msg);
  		bw.newLine();
  		bw.flush();
