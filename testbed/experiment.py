@@ -10,6 +10,9 @@ import sys
 partition="infai"
 qos="infai"
 
+# Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
+nice="2000"
+
 # The email adress that receives an email when the experiment is finished
 email = "tho.keller@unibas.ch"
 
@@ -80,7 +83,7 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s %(serverLogDir)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s 0 0 1 %(serverLogDir)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
 " ../src/search/prost benchmarks/%(benchmark)s/prost/%(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
@@ -100,6 +103,8 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "#SBATCH -t %(timeout)s\n"\
                  "### Number of tasks.\n"\
                  "#SBATCH --array=1-%(num_tasks)s\n"\
+                 "### Adjustment to priority ([-2147483645, 2147483645])."\
+                 "#SBATCH --nice=%(nice)s"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
                  "#SBATCH --mail-user=%(email)s\n"\
