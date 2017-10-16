@@ -103,8 +103,8 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "#SBATCH -t %(timeout)s\n"\
                  "### Number of tasks.\n"\
                  "#SBATCH --array=1-%(num_tasks)s\n"\
-                 "### Adjustment to priority ([-2147483645, 2147483645])."\
-                 "#SBATCH --nice=%(nice)s"\
+                 "### Adjustment to priority ([-2147483645, 2147483645]).\n"\
+                 "#SBATCH --nice=%(nice)s\n"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
                  "#SBATCH --mail-user=%(email)s\n"\
@@ -159,6 +159,7 @@ def create_tasks(filename, instances):
                                     memout=memout,
                                     timeout=timeout,
                                     num_tasks=str(len(tasks)),
+                                    nice=nice,
                                     email=email)
         
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
