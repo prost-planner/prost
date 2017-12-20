@@ -525,7 +525,7 @@ NonfluentBlock: non_fluents_token id_token '{'
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
                         SystemUtils::abort("Unknown domain " + *$6 +
-                                           "  defined in Non fluent section");
+                                           "  used in non-fluents section");
                     }
                 }
             | non_fluents_token id_token '{'
@@ -535,7 +535,17 @@ NonfluentBlock: non_fluents_token id_token '{'
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
                         SystemUtils::abort("Unknown domain " + *$6 +
-                                           "  defined in Non fluent section");
+                                           "  used in non-fluents section");
+                    }
+                }
+            | non_fluents_token id_token '{'
+                domain_token '=' id_token ';'
+                objects_token '{' ObjectsList  '}' ';'
+            '}' {
+                    rddlTask->nonFluentsName = *$2;
+                    if (rddlTask->domainName != *$6) {
+                        SystemUtils::abort("Unknown domain " + *$6 +
+                                           "  used in non-fluents section");
                     }
                 }
 ;
@@ -649,7 +659,7 @@ InstanceBlock:
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
                                 '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
-        // 1.7 No objects, no inti state
+        // 1.7 No objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 non_fluents_token '=' id_token ';'
