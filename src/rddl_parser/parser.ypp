@@ -66,8 +66,8 @@ RDDLTask* rddlTask;
 %type <parameterList> TypedVarList
 %type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
 %type <parametrizedVariables> VarSection VarList VariablesInstanceList
-%type <logicalExpression> Expression LConst StateConstraintSchematic
-%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList ExpressionList
+%type <logicalExpression> Expression LConst StateConstraintSchematic ActionPreconditionsSchematic
+%type <logicalExpressions> StateConstraintsSection StateConstraintList ActionPreconditionsSection ActionPreconditionsList LConstList ExpressionList
 %type <type> TypeSpecification SchematicType
 %type <types> TypeList TypeSection
 %type <conditionEffect> CaseSchematic
@@ -125,7 +125,7 @@ DomainList: TypeSection DomainList                      { }
           | StateConstraintsSection DomainList          { }
           | ObjectsSection DomainList                   { }
           | RequirementsSection DomainList              { }
-          | ActionPreconditionsSection DomainList       { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | ActionPreconditionsSection DomainList       { }
           | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
           | TypeSection                       { }
           | VarSection                        { }
@@ -134,7 +134,7 @@ DomainList: TypeSection DomainList                      { }
           | StateConstraintsSection           { }
           | ObjectsSection                    { }
           | RequirementsSection               { }
-          | ActionPreconditionsSection        { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
+          | ActionPreconditionsSection        { }
           | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
 ;
 ////////////////////////
@@ -142,6 +142,8 @@ DomainList: TypeSection DomainList                      { }
 ////////////////////////
 RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { }
                 | requirements_token '=' '{' '}' ';'                     { }
+                | requirements_token '{' RequirementsList '}' ';'        { }
+                | requirements_token  '{' '}' ';'                        { }
 ;
 
 RequirementsList: id_token                    { }
@@ -463,15 +465,15 @@ StateConstraintSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ////////////////////////
 // Action Prediction section
 ////////////////////////
-ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { SystemUtils::abort("Action prediction not implemented yet."); }
-                        | action_preconditions_token '{' '}' ';'                            { SystemUtils::abort("Action prediction not implemented yet."); }
+ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { }
+                        | action_preconditions_token '{' '}' ';'                            { }
 ;
 
-ActionPreconditionsList: ActionPreconditionsSchematic
-                    | ActionPreconditionsSchematic ',' ActionPreconditionsList
+ActionPreconditionsList: ActionPreconditionsSchematic                       { }
+                    | ActionPreconditionsSchematic ActionPreconditionsList  { }
 ;
 
-ActionPreconditionsSchematic: Expression ';'
+ActionPreconditionsSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ;
 
 ////////////////////////
