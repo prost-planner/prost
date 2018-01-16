@@ -157,7 +157,9 @@ void IPPCClient::initRound(vector<double>& initialState,
     stringstream os;
     os.str("");
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-       << "<round-request/>" << '\0';
+       << "<round-request> <execute-policy>yes</execute-policy> "
+          "</round-request>"
+       << '\0';
 
     if (write(socket, os.str().c_str(), os.str().length()) == -1) {
         SystemUtils::abort("Error: writing to socket failed.");
