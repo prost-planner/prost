@@ -406,7 +406,6 @@ void IPPCClient::readVariable(XMLNode const* node,
 ******************************************************************************/
 
 void IPPCClient::executeParser(string const& taskDesc) {
-    cout << taskDesc << endl;
     generateTempFiles(taskDesc);
     // Assumes that rddl-parser executable exists in the current directory.
     if (!fs::exists(fs::current_path() / "rddl-parser")) {
@@ -415,7 +414,6 @@ void IPPCClient::executeParser(string const& taskDesc) {
     }
     // TODO This probably only works in unix and is not portable.
     int result = std::system("./rddl-parser temp_domain.rddl temp_instance.rddl temp.prost");
-    std::cout << result << std::endl;
     Parser parser("temp.prost");
     parser.parseTask(stateVariableIndices, stateVariableValues);
     removeTempFiles();
