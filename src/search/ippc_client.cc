@@ -144,7 +144,7 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
                 "Error: server response does not contain task description.");
         }
         s = base64_decode(s);
-        executeParser(s);
+        executeParser(rddlProblem, s);
     }
 
     if (!serverResponse->dissect("num-rounds", s)) {
@@ -405,7 +405,8 @@ void IPPCClient::readVariable(XMLNode const* node,
                              Parser Interaction
 ******************************************************************************/
 
-void IPPCClient::executeParser(string const& taskDesc) {
+void IPPCClient::executeParser(string const& problemName,
+                               string const& taskDesc) {
     cout << taskDesc << endl;
     generateTempFiles(taskDesc);
     // Assumes that rddl-parser executable exists in the current directory.
@@ -414,11 +415,14 @@ void IPPCClient::executeParser(string const& taskDesc) {
             "Error: rddl-parser executable not found in working directory.");
     }
     // TODO This probably only works in unix and is not portable.
-    int result = std::system("./rddl-parser temp_domain.rddl temp_instance.rddl temp.prost");
-    std::cout << result << std::endl;
-    Parser parser("temp.prost");
+    int result =
+        std::system("./rddl-parser temp_domain.rddl temp_instance.rddl .");
+    if (result != 0) {
+        SystemUtils::abort("Error: rddl-parser had an error");
+    }
+    Parser parser(problemName);
     parser.parseTask(stateVariableIndices, stateVariableValues);
-    removeTempFiles();
+    removeTempFiles(problemName);
 }
 
 void IPPCClient::generateTempFiles(string const& taskDesc) const {
@@ -441,8 +445,8 @@ void IPPCClient::generateTempFiles(string const& taskDesc) const {
     ofs.close();
 }
 
-void IPPCClient::removeTempFiles() const {
+void IPPCClient::removeTempFiles(string const& problemName) const {
     fs::remove(fs::current_path() / "temp_domain.rddl");
     fs::remove(fs::current_path() / "temp_instance.rddl");
-    fs::remove(fs::current_path() / "temp.prost");
+    fs::remove(fs::current_path() / problemName);
 }
