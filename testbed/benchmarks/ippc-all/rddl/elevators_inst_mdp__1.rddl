@@ -24,4 +24,3 @@ instance elevators_inst_mdp__1 {
 	horizon = 40;
 	discount = 1.0;
 } 
-

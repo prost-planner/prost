@@ -17,6 +17,7 @@ HEADERS = parser.h \
 	  evaluatables.h \
 	  logical_expressions.h \
 	  probability_distribution.h \
+	  utils/base64.h \
 	  utils/strxml.h \
 	  utils/stopwatch.h \
 	  utils/string_utils.h \
