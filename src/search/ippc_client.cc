@@ -1,5 +1,6 @@
 #include "ippc_client.h"
 
+#include "parser.h"
 #include "prost_planner.h"
 
 #include "utils/string_utils.h"
@@ -8,20 +9,34 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <netdb.h>
 #include <sstream>
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <experimental/filesystem>
+
+namespace fs = std::experimental::filesystem;
+
 using namespace std;
 
-void IPPCClient::run(string const& problemName) {
+void IPPCClient::run(string const& input, string& plannerDesc) {
+    string problemName = input;
+    // If the input refers to a problem file we parse the file. Otherwise we
+    // first have to request the task description from the server.
+    if (fs::exists(input)) {
+        Parser parser(input);
+        parser.parseTask(stateVariableIndices, stateVariableValues);
+        problemName = SearchEngine::taskName;
+    }
+
     // Init connection to the rddlsim server
     initConnection();
 
     // Request round
-    initSession(problemName);
+    initSession(problemName, plannerDesc);
 
     vector<double> nextState(stateVariableIndices.size());
     double immediateReward = 0.0;
@@ -100,7 +115,7 @@ void IPPCClient::closeConnection() {
                      Session and rounds management
 ******************************************************************************/
 
-void IPPCClient::initSession(string const& rddlProblem) {
+void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
        << "<session-request>"
@@ -118,8 +133,18 @@ void IPPCClient::initSession(string const& rddlProblem) {
     if (!serverResponse) {
         SystemUtils::abort("Error: initializing session failed.");
     }
-
     string s;
+
+    // If the task was not initialized, we have to read it from the server and
+    // run the parser
+    if (SearchEngine::taskName.empty()) {
+        if (!serverResponse->dissect("task", s)) {
+            SystemUtils::abort(
+                "Error: server response does not contain task description.");
+        }
+        executeParser(s);
+    }
+
     if (!serverResponse->dissect("num-rounds", s)) {
         SystemUtils::abort("Error: server response insufficient.");
     }
@@ -131,9 +156,12 @@ void IPPCClient::initSession(string const& rddlProblem) {
     remainingTime = atoi(s.c_str());
 
     delete serverResponse;
-
+    // in c++ 14 we would use make_unique<ProstPlanner>
+    planner = std::unique_ptr<ProstPlanner>(new ProstPlanner(plannerDesc));
+    planner->init();
     planner->initSession(numberOfRounds, remainingTime);
 }
+
 void IPPCClient::finishSession() {
     XMLNode const* sessionEndResponse = XMLNode::readNode(socket);
 
@@ -369,4 +397,48 @@ void IPPCClient::readVariable(XMLNode const* node,
     name += ")";
     assert(result.find(name) == result.end());
     result[name] = value;
+}
+
+/******************************************************************************
+                             Parser Interaction
+******************************************************************************/
+
+void IPPCClient::executeParser(string const& taskDesc) {
+    generateTempFiles(taskDesc);
+    // Assumes that rddl-parser executable exists in the current directory.
+    if (!fs::exists(fs::current_path() / "rddl-parser")) {
+        SystemUtils::abort(
+            "Error: rddl-parser executable not found in working directory.");
+    }
+    // TODO This probably only works in unix and is not portable.
+    std::system("./rddl-parser temp_domain.rddl temp_instance.rddl temp.prost");
+    Parser parser("temp.prost");
+    parser.parseTask(stateVariableIndices, stateVariableValues);
+    removeTempFiles();
+}
+
+void IPPCClient::generateTempFiles(string const& taskDesc) const {
+    vector<string> tokens;
+    StringUtils::tokenize(taskDesc, '{', '}', tokens);
+    // We assume task description is always ordered
+    string const& task = tokens[0];
+    string const& non_fluents = tokens[1];
+    string const& instance = tokens[2];
+
+    // Generate temp domain file
+    fs::path domain_path = fs::current_path() / "temp_domain.rddl";
+    std::ofstream ofs(domain_path);
+    ofs << task << endl;
+    ofs.close();
+    // Generate temp instance file
+    fs::path instance_path = fs::current_path() / "temp_instance.rddl";
+    ofs.open(instance_path);
+    ofs << non_fluents << endl << instance << endl;
+    ofs.close();
+}
+
+void IPPCClient::removeTempFiles() const {
+    fs::remove(fs::current_path() / "temp_domain.rddl");
+    fs::remove(fs::current_path() / "temp_instance.rddl");
+    fs::remove(fs::current_path() / "temp.prost");
 }
