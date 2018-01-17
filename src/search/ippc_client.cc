@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "prost_planner.h"
 
+#include "utils/base64.h"
 #include "utils/string_utils.h"
 #include "utils/strxml.h"
 #include "utils/system_utils.h"
@@ -142,6 +143,7 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
             SystemUtils::abort(
                 "Error: server response does not contain task description.");
         }
+        s = base64_decode(s);
         executeParser(s);
     }
 
@@ -404,6 +406,7 @@ void IPPCClient::readVariable(XMLNode const* node,
 ******************************************************************************/
 
 void IPPCClient::executeParser(string const& taskDesc) {
+    cout << taskDesc << endl;
     generateTempFiles(taskDesc);
     // Assumes that rddl-parser executable exists in the current directory.
     if (!fs::exists(fs::current_path() / "rddl-parser")) {
@@ -411,7 +414,8 @@ void IPPCClient::executeParser(string const& taskDesc) {
             "Error: rddl-parser executable not found in working directory.");
     }
     // TODO This probably only works in unix and is not portable.
-    std::system("./rddl-parser temp_domain.rddl temp_instance.rddl temp.prost");
+    int result = std::system("./rddl-parser temp_domain.rddl temp_instance.rddl temp.prost");
+    std::cout << result << std::endl;
     Parser parser("temp.prost");
     parser.parseTask(stateVariableIndices, stateVariableValues);
     removeTempFiles();
