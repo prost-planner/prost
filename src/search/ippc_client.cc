@@ -407,7 +407,6 @@ void IPPCClient::readVariable(XMLNode const* node,
 
 void IPPCClient::executeParser(string const& problemName,
                                string const& taskDesc) {
-    cout << taskDesc << endl;
     generateTempFiles(taskDesc);
     // Assumes that rddl-parser executable exists in the current directory.
     if (!fs::exists(fs::current_path() / "rddl-parser")) {
