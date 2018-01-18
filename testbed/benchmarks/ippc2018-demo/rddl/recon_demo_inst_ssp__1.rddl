@@ -1,0 +1,81 @@
+////////////////////////////////////////////////////////////////////
+//
+// RDDL SSP version of the Recon demo instance for IPC 2018 by Thomas
+// Keller (tho.keller [at] unibas.ch), based on the IPC 2011 Recon
+// domain of Tom Walsh.
+//
+////////////////////////////////////////////////////////////////////
+
+instance recon_demo_inst_ssp__1 {
+    domain = recon_demo_ssp;
+    
+    objects {
+        location      : {loc00, loc01, loc02, loc10, loc11, loc12, loc20, loc21, loc22};
+        rover         : {r1, r2};
+        camera        : {c1, c2};
+        life-detector : {l1, l2};
+    };
+
+    non-fluents {
+        CONNECTED(loc00, loc01);
+        CONNECTED(loc01, loc00);        
+        CONNECTED(loc01, loc02);
+        CONNECTED(loc02, loc01);        
+        CONNECTED(loc10, loc11);
+        CONNECTED(loc11, loc10);        
+        CONNECTED(loc11, loc12);
+        CONNECTED(loc12, loc11);
+        CONNECTED(loc20, loc21);
+        CONNECTED(loc21, loc20);        
+        CONNECTED(loc21, loc22);
+        CONNECTED(loc22, loc21);
+
+        CONNECTED(loc00, loc10);
+        CONNECTED(loc10, loc00);
+        CONNECTED(loc01, loc11);
+        CONNECTED(loc11, loc01);
+        CONNECTED(loc02, loc12);
+        CONNECTED(loc12, loc02);
+        CONNECTED(loc10, loc20);
+        CONNECTED(loc20, loc10);
+        CONNECTED(loc11, loc21);
+        CONNECTED(loc21, loc11);
+        CONNECTED(loc12, loc22);
+        CONNECTED(loc22, loc12);
+
+        BASE(loc00);
+
+        TOOL-ON(c1, r1);
+        TOOL-ON(l1, r1);
+        TOOL-ON(c2, r2);
+        TOOL-ON(l2, r2);
+
+        LIFE-DETECTION-PROB(loc10) = 0.4;
+        LIFE-DETECTION-PROB-DAMAGED(loc10) = 0.2;
+
+        LIFE-DETECTION-PROB(loc22) = 0.8;
+        LIFE-DETECTION-PROB-DAMAGED(loc22) = 0.4;
+
+        LIFE-DETECTION-PROB(loc02) = 0.9;
+        LIFE-DETECTION-PROB-DAMAGED(loc02) = 0.5;
+
+        IMPORTANCE(loc10) = 5;
+        IMPORTANCE(loc22) = 8;
+        IMPORTANCE(loc02) = 12;
+
+        DAMAGE-PROB(loc10) = 0.8;
+        DAMAGE-PROB(loc11) = 0.6;
+        DAMAGE-PROB(loc12) = 0.2;
+    };
+
+    init-state { 
+        rover-at(r1, loc00);
+        rover-at(r2, loc00);
+    };
+
+    // all locations with non-zero probability of life must have been checked
+    terminal = forall_{?loc : location} [ LIFE-DETECTION-PROB(?loc) == 0.0 | life-checked(?loc) ];
+    
+    discount = 1.0;
+} 
+

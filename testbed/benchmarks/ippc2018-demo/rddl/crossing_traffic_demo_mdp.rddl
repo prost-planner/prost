@@ -1,0 +1,80 @@
+////////////////////////////////////////////////////////////////////
+//
+// RDDL MDP version of the Crossing Traffic demo domain for IPC 2018
+// by Thomas Keller (tho.keller [at] unibas.ch), based on the IPC 2011
+// and 2014 Crossing Traffic domain of Sungwook Yoon and Scott Sanner.
+//
+////////////////////////////////////////////////////////////////////
+
+domain crossing_traffic_demo_mdp {
+    requirements {
+         reward-deterministic,
+         preconditions
+    };
+
+    types {
+        xpos : object;
+        ypos : object;
+    };
+
+    pvariables {
+        // non-fluents
+        NORTH(ypos, ypos)            : {non-fluent, bool, default = false};
+        SOUTH(ypos, ypos)            : {non-fluent, bool, default = false};
+        EAST(xpos, xpos)             : {non-fluent, bool, default = false};
+        WEST(xpos, xpos)             : {non-fluent, bool, default = false};
+        GOAL(xpos,ypos)              : {non-fluent, bool, default = false};
+        INPUT-RATE(ypos)             : {non-fluent, real, default = 0.2};
+
+        // state-fluents
+        agent-at(xpos, ypos)         : {state-fluent, bool, default = false};
+        obstacle-at(xpos, ypos)      : {state-fluent, bool, default = false};
+
+        // action-fluents
+        move(xpos, ypos)             : {action-fluent, bool, default = false};
+    };
+
+    cpfs {
+        agent-at'(?x,?y) =
+            // if the agent has been hit by an obstacle, it disappears
+            if ( exists_{?x2 : xpos, ?y2 : ypos} [ agent-at(?x2,?y2) & obstacle-at(?x2,?y2) ] )
+                then false
+            // the agent moves here
+            else if ( move(?x,?y) )
+                then true
+            // the agent was already here and didn't move away
+            else ( ( forall_{?x2 : xpos, ?y2 : ypos} [ ~move(?x2,?y2) ] ) & agent-at(?x,?y) );
+
+        obstacle-at'(?x, ?y) =
+            // at the eastern border of the grid, there is a chance that a new obstacle appears
+            if ( ~exists_{?x2 : xpos} [ EAST(?x, ?x2) ] )
+                then Bernoulli( INPUT-RATE(?y) )
+            // all obstacles move one step westward
+            else ( exists_{?x2 : xpos} [ EAST(?x,?x2) & obstacle-at(?x2,?y) ] );
+    };
+
+    // -1 reward if the agent is not at the goal, and 0 otherwise
+    reward = 0 - ~(exists_{?x : xpos, ?y : ypos} [ agent-at(?x,?y) & GOAL(?x,?y) ]);
+
+    action-preconditions {
+        // only allow movement to adjacent cells
+        forall_{?x  : xpos, ?y : ypos}
+            [ move(?x, ?y) => exists_{?x2 : xpos, ?y2 : ypos}
+                [ agent-at(?x2, ?y2) &
+                  (( NORTH(?y, ?y2) & ?x == ?x2 ) |
+                   ( SOUTH(?y, ?y2) & ?x == ?x2 ) |
+                   ( EAST(?x, ?x2) & ?y == ?y2 ) |
+                   ( WEST(?x, ?x2) & ?y == ?y2 ))]];
+
+        // do not allow to move once the goal is reached
+        forall_{?x : xpos, ?y : ypos} [ move(?x, ?y) => (~exists_{?x2 : xpos, ?y2 : ypos} [ agent-at(?x2,?y2) & GOAL(?x2,?y2) ]) ];
+
+        // no concurrency (this replaces the max-nondef-actions entry in the instance specification)
+        (sum_{?x : xpos, ?y : ypos} [ move(?x,?y) ]) <= 1;
+    };
+
+    state-invariants {
+        // the agent is at most at one grid cell
+        (sum_{?x : xpos, ?y : ypos} [ agent-at(?x, ?y) ]) <= 1;
+    };
+}

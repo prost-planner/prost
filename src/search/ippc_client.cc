@@ -429,8 +429,7 @@ void IPPCClient::generateTempFiles(string const& taskDesc) const {
     StringUtils::tokenize(taskDesc, '{', '}', tokens);
     // We assume task description is always ordered
     string const& task = tokens[0];
-    string const& non_fluents = tokens[1];
-    string const& instance = tokens[2];
+    string const& instance = tokens[1];
 
     // Generate temp domain file
     fs::path domain_path = fs::current_path() / "temp_domain.rddl";
@@ -440,7 +439,7 @@ void IPPCClient::generateTempFiles(string const& taskDesc) const {
     // Generate temp instance file
     fs::path instance_path = fs::current_path() / "temp_instance.rddl";
     ofs.open(instance_path);
-    ofs << non_fluents << endl << instance << endl;
+    ofs << instance << endl;
     ofs.close();
 }
 
