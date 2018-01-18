@@ -425,21 +425,15 @@ void IPPCClient::executeParser(string const& problemName,
 }
 
 void IPPCClient::generateTempFiles(string const& taskDesc) const {
-    vector<string> tokens;
-    StringUtils::tokenize(taskDesc, '{', '}', tokens);
-    // We assume task description is always ordered
-    string const& task = tokens[0];
-    string const& instance = tokens[1];
-
-    // Generate temp domain file
+    // Since the rddl parser concatenates files anyway, we just print the whole
+    // task in one file and pass additionally a dummy file
     fs::path domain_path = fs::current_path() / "temp_domain.rddl";
     std::ofstream ofs(domain_path);
-    ofs << task << endl;
+    ofs << taskDesc << endl;
     ofs.close();
-    // Generate temp instance file
     fs::path instance_path = fs::current_path() / "temp_instance.rddl";
     ofs.open(instance_path);
-    ofs << instance << endl;
+    ofs << endl;
     ofs.close();
 }
 
