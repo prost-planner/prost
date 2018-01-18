@@ -57,7 +57,7 @@ domain recon_demo_ssp {
                 then ~(exists_{?r: rover} [ repair(?r, ?t) ])
             // otherwise, if the rover moves, it is damaged with a probability that depends on the target location
             // (there is always just a single non-zero element in the sum)
-            else ( sum_{?loc : location, ?r: rover} [ move(?r, ?loc) * tool_on(?t, ?r) * DAMAGE-PROB(?loc) ] );
+            else ( sum_{?loc : location, ?r: rover} [ move(?r, ?loc) * TOOL-ON(?t, ?r) * DAMAGE-PROB(?loc) ] );
 
         life-checked'(?loc) =
             // becomes true when a life detector is used and remains true from there on
