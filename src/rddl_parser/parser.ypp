@@ -126,7 +126,7 @@ DomainList: TypeSection DomainList                      { }
           | ObjectsSection DomainList                   { }
           | RequirementsSection DomainList              { }
           | ActionPreconditionsSection DomainList       { }
-          | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | StateInvariantSection DomainList            { }
           | TypeSection                       { }
           | VarSection                        { }
           | CPFSection                        { }
@@ -135,7 +135,7 @@ DomainList: TypeSection DomainList                      { }
           | ObjectsSection                    { }
           | RequirementsSection               { }
           | ActionPreconditionsSection        { }
-          | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | StateInvariantSection             { }
 ;
 ////////////////////////
 // Requirements section
@@ -479,8 +479,8 @@ ActionPreconditionsSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ////////////////////////
 // State Invariant Section
 ////////////////////////
-StateInvariantSection: state_invariants_token '{' StateInvariantList '}' ';' { SystemUtils::abort("State invariant not implemented yet."); }
-                    | state_invariants_token '{' '}' ';'                     { SystemUtils::abort("State invariant not implemented yet."); }
+StateInvariantSection: state_invariants_token '{' StateInvariantList '}' ';' { }
+                    | state_invariants_token '{' '}' ';'                     { }
 ;
 
 StateInvariantList: StateInvariantSchematic
