@@ -124,6 +124,7 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
        << "<client-name>"
        << "prost"
        << "</client-name>"
+       << "<input-language>rddl</input-language>"
        << "<no-header/>"
        << "</session-request>" << '\0';
     if (write(socket, os.str().c_str(), os.str().length()) == -1) {
