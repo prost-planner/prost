@@ -22,12 +22,12 @@ done
 # arg1: benchmark directory (required input)
 # arg2: portnumber
 # arg3: number of rounds
-# arg4: use random seed (0/1 for false/true)
+# arg4: random seed
 # arg5: use timeout (0/1 for false/true)
-# arg6: individual session
+# arg6: individual session (0/1 for false/true)
 # arg7: log folder
 # arg8: monitor execution (0/1 for false/true)
-# arg9: class name for visualization display (i.e. rddlsim screen display class)
+# arg9: class name for visualization display (i.e., rddlsim screen display class)
 if [ $# == 0 ] ; then
    java -Xms100M -Xmx500M -classpath $CP rddl.competition.Server benchmarks/ippc-all/rddl 2323 30 0 0 0
 else

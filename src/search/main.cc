@@ -9,9 +9,8 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./prost <rddl-parser-output | rddl-problem> [PROST "
-            "<options>]"
-         << endl
+    cout << "Usage: ./prost <rddl-parser-output | rddl-problem-name> "
+            "[PROST <options>]"
          << endl;
 
     cout << "**************************************************************"
