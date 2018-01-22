@@ -135,8 +135,8 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
     if (!serverResponse) {
         SystemUtils::abort("Error: initializing session failed.");
     }
-    string s;
 
+    string s;
     // If the task was not initialized, we have to read it from the server and
     // run the parser
     if (SearchEngine::taskName.empty()) {
@@ -144,7 +144,7 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
             SystemUtils::abort(
                 "Error: server response does not contain task description.");
         }
-        s = base64_decode(s);
+        s = decodeBase64(s);
         executeParser(rddlProblem, s);
     }
 

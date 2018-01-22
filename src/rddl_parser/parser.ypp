@@ -760,7 +760,7 @@ PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
 
 %%
 
-bool CheckExtension(std::string s) {
+bool checkExtension(std::string s) {
      return ((s.length() > 5) &&  (s.substr(s.length() - 5).compare(".rddl") == 0));
 }
 
@@ -772,7 +772,7 @@ int main (int argc, char** argv) {
     }
 
     // Checking input file
-    if (!CheckExtension(argv[1]) || !CheckExtension(argv[2])) {
+    if (!checkExtension(argv[1]) || !checkExtension(argv[2])) {
         SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
     }
 
