@@ -6,6 +6,6 @@
 
 typedef unsigned char BYTE;
 
-std::string base64_decode(std::string const&);
+std::string decodeBase64(std::string const&);
 
 #endif /* BASE64_H */
