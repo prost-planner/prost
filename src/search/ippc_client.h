@@ -1,23 +1,18 @@
 #ifndef RDDL_CLIENT_H
 #define RDDL_CLIENT_H
 
-#include "prost_planner.h"
-
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
+class ProstPlanner;
 class XMLNode;
 
 class IPPCClient {
 public:
-    IPPCClient(std::string _hostName, unsigned short _port)
-        : hostName(_hostName),
-          port(_port),
-          socket(-1),
-          numberOfRounds(-1),
-          remainingTime(0) {}
+    IPPCClient(std::string _hostName, unsigned short _port);
+    ~IPPCClient();
 
     void run(std::string const& problem, std::string& plannerDesc);
 

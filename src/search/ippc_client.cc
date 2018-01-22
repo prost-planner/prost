@@ -23,6 +23,17 @@ namespace fs = std::experimental::filesystem;
 
 using namespace std;
 
+IPPCClient::IPPCClient(std::string _hostName, unsigned short _port)
+    : hostName(_hostName),
+      port(_port),
+      socket(-1),
+      numberOfRounds(-1),
+      remainingTime(0) {}
+
+// This destructor is required here to allow forward declaration of
+// ProstPlanner in header because of usage of unique_ptr<ProstPlanner>
+IPPCClient::~IPPCClient() = default;
+
 void IPPCClient::run(string const& input, string& plannerDesc) {
     string problemName = input;
     // If the input refers to a problem file we parse the file. Otherwise we
