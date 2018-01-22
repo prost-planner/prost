@@ -767,44 +767,44 @@ bool checkExtension(std::string s) {
 int main (int argc, char** argv) {
     // Debuging on/off
     // yydebug = 1;
-    if (argc < 4) {
-        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir> [options]");
+    if (argc < 3) {
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+                           "where rddlDesc consists of 1-3 individual files");
     }
 
-    // Checking input file
-    if (!checkExtension(argv[1]) || !checkExtension(argv[2])) {
-        SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
-    }
-
-    // Read non-optionals
-    std::ifstream domain(argv[1], std::ifstream::in);
-    std::ifstream nfAndInst(argv[2], std::ifstream::in);
+    // Find input files and combine them in one file
     std::ofstream combined(".combined", std::ifstream::out);
+    unsigned int index = 1;
 
-    if (domain && nfAndInst) {
-        combined << domain.rdbuf() << nfAndInst.rdbuf();
-        combined.close();
-    } else {
-        SystemUtils::abort("Error opening files. Check the correctnes of files.");
+    while (index < argc && checkExtension(argv[index])) {
+         std::ifstream ifs(argv[index], std::ifstream::in);
+         combined << ifs.rdbuf();
+         ifs.close();
+         index++;
     }
+    if (index == 1 || index > 4 || index >= argc) {
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+                           "where rddlDesc consists of 1-3 individual files");
+    }
+    combined.close();
 
-    std::string targetDir = std::string(argv[3]);
+    std::string targetDir = std::string(argv[index++]);
 
     double seed = time(nullptr);
     int numStates = 250;
     int numSimulations = 25;
 
-    // Read optinals
-    for (unsigned int i = 4; i < argc; ++i) {
-        std::string nextOption = std::string(argv[i]);
+    // Read optionals
+    for (; index < argc; ++index) {
+        std::string nextOption = std::string(argv[index]);
         if (nextOption == "-s") {
-            seed = atoi(std::string(argv[++i]).c_str());
+            seed = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting seed to " << seed << std::endl;
         } else if (nextOption == "-trainingSimulations") {
-            numSimulations = atoi(std::string(argv[++i]).c_str());
+            numSimulations = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting number of simulations for training set creation to " << numSimulations << std::endl;
         } else if (nextOption == "-trainingSetSize") {
-            numStates = atoi(std::string(argv[++i]).c_str());
+            numStates = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting target training set size to " << numStates << std::endl;
         } else {
             assert(false);
