@@ -1,23 +1,26 @@
 %{
-#include <iostream>
-#include <fstream>
 #include <cstdlib>
 #include <cstdio>
-#include <vector>
-#include <string>
+#include <fstream>
+#include <iostream>
 #include <limits>
-
-#define YYDEBUG 1
-
-extern int yylex(); // Lexic analisys function
-extern FILE* yyin; // Extern file, used for reading code from file
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "logical_expressions.h"
 #include "rddl.h"
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-extern void yyerror (std::string message); // Function for syntax error handling
+#define YYDEBUG 1
+
+extern int yylex();
+extern int yyparse();
+typedef struct yy_buffer_state* YY_BUFFER_STATE;
+extern YY_BUFFER_STATE yy_scan_string(const char * str);
+extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
+extern void yyerror (std::string message);
 
 std::string targetDir;
 RDDLTask* rddlTask;
@@ -767,13 +770,15 @@ bool checkExtension(std::string s) {
 int main (int argc, char** argv) {
     // Debuging on/off
     // yydebug = 1;
+    Timer t;
+    std::cout << "Parsing..." << std::endl;
     if (argc < 3) {
         SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 
     // Find input files and combine them in one file
-    std::ofstream combined(".combined", std::ifstream::out);
+    std::stringstream combined;
     unsigned int index = 1;
 
     while (index < argc && checkExtension(argv[index])) {
@@ -786,7 +791,6 @@ int main (int argc, char** argv) {
         SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
-    combined.close();
 
     std::string targetDir = std::string(argv[index++]);
 
@@ -814,17 +818,12 @@ int main (int argc, char** argv) {
     // Creating RDDLTask object
     rddlTask = new RDDLTask();
 
-    yyin = fopen(".combined", "r");
-    Timer t, totalTime;
-    std::cout << "Parsing..." << std::endl;
+    yy_scan_string(combined.str().c_str());
     yyparse();
     std::cout << "...finished (" << t << ")." << std::endl;
-    fclose(yyin);
-    combined.close();
-    std::remove(".combined");
 
     rddlTask->execute(targetDir, seed, numStates, numSimulations);
-    std::cout << "total time: " << totalTime << std::endl;
+    std::cout << "total time: " << t << std::endl;
 
     return EXIT_SUCCESS;
 }
