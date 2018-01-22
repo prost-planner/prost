@@ -40,9 +40,6 @@ private:
     void readVariable(XMLNode const* node,
                       std::map<std::string, std::string>& result);
 
-    // Writes domain and instance from task description to temporary files.
-    void generateTempFiles(std::string const& taskDesc) const;
-    void removeTempFiles(std::string const& problemName) const;
     // If the client call did not contain a task file, we have to read the task
     // description from the server and run the external parser to create a task
     // in PROST format.

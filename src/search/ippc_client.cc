@@ -408,7 +408,12 @@ void IPPCClient::readVariable(XMLNode const* node,
 
 void IPPCClient::executeParser(string const& problemName,
                                string const& taskDesc) {
-    generateTempFiles(taskDesc);
+    // Generate temporary input file for parser
+    fs::path domainPath = fs::current_path() / "parser_in.rddl";
+    std::ofstream ofs(domainPath);
+    ofs << taskDesc << endl;
+    ofs.close();
+
     // Assumes that rddl-parser executable exists in the current directory.
     if (!fs::exists(fs::current_path() / "rddl-parser")) {
         SystemUtils::abort(
@@ -416,30 +421,14 @@ void IPPCClient::executeParser(string const& problemName,
     }
     // TODO This probably only works in unix and is not portable.
     int result =
-        std::system("./rddl-parser temp_domain.rddl temp_instance.rddl .");
+        std::system("./rddl-parser parser_in.rddl .");
     if (result != 0) {
         SystemUtils::abort("Error: rddl-parser had an error");
     }
     Parser parser(problemName);
     parser.parseTask(stateVariableIndices, stateVariableValues);
-    removeTempFiles(problemName);
-}
 
-void IPPCClient::generateTempFiles(string const& taskDesc) const {
-    // Since the rddl parser concatenates files anyway, we just print the whole
-    // task in one file and pass additionally a dummy file
-    fs::path domain_path = fs::current_path() / "temp_domain.rddl";
-    std::ofstream ofs(domain_path);
-    ofs << taskDesc << endl;
-    ofs.close();
-    fs::path instance_path = fs::current_path() / "temp_instance.rddl";
-    ofs.open(instance_path);
-    ofs << endl;
-    ofs.close();
-}
-
-void IPPCClient::removeTempFiles(string const& problemName) const {
-    fs::remove(fs::current_path() / "temp_domain.rddl");
-    fs::remove(fs::current_path() / "temp_instance.rddl");
+    // Remove temporary files
+    fs::remove(fs::current_path() / "parser_in.rddl");
     fs::remove(fs::current_path() / problemName);
 }
