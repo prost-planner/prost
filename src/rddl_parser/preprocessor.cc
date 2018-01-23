@@ -328,6 +328,10 @@ void Preprocessor::prepareActions() {
         task->actionFluents[index]->index = index;
     }
 
+    if (task->numberOfConcurrentActions > task->actionFluents.size()) {
+        task->numberOfConcurrentActions = task->actionFluents.size();
+    }
+
     // Calculate all action states with up to numberOfConcurrentActions
     // concurrent actions TODO: Make sure this stops also if an static SAC is
     // violated that constrains the number of concurrently applicable actions.
