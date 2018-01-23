@@ -1,23 +1,24 @@
 %{
-#include <iostream>
-#include <fstream>
 #include <cstdlib>
 #include <cstdio>
-#include <vector>
-#include <string>
+#include <fstream>
+#include <iostream>
 #include <limits>
-
-#define YYDEBUG 1
-
-extern int yylex(); // Lexic analisys function
-extern FILE* yyin; // Extern file, used for reading code from file
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "logical_expressions.h"
 #include "rddl.h"
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-extern void yyerror (std::string message); // Function for syntax error handling
+extern int yylex();
+extern int yyparse();
+typedef struct yy_buffer_state* YY_BUFFER_STATE;
+extern YY_BUFFER_STATE yy_scan_string(const char * str);
+extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
+extern void yyerror (std::string message);
 
 std::string targetDir;
 RDDLTask* rddlTask;
@@ -66,8 +67,8 @@ RDDLTask* rddlTask;
 %type <parameterList> TypedVarList
 %type <parametrizedVariable> VariableSchematic VariableExpression VariableInstanceSchematic
 %type <parametrizedVariables> VarSection VarList VariablesInstanceList
-%type <logicalExpression> Expression LConst StateConstraintSchematic
-%type <logicalExpressions> StateConstraintsSection StateConstraintList LConstList ExpressionList
+%type <logicalExpression> Expression LConst StateConstraintSchematic ActionPreconditionsSchematic
+%type <logicalExpressions> StateConstraintsSection StateConstraintList ActionPreconditionsSection ActionPreconditionsList LConstList ExpressionList
 %type <type> TypeSpecification SchematicType
 %type <types> TypeList TypeSection
 %type <conditionEffect> CaseSchematic
@@ -125,8 +126,8 @@ DomainList: TypeSection DomainList                      { }
           | StateConstraintsSection DomainList          { }
           | ObjectsSection DomainList                   { }
           | RequirementsSection DomainList              { }
-          | ActionPreconditionsSection DomainList       { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
-          | StateInvariantSection DomainList            { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | ActionPreconditionsSection DomainList       { }
+          | StateInvariantSection DomainList            { }
           | TypeSection                       { }
           | VarSection                        { }
           | CPFSection                        { }
@@ -134,14 +135,16 @@ DomainList: TypeSection DomainList                      { }
           | StateConstraintsSection           { }
           | ObjectsSection                    { }
           | RequirementsSection               { }
-          | ActionPreconditionsSection        { SystemUtils::abort("Action precondition section not implemented yet."); }//$$ = $2; $$ = new DomainList(); $$->setActionPrecondition($1);}
-          | StateInvariantSection             { SystemUtils::abort("State invariant section not implemented yet.");  }//$$ = $2; $$ = new DomainList(); $$->setStateInvariant($1); }
+          | ActionPreconditionsSection        { }
+          | StateInvariantSection             { }
 ;
 ////////////////////////
 // Requirements section
 ////////////////////////
 RequirementsSection: requirements_token '=' '{' RequirementsList '}' ';' { }
                 | requirements_token '=' '{' '}' ';'                     { }
+                | requirements_token '{' RequirementsList '}' ';'        { }
+                | requirements_token  '{' '}' ';'                        { }
 ;
 
 RequirementsList: id_token                    { }
@@ -463,22 +466,22 @@ StateConstraintSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ////////////////////////
 // Action Prediction section
 ////////////////////////
-ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { SystemUtils::abort("Action prediction not implemented yet."); }
-                        | action_preconditions_token '{' '}' ';'                            { SystemUtils::abort("Action prediction not implemented yet."); }
+ActionPreconditionsSection: action_preconditions_token '{' ActionPreconditionsList '}' ';'  { }
+                        | action_preconditions_token '{' '}' ';'                            { }
 ;
 
-ActionPreconditionsList: ActionPreconditionsSchematic
-                    | ActionPreconditionsSchematic ',' ActionPreconditionsList
+ActionPreconditionsList: ActionPreconditionsSchematic                       { }
+                    | ActionPreconditionsSchematic ActionPreconditionsList  { }
 ;
 
-ActionPreconditionsSchematic: Expression ';'
+ActionPreconditionsSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
 ;
 
 ////////////////////////
 // State Invariant Section
 ////////////////////////
-StateInvariantSection: state_invariants_token '{' StateInvariantList '}' ';' { SystemUtils::abort("State invariant not implemented yet."); }
-                    | state_invariants_token '{' '}' ';'                     { SystemUtils::abort("State invariant not implemented yet."); }
+StateInvariantSection: state_invariants_token '{' StateInvariantList '}' ';' { }
+                    | state_invariants_token '{' '}' ';'                     { }
 ;
 
 StateInvariantList: StateInvariantSchematic
@@ -607,15 +610,15 @@ LConstList: LConst                  { $$ = new std::vector<LogicalExpression*>()
 ////////////////////////////////////////////////
 InstanceBlock:
         // 1.1 All
-        instance_token id_token '{'
-                                    domain_token '=' id_token ';'
-                                    non_fluents_token '=' id_token ';'
-                                    objects_token '{' ObjectsList '}' ';'
-                                    init_state_token '{' VariablesInstanceList '}' ';'
-                                    max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
-                                    HorizonSpecification ';'
-                                    discount_token '=' doubleNum_token ';'
-                                '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+      instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                non_fluents_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, $24, $26, $30); }
         // 1.2 No nonfluents
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -624,7 +627,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", $20, $22, $26); }
         // 1.3 No objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -633,7 +636,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->setInstance(*$2, *$6, *$10, $19, $21, $25); }
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, $19, $21, $25); }
         // 1.4 No nonfluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -641,7 +644,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->setInstance(*$2, *$6, "", $15, $17, $21); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", $15, $17, $21); }
         // 1.5 No Init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -650,7 +653,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, $19, $21, $25); }
         // 1.6 No nonfluents, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -658,7 +661,7 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", $15, $17, $21); }
         // 1.7 No objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -666,14 +669,14 @@ InstanceBlock:
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' {  rddlTask->setInstance(*$2, *$6, *$10, $14, $16, $20);  }
+                              '}' {  rddlTask->setInstance(*$2, *$6, *$10, $14, $16, $20);  }
         // 1.8 No non fluents, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 max_nondef_actions_token '=' PositiveIntOrPositiveInfinity ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->setInstance(*$2, *$6, "", $10, $12, $16); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", $10, $12, $16); }
 
         // Omitting Max Non Def Actions and ..
         // 2.1 All
@@ -684,7 +687,7 @@ InstanceBlock:
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, std::numeric_limits<int>::max(), $22, $26); }
         // 2.2 No non fluents
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -692,7 +695,7 @@ InstanceBlock:
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", std::numeric_limits<int>::max(), $18, $22); }
         // 2.3 No objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -700,14 +703,14 @@ InstanceBlock:
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $17, $21); }
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, std::numeric_limits<int>::max(), $17, $21); }
         // 2.4 No non fluents, no objects
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 init_state_token '{' VariablesInstanceList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                            '}' { rddlTask->setInstance(*$2, *$6, "", -1, $13, $17); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", std::numeric_limits<int>::max(), $13, $17); }
         // 2.5 No init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
@@ -715,27 +718,36 @@ InstanceBlock:
                                 objects_token '{' ObjectsList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, *$10, std::numeric_limits<int>::max(), $17, $21); }
         // 2.6 No non fluents, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 objects_token '{' ObjectsList '}' ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                        '}' { SystemUtils::abort("Definition of instance block with definition of objects not implemented yet."); }
+                              '}' { rddlTask->setInstance(*$2, *$6, "", std::numeric_limits<int>::max(), $13, $17); }
         // 2.7 No objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 non_fluents_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { rddlTask->setInstance(*$2, *$6, *$10, -1, $12, $16); }
+                               '}' { rddlTask->setInstance(*$2, *$6, *$10, std::numeric_limits<int>::max(), $12, $16); }
         // 2.8 No non fluetnts, no objects, no init state
     | instance_token id_token '{'
                                 domain_token '=' id_token ';'
                                 HorizonSpecification ';'
                                 discount_token '=' doubleNum_token ';'
-                                '}' { rddlTask->setInstance(*$2, *$6, "", -1, $8, $12); }
+                               '}' { rddlTask->setInstance(*$2, *$6, "", std::numeric_limits<int>::max(), $8, $12); }                                
+       // 3.1 non-fluents section in instance block, no max-nondef-actions (for IPC 2018)
+    | instance_token id_token '{'
+                                domain_token '=' id_token ';'
+                                objects_token '{' ObjectsList '}' ';'
+                                non_fluents_token '{' VariablesInstanceList  '}' ';'
+                                init_state_token '{' VariablesInstanceList '}' ';'
+                                HorizonSpecification ';'
+                                discount_token '=' doubleNum_token ';'
+                               '}' { rddlTask->setInstance(*$2, *$6, "", std::numeric_limits<int>::max(), $23, $27); }
 ;
 
 
@@ -749,51 +761,50 @@ PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
 
 %%
 
-bool CheckExtension(std::string s) {
+bool checkExtension(std::string s) {
      return ((s.length() > 5) &&  (s.substr(s.length() - 5).compare(".rddl") == 0));
 }
 
 int main (int argc, char** argv) {
-    // Debuging on/off
-    // yydebug = 1;
-    if (argc < 4) {
-        SystemUtils::abort("Usage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir> [options]");
+    Timer t;
+    std::cout << "Parsing..." << std::endl;
+    if (argc < 3) {
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+                           "where rddlDesc consists of 1-3 individual files");
     }
 
-    // Checking input file
-    if (!CheckExtension(argv[1]) || !CheckExtension(argv[2])) {
-        SystemUtils::abort("Invalid file type.\nUsage: ./rddl_parse <rddlDomain> <rddlProblem> <targetDir>");
+    // Find input files and combine them in one file
+    std::stringstream combined;
+    unsigned int index = 1;
+
+    while (index < argc && checkExtension(argv[index])) {
+         std::ifstream ifs(argv[index], std::ifstream::in);
+         combined << ifs.rdbuf();
+         ifs.close();
+         index++;
+    }
+    if (index == 1 || index > 4 || index >= argc) {
+        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+                           "where rddlDesc consists of 1-3 individual files");
     }
 
-    // Read non-optionals
-    std::ifstream domain(argv[1], std::ifstream::in);
-    std::ifstream nfAndInst(argv[2], std::ifstream::in);
-    std::ofstream combined(".combined", std::ifstream::out);
-
-    if (domain && nfAndInst) {
-        combined << domain.rdbuf() << nfAndInst.rdbuf();
-        combined.close();
-    } else {
-        SystemUtils::abort("Error opening files. Check the correctnes of files.");
-    }
-
-    std::string targetDir = std::string(argv[3]);
+    std::string targetDir = std::string(argv[index++]);
 
     double seed = time(nullptr);
     int numStates = 250;
     int numSimulations = 25;
 
-    // Read optinals
-    for (unsigned int i = 4; i < argc; ++i) {
-        std::string nextOption = std::string(argv[i]);
+    // Read optionals
+    for (; index < argc; ++index) {
+        std::string nextOption = std::string(argv[index]);
         if (nextOption == "-s") {
-            seed = atoi(std::string(argv[++i]).c_str());
+            seed = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting seed to " << seed << std::endl;
         } else if (nextOption == "-trainingSimulations") {
-            numSimulations = atoi(std::string(argv[++i]).c_str());
+            numSimulations = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting number of simulations for training set creation to " << numSimulations << std::endl;
         } else if (nextOption == "-trainingSetSize") {
-            numStates = atoi(std::string(argv[++i]).c_str());
+            numStates = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting target training set size to " << numStates << std::endl;
         } else {
             assert(false);
@@ -803,17 +814,12 @@ int main (int argc, char** argv) {
     // Creating RDDLTask object
     rddlTask = new RDDLTask();
 
-    yyin = fopen(".combined", "r");
-    Timer t, totalTime;
-    std::cout << "Parsing..." << std::endl;
+    yy_scan_string(combined.str().c_str());
     yyparse();
     std::cout << "...finished (" << t << ")." << std::endl;
-    fclose(yyin);
-    combined.close();
-    std::remove(".combined");
 
     rddlTask->execute(targetDir, seed, numStates, numSimulations);
-    std::cout << "total time: " << totalTime << std::endl;
+    std::cout << "total time: " << t << std::endl;
 
     return EXIT_SUCCESS;
 }

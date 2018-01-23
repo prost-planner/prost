@@ -701,12 +701,7 @@ void RDDLTask::print(std::ostream& out) {
 }
 
 void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations) {
-    // std::cout << "Executing..." << std::endl << "Writing output.." <<
-    // std::endl;
-
-    Timer t, totalTime;
-    // std::cout << "Parsing...finished" << std::endl;
-
+    Timer t;
     srand(seed);
 
     t.reset();
@@ -728,15 +723,12 @@ void RDDLTask::execute(std::string td, double seed, int numStates, int numSimula
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "writing output..." << std::endl;
+    std::cout << "writing output for instance " << name << "..." << std::endl;
     std::ofstream resultFile;
-    std::cout << "Task name " << name << std::endl;
     std::string targetDir = td + "/" + name;
     resultFile.open(targetDir.c_str());
     print(resultFile);
     resultFile.close();
     // print(std::cout);
-    std::cout << "...finished (" << t << ")." << name << std::endl;
-
-    // std::cout << "total time: " << totalTime << std::endl;
+    std::cout << "...finished (" << t << ")." << std::endl;
 }
