@@ -13,8 +13,6 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-#define YYDEBUG 1
-
 extern int yylex();
 extern int yyparse();
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
@@ -768,8 +766,6 @@ bool checkExtension(std::string s) {
 }
 
 int main (int argc, char** argv) {
-    // Debuging on/off
-    // yydebug = 1;
     Timer t;
     std::cout << "Parsing..." << std::endl;
     if (argc < 3) {
