@@ -10,28 +10,32 @@
 
 import os
 import sys
+from shutil import copy2
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4 or len(sys.argv) > 6:
-        print >> sys.stderr, "Usage: ./plan.py domain instance config [hostname] [port]"
+    if len(sys.argv) < 3 or len(sys.argv) > 5:
+        if os.path.isfile("../src/search/prost"):
+            copy2("../src/search/prost", "./prost")
+        os.system("./prost")
+        print >> sys.stderr, "Usage of plan.py: ./plan.py instance \"config\" [hostname] [port]"
         exit()
 
     hostname = "localhost";
     port = "2323"
 
-    if len(sys.argv) > 5:
+    if len(sys.argv) > 4:
         port = sys.argv[5]
 
-    if len(sys.argv) > 4:
+    if len(sys.argv) > 3:
         hostname = sys.argv[4]
 
-    domain = sys.argv[1]
-    instance = sys.argv[2]
-    config = sys.argv[3]
+    instance = sys.argv[1]
+    config = sys.argv[2]
 
-    parserOut = instance.split("/")
-    parserOut = parserOut[len(parserOut)-1].split(".")[0]
+    if os.path.isfile("../src/search/prost"):
+        copy2("../src/search/prost", "./prost")
 
-    os.system("../src/rddl_parser/rddl-parser " + domain + " " + instance + " ./ -s 1")
-    os.system("../src/search/prost " + parserOut + " -h " + hostname + " -p " + port + " [PROST -s 1 -se [" + config + "]]")
-    os.system("rm -rf " + parserOut)
+    if os.path.isfile("../src/rddl_parser/rddl-parser"):
+        copy2("../src/rddl_parser/rddl-parser", "./rddl-parser")        
+    
+    os.system("./prost " + instance + " -h " + hostname + " -p " + port + " " + config)
