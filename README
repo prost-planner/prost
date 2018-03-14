@@ -1,70 +1,78 @@
 Guide to set up and run the PROST planner. If you have any questions
 that are not answered by this file or under
-http://prost.informatik.uni-freiburg.de/installation.html, please do
-not hesitate to contact tho.keller [@] unibas.ch.
+https://bitbucket.org/tkeller/prost/wiki/Installation, please do not
+hesitate to contact tho.keller [@] unibas.ch.
 
 ===[ Prerequisites ]===
 
 Libraries: BuDDy (http://sourceforge.net/projects/buddy/)
 
-NOTE: make sure to install BuDDy in /lib or update the PROST makefile
-so that it finds the buddy library, otherwise it will compile fine but
-give an error on running the PROST solver. 
+NOTE: make sure to install BuDDy in /lib or update the PROST makefile so
+that it finds the buddy library, otherwise it will compile fine but give
+an error on running the PROST solver. On Linux, you install all
+dependecies (including BuDDy) with the command
+
+sudo apt-get install mercurial g++ make bison flex libbdd-dev
 
 ===[ Compiling the PROST planner ]===
 
-The planner can be compiled simply by going into the source directory
-and running make. 
+Prost consists of two parts: a parser component that can be found in the
+directory src/rddl_parser, and a search component that can be found in
+src/search.
 
-Running make debug will compile the debug version, and running make test will
-build the unit tests and execute them.
+Both parts can be compiled by going into the respective source directory
+and running make.
+
+Running make debug will compile the debug version, and running make test
+will build the unit tests and execute them.
 
 ===[ Running PROST ]===
 
-The PROST solver requires the IPPC 2011 competition server to run. You
-can get this server (and some additional RDDL/planning tools) from
+The PROST solver requires the IPPC 2011/2014 competition server to run.
+You can get this server (and some additional RDDL/planning tools) from
 https://code.google.com/p/rddlsim/ (more detailed instructions can be
 found further in this guide).
 
 If your IPPC server is running (on the default port 2323) you can run
-the PROST solver using:
+the PROST solver by changing to the testbed folder and running
 
-	prost <rddldir> <instance-name> [<solver> <solveroptions>]
+	./plan.py <instance-name> "[PROST -se <PROST-config>]"
 
-in which <rddldir> is the directory that contains your rddl models,
-<instance-name> the name of the instance to solve, <solver> the solver
-you want to use and <solveroptions> the options for the chosen solver.
-Note that there are several solvers available, type
+, where <instance-name> is the name of the RDDL instance and
+<PROST-config> the configuration of PROST you want to run.
+Note that there are several configs for PROST available, type
 
-	prost --help
+	./plan.py
 
 for an overview of all available solvers and their options.
 
-The current version of PROST requires the domain file name to end with
-_mdp.rddl and the instance with mdp__#.rddl where # is the instance
-number.
-
 ===[ Installing the IPPC Server ]===
 
-Extract the IPPC source to any directory, go to the extracted
-directory and simply run 'compile'. This compiles the RDDLSim tools,
-including the server (a more detailed setup guide can be found in the
-RDDLSim dir). If you have compiled the IPPC source, run the IPPC
-server from the rddlsim main directory with the following command:
+Extract the IPPC source to any directory, go to the extracted directory
+and simply run 'compile'. This compiles the RDDLSim tools, including the
+server (a more detailed setup guide can be found in the RDDLSim dir). If
+you have compiled the IPPC source, go to the testbed folder in the
+directory where you installed PROST, create a symlink to the server with
 
-	run rddl.competition.Server <rddldir>
+    ln -s <RDDLSIM_ROOT>
 
-where <rddldir> is the folder that contains your rddl model(s).
+where <RDDLSIM_ROOT> is the folder where you installed rddlsim. You can
+then use the run-server script in the testbed folder to run rddlsim,
+e.g. by typing
+
+    ./run-server benchmarks/ippc-all/
+
+to load all instances of IPPC 2011 and 2014.
 
 ===[ Create your own search engine ]===
 
 The simplest way to implement your own search engine, derive a class
-from SearchEngine and implement the pure virtual method
-estimateQValues as a function that assigns a Q-Value estimate to each
-action. After you have added your search engine to the
-SearchEngine::fromString method with a unique string, PROST will use
-your search engine if called with that string and execute that action
-with the highest Q-Value estimate in each step. 
+from SearchEngine and implement the pure virtual method estimateQValues
+as a function that assigns a Q-Value estimate to each action. After you
+have added your search engine to the SearchEngine::fromString method
+with a unique string, PROST will use your search engine if called with
+that string and execute that action with the highest Q-Value estimate in
+each step.
 
 Have a look at thts.h if you are interested in creating a search
 engine that can be modelled within the THTS framework (see the ICAPS
@@ -72,12 +80,12 @@ engine that can be modelled within the THTS framework (see the ICAPS
 
 ===[ Test your own search engine ]===
 
-We use the Google Test framework to implement unit tests for our code. All tests
-are contained in /src/test/ and will be run automatically by compiling the debug
-version of the planner (i.e. calling make in src/search/). If you want to
-implement your own unit tests you have to keep the following naming conventions:
-- No underscore (_) in test case names and test names. 
-- Every test should end with *Test.cc
+We use the Google Test framework to implement unit tests for our code.
+All tests are contained in /src/test/ and will be run automatically by
+compiling the debug version of the planner (i.e. calling make in
+src/search/). If you want to implement your own unit tests you have to
+keep the following naming conventions: - No underscore (_) in test case
+names and test names. - Every test should end with *Test.cc
 
 The first convention is necessary by the framework and the second rule allows
 make to automatically compile and run your tests.
