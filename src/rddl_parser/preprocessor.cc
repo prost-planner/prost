@@ -598,6 +598,19 @@ void Preprocessor::calculateCPFDomains() {
         ++currentHorizon;
     }
 
+    // QUICK FIX START
+    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        double max_val = *domains[index].rbegin();
+        if (domains[index].size() > 1 && (max_val != domains[index].size() -1)) {
+            cout << "State-fluent " << task->CPFs[index]->head->fullName << " has a domain size of " << domains[index].size() << " and a max val of " << max_val << endl;
+            cout << "Inserting values into domain of state-fluent " << task->CPFs[index]->head->fullName << endl;
+            for (unsigned int val = 0; val < max_val; ++val) {
+                domains[index].insert(val);
+            }
+        }
+    }
+    // QUICK FIX END
+
     // Set domains
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->setDomain(domains[index]);
