@@ -793,6 +793,7 @@ int main (int argc, char** argv) {
     double seed = time(nullptr);
     int numStates = 250;
     int numSimulations = 25;
+    bool useIPC2018Rules = false;
 
     // Read optionals
     for (; index < argc; ++index) {
@@ -806,6 +807,9 @@ int main (int argc, char** argv) {
         } else if (nextOption == "-trainingSetSize") {
             numStates = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting target training set size to " << numStates << std::endl;
+        } else if (nextOption == "-ipc2018") {
+            useIPC2018Rules = atoi(std::string(argv[++index]).c_str());
+            std::cout << "Using IPC 2018 rules: " << useIPC2018Rules << std::endl;
         } else {
             assert(false);
         }
@@ -818,7 +822,7 @@ int main (int argc, char** argv) {
     yyparse();
     std::cout << "...finished (" << t << ")." << std::endl;
 
-    rddlTask->execute(targetDir, seed, numStates, numSimulations);
+    rddlTask->execute(targetDir, seed, numStates, numSimulations, useIPC2018Rules);
     std::cout << "total time: " << t << std::endl;
 
     return EXIT_SUCCESS;
