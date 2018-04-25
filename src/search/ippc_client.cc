@@ -432,7 +432,7 @@ void IPPCClient::executeParser(string const& problemName,
     }
     // TODO This probably only works in unix and is not portable.
     int result =
-        std::system("./rddl-parser parser_in.rddl .");
+        std::system("./rddl-parser parser_in.rddl . -ipc2018 1");
     if (result != 0) {
         SystemUtils::abort("Error: rddl-parser had an error");
     }

@@ -303,7 +303,6 @@ void Preprocessor::prepareActions() {
         for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             task->CPFs[index]->simplify(replacements);
         }
-
         task->rewardCPF->simplify(replacements);
 
         for (unsigned int index = 0; index < task->actionPreconds.size();
@@ -328,36 +327,90 @@ void Preprocessor::prepareActions() {
         task->actionFluents[index]->index = index;
     }
 
-    if (task->numberOfConcurrentActions > task->actionFluents.size()) {
-        task->numberOfConcurrentActions = task->actionFluents.size();
-    }
-
-    // Calculate all action states with up to numberOfConcurrentActions
-    // concurrent actions TODO: Make sure this stops also if an static SAC is
-    // violated that constrains the number of concurrently applicable actions.
-    // Currently, if max-nondef-actions is not used, this will always produce
-    // the power set over all action fluents.
-    vector<ActionState> allActionStates;
-    calcAllActionStates(allActionStates);
-
-    // Remove all illegal action combinations by checking the SACs that are
-    // state independent
+    vector<ActionState> actionStateCandidates;
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
+    int minElement = 0;
+    int scheduledActions = 0;
+    if (useIPC2018Rules) {
+    
+        task->numberOfConcurrentActions = 1;
+    
+        while (true) {
+            // cout << "Generating action states with up to " << task->numberOfConcurrentActions << " many action fluents." << endl;
+            int lastIndex = actionStateCandidates.size();
+            calcAllActionStates(actionStateCandidates, minElement, scheduledActions);
+            // cout << "number of action states with up to " << task->numberOfConcurrentActions << " many action fluents: " << actionStateCandidates.size() << endl;
+            
+            for (ActionState const& actionState : actionStateCandidates) {
+                bool isLegal = true;
+                for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+                    double res = 0.0;
+                    task->staticSACs[i]->formula->evaluate(res, current, actionState);
+                    if (MathUtils::doubleIsEqual(res, 0.0)) {
+                        isLegal = false;
+                        break;
+                    }
+                }
 
-    for (ActionState const& actionState : allActionStates) {
-        bool isLegal = true;
-        for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
-            double res = 0.0;
-            task->staticSACs[i]->formula->evaluate(res, current, actionState);
-            if (MathUtils::doubleIsEqual(res, 0.0)) {
-                isLegal = false;
+                if (isLegal) {
+                    legalActionStates.push_back(actionState);
+                    // cout << "    legal: ";
+                    // for (size_t i = 0; i < actionState.state.size(); ++i) {
+                    //     if (actionState[i]) {
+                    //         cout << task->actionFluents[i]->fullName << " ";
+                    //     }
+                    // }
+                    // cout << endl;
+                }//  else {
+                //     cout << "not legal: ";
+                //     for (size_t i = 0; i < actionState.state.size(); ++i) {
+                //         if (actionState[i]) {
+                //             cout << task->actionFluents[i]->fullName << " ";
+                //         }
+                //     }
+                //     cout << endl;
+                // }
+            }
+            ++task->numberOfConcurrentActions;
+            if ((legalActionStates.size() == lastIndex) ||
+                (scheduledActions == task->actionFluents.size())) {
                 break;
             }
+            actionStateCandidates = legalActionStates;
+            legalActionStates.clear();
+        }
+    } else {
+        if (task->numberOfConcurrentActions > task->actionFluents.size()) {
+            task->numberOfConcurrentActions = task->actionFluents.size();
         }
 
-        if (isLegal) {
-            legalActionStates.push_back(actionState);
+        // Calculate all action states with up to
+        // numberOfConcurrentActions concurrent actions TODO: Make sure
+        // this stops also if a static SAC is violated that constrains
+        // the number of concurrently applicable actions. Currently, if
+        // max-nondef-actions is not used, this will always produce the
+        // power set over all action fluents.
+
+        calcAllActionStates(actionStateCandidates, minElement, scheduledActions);
+
+        // Remove all illegal action combinations by checking the SACs
+        // that are state independent
+
+        for (ActionState const& actionState : actionStateCandidates) {
+            bool isLegal = true;
+            for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+                double res = 0.0;
+                task->staticSACs[i]->formula->evaluate(res, current, actionState);
+                if (MathUtils::doubleIsEqual(res, 0.0)) {
+                    isLegal = false;
+                    break;
+                }
+            }
+
+            if (isLegal) {
+                legalActionStates.push_back(actionState);
+            }
         }
     }
 
@@ -473,8 +526,8 @@ void Preprocessor::initializeActionStates() {
 }
 
 void Preprocessor::calcAllActionStates(vector<ActionState>& result,
-                                       int minElement,
-                                       int scheduledActions) const {
+                                       int& minElement,
+                                       int& scheduledActions) const {
     if (result.empty()) {
         result.push_back(ActionState((int)task->actionFluents.size()));
     } else {

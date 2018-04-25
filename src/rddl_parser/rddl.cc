@@ -700,7 +700,7 @@ void RDDLTask::print(std::ostream& out) {
     }
 }
 
-void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations) {
+void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations, bool useIPC2018Rules) {
     Timer t;
     srand(seed);
 
@@ -712,7 +712,7 @@ void RDDLTask::execute(std::string td, double seed, int numStates, int numSimula
 
     t.reset();
     std::cout << "preprocessing..." << std::endl;
-    Preprocessor preprocessor(this);
+    Preprocessor preprocessor(this, useIPC2018Rules);
     preprocessor.preprocess();
     std::cout << "...finished (" << t << ")." << std::endl;
 
