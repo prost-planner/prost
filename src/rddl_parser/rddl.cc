@@ -723,9 +723,9 @@ void RDDLTask::execute(std::string td, double seed, int numStates, int numSimula
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "writing output for instance " << name << "..." << std::endl;
     std::ofstream resultFile;
     std::string targetDir = td + "/" + name;
+    std::cout << "writing output for instance " << name << " to " << targetDir << " ..." << std::endl;
     resultFile.open(targetDir.c_str());
     print(resultFile);
     resultFile.close();

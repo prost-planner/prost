@@ -24,10 +24,10 @@ if __name__ == "__main__":
     port = "2323"
 
     if len(sys.argv) > 4:
-        port = sys.argv[5]
+        port = sys.argv[4]
 
     if len(sys.argv) > 3:
-        hostname = sys.argv[4]
+        hostname = sys.argv[3]
 
     instance = sys.argv[1]
     config = sys.argv[2]
