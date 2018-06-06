@@ -30,9 +30,8 @@ private:
     void initializeActionStates();
 
     void calcAllActionStates(std::vector<ActionState>& result,
-                             int& minElement, int& scheduledActions) const;
-    void calcAllActionStatesForIPC2018(std::vector<ActionState>& result,
-                                       int& minElement, int& scheduledActions) const; 
+                             int minElement, int scheduledActions) const;
+    void calcAllActionStatesForIPC2018(std::vector<ActionState>& result) const; 
 
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
                                          ActionState const& actionState) const;
