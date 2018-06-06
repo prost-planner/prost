@@ -339,7 +339,7 @@ void Preprocessor::prepareActions() {
         while (true) {
             // cout << "Generating action states with up to " << task->numberOfConcurrentActions << " many action fluents." << endl;
             int lastIndex = actionStateCandidates.size();
-            calcAllActionStates(actionStateCandidates, minElement, scheduledActions);
+            calcAllActionStatesForIPC2018(actionStateCandidates, minElement, scheduledActions);
             // cout << "number of action states with up to " << task->numberOfConcurrentActions << " many action fluents: " << actionStateCandidates.size() << endl;
             
             for (ActionState const& actionState : actionStateCandidates) {
@@ -372,11 +372,11 @@ void Preprocessor::prepareActions() {
                 //     cout << endl;
                 // }
             }
-            ++task->numberOfConcurrentActions;
             if ((legalActionStates.size() == lastIndex) ||
                 (scheduledActions == task->actionFluents.size())) {
                 break;
             }
+            ++task->numberOfConcurrentActions;
             actionStateCandidates = legalActionStates;
             legalActionStates.clear();
         }
@@ -522,6 +522,39 @@ void Preprocessor::initializeActionStates() {
                 actionState.relevantSACs.push_back(task->actionPreconds[i]);
             }
         }
+    }
+}
+
+void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& result,
+                                                 int& minElement,
+                                                 int& scheduledActions) const {
+    cout << "generating actions with " << scheduledActions << " many actions" << endl;
+    if (result.empty()) {
+        result.push_back(ActionState((int)task->actionFluents.size()));
+    } else {
+        int lastIndex = result.size();
+        cout << "last index is " << lastIndex << endl;
+        cout << "min element is " << minElement << endl;
+
+        for (unsigned int i = minElement; i < lastIndex; ++i) {
+            cout << "trying to extend state " << endl;
+            result[i].print(cout);
+            cout << endl;
+            for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
+                cout << "considering to add action fluent " << j << endl;
+                if (!result[i][j]) {
+                    ActionState copy(result[i]);
+                    copy[j] = 1;
+                    result.push_back(copy);
+                }
+            }
+        }
+        minElement = lastIndex;
+    }
+
+    ++scheduledActions;
+    if (scheduledActions <= task->numberOfConcurrentActions) {
+        calcAllActionStates(result, minElement, scheduledActions);
     }
 }
 
