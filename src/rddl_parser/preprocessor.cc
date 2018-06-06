@@ -330,18 +330,15 @@ void Preprocessor::prepareActions() {
     vector<ActionState> actionStateCandidates;
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
-    int minElement = 0;
-    int scheduledActions = 0;
     if (useIPC2018Rules) {
     
-        task->numberOfConcurrentActions = 1;
-    
+        task->numberOfConcurrentActions = 1;    
         while (true) {
             // cout << "Generating action states with up to " << task->numberOfConcurrentActions << " many action fluents." << endl;
-            int lastIndex = actionStateCandidates.size();
-            calcAllActionStatesForIPC2018(actionStateCandidates, minElement, scheduledActions);
+            int lastIndex = legalActionStates.size();
+            calcAllActionStatesForIPC2018(actionStateCandidates);
             // cout << "number of action states with up to " << task->numberOfConcurrentActions << " many action fluents: " << actionStateCandidates.size() << endl;
-            
+            vector<ActionState> nextActionStateCandidates;
             for (ActionState const& actionState : actionStateCandidates) {
                 bool isLegal = true;
                 for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
@@ -355,6 +352,7 @@ void Preprocessor::prepareActions() {
 
                 if (isLegal) {
                     legalActionStates.push_back(actionState);
+                    nextActionStateCandidates.push_back(actionState);
                     // cout << "    legal: ";
                     // for (size_t i = 0; i < actionState.state.size(); ++i) {
                     //     if (actionState[i]) {
@@ -373,12 +371,11 @@ void Preprocessor::prepareActions() {
                 // }
             }
             if ((legalActionStates.size() == lastIndex) ||
-                (scheduledActions == task->actionFluents.size())) {
+                (task->numberOfConcurrentActions == task->actionFluents.size())) {
                 break;
             }
             ++task->numberOfConcurrentActions;
-            actionStateCandidates = legalActionStates;
-            legalActionStates.clear();
+            actionStateCandidates = nextActionStateCandidates;
         }
     } else {
         if (task->numberOfConcurrentActions > task->actionFluents.size()) {
@@ -391,8 +388,7 @@ void Preprocessor::prepareActions() {
         // the number of concurrently applicable actions. Currently, if
         // max-nondef-actions is not used, this will always produce the
         // power set over all action fluents.
-
-        calcAllActionStates(actionStateCandidates, minElement, scheduledActions);
+        calcAllActionStates(actionStateCandidates, 0, 0);
 
         // Remove all illegal action combinations by checking the SACs
         // that are state independent
@@ -525,42 +521,26 @@ void Preprocessor::initializeActionStates() {
     }
 }
 
-void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& result,
-                                                 int& minElement,
-                                                 int& scheduledActions) const {
-    cout << "generating actions with " << scheduledActions << " many actions" << endl;
+void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& result) const {
     if (result.empty()) {
         result.push_back(ActionState((int)task->actionFluents.size()));
-    } else {
-        int lastIndex = result.size();
-        cout << "last index is " << lastIndex << endl;
-        cout << "min element is " << minElement << endl;
+    }
+    int lastIndex = result.size();
 
-        for (unsigned int i = minElement; i < lastIndex; ++i) {
-            cout << "trying to extend state " << endl;
-            result[i].print(cout);
-            cout << endl;
-            for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
-                cout << "considering to add action fluent " << j << endl;
-                if (!result[i][j]) {
-                    ActionState copy(result[i]);
-                    copy[j] = 1;
-                    result.push_back(copy);
-                }
+    for (unsigned int i = 0; i < lastIndex; ++i) {
+        for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
+            if (!result[i][j]) {
+                ActionState copy(result[i]);
+                copy[j] = 1;
+                result.push_back(copy);
             }
         }
-        minElement = lastIndex;
-    }
-
-    ++scheduledActions;
-    if (scheduledActions <= task->numberOfConcurrentActions) {
-        calcAllActionStates(result, minElement, scheduledActions);
     }
 }
 
 void Preprocessor::calcAllActionStates(vector<ActionState>& result,
-                                       int& minElement,
-                                       int& scheduledActions) const {
+                                       int minElement,
+                                       int scheduledActions) const {
     if (result.empty()) {
         result.push_back(ActionState((int)task->actionFluents.size()));
     } else {
