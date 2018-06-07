@@ -327,19 +327,48 @@ void Preprocessor::prepareActions() {
         task->actionFluents[index]->index = index;
     }
 
-    vector<ActionState> actionStateCandidates;
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
     if (useIPC2018Rules) {
-    
+        // For IPC 2018, the rules say that an action cannot be legal
+        // unless there is at least one legal action where the same
+        // action fluents are "active" except for one action fluent.
+        // Actions with exactly one "active" action fluent are an
+        // exception, these can be legal even if noop isn't. To use this
+        // part of the code, invoke the parser with
+        // rddl-parser DOMAIN_FILE INSTANCE_FILE OUTPUT -ipc2018 1 or
+        // rddl-parser INSTEACE_NAME DESTINATION -ipc2018 1
+        
+        
+        // Check if noop is legal
+        ActionState noop((int)task->actionFluents.size());
+        bool isLegal = true;
+        for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+            double res = 0.0;
+            task->staticSACs[i]->formula->evaluate(res, current, noop);
+            if (MathUtils::doubleIsEqual(res, 0.0)) {
+                isLegal = false;
+                break;
+            }
+        }
+        if (isLegal) {
+            // cout << "Noop is legal!" << endl;
+            legalActionStates.push_back(noop);
+        }
+        vector<ActionState> base;
         task->numberOfConcurrentActions = 1;    
         while (true) {
-            // cout << "Generating action states with up to " << task->numberOfConcurrentActions << " many action fluents." << endl;
-            int lastIndex = legalActionStates.size();
-            calcAllActionStatesForIPC2018(actionStateCandidates);
-            // cout << "number of action states with up to " << task->numberOfConcurrentActions << " many action fluents: " << actionStateCandidates.size() << endl;
-            vector<ActionState> nextActionStateCandidates;
-            for (ActionState const& actionState : actionStateCandidates) {
+            // cout << "Generating action states with " << task->numberOfConcurrentActions << " many action fluents." << endl;
+            // cout << "Total number of legal action states: " << legalActionStates.size() << endl;
+            // cout << "Number of base actions: " << base.size() << endl;
+            set<ActionState> candidates;
+            calcAllActionStatesForIPC2018(base, candidates);
+            // cout << "number of action state candidates with up to "
+            //      << task->numberOfConcurrentActions
+            //      << " many action fluents: " << candidates.size() << endl;
+            vector<ActionState> addedActionStates;
+            bool foundLegal = false;
+            for (const ActionState& actionState : candidates) {
                 bool isLegal = true;
                 for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
                     double res = 0.0;
@@ -349,33 +378,18 @@ void Preprocessor::prepareActions() {
                         break;
                     }
                 }
+                foundLegal |= isLegal;
 
                 if (isLegal) {
                     legalActionStates.push_back(actionState);
-                    nextActionStateCandidates.push_back(actionState);
-                    // cout << "    legal: ";
-                    // for (size_t i = 0; i < actionState.state.size(); ++i) {
-                    //     if (actionState[i]) {
-                    //         cout << task->actionFluents[i]->fullName << " ";
-                    //     }
-                    // }
-                    // cout << endl;
-                }//  else {
-                //     cout << "not legal: ";
-                //     for (size_t i = 0; i < actionState.state.size(); ++i) {
-                //         if (actionState[i]) {
-                //             cout << task->actionFluents[i]->fullName << " ";
-                //         }
-                //     }
-                //     cout << endl;
-                // }
+                    addedActionStates.push_back(actionState);
+                }
             }
-            if ((legalActionStates.size() == lastIndex) ||
-                (task->numberOfConcurrentActions == task->actionFluents.size())) {
+            if (!foundLegal || (task->numberOfConcurrentActions == task->actionFluents.size())) {
                 break;
             }
             ++task->numberOfConcurrentActions;
-            actionStateCandidates = nextActionStateCandidates;
+            base = addedActionStates;
         }
     } else {
         if (task->numberOfConcurrentActions > task->actionFluents.size()) {
@@ -388,6 +402,7 @@ void Preprocessor::prepareActions() {
         // the number of concurrently applicable actions. Currently, if
         // max-nondef-actions is not used, this will always produce the
         // power set over all action fluents.
+        vector<ActionState> actionStateCandidates;
         calcAllActionStates(actionStateCandidates, 0, 0);
 
         // Remove all illegal action combinations by checking the SACs
@@ -521,18 +536,24 @@ void Preprocessor::initializeActionStates() {
     }
 }
 
-void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& result) const {
-    if (result.empty()) {
-        result.push_back(ActionState((int)task->actionFluents.size()));
-    }
-    int lastIndex = result.size();
-
-    for (unsigned int i = 0; i < lastIndex; ++i) {
+void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& base,
+                                                 set<ActionState>& result) const {
+    if (base.empty()) {
+        // Generate all action states with exactly one active action fluent
         for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
-            if (!result[i][j]) {
-                ActionState copy(result[i]);
-                copy[j] = 1;
-                result.push_back(copy);
+            ActionState state((int)task->actionFluents.size());
+            state[j] = 1;
+            result.insert(state);
+        }
+        return;
+    }
+
+    for (const ActionState& baseState : base) {
+        for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
+            if (!baseState[index]) {
+                ActionState copy(baseState);
+                copy[index] = 1;
+                result.insert(copy);
             }
         }
     }

@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,8 @@ private:
 
     void calcAllActionStates(std::vector<ActionState>& result,
                              int minElement, int scheduledActions) const;
-    void calcAllActionStatesForIPC2018(std::vector<ActionState>& result) const; 
+    void calcAllActionStatesForIPC2018(std::vector<ActionState>& base,
+                                       std::set<ActionState>& result) const; 
 
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
                                          ActionState const& actionState) const;
