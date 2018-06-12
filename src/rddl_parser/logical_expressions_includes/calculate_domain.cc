@@ -285,7 +285,7 @@ void Division::calculateDomain(Domains const& domains,
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
         for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             // Avoid division by 0
-            if (MathUtils::dounleIsEqual(*it2,0.0)) {
+            if (MathUtils::doubleIsEqual(*it2,0.0)) {
                 continue;
             }
             res.insert(*it / *it2);
