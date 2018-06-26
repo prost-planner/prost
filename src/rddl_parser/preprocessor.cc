@@ -708,8 +708,7 @@ void Preprocessor::finalizeEvaluatables() {
     // Remove all CPFs with a domain that only includes their initial value
     map<ParametrizedVariable*, double> replacements;
     for (vector<ConditionalProbabilityFunction*>::iterator it =
-             task->CPFs.begin();
-         it != task->CPFs.end(); ++it) {
+             task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
 
         if ((*it)->getDomainSize() == 1) {
@@ -745,15 +744,15 @@ void Preprocessor::finalizeEvaluatables() {
         task->actionPreconds[i]->simplify(replacements);
         NumericConstant* nc =
             dynamic_cast<NumericConstant*>(task->actionPreconds[i]->formula);
-        if (nc) {
-            assert(!MathUtils::doubleIsEqual(nc->value, 0.0));
+        if (nc && !MathUtils::doubleIsEqual(nc->value, 0.0)) {
             // This SAC is not dynamic anymore after simplification as it
-            // simplifies to a state invariant
+            // simplifies to a state invariant that is always true
             swap(task->actionPreconds[i],
                  task->actionPreconds[task->actionPreconds.size() - 1]);
             task->actionPreconds.pop_back();
             --i;
-        }
+        } // TODO: Otherwise, we can remove the actions that violate the
+          // now static action precondition
     }
 
     for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
