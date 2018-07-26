@@ -76,7 +76,7 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
 
         // Extract the value-probability pairs
         vector<string> tokens;
-        StringUtils::tokenize(desc, tokens);
+        StringUtils::tokenize(desc, '(', ')', tokens);
 
         vector<LogicalExpression*> values;
         vector<LogicalExpression*> probabilities;
@@ -94,7 +94,7 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
 
         // Extract the condition-effect pairs
         vector<string> tokens;
-        StringUtils::tokenize(desc, tokens);
+        StringUtils::tokenize(desc, '(', ')', tokens);
         assert(tokens.size() > 1);
 
         vector<LogicalExpression*> conditions;
@@ -126,7 +126,7 @@ vector<LogicalExpression*> LogicalExpression::createExpressions(string& desc) {
     // Extract the expression descriptions (careful, this only works since all
     // expressions end with a closing parenthesis!)
     vector<string> tokens;
-    StringUtils::tokenize(desc, tokens);
+    StringUtils::tokenize(desc, '(', ')', tokens);
 
     // Create the logical expressions
     for (unsigned int index = 0; index < tokens.size(); ++index) {
@@ -141,7 +141,7 @@ LogicalExpressionPair LogicalExpression::splitExpressionPair(string& desc) {
     StringUtils::removeFirstAndLastCharacter(desc);
 
     vector<string> tokens;
-    StringUtils::tokenize(desc, tokens);
+    StringUtils::tokenize(desc, '(', ')', tokens);
     assert(tokens.size() == 2);
 
     tokens[1] = tokens[1].substr(1);

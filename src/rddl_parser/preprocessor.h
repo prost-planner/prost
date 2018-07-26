@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -15,12 +16,14 @@ class StateFluent;
 
 class Preprocessor {
 public:
-    Preprocessor(RDDLTask* _task) : task(_task) {}
+    Preprocessor(RDDLTask* task, bool useIPC2018Rules)
+        : task(task), useIPC2018Rules(useIPC2018Rules) {}
 
     void preprocess(bool const& output = true);
 
 private:
     RDDLTask* task;
+    bool useIPC2018Rules;
 
     void prepareEvaluatables();
     void prepareActions();
@@ -28,8 +31,9 @@ private:
     void initializeActionStates();
 
     void calcAllActionStates(std::vector<ActionState>& result,
-                             int minElement = 0,
-                             int scheduledActions = 0) const;
+                             int minElement, int scheduledActions) const;
+    void calcAllActionStatesForIPC2018(std::vector<ActionState>& base,
+                                       std::set<ActionState>& result) const; 
 
     bool sacContainsNegativeActionFluent(ActionPrecondition* const& sac,
                                          ActionState const& actionState) const;

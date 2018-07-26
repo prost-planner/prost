@@ -35,7 +35,7 @@ public:
     void addCPF(ParametrizedVariable variable,
                 LogicalExpression* logicalExpression);
 
-    void execute(std::string targetDir);
+    void execute(std::string td, double seed, int numStates, int numSimulations, bool useIPC2018Rules);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);

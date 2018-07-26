@@ -18,11 +18,11 @@ class ActionState;
 class DiscretePD;
 class ParametrizedVariable;
 
-typedef std::map<std::string, Object*> Instantiations;
-typedef std::map<ParametrizedVariable*, double> Simplifications;
-typedef std::set<StateFluent*> StateFluentSet;
-typedef std::set<ActionFluent*> ActionFluentSet;
-typedef std::vector<std::set<double>> Domains;
+using Instantiations = std::map<std::string, Object*>;
+using Simplifications = std::map<ParametrizedVariable*, double>;
+using StateFluentSet = std::set<StateFluent*>;
+using ActionFluentSet = std::set<ActionFluent*>;
+using Domains = std::vector<std::set<double>>;
 
 class LogicalExpression {
 public:

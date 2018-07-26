@@ -166,15 +166,15 @@ void StringUtils::deleteCommentFromLine(std::string& line,
     }
 }
 
-void StringUtils::tokenize(std::string const& s,
-                           std::vector<std::string>& res) {
+void StringUtils::tokenize(std::string const& s, char open_paren,
+                           char close_paren, std::vector<std::string>& res) {
     int openParens = 0;
     std::stringstream tmp;
     for (size_t pos = 0; pos < s.length(); ++pos) {
         tmp << s[pos];
-        if (s[pos] == '(') {
+        if (s[pos] == open_paren) {
             openParens++;
-        } else if (s[pos] == ')') {
+        } else if (s[pos] == close_paren) {
             openParens--;
             if (openParens == 0) {
                 std::string token = tmp.str();

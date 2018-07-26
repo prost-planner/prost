@@ -1,6 +1,4 @@
 #include "ippc_client.h"
-#include "parser.h"
-#include "prost_planner.h"
 
 #include "utils/stopwatch.h"
 
@@ -11,7 +9,8 @@
 using namespace std;
 
 void printUsage() {
-    cout << "Usage: ./prost <rddl-parser-output> [PROST <options>]" << endl
+    cout << "Usage: ./prost <rddl-parser-output | rddl-problem-name> "
+            "[PROST <options>]"
          << endl;
 
     cout << "**************************************************************"
@@ -580,21 +579,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    map<string, int> stateVariableIndices;
-    vector<vector<string>> stateVariableValues;
-
-    Parser parser(problemFileName);
-    parser.parseTask(stateVariableIndices, stateVariableValues);
-
-    // Create Prost Planner
-    ProstPlanner* planner = new ProstPlanner(plannerDesc);
-    planner->init();
-
     // Create connector to rddlsim and run
-    IPPCClient* client = new IPPCClient(
-        planner, hostName, port, stateVariableIndices, stateVariableValues);
-
-    client->run(SearchEngine::taskName);
+    IPPCClient* client = new IPPCClient(hostName, port);
+    client->run(problemFileName, plannerDesc);
 
     cout << "PROST complete running time: " << totalTime << endl;
     return 0;

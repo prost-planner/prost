@@ -27,7 +27,8 @@ public:
                                                 std::string substr);
     static void deleteCommentFromLine(std::string& line,
                                       std::string commentSign);
-    static void tokenize(std::string const& s, std::vector<std::string>& res);
+    static void tokenize(std::string const& s, char open_paren,
+                         char close_paren, std::vector<std::string>& res);
     static void split(std::string const& s, std::vector<std::string>& res,
                       std::string const& delim = " ");
     static void tabString(std::string& s, int tabs);

@@ -1,7 +1,6 @@
 #include "preprocessor.h"
 
 #include "evaluatables.h"
-
 #include "rddl.h"
 
 #include "utils/math_utils.h"
@@ -304,7 +303,6 @@ void Preprocessor::prepareActions() {
         for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
             task->CPFs[index]->simplify(replacements);
         }
-
         task->rewardCPF->simplify(replacements);
 
         for (unsigned int index = 0; index < task->actionPreconds.size();
@@ -329,32 +327,101 @@ void Preprocessor::prepareActions() {
         task->actionFluents[index]->index = index;
     }
 
-    // Calculate all action states with up to numberOfConcurrentActions
-    // concurrent actions TODO: Make sure this stops also if an static SAC is
-    // violated that constrains the number of concurrently applicable actions.
-    // Currently, if max-nondef-actions is not used, this will always produce
-    // the power set over all action fluents.
-    vector<ActionState> allActionStates;
-    calcAllActionStates(allActionStates);
-
-    // Remove all illegal action combinations by checking the SACs that are
-    // state independent
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
-
-    for (ActionState const& actionState : allActionStates) {
+    if (useIPC2018Rules) {
+        // For IPC 2018, the rules say that an action cannot be legal
+        // unless there is at least one legal action where the same
+        // action fluents are "active" except for one action fluent.
+        // Actions with exactly one "active" action fluent are an
+        // exception, these can be legal even if noop isn't. To use this
+        // part of the code, invoke the parser with
+        // rddl-parser DOMAIN_FILE INSTANCE_FILE OUTPUT -ipc2018 1 or
+        // rddl-parser INSTEACE_NAME DESTINATION -ipc2018 1
+        
+        
+        // Check if noop is legal
+        ActionState noop((int)task->actionFluents.size());
         bool isLegal = true;
         for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
             double res = 0.0;
-            task->staticSACs[i]->formula->evaluate(res, current, actionState);
+            task->staticSACs[i]->formula->evaluate(res, current, noop);
             if (MathUtils::doubleIsEqual(res, 0.0)) {
                 isLegal = false;
                 break;
             }
         }
-
         if (isLegal) {
-            legalActionStates.push_back(actionState);
+            // cout << "Noop is legal!" << endl;
+            legalActionStates.push_back(noop);
+        }
+        vector<ActionState> base;
+        task->numberOfConcurrentActions = 1;    
+        while (true) {
+            // cout << "Generating action states with " << task->numberOfConcurrentActions << " many action fluents." << endl;
+            // cout << "Total number of legal action states: " << legalActionStates.size() << endl;
+            // cout << "Number of base actions: " << base.size() << endl;
+            set<ActionState> candidates;
+            calcAllActionStatesForIPC2018(base, candidates);
+            // cout << "number of action state candidates with up to "
+            //      << task->numberOfConcurrentActions
+            //      << " many action fluents: " << candidates.size() << endl;
+            vector<ActionState> addedActionStates;
+            bool foundLegal = false;
+            for (const ActionState& actionState : candidates) {
+                bool isLegal = true;
+                for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+                    double res = 0.0;
+                    task->staticSACs[i]->formula->evaluate(res, current, actionState);
+                    if (MathUtils::doubleIsEqual(res, 0.0)) {
+                        isLegal = false;
+                        break;
+                    }
+                }
+                foundLegal |= isLegal;
+
+                if (isLegal) {
+                    legalActionStates.push_back(actionState);
+                    addedActionStates.push_back(actionState);
+                }
+            }
+            if (!foundLegal || (task->numberOfConcurrentActions == task->actionFluents.size())) {
+                break;
+            }
+            ++task->numberOfConcurrentActions;
+            base = addedActionStates;
+        }
+    } else {
+        if (task->numberOfConcurrentActions > task->actionFluents.size()) {
+            task->numberOfConcurrentActions = task->actionFluents.size();
+        }
+
+        // Calculate all action states with up to
+        // numberOfConcurrentActions concurrent actions TODO: Make sure
+        // this stops also if a static SAC is violated that constrains
+        // the number of concurrently applicable actions. Currently, if
+        // max-nondef-actions is not used, this will always produce the
+        // power set over all action fluents.
+        vector<ActionState> actionStateCandidates;
+        calcAllActionStates(actionStateCandidates, 0, 0);
+
+        // Remove all illegal action combinations by checking the SACs
+        // that are state independent
+
+        for (ActionState const& actionState : actionStateCandidates) {
+            bool isLegal = true;
+            for (unsigned int i = 0; i < task->staticSACs.size(); ++i) {
+                double res = 0.0;
+                task->staticSACs[i]->formula->evaluate(res, current, actionState);
+                if (MathUtils::doubleIsEqual(res, 0.0)) {
+                    isLegal = false;
+                    break;
+                }
+            }
+
+            if (isLegal) {
+                legalActionStates.push_back(actionState);
+            }
         }
     }
 
@@ -464,6 +531,29 @@ void Preprocessor::initializeActionStates() {
                 // this ActionStates' action fluents it might enforce that
                 // action fluent (and thereby forbid this action)
                 actionState.relevantSACs.push_back(task->actionPreconds[i]);
+            }
+        }
+    }
+}
+
+void Preprocessor::calcAllActionStatesForIPC2018(vector<ActionState>& base,
+                                                 set<ActionState>& result) const {
+    if (base.empty()) {
+        // Generate all action states with exactly one active action fluent
+        for (unsigned int j = 0; j < task->actionFluents.size(); ++j) {
+            ActionState state((int)task->actionFluents.size());
+            state[j] = 1;
+            result.insert(state);
+        }
+        return;
+    }
+
+    for (const ActionState& baseState : base) {
+        for (unsigned int index = 0; index < task->actionFluents.size(); ++index) {
+            if (!baseState[index]) {
+                ActionState copy(baseState);
+                copy[index] = 1;
+                result.insert(copy);
             }
         }
     }
@@ -595,9 +685,22 @@ void Preprocessor::calculateCPFDomains() {
         ++currentHorizon;
     }
 
+    // QUICK FIX START
+    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
+        double max_val = *domains[index].rbegin();
+        if (domains[index].size() > 1 && (max_val != domains[index].size() -1)) {
+            cout << "State-fluent " << task->CPFs[index]->head->fullName << " has a domain size of " << domains[index].size() << " and a max val of " << max_val << endl;
+            cout << "Inserting values into domain of state-fluent " << task->CPFs[index]->head->fullName << endl;
+            for (unsigned int val = 0; val < max_val; ++val) {
+                domains[index].insert(val);
+            }
+        }
+    }
+    // QUICK FIX END
+
     // Set domains
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
-        task->CPFs[index]->domain = domains[index];
+        task->CPFs[index]->setDomain(domains[index]);
     }
 }
 
@@ -605,8 +708,7 @@ void Preprocessor::finalizeEvaluatables() {
     // Remove all CPFs with a domain that only includes their initial value
     map<ParametrizedVariable*, double> replacements;
     for (vector<ConditionalProbabilityFunction*>::iterator it =
-             task->CPFs.begin();
-         it != task->CPFs.end(); ++it) {
+             task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
 
         if ((*it)->getDomainSize() == 1) {
@@ -642,15 +744,15 @@ void Preprocessor::finalizeEvaluatables() {
         task->actionPreconds[i]->simplify(replacements);
         NumericConstant* nc =
             dynamic_cast<NumericConstant*>(task->actionPreconds[i]->formula);
-        if (nc) {
-            assert(!MathUtils::doubleIsEqual(nc->value, 0.0));
+        if (nc && !MathUtils::doubleIsEqual(nc->value, 0.0)) {
             // This SAC is not dynamic anymore after simplification as it
-            // simplifies to a state invariant
+            // simplifies to a state invariant that is always true
             swap(task->actionPreconds[i],
                  task->actionPreconds[task->actionPreconds.size() - 1]);
             task->actionPreconds.pop_back();
             --i;
-        }
+        } // TODO: Otherwise, we can remove the actions that violate the
+          // now static action precondition
     }
 
     for (unsigned int index = 0; index < task->actionPreconds.size(); ++index) {
@@ -671,7 +773,7 @@ void Preprocessor::determinize() {
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =
-                task->CPFs[index]->formula->determinizeMostLikely();
+                task->CPFs[index]->formula->determinizeMostLikely(task->actionStates);
             task->CPFs[index]->determinization =
                 task->CPFs[index]->determinization->simplify(replacementsDummy);
         }

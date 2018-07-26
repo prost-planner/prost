@@ -44,7 +44,7 @@ TEST_OBJECTS = $(addsuffix .o, $(TEST_BINARIES))
 CCOPT = -g -Wall -W -Wno-sign-compare -Wno-deprecated -ansi -pedantic -Werror -std=c++0x #-Wconversion
 LINKOPT = -g
 
-OPT =
+OPT = -std=c++0x
 
 LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS),64)
@@ -59,7 +59,7 @@ CCOPT_RELEASE  = -O3 -fomit-frame-pointer -DNDEBUG
 CCOPT_DEBUG    = -fprofile-arcs -ftest-coverage
 
 LINKOPT_RELEASE  = -O3 #-static -static-libgcc
-LINKOPT_DEBUG    = 
+LINKOPT_DEBUG    =
 
 CCOPT_GTEST += -I../test -DGTEST_HAS_PTHREAD=0
 

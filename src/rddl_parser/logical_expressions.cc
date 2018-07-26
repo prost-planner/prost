@@ -106,6 +106,7 @@ bool Type::isSubtypeOf(Type* const& other) const {
 #include "logical_expressions_includes/calculate_domain_as_interval.cc"
 #include "logical_expressions_includes/classify_action_fluents.cc"
 #include "logical_expressions_includes/collect_initial_info.cc"
+#include "logical_expressions_includes/determine_bounds.cc"
 #include "logical_expressions_includes/determinization.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
