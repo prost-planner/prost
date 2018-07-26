@@ -700,12 +700,9 @@ void RDDLTask::print(std::ostream& out) {
     }
 }
 
-void RDDLTask::execute(std::string td /*target dir*/) {
-    // std::cout << "Executing..." << std::endl << "Writing output.." <<
-    // std::endl;
-
-    Timer t, totalTime;
-    // std::cout << "Parsing...finished" << std::endl;
+void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations, bool useIPC2018Rules) {
+    Timer t;
+    srand(seed);
 
     t.reset();
     std::cout << "instantiating..." << std::endl;
@@ -715,26 +712,23 @@ void RDDLTask::execute(std::string td /*target dir*/) {
 
     t.reset();
     std::cout << "preprocessing..." << std::endl;
-    Preprocessor preprocessor(this);
+    Preprocessor preprocessor(this, useIPC2018Rules);
     preprocessor.preprocess();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "analyzing task..." << std::endl;
     TaskAnalyzer analyzer(this);
-    analyzer.analyzeTask();
+    analyzer.analyzeTask(numStates, numSimulations);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "writing output..." << std::endl;
     std::ofstream resultFile;
-    std::cout << "Task name " << name << std::endl;
     std::string targetDir = td + "/" + name;
+    std::cout << "writing output for instance " << name << " to " << targetDir << " ..." << std::endl;
     resultFile.open(targetDir.c_str());
     print(resultFile);
     resultFile.close();
     // print(std::cout);
-    std::cout << "...finished (" << t << ")." << name << std::endl;
-
-    // std::cout << "total time: " << totalTime << std::endl;
+    std::cout << "...finished (" << t << ")." << std::endl;
 }

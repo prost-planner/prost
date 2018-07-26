@@ -1,7 +1,6 @@
 #include "probability_distribution.h"
 
 #include <cassert>
-#include <iostream>
 
 using namespace std;
 
