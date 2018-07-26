@@ -43,6 +43,7 @@ set(SEARCH_SOURCES
   states
   thts
   uniform_evaluation_search
+  utils/base64
   utils/math_utils
   utils/random
   utils/stopwatch
@@ -62,4 +63,4 @@ add_executable(search ${SEARCH_SOURCES})
 
 # Linking BDD
 target_link_libraries(search bdd)
-
+target_link_libraries(search -lstdc++fs)
