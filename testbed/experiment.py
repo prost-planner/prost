@@ -7,8 +7,8 @@ import sys
 ############ BASEL GRID PARAMETER ############
 
 # Load "infai" settings for partition and qos 
-partition="infai"
-qos="infai"
+partition="infai_2"
+qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
 nice="2000"
@@ -54,12 +54,12 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "1:40:00"
+timeout = "4:00:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
 # stands for MByte and G for GByte. Note that PROST additionally has an
-# internal memory management that makes sure that the used memory that
+# internal memory management that makes sure that the used memory does
 # not exceed a given value (see src/search/prost_planner.cc)
 memout = "3872M"
 
@@ -83,7 +83,7 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/ %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 0 prost > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
 " ../src/search/prost benchmarks/%(benchmark)s/prost/%(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
