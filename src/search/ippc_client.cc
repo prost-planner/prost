@@ -17,10 +17,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <experimental/filesystem>
-
-namespace fs = std::experimental::filesystem;
-
 using namespace std;
 
 IPPCClient::IPPCClient(std::string _hostName, unsigned short _port)
@@ -36,13 +32,6 @@ IPPCClient::~IPPCClient() = default;
 
 void IPPCClient::run(string const& input, string& plannerDesc) {
     string problemName = input;
-    // If the input refers to a problem file we parse the file. Otherwise we
-    // first have to request the task description from the server.
-    if (fs::exists(input)) {
-        Parser parser(input);
-        parser.parseTask(stateVariableIndices, stateVariableValues);
-        problemName = SearchEngine::taskName;
-    }
 
     // Init connection to the rddlsim server
     initConnection();
@@ -150,14 +139,12 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
     string s;
     // If the task was not initialized, we have to read it from the server and
     // run the parser
-    if (SearchEngine::taskName.empty()) {
-        if (!serverResponse->dissect("task", s)) {
-            SystemUtils::abort(
-                "Error: server response does not contain task description.");
-        }
-        s = decodeBase64(s);
-        executeParser(rddlProblem, s);
+    assert(SearchEngine::taskName.empty());
+    if (!serverResponse->dissect("task", s)) {
+        SystemUtils::abort("Error: server response does not contain task description.");
     }
+    s = decodeBase64(s);
+    executeParser(rddlProblem, s);
 
     if (!serverResponse->dissect("num-rounds", s)) {
         SystemUtils::abort("Error: server response insufficient.");
@@ -420,16 +407,17 @@ void IPPCClient::readVariable(XMLNode const* node,
 void IPPCClient::executeParser(string const& problemName,
                                string const& taskDesc) {
     // Generate temporary input file for parser
-    fs::path domainPath = fs::current_path() / "parser_in.rddl";
-    std::ofstream ofs(domainPath);
-    ofs << taskDesc << endl;
-    ofs.close();
+    std::ofstream taskFile;
+    string taskFileName("./parser_in.rddl");
+    taskFile.open(taskFileName.c_str());
+    taskFile << taskDesc << endl;
+    taskFile.close();
 
     // Assumes that rddl-parser executable exists in the current directory.
-    if (!fs::exists(fs::current_path() / "rddl-parser")) {
-        SystemUtils::abort(
-            "Error: rddl-parser executable not found in working directory.");
-    }
+    //if (!fs::exists(fs::current_path() / "rddl-parser")) {
+    //    SystemUtils::abort(
+    //        "Error: rddl-parser executable not found in working directory.");
+    //}
     // TODO This probably only works in unix and is not portable.
     int result =
         std::system("./rddl-parser parser_in.rddl .");
@@ -439,7 +427,9 @@ void IPPCClient::executeParser(string const& problemName,
     Parser parser(problemName);
     parser.parseTask(stateVariableIndices, stateVariableValues);
 
-    // Remove temporary files
-    fs::remove(fs::current_path() / "parser_in.rddl");
-    fs::remove(fs::current_path() / problemName);
+    // Remove temporary file
+    if ((remove(taskFileName.c_str()) != 0) ||
+        (remove(problemName.c_str()) != 0)) {
+        SystemUtils::abort("Error: deleting temporary file failed");
+    }
 }
