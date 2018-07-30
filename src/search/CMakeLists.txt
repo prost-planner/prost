@@ -63,4 +63,3 @@ add_executable(search ${SEARCH_SOURCES})
 
 # Linking BDD
 target_link_libraries(search bdd)
-target_link_libraries(search -lstdc++fs)
