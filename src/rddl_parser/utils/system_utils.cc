@@ -11,6 +11,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include <sys/stat.h>
 #include "sys/sysinfo.h"
 #include "sys/times.h"
 #include "sys/types.h"
@@ -47,6 +48,12 @@ double SystemUtils::stopTime() {
 
     clockRunning = false;
     return double(clock() - start) / (double)CLOCKS_PER_SEC;
+}
+
+bool SystemUtils::isDirectory(std::string const& name) {
+    struct stat buf;
+    stat(name.c_str(), &buf);
+    return S_ISDIR(buf.st_mode);
 }
 
 bool SystemUtils::readFile(std::string& file, std::string& res,
