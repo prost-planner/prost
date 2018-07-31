@@ -700,7 +700,8 @@ void RDDLTask::print(std::ostream& out) {
     }
 }
 
-void RDDLTask::execute(std::string td, double seed, int numStates, int numSimulations, bool useIPC2018Rules) {
+void RDDLTask::execute(std::string td, double seed, int numStates,
+                       int numSimulations, bool useIPC2018Rules) {
     Timer t;
     srand(seed);
 
@@ -724,7 +725,10 @@ void RDDLTask::execute(std::string td, double seed, int numStates, int numSimula
 
     t.reset();
     std::ofstream resultFile;
-    std::string targetDir = td + "/" + name;
+    std::string targetDir = td;
+    if (SystemUtils::isDirectory(td)) {
+        targetDir += "/" + name;
+    }
     std::cout << "writing output for instance " << name << " to " << targetDir << " ..." << std::endl;
     resultFile.open(targetDir.c_str());
     print(resultFile);

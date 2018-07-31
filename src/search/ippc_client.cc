@@ -30,14 +30,12 @@ IPPCClient::IPPCClient(std::string _hostName, unsigned short _port)
 // ProstPlanner in header because of usage of unique_ptr<ProstPlanner>
 IPPCClient::~IPPCClient() = default;
 
-void IPPCClient::run(string const& input, string& plannerDesc) {
-    string problemName = input;
-
+void IPPCClient::run(string const& instanceName, string& plannerDesc) {
     // Init connection to the rddlsim server
     initConnection();
 
     // Request round
-    initSession(problemName, plannerDesc);
+    initSession(instanceName, plannerDesc);
 
     vector<double> nextState(stateVariableIndices.size());
     double immediateReward = 0.0;
@@ -116,11 +114,11 @@ void IPPCClient::closeConnection() {
                      Session and rounds management
 ******************************************************************************/
 
-void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
+void IPPCClient::initSession(string const& instanceName, string& plannerDesc) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
        << "<session-request>"
-       << "<problem-name>" << rddlProblem << "</problem-name>"
+       << "<problem-name>" << instanceName << "</problem-name>"
        << "<client-name>"
        << "prost"
        << "</client-name>"
@@ -144,7 +142,7 @@ void IPPCClient::initSession(string const& rddlProblem, string& plannerDesc) {
         SystemUtils::abort("Error: server response does not contain task description.");
     }
     s = decodeBase64(s);
-    executeParser(rddlProblem, s);
+    executeParser(s);
 
     if (!serverResponse->dissect("num-rounds", s)) {
         SystemUtils::abort("Error: server response insufficient.");
@@ -404,11 +402,12 @@ void IPPCClient::readVariable(XMLNode const* node,
                              Parser Interaction
 ******************************************************************************/
 
-void IPPCClient::executeParser(string const& problemName,
-                               string const& taskDesc) {
+void IPPCClient::executeParser(string const& taskDesc) {
     // Generate temporary input file for parser
     std::ofstream taskFile;
-    string taskFileName("./parser_in.rddl");
+    stringstream taskFileNameStream;
+    taskFileNameStream << "./parser_in_" << ::getpid() << ".rddl";
+    string taskFileName = taskFileNameStream.str();
     taskFile.open(taskFileName.c_str());
     taskFile << taskDesc << endl;
     taskFile.close();
@@ -419,17 +418,24 @@ void IPPCClient::executeParser(string const& problemName,
     //        "Error: rddl-parser executable not found in working directory.");
     //}
     // TODO This probably only works in unix and is not portable.
+    stringstream parserOutStream;
+    parserOutStream << "parser_out_" << ::getpid();
+    string parserOut = parserOutStream.str();
+    
+    stringstream callString;
+    callString << "./rddl-parser " << taskFileName << " ./" << parserOut ;
     int result =
-        std::system("./rddl-parser parser_in.rddl .");
+        std::system(callString.str().c_str());
     if (result != 0) {
         SystemUtils::abort("Error: rddl-parser had an error");
     }
-    Parser parser(problemName);
+
+    Parser parser(parserOut);
     parser.parseTask(stateVariableIndices, stateVariableValues);
 
-    // Remove temporary file
+    // Remove temporary files
     if ((remove(taskFileName.c_str()) != 0) ||
-        (remove(problemName.c_str()) != 0)) {
+        (remove(parserOut.c_str()) != 0)) {
         SystemUtils::abort("Error: deleting temporary file failed");
     }
 }

@@ -769,7 +769,7 @@ int main (int argc, char** argv) {
     Timer t;
     std::cout << "Parsing..." << std::endl;
     if (argc < 3) {
-        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+        SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <targetDir-or-targetFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 
@@ -784,7 +784,7 @@ int main (int argc, char** argv) {
          index++;
     }
     if (index == 1 || index > 4 || index >= argc) {
-        SystemUtils::abort("Usage: ./rddl_parse <rddlDesc> <targetDir> [options]\n"
+        SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <targetDir> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 

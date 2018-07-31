@@ -14,14 +14,14 @@ public:
     IPPCClient(std::string _hostName, unsigned short _port);
     ~IPPCClient();
 
-    void run(std::string const& problem, std::string& plannerDesc);
+    void run(std::string const& instanceName, std::string& plannerDesc);
 
 private:
     void initConnection();
     int connectToServer();
     void closeConnection();
 
-    void initSession(std::string const& rddlProblem, std::string& plannerDesc);
+    void initSession(std::string const& instanceName, std::string& plannerDesc);
     void finishSession();
 
     void initRound(std::vector<double>& initialState, double& immediateReward);
@@ -38,8 +38,7 @@ private:
     // If the client call did not contain a task file, we have to read the task
     // description from the server and run the external parser to create a task
     // in PROST format.
-    void executeParser(std::string const& problemName,
-                       std::string const& taskDesc);
+    void executeParser(std::string const& taskDesc);
 
     std::unique_ptr<ProstPlanner> planner;
     std::string hostName;
