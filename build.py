@@ -14,9 +14,9 @@ for config_file in sorted(glob.glob(os.path.join(script_dir, "*build_configs.py"
         exec(config_file_content, globals(), CONFIGS)
 
 DEFAULT_CONFIG_NAME = CONFIGS.pop("DEFAULT")
+RELEASE_CONFIG_NAME = CONFIGS.pop("RELEASE")
 DEBUG_CONFIG_NAME = CONFIGS.pop("DEBUG")
-TEST_CONFIG_NAME = CONFIGS.pop("TEST")                            
-
+TEST_CONFIG_NAME = CONFIGS.pop("TEST")
 
 CMAKE = "cmake"
 if os.name == "posix":
@@ -76,6 +76,8 @@ def main():
         if arg == "--help" or arg == "-h":
             print_usage()
             sys.exit(0)
+        elif arg == "--release":
+            config_names.add(RELEASE_CONFIG_NAME)
         elif arg == "--debug":
             config_names.add(DEBUG_CONFIG_NAME)
         elif arg == "--test":
