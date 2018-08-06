@@ -403,6 +403,12 @@ void IPPCClient::readVariable(XMLNode const* node,
 ******************************************************************************/
 
 void IPPCClient::executeParser(string const& taskDesc) {
+#ifdef NDEBUG
+    std::string parserExec = "./rddl-parser-release ";
+#else
+    std::string parserExec = "./rddl-parser-debug ";
+#endif
+    std::cout << "RUNNING RDDL PARSER AT " << parserExec << endl;
     // Generate temporary input file for parser
     std::ofstream taskFile;
     stringstream taskFileNameStream;
@@ -412,22 +418,17 @@ void IPPCClient::executeParser(string const& taskDesc) {
     taskFile << taskDesc << endl;
     taskFile.close();
 
-    // Assumes that rddl-parser executable exists in the current directory.
-    //if (!fs::exists(fs::current_path() / "rddl-parser")) {
-    //    SystemUtils::abort(
-    //        "Error: rddl-parser executable not found in working directory.");
-    //}
-    // TODO This probably only works in unix and is not portable.
     stringstream parserOutStream;
     parserOutStream << "parser_out_" << ::getpid();
     string parserOut = parserOutStream.str();
     
     stringstream callString;
-    callString << "./rddl-parser " << taskFileName << " ./" << parserOut ;
+    callString << parserExec << taskFileName << " ./" << parserOut;
+    std::cout << callString.str() << std::endl;
     int result =
         std::system(callString.str().c_str());
     if (result != 0) {
-        SystemUtils::abort("Error: rddl-parser had an error");
+        SystemUtils::abort("Error: " + parserExec + " had an error");
     }
 
     Parser parser(parserOut);
