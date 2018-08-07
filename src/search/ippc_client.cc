@@ -139,7 +139,8 @@ void IPPCClient::initSession(string const& instanceName, string& plannerDesc) {
     // run the parser
     assert(SearchEngine::taskName.empty());
     if (!serverResponse->dissect("task", s)) {
-        SystemUtils::abort("Error: server response does not contain task description.");
+        SystemUtils::abort(
+            "Error: server response does not contain task description.");
     }
     s = decodeBase64(s);
     executeParser(s);
@@ -421,12 +422,11 @@ void IPPCClient::executeParser(string const& taskDesc) {
     stringstream parserOutStream;
     parserOutStream << "parser_out_" << ::getpid();
     string parserOut = parserOutStream.str();
-    
+
     stringstream callString;
     callString << parserExec << taskFileName << " ./" << parserOut;
     std::cout << callString.str() << std::endl;
-    int result =
-        std::system(callString.str().c_str());
+    int result = std::system(callString.str().c_str());
     if (result != 0) {
         SystemUtils::abort("Error: " + parserExec + " had an error");
     }

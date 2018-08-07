@@ -52,7 +52,7 @@ set(SEARCH_SOURCES
   utils/system_utils
  )
 
-# Linking BDD for the needes of search
+# Linking BDD library required for reward lock detection
 set(GPP_LINK_FLAGS "${GPP_LINK_FLAGS} -lbdd")
 
 # Setting flags
