@@ -45,7 +45,7 @@ RDDLTask::RDDLTask()
 }
 
 void RDDLTask::addCPF(ParametrizedVariable variable,
-             LogicalExpression* logicalExpression) {
+                      LogicalExpression* logicalExpression) {
     // Variable
     std::string name = variable.variableName;
     if (name[name.length() - 1] == '\'') {
@@ -69,17 +69,15 @@ void RDDLTask::addCPF(ParametrizedVariable variable,
     }
 
     if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
-        SystemUtils::abort("Error: Multiple definition of CPF " + name +
-                           ".");
+        SystemUtils::abort("Error: Multiple definition of CPF " + name + ".");
     }
     // Expression
     CPFDefinitions[head] = logicalExpression;
 }
 
 void RDDLTask::setInstance(std::string name, std::string domainName,
-         std::string nonFluentsName,
-         int maxNonDefActions, int horizon, double discount) {
-
+                           std::string nonFluentsName, int maxNonDefActions,
+                           int horizon, double discount) {
     this->name = name;
 
     // Check domain name
@@ -90,8 +88,7 @@ void RDDLTask::setInstance(std::string name, std::string domainName,
 
     // Check Non fluents name
     if (this->nonFluentsName != nonFluentsName) {
-        SystemUtils::abort("Unknown non fluents " +
-                           nonFluentsName +
+        SystemUtils::abort("Unknown non fluents " + nonFluentsName +
                            "defined in Non fluent section");
     }
 
@@ -217,12 +214,12 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
 }
 
 ParametrizedVariable* RDDLTask::getParametrizedVariable(std::string varName) {
-  if (variableDefinitions.find(varName) != variableDefinitions.end()) {
-    return variableDefinitions[varName];
-  } else {
-    SystemUtils::abort("Unknown variable: " + varName + ".");
-  }
-  return nullptr;
+    if (variableDefinitions.find(varName) != variableDefinitions.end()) {
+        return variableDefinitions[varName];
+    } else {
+        SystemUtils::abort("Unknown variable: " + varName + ".");
+    }
+    return nullptr;
 }
 
 StateFluent* RDDLTask::getStateFluent(std::string const& name) {
@@ -729,7 +726,8 @@ void RDDLTask::execute(std::string td, double seed, int numStates,
     if (SystemUtils::isDirectory(td)) {
         targetDir += "/" + name;
     }
-    std::cout << "writing output for instance " << name << " to " << targetDir << " ..." << std::endl;
+    std::cout << "writing output for instance " << name << " to " << targetDir
+              << " ..." << std::endl;
     resultFile.open(targetDir.c_str());
     print(resultFile);
     resultFile.close();
