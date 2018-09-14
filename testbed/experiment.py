@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import sys
 
 ############ BASEL GRID PARAMETER ############
@@ -28,6 +29,9 @@ queue = "meta_core.q"
 priority = 0
 
 ############ OTHER PARAMETERS ############
+
+# Set to true if you want to run the experiment in debug mode
+run_debug = False
 
 # Available options are "slurm" and "sge" (for sun grid engine)
 grid_engine = "slurm"
@@ -134,6 +138,19 @@ SGE_TEMPLATE = "#! /bin/bash\n"\
 def isInstanceName(fileName):
     return fileName.count("inst") > 0
 
+def copy_binaries():
+    if run_debug:
+        parser_name = "rddl-parser-debug"
+        parser_file = "../builds/debug/rddl_parser/rddl-parser"
+        search_file = "../builds/debug/search/search"
+    else:
+        parser_name = "rddl-parser-release"
+        parser_file = "../builds/release/rddl_parser/rddl-parser"
+        search_file = "../builds/release/search/search"
+
+    shutil.copy2(parser_file, "./"+parser_name)
+    shutil.copy2(search_file, "./prost")
+
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
@@ -207,5 +224,6 @@ if __name__ == '__main__':
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
+    copy_binaries()
     create_tasks(filename, instances)
     run_experiments(filename)
