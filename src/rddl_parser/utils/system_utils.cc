@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
-#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -12,11 +11,12 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "sys/stat.h"
 #include "sys/sysinfo.h"
 #include "sys/times.h"
 #include "sys/types.h"
 #include "sys/vtimes.h"
-#include <sys/stat.h>
+
 
 clock_t SystemUtils::start = 0;
 clock_t SystemUtils::lastCPU = 0;
@@ -25,8 +25,6 @@ clock_t SystemUtils::lastUserCPU = 0;
 int SystemUtils::numProcessors = 0;
 bool SystemUtils::clockRunning = false;
 bool SystemUtils::CPUMeasurementOfProcessRunning = false;
-
-namespace fs = std::experimental::filesystem;
 
 void SystemUtils::abort(std::string msg) {
     std::cerr << "\033[1;31mERROR! \033[0m" << msg << std::endl;
@@ -51,10 +49,6 @@ double SystemUtils::stopTime() {
 
     clockRunning = false;
     return double(clock() - start) / (double)CLOCKS_PER_SEC;
-}
-
-bool SystemUtils::isDirectory(std::string const& name) {
-    return fs::is_directory(name);
 }
 
 bool SystemUtils::readFile(std::string& file, std::string& res,

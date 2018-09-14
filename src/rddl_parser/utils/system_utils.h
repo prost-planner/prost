@@ -11,7 +11,6 @@ public:
     static void takeTime();
     static double stopTime();
 
-    static bool isDirectory(std::string const& name);
     static bool readFile(std::string& file, std::string& res,
                          std::string ignoreSign = "");
 
