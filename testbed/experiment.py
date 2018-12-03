@@ -8,14 +8,14 @@ import sys
 ############ BASEL GRID PARAMETER ############
 
 # Load "infai" settings for partition and qos
-partition="infai_2"
+partition="infai_1"
 qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
 nice="2000"
 
 # The email adress that receives an email when the experiment is finished
-email = "tho.keller@unibas.ch"
+#email = "tho.keller@unibas.ch"
 
 ############ FREIBURG GRID PARAMETER ############
 # defines which queue to use for one task. Possible values are
@@ -87,9 +87,9 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s_server.log 2> %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s.log 2> %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.err"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -159,7 +159,7 @@ def create_tasks(filename, instances):
     for config in configs:
         task_id = 1
         lower = 1
-        higher = 100
+        upper = 100
         for instance in sorted(instances):
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark = benchmark,
@@ -167,13 +167,13 @@ def create_tasks(filename, instances):
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
-                                        run_batch="{lower:0>5}-{upper:0>5}".format(lower, upper),
-                                        run="{task_id:0>5}".format(task_id),
+                                        run_batch="{:0>5}-{:0>5}".format(lower, upper),
+                                        run="{:0>5}".format(task_id),
                                         serverLogDir=serverLogDir)
             task_id += 1
-            if task_id == higher:
+            if task_id == upper:
                 lower += 100
-                higher += 100
+                upper += 100
             tasks.append(task)
             port = port + 1
 
