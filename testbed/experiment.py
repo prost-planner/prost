@@ -7,7 +7,7 @@ import sys
 
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos 
+# Load "infai" settings for partition and qos
 partition="infai_2"
 qos="normal"
 
@@ -47,7 +47,7 @@ configs = [
     "IPPC2014",                                         # The configuration that participated at IPPC 2014
     "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
     "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
-    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin    
+    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
 ]
 
 # The number of runs (30 in competition, should be higher (>=100) for
@@ -58,7 +58,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "4:00:00"
+timeout = "0:10:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -87,9 +87,9 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s_server.log 2> %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s_server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s.log 2> %(resultsDir)s/runs-%(run_batch)/%(run)/%(instance)s.err"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -154,8 +154,12 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-    
+
+    # "runs-{lower:0>5}-{upper:0>5}/{task_id:0>5}"
     for config in configs:
+        task_id = 1
+        lower = 1
+        higher = 100
         for instance in sorted(instances):
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark = benchmark,
@@ -163,7 +167,13 @@ def create_tasks(filename, instances):
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
+                                        run_batch="{lower:0>5}-{upper:0>5}".format(lower, upper),
+                                        run="{task_id:0>5}".format(task_id),
                                         serverLogDir=serverLogDir)
+            task_id += 1
+            if task_id == higher:
+                lower += 100
+                higher += 100
             tasks.append(task)
             port = port + 1
 
@@ -178,7 +188,7 @@ def create_tasks(filename, instances):
                                     num_tasks=str(len(tasks)),
                                     nice=nice,
                                     email=email)
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -192,7 +202,7 @@ def create_tasks(filename, instances):
                                   queue=queue,
                                   num_tasks=str(len(tasks)),
                                   priority=str(priority))
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SGE_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -213,7 +223,7 @@ def run_experiments(filename):
         os.system("qsub " + filename + " &")
     else:
         print "Invalid grid engine!"
-        exit() 
+        exit()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
