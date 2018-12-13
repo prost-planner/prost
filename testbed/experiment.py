@@ -87,6 +87,8 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
+"mkdir -p %(resultsDir)s/runs-%(run_batch)s && " \
+"mkdir -p %(resultsDir)s/runs-%(run_batch)s/%(run)s && " \
 "./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
 " ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.err"
