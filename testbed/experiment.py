@@ -90,9 +90,9 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s_server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err"
 
 # Add "#SBATCH --mail-user=%(email)s\n"
 # to receive email once job is finished.
