@@ -4,6 +4,7 @@
 import os
 import shutil
 import sys
+import json
 
 ############ BASEL GRID PARAMETER ############
 
@@ -58,7 +59,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "0:10:00"
+timeout = "4:00:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -87,12 +88,14 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"mkdir -p %(resultsDir)s/runs-%(run_batch)s && " \
-"mkdir -p %(resultsDir)s/runs-%(run_batch)s/%(run)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s_server.err &" \
+"mkdir -p %(resultsDir)s/%(run_batch)s && " \
+"mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
+"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s_server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.log 2> %(resultsDir)s/runs-%(run_batch)s/%(run)s/%(instance)s.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/%(instance)s.err"
 
+# Add "#SBATCH --mail-user=%(email)s\n"
+# to receive email once job is finished.
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
                  "#SBATCH --job-name=%(name)s\n"\
@@ -113,7 +116,6 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "#SBATCH --nice=%(nice)s\n"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
-                 "#SBATCH --mail-user=%(email)s\n"\
                  "### Extra options.\n\n"
 
 SGE_TEMPLATE = "#! /bin/bash\n"\
@@ -163,17 +165,33 @@ def create_tasks(filename, instances):
         lower = 1
         upper = 100
         for instance in sorted(instances):
+            run_batch = "runs-{:0>5}-{:0>5}".format(lower, upper)
+            run = "{:0>5}".format(task_id)
+            run_dir = "/".join((resultsDir+config.replace(" ","_"),
+                                   run_batch, run))
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark = benchmark,
                                         instance=instance,
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
-                                        run_batch="{:0>5}-{:0>5}".format(lower, upper),
-                                        run="{:0>5}".format(task_id),
+                                        run_batch=run_batch,
+                                        run=run,
                                         serverLogDir=serverLogDir)
+            
+            if not os.path.exists(run_dir):
+                os.makedirs(run_dir)
+            properties = dict()
+            properties["benchmark"] = benchmark
+            properties["instance"] = instance
+            properties["numRuns"] = numRuns
+            properties["run_dir"] = run_dir
+            props_path =  "/".join((run_dir, "static-properties"))
+            with open(props_path, 'w') as fp:
+                json.dump(properties, fp, indent=2)
+            
             task_id += 1
-            if task_id == upper:
+            if task_id > upper:
                 lower += 100
                 upper += 100
             tasks.append(task)
@@ -188,8 +206,9 @@ def create_tasks(filename, instances):
                                     memout=memout,
                                     timeout=timeout,
                                     num_tasks=str(len(tasks)),
-                                    nice=nice,
-                                    email=email)
+                                    nice=nice)
+                                    #email=email)
+        
 
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
