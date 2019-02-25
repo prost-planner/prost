@@ -5,9 +5,9 @@
 // used for the RDDL KronDelta, Bernoulli and Discrete statements (TODO: maybe
 // it is more efficient to distinguish these by using different classes.)
 
+#include <cassert>
 #include <iostream>
 #include <map>
-
 
 #include "utils/math_utils.h"
 
@@ -64,6 +64,8 @@ public:
 
     // Places truthProb on 1.0 and the rest on 0.0
     void assignBernoulli(double const& truthProb) {
+        assert(truthProb >= 0);
+        assert(truthProb <= 1);
         reset();
         if (!MathUtils::doubleIsEqual(truthProb, 1.0)) {
             values.push_back(0.0);
