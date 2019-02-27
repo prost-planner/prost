@@ -18,11 +18,11 @@ bool DiscretePD::isWellDefined() const {
     }
 
     // The sum of the probabilities must be 1, each individual probability must
-    // not be 0.0 and the values must be ordered and unique
+    // not be <= 0.0 and the values must be ordered and unique
     double probSum = probabilities[0];
     double lastVal = values[0];
     for (unsigned int i = 1; i < probabilities.size(); ++i) {
-        if (MathUtils::doubleIsEqual(probabilities[i], 0.0)) {
+        if (MathUtils::doubleIsSmallerOrEqual(probabilities[i], 0.0)) {
             return false;
         }
         probSum += probabilities[i];
