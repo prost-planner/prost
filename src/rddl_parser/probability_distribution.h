@@ -64,8 +64,8 @@ public:
 
     // Places truthProb on 1.0 and the rest on 0.0
     void assignBernoulli(double const& truthProb) {
-        assert(MathUtils.doubleIsGreaterOrEqual(truthProb, 0);
-        assert(MathUtils.doubleIsSmallerOrEqual(truthProb, 1);
+        assert(MathUtils.doubleIsGreaterOrEqual(truthProb, 0));
+        assert(MathUtils.doubleIsSmallerOrEqual(truthProb, 1));
         reset();
         if (!MathUtils::doubleIsEqual(truthProb, 1.0)) {
             values.push_back(0.0);
