@@ -4,18 +4,19 @@
 import os
 import shutil
 import sys
+import json
 
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos 
-partition="infai_2"
+# Load "infai" settings for partition and qos
+partition="infai_1"
 qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
 nice="2000"
 
 # The email adress that receives an email when the experiment is finished
-email = "tho.keller@unibas.ch"
+#email = "tho.keller@unibas.ch"
 
 ############ FREIBURG GRID PARAMETER ############
 # defines which queue to use for one task. Possible values are
@@ -47,7 +48,7 @@ configs = [
     "IPPC2014",                                         # The configuration that participated at IPPC 2014
     "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
     "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
-    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin    
+    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
 ]
 
 # The number of runs (30 in competition, should be higher (>=100) for
@@ -87,10 +88,14 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"mkdir -p %(resultsDir)s/%(run_batch)s && " \
+"mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
+"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err"
 
+# Add "#SBATCH --mail-user=%(email)s\n"
+# to receive email once job is finished.
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
                  "#SBATCH --job-name=%(name)s\n"\
@@ -111,7 +116,6 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "#SBATCH --nice=%(nice)s\n"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
-                 "#SBATCH --mail-user=%(email)s\n"\
                  "### Extra options.\n\n"
 
 SGE_TEMPLATE = "#! /bin/bash\n"\
@@ -154,16 +158,42 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-    
+
+    # "runs-{lower:0>5}-{upper:0>5}/{task_id:0>5}"
     for config in configs:
+        task_id = 1
+        lower = 1
+        upper = 100
         for instance in sorted(instances):
+            run_batch = "runs-{:0>5}-{:0>5}".format(lower, upper)
+            run = "{:0>5}".format(task_id)
+            run_dir = "/".join((resultsDir+config.replace(" ","_"),
+                                   run_batch, run))
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark = benchmark,
                                         instance=instance,
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
+                                        run_batch=run_batch,
+                                        run=run,
                                         serverLogDir=serverLogDir)
+            
+            if not os.path.exists(run_dir):
+                os.makedirs(run_dir)
+            properties = dict()
+            properties["benchmark"] = benchmark
+            properties["instance"] = instance
+            properties["numRuns"] = numRuns
+            properties["run_dir"] = run_dir
+            props_path =  "/".join((run_dir, "static-properties"))
+            with open(props_path, 'w') as fp:
+                json.dump(properties, fp, indent=2)
+            
+            task_id += 1
+            if task_id > upper:
+                lower += 100
+                upper += 100
             tasks.append(task)
             port = port + 1
 
@@ -176,9 +206,10 @@ def create_tasks(filename, instances):
                                     memout=memout,
                                     timeout=timeout,
                                     num_tasks=str(len(tasks)),
-                                    nice=nice,
-                                    email=email)
+                                    nice=nice)
+                                    #email=email)
         
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -192,7 +223,7 @@ def create_tasks(filename, instances):
                                   queue=queue,
                                   num_tasks=str(len(tasks)),
                                   priority=str(priority))
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SGE_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -213,7 +244,7 @@ def run_experiments(filename):
         os.system("qsub " + filename + " &")
     else:
         print "Invalid grid engine!"
-        exit() 
+        exit()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
