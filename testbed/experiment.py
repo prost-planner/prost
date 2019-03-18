@@ -87,7 +87,7 @@ logfile = "stdout.log"
 # Template for the string that is executed for each job
 TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
 " ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
-    instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/rddl/"))
+    instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/"))
     instances = [instance.split(".")[0] for instance in instances]
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)

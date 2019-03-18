@@ -27,3 +27,9 @@ to simplify the domain description.
 These are the domains and instances that were used for the International
 Probabilistic Planning Competition in 2014.
 
+[ippc2018]
+
+These are the domains and instances that were used for the International
+Probabilistic Planning Competition in 2018. For some domains, there were
+several versions that differ in the usage of enums and/or
+interm-fluents. The instances here do use enums but no interm-fluents.
