@@ -160,8 +160,8 @@ def create_tasks(filename, instances):
     for config in configs:
         for instance in sorted(instances):
             task = TASK_TEMPLATE % dict(config=config,
-                                        benchmark = benchmark,
-                                        instance=instance,
+                                        benchmark =instance[0],
+                                        instance=instance[1],
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     instances = []
     for domain in benchmark:
         domain_instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+domain+"/"))
-        instances += [instance.split(".")[0] for instance in domain_instances]
+        instances += [(domain, instance.split(".")[0]) for instance in domain_instances]
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
