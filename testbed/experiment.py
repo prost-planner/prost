@@ -44,7 +44,6 @@ benchmark= IPPC_ALL
 
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
-# You can use any other configuration from benchmarks_suites or create your own.
 configs = [
     "IPPC2011",                                         # The configuration that participated at IPPC 2011
     "IPPC2014",                                         # The configuration that participated at IPPC 2014
@@ -222,8 +221,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
-    instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/"))
-    instances = [instance.split(".")[0] for instance in instances]
+    instances = []
+    for domain in benchmark:
+        domain_instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+domain+"/"))
+        instances += [instance.split(".")[0] for instance in domain_instances]
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
