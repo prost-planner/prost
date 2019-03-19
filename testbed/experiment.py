@@ -5,7 +5,7 @@ import os
 import shutil
 import sys
 
-from benchmarks_suites import *
+from benchmark_suites import *
 
 ############ BASEL GRID PARAMETER ############
 
@@ -40,12 +40,18 @@ grid_engine = "slurm"
 
 # The benchmark that is used for the experiment (must be the name of a
 # folder in testbed/benchmarks)
-benchmark="ippc-all"
+benchmark= IPPC_ALL
 
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 # You can use any other configuration from benchmarks_suites or create your own.
-configs = IPPC_ALL
+configs = [
+    "IPPC2011",                                         # The configuration that participated at IPPC 2011
+    "IPPC2014",                                         # The configuration that participated at IPPC 2014
+    "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
+    "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
+    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
+]
 
 # The number of runs (30 in competition, should be higher (>=100) for
 # papers and theses to obtain acceptable confidence intervalls
