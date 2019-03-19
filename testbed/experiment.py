@@ -5,9 +5,11 @@ import os
 import shutil
 import sys
 
+from benchmarks_suites import *
+
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos 
+# Load "infai" settings for partition and qos
 partition="infai_2"
 qos="normal"
 
@@ -40,15 +42,10 @@ grid_engine = "slurm"
 # folder in testbed/benchmarks)
 benchmark="ippc-all"
 
-# The search engine configurations that are started in this experiment
+# The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
-configs = [
-    "IPPC2011",                                         # The configuration that participated at IPPC 2011
-    "IPPC2014",                                         # The configuration that participated at IPPC 2014
-    "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
-    "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
-    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin    
-]
+# You can use any other configuration from benchmarks_suites or create your own.
+configs = IPPC_ALL
 
 # The number of runs (30 in competition, should be higher (>=100) for
 # papers and theses to obtain acceptable confidence intervalls
@@ -154,7 +151,7 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-    
+
     for config in configs:
         for instance in sorted(instances):
             task = TASK_TEMPLATE % dict(config=config,
@@ -178,7 +175,7 @@ def create_tasks(filename, instances):
                                     num_tasks=str(len(tasks)),
                                     nice=nice,
                                     email=email)
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -192,7 +189,7 @@ def create_tasks(filename, instances):
                                   queue=queue,
                                   num_tasks=str(len(tasks)),
                                   priority=str(priority))
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SGE_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -213,7 +210,7 @@ def run_experiments(filename):
         os.system("qsub " + filename + " &")
     else:
         print "Invalid grid engine!"
-        exit() 
+        exit()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
