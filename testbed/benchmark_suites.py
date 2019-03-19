@@ -6,25 +6,28 @@
 Separate the domains according to their first IPPC appearance.
 All domains are in the directory "benchmarks/".
 
+(Note that some domains used in the IPPC 2014 are originally
+from the IPPC 2011.)
+
 """
 
-IPPC2011 = ["crossing-traffic2011",
-            "elevators2011",
-            "game-of-life2011",
-            "navigation2011",
-            "recon2011",
-            "skill-teaching2011",
-            "sysadmin2011",
-            "traffic2011"]
+IPPC2011 = ["crossing-traffic-2011",
+            "elevators-2011",
+            "game-of-life-2011",
+            "navigation-2011",
+            "recon-2011",
+            "skill-teaching-2011",
+            "sysadmin-2011",
+            "traffic-2011"]
 
-IPPC2014 = ["academic-advising2014",
-            "tamarisk2014",
-            "triangle-tireworld2014",
-            "wildfire2014",
-            "crossing-traffic2011",
-            "elevators2011",
-            "skill-teaching2011",
-            "traffic2011"]
+IPPC2014 = ["academic-advising-2014",
+            "tamarisk-2014",
+            "triangle-tireworld-2014",
+            "wildfire-2014",
+            "crossing-traffic-2011",
+            "elevators-2011",
+            "skill-teaching-2011",
+            "traffic-2011"]
 
 IPPC2018 = ["academic-advising-2018",
             "chromatic-dice-2018",
