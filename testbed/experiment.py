@@ -5,9 +5,11 @@ import os
 import shutil
 import sys
 
+from benchmark_suites import *
+
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos 
+# Load "infai" settings for partition and qos
 partition="infai_2"
 qos="normal"
 
@@ -36,18 +38,19 @@ run_debug = False
 # Available options are "slurm" and "sge" (for sun grid engine)
 grid_engine = "slurm"
 
-# The benchmark that is used for the experiment (must be the name of a
-# folder in testbed/benchmarks)
-benchmark="ippc-all"
+# A list of domains that are used in this experiment. Each entry must correspond
+# to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
+# predefined benchmark sets, such as IPPC2018 and IPPC_ALL.
+benchmark= IPPC_ALL
 
-# The search engine configurations that are started in this experiment
+# The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 configs = [
     "IPPC2011",                                         # The configuration that participated at IPPC 2011
     "IPPC2014",                                         # The configuration that participated at IPPC 2014
     "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
     "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
-    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin    
+    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
 ]
 
 # The number of runs (30 in competition, should be higher (>=100) for
@@ -154,12 +157,12 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-    
+
     for config in configs:
         for instance in sorted(instances):
             task = TASK_TEMPLATE % dict(config=config,
-                                        benchmark = benchmark,
-                                        instance=instance,
+                                        benchmark =instance[0],
+                                        instance=instance[1],
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
@@ -178,7 +181,7 @@ def create_tasks(filename, instances):
                                     num_tasks=str(len(tasks)),
                                     nice=nice,
                                     email=email)
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -192,7 +195,7 @@ def create_tasks(filename, instances):
                                   queue=queue,
                                   num_tasks=str(len(tasks)),
                                   priority=str(priority))
-        
+
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SGE_TASK_ID ]; then\n"
             jobs += "    " + task + "\n"
@@ -213,14 +216,16 @@ def run_experiments(filename):
         os.system("qsub " + filename + " &")
     else:
         print "Invalid grid engine!"
-        exit() 
+        exit()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
-    instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/"))
-    instances = [instance.split(".")[0] for instance in instances]
+    instances = []
+    for domain in benchmark:
+        domain_instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+domain+"/"))
+        instances += [(domain, instance.split(".")[0]) for instance in domain_instances]
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
