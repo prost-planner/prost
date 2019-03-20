@@ -38,8 +38,9 @@ run_debug = False
 # Available options are "slurm" and "sge" (for sun grid engine)
 grid_engine = "slurm"
 
-# The benchmark that is used for the experiment (must be the name of a
-# folder in testbed/benchmarks)
+# A list of domains that are used in this experiment. Each entry must correspond
+# to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
+# predefined benchmark sets, such as IPPC2018 and IPPC_ALL.
 benchmark= IPPC_ALL
 
 # The search engine configurations that are started in this experiment.
