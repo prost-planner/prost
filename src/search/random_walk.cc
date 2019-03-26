@@ -74,4 +74,6 @@ void RandomWalk::sampleSuccessorState(PDState const& current,
          varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
         next.sample(varIndex);
     }
+    State::calcStateFluentHashKeys(next);
+    State::calcStateHashKey(next);
 }
