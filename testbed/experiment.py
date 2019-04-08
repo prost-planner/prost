@@ -11,7 +11,7 @@ from benchmark_suites import *
 ############ BASEL GRID PARAMETER ############
 
 # Load "infai" settings for partition and qos 
-partition="infai_2"
+partition="infai_1"
 qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
@@ -49,9 +49,9 @@ benchmark= IPPC_ALL
 configs = [
     "IPPC2011",                                         # The configuration that participated at IPPC 2011
     "IPPC2014",                                         # The configuration that participated at IPPC 2014
-    "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
-    "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
-    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
+#    "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
+#    "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
+#    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin
 ]
 
 # The number of runs (30 in competition, should be higher (>=100) for
@@ -62,7 +62,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "4:00:00"
+timeout = "0:10:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -93,9 +93,9 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
-"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
+"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/runs/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
+" ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/runs/%(run_batch)s/%(run)s/run.err"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -155,27 +155,27 @@ def copy_binaries():
         search_file = "../builds/release/search/search"
 
     shutil.copy2(parser_file, "./"+parser_name)
-    shutil.copy2(search_file, "./prost")
+    shutil.copy2(search_file, "./"+resultsDir+"prost")
 
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-    
+
+    task_id = 1
+    lower = 1
+    upper = 100
     for config in configs:
-        task_id = 1
-        lower = 1
-        upper = 100
         for instance in sorted(instances):
             run_batch = "runs-{:0>5}-{:0>5}".format(lower, upper)
             run = "{:0>5}".format(task_id)
-            run_dir = "/".join((resultsDir+config.replace(" ","_"),
+            run_dir = "/".join((resultsDir+"runs",
                                    run_batch, run))
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark =instance[0],
                                         instance=instance[1],
                                         port=port,
                                         numRuns = numRuns,
-                                        resultsDir=resultsDir+config.replace(" ","_"),
+                                        resultsDir=resultsDir,
                                         run_batch=run_batch,
                                         run=run,
                                         serverLogDir=serverLogDir)
@@ -184,6 +184,7 @@ def create_tasks(filename, instances):
                 os.makedirs(run_dir)
             properties = dict()
             properties["benchmark"] = benchmark
+            properties["config"] = config
             properties["instance"] = instance
             properties["numRuns"] = numRuns
             properties["run_dir"] = run_dir
