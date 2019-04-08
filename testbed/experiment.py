@@ -6,17 +6,19 @@ import shutil
 import sys
 import json
 
+from benchmark_suites import *
+
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos
-partition="infai_1"
+# Load "infai" settings for partition and qos 
+partition="infai_2"
 qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
 nice="2000"
 
 # The email adress that receives an email when the experiment is finished
-#email = "tho.keller@unibas.ch"
+email = "my.name@unibas.ch"
 
 ############ FREIBURG GRID PARAMETER ############
 # defines which queue to use for one task. Possible values are
@@ -37,11 +39,12 @@ run_debug = False
 # Available options are "slurm" and "sge" (for sun grid engine)
 grid_engine = "slurm"
 
-# The benchmark that is used for the experiment (must be the name of a
-# folder in testbed/benchmarks)
-benchmark="ippc-all"
+# A list of domains that are used in this experiment. Each entry must correspond
+# to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
+# predefined benchmark sets, such as IPPC2018 and IPPC_ALL.
+benchmark= IPPC_ALL
 
-# The search engine configurations that are started in this experiment
+# The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 configs = [
     "IPPC2011",                                         # The configuration that participated at IPPC 2011
@@ -90,12 +93,10 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
-"./run-server benchmarks/%(benchmark)s/rddl %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
+"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(instance)s_server.log 2> %(resultsDir)s/%(instance)s_server.err &" \
 " sleep 45 &&" \
-" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err"
+" ./prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(instance)s.log 2> %(resultsDir)s/%(instance)s.err"
 
-# Add "#SBATCH --mail-user=%(email)s\n"
-# to receive email once job is finished.
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
                  "#SBATCH --job-name=%(name)s\n"\
@@ -116,6 +117,7 @@ SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "#SBATCH --nice=%(nice)s\n"\
                  "### Send mail? Mail type can be e.g. NONE, END, FAIL, ARRAY_TASKS.\n"\
                  "#SBATCH --mail-type=END\n"\
+                 "#SBATCH --mail-user=%(email)s\n"\
                  "### Extra options.\n\n"
 
 SGE_TEMPLATE = "#! /bin/bash\n"\
@@ -158,8 +160,7 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-
-    # "runs-{lower:0>5}-{upper:0>5}/{task_id:0>5}"
+    
     for config in configs:
         task_id = 1
         lower = 1
@@ -170,8 +171,8 @@ def create_tasks(filename, instances):
             run_dir = "/".join((resultsDir+config.replace(" ","_"),
                                    run_batch, run))
             task = TASK_TEMPLATE % dict(config=config,
-                                        benchmark = benchmark,
-                                        instance=instance,
+                                        benchmark =instance[0],
+                                        instance=instance[1],
                                         port=port,
                                         numRuns = numRuns,
                                         resultsDir=resultsDir+config.replace(" ","_"),
@@ -206,9 +207,8 @@ def create_tasks(filename, instances):
                                     memout=memout,
                                     timeout=timeout,
                                     num_tasks=str(len(tasks)),
-                                    nice=nice)
-                                    #email=email)
-        
+                                    nice=nice,
+                                    email=email)
 
         for task_id,task in zip(range(1, len(tasks)+1), tasks):
             jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
@@ -250,8 +250,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
-    instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+benchmark+"/rddl/"))
-    instances = [instance.split(".")[0] for instance in instances]
+    instances = []
+    for domain in benchmark:
+        domain_instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+domain+"/"))
+        instances += [(domain, instance.split(".")[0]) for instance in domain_instances]
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
