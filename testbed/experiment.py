@@ -62,7 +62,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "0:05:00"
+timeout = "4:00:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -95,7 +95,8 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
 "./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
-" ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err"
+" ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err &&" \
+"cat > %(resultsDir)s/%(run_batch)s/%(run)s/driver.log" # TODO temporary just to avoid lab errors
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -164,7 +165,7 @@ def create_tasks(filename, instances):
     # Create properties file of the whole experiment.
     properties = dict()
     properties["domains"] = benchmark
-    properties["configs"] = configs
+    properties["algorithms"] = configs
     properties["memory_limit"] = memout
     properties["name"] = name
     properties["num_runs"] = numRuns
@@ -198,11 +199,13 @@ def create_tasks(filename, instances):
             if not os.path.exists(run_dir):
                 os.makedirs(run_dir)
             # Create properties file of the run.
+            # Lab requires at least the attributes with the names:
+            # domain, problem and algorithm.
             properties = dict()
-            properties["domain"] = instance[1]
-            properties["config"] = config
+            properties["domain"] = instance[0]
+            properties["algorithm"] = config
             properties["id"] = config, instance[0], instance[1]
-            properties["instance"] = instance[0]
+            properties["problem"] = instance[1]
             properties["memory_limit"] = memout
             properties["numRuns"] = numRuns
             properties["revision"] = revision
