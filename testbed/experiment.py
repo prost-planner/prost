@@ -62,7 +62,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "0:10:00"
+timeout = "0:05:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -93,9 +93,9 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "mkdir -p %(resultsDir)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s && " \
 "mkdir -p %(resultsDir)s/%(run_batch)s/%(run)s && " \
-"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/runs/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/runs/%(run_batch)s/%(run)s/server.err &" \
+"./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
-" ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/runs/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/runs/%(run_batch)s/%(run)s/run.err"
+" ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -161,6 +161,21 @@ def create_tasks(filename, instances):
     port = 2000
     tasks = []
 
+    # Create properties file of the whole experiment.
+    properties = dict()
+    properties["domains"] = benchmark
+    properties["configs"] = configs
+    properties["memory_limit"] = memout
+    properties["name"] = name
+    properties["num_runs"] = numRuns
+    properties["partition"] = partition
+    properties["revision"] = revision
+    properties["run_debug"] = run_debug
+    properties["time_limit"] = timeout
+    props_path =  "/".join((resultsDir, "properties"))
+    with open(props_path, 'w') as fp:
+        json.dump(properties, fp, indent=2)
+    
     task_id = 1
     lower = 1
     upper = 100
@@ -168,7 +183,7 @@ def create_tasks(filename, instances):
         for instance in sorted(instances):
             run_batch = "runs-{:0>5}-{:0>5}".format(lower, upper)
             run = "{:0>5}".format(task_id)
-            run_dir = "/".join((resultsDir+"runs",
+            run_dir = "/".join((resultsDir,
                                    run_batch, run))
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark =instance[0],
@@ -182,12 +197,17 @@ def create_tasks(filename, instances):
             
             if not os.path.exists(run_dir):
                 os.makedirs(run_dir)
+            # Create properties file of the run.
             properties = dict()
-            properties["benchmark"] = benchmark
+            properties["domain"] = instance[1]
             properties["config"] = config
-            properties["instance"] = instance
+            properties["id"] = config, instance[0], instance[1]
+            properties["instance"] = instance[0]
+            properties["memory_limit"] = memout
             properties["numRuns"] = numRuns
+            properties["revision"] = revision
             properties["run_dir"] = run_dir
+            properties["time_limit"] = timeout
             props_path =  "/".join((run_dir, "static-properties"))
             with open(props_path, 'w') as fp:
                 json.dump(properties, fp, indent=2)
