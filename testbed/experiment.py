@@ -10,7 +10,7 @@ from benchmark_suites import *
 
 ############ BASEL GRID PARAMETER ############
 
-# Load "infai" settings for partition and qos 
+# Load "infai" settings for partition and qos
 partition="infai_1"
 qos="normal"
 
@@ -176,7 +176,7 @@ def create_tasks(filename, instances):
     props_path =  "/".join((resultsDir, "properties"))
     with open(props_path, 'w') as fp:
         json.dump(properties, fp, indent=2)
-    
+
     task_id = 1
     lower = 1
     upper = 100
@@ -195,7 +195,7 @@ def create_tasks(filename, instances):
                                         run_batch=run_batch,
                                         run=run,
                                         serverLogDir=serverLogDir)
-            
+
             if not os.path.exists(run_dir):
                 os.makedirs(run_dir)
             # Create properties file of the run.
@@ -214,7 +214,7 @@ def create_tasks(filename, instances):
             props_path =  "/".join((run_dir, "static-properties"))
             with open(props_path, 'w') as fp:
                 json.dump(properties, fp, indent=2)
-            
+
             task_id += 1
             if task_id > upper:
                 lower += 100
