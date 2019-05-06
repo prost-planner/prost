@@ -42,7 +42,7 @@ grid_engine = "slurm"
 # A list of domains that are used in this experiment. Each entry must correspond
 # to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
 # predefined benchmark sets, such as IPPC2018 and IPPC_ALL.
-benchmark= IPPC_ALL
+benchmark= IPPC2011
 
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
@@ -62,7 +62,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "4:00:00"
+timeout = "0:10:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -161,10 +161,15 @@ def copy_binaries():
 def create_tasks(filename, instances):
     port = 2000
     tasks = []
-
+    domains_in_benchmark = set()
+    for task in benchmark:
+        # The path in benchmark_suites is the directory name.
+        # We use this name to identify the domains instead of the RDDL domain file.
+        domains_in_benchmark.add(task.path)
+    
     # Create properties file of the whole experiment.
     properties = dict()
-    properties["domains"] = benchmark
+    properties["domains"] = list(domains_in_benchmark)
     properties["algorithms"] = configs
     properties["memory_limit"] = memout
     properties["name"] = name
@@ -275,9 +280,10 @@ if __name__ == '__main__':
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
     instances = []
-    for domain in benchmark:
-        domain_instances = filter(isInstanceName, os.listdir("../testbed/benchmarks/"+domain+"/"))
-        instances += [(domain, instance.split(".")[0]) for instance in domain_instances]
+    for instance in benchmark:
+        domain_name = instance.path
+        problem_name = instance.problem
+        instances.append((domain_name, problem_name))
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision

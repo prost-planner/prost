@@ -232,7 +232,7 @@ PUSH_YOUR_LUCK_2018 = [
     Benchmark("push-your-luck_mdp.rddl", "push-your-luck_inst_mdp__20.rddl", "push-your-luck-2018", 2.19208333333, None),
 ]
 
-RECON = [
+RECON_2011 = [
     Benchmark("recon_mdp.rddl", "recon_inst_mdp__1.rddl", "recon-2011", 0.0, None),
     Benchmark("recon_mdp.rddl", "recon_inst_mdp__2.rddl", "recon-2011", 0.0, None),
     Benchmark("recon_mdp.rddl", "recon_inst_mdp__3.rddl", "recon-2011", 0.0, None),
