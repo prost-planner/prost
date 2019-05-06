@@ -27,16 +27,16 @@ class Benchmark(object):
         self.max_score = max_score
 
 ACADEMIC_ADVISING_2014 = [
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__1.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__2.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__3.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__4.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__5.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__6.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__7.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__8.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__9.rddl", "academic-advising-2014", -200.0, None),
-    Benchmark("academic-advising_mdp.rddl", "academic-advising_inst_mdp__10.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__1.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__2.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__3.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__4.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__5.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__6.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__7.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__8.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__9.rddl", "academic-advising-2014", -200.0, None),
+    Benchmark("academic_advising_mdp.rddl", "academic_advising_inst_mdp__10.rddl", "academic-advising-2014", -200.0, None),
 ]
 
 ACADEMIC_ADVISING_2018 = [
@@ -146,21 +146,21 @@ EARTH_OBSERVATION_2018 = [
 ]
 
 ELEVATORS_2011 = [
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__1.rddl", "elevators-2011", -65.2, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__2.rddl", "elevators-2011", -54.7, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__3.rddl", "elevators-2011", -71.7, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__4.rddl", "elevators-2011", -94.07, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__5.rddl", "elevators-2011", -111.8, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__6.rddl", "elevators-2011", -118.67, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__7.rddl", "elevators-2011", -129.63, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__8.rddl", "elevators-2011", -146.9, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__9.rddl", "elevators-2011", -160.37, None),
-    Benchmark("elevators_2011_mdp.rddl", "elevators_2011_inst_mdp__10.rddl", "elevators-2011", -109.7, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__1.rddl", "elevators-2011", -65.2, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__2.rddl", "elevators-2011", -54.7, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__3.rddl", "elevators-2011", -71.7, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__4.rddl", "elevators-2011", -94.07, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__5.rddl", "elevators-2011", -111.8, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__6.rddl", "elevators-2011", -118.67, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__7.rddl", "elevators-2011", -129.63, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__8.rddl", "elevators-2011", -146.9, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__9.rddl", "elevators-2011", -160.37, None),
+    Benchmark("elevators_mdp.rddl", "elevators_inst_mdp__10.rddl", "elevators-2011", -109.7, None),
 ]
 
 GAME_OF_LIFE_2011 = [
     Benchmark("game_of_life_mdp.rddl", "game_of_life_inst_mdp__1.rddl", "game-of-life-2011", 70.53, None),
-    Benchmark("game_of_life_mdp.rddl", "game-of-life_inst_mdp__2.rddl", "game-of-life-2011", 73.27, None),
+    Benchmark("game_of_life_mdp.rddl", "game_of_life_inst_mdp__2.rddl", "game-of-life-2011", 73.27, None),
     Benchmark("game_of_life_mdp.rddl", "game_of_life_inst_mdp__3.rddl", "game-of-life-2011", 107.17, None),
     Benchmark("game_of_life_mdp.rddl", "game_of_life_inst_mdp__4.rddl", "game-of-life-2011", 167.23, None),
     Benchmark("game_of_life_mdp.rddl", "game_of_life_inst_mdp__5.rddl", "game-of-life-2011", 203.07, None),
@@ -269,16 +269,16 @@ RED_FINNED_BLUE_EYES_2018 = [
 ]
 
 SKILL_TEACHING_2011 = [
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__1.rddl", "skill-teaching-2011", 39.34, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__2.rddl", "skill-teaching-2011", 33.75, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__3.rddl", "skill-teaching-2011", -83.23, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__4.rddl", "skill-teaching-2011", -108.73, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__5.rddl", "skill-teaching-2011", -285.95, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__6.rddl", "skill-teaching-2011", -302.99, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__7.rddl", "skill-teaching-2011", -382.86, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__8.rddl", "skill-teaching-2011", -534.7, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__9.rddl", "skill-teaching-2011", -540.62, None),
-    Benchmark("skill-teaching_mdp.rddl", "skill-teaching_inst_mdp__10.rddl", "skill-teaching-2011", -632.0, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__1.rddl", "skill-teaching-2011", 39.34, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__2.rddl", "skill-teaching-2011", 33.75, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__3.rddl", "skill-teaching-2011", -83.23, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__4.rddl", "skill-teaching-2011", -108.73, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__5.rddl", "skill-teaching-2011", -285.95, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__6.rddl", "skill-teaching-2011", -302.99, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__7.rddl", "skill-teaching-2011", -382.86, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__8.rddl", "skill-teaching-2011", -534.7, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__9.rddl", "skill-teaching-2011", -540.62, None),
+    Benchmark("skill_teaching_mdp.rddl", "skill_teaching_inst_mdp__10.rddl", "skill-teaching-2011", -632.0, None),
 ]
 
 SYSADMIN_2011 = [

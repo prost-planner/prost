@@ -11,7 +11,7 @@ from benchmark_suites import *
 ############ BASEL GRID PARAMETER ############
 
 # Load "infai" settings for partition and qos
-partition="infai_1"
+partition="infai_2"
 qos="normal"
 
 # Gives the task's priority as a value between 0 (highest) and 2000 (lowest).
@@ -62,7 +62,7 @@ numRuns = "100"
 revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
-timeout = "0:10:00"
+timeout = "4:00:00"
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     instances = []
     for instance in benchmark:
         domain_name = instance.path
-        problem_name = instance.problem
+        problem_name = instance.problem.replace('.rddl','')
         instances.append((domain_name, problem_name))
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
