@@ -211,7 +211,9 @@ def create_tasks(filename, instances):
             properties["algorithm"] = config
             properties["id"] = config, instance[0], instance[1]
             properties["problem"] = instance[1]
+            properties["max_score"] = instance[3]
             properties["memory_limit"] = memout
+            properties["min_score"] = instance[2]
             properties["numRuns"] = numRuns
             properties["revision"] = revision
             properties["run_dir"] = run_dir
@@ -283,7 +285,9 @@ if __name__ == '__main__':
     for instance in benchmark:
         domain_name = instance.path
         problem_name = instance.problem.replace('.rddl','')
-        instances.append((domain_name, problem_name))
+        problem_min_score = instance.min_score
+        problem_max_score = instance.max_score
+        instances.append((domain_name, problem_name, problem_min_score, problem_max_score))
     os.system("mkdir -p " + resultsDir)
     os.system("mkdir -p " + serverLogDir)
     filename = resultsDir + "experiment_"+revision
