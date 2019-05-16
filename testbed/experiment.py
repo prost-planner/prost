@@ -96,7 +96,7 @@ TASK_TEMPLATE = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && " \
 "./run-server benchmarks/%(benchmark)s %(port)s %(numRuns)s 0 1 0 %(serverLogDir)s 0 > %(resultsDir)s/%(run_batch)s/%(run)s/server.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/server.err &" \
 " sleep 45 &&" \
 " ./%(resultsDir)s/prost %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] > %(resultsDir)s/%(run_batch)s/%(run)s/run.log 2> %(resultsDir)s/%(run_batch)s/%(run)s/run.err &&" \
-"cat > %(resultsDir)s/%(run_batch)s/%(run)s/driver.log" # TODO temporary just to avoid lab errors
+"cat > %(resultsDir)s/%(run_batch)s/%(run)s/driver.log"
 
 SLURM_TEMPLATE = "#! /bin/bash -l\n" \
                  "### Set name.\n"\
@@ -166,7 +166,7 @@ def create_tasks(filename, instances):
         # The path in benchmark_suites is the directory name.
         # We use this name to identify the domains instead of the RDDL domain file.
         domains_in_benchmark.add(task.path)
-    
+
     # Create properties file of the whole experiment.
     properties = dict()
     properties["domains"] = list(domains_in_benchmark)
