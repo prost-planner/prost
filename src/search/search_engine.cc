@@ -100,8 +100,8 @@ SearchEngine* SearchEngine::fromString(string& desc) {
     };
 
     // Check if a shortcut description has been used
-    if (isConfig("IPPC2011")) {
-        // This is the configuration that was used at IPPC 2011 (all bugfixes
+    if (isConfig("IPC2011")) {
+        // This is the configuration that was used at IPC 2011 (all bugfixes
         // and code improvements that have been implemented since then are
         // contained, though)
 
@@ -110,8 +110,8 @@ SearchEngine* SearchEngine::fromString(string& desc) {
             "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd "
             "15] -iv 5 -hw 1.0] -ndn H -sd 15" +
             desc;
-    } else if (isConfig("IPPC2014")) {
-        // This is the configuration that was used at IPPC 2014 (without
+    } else if (isConfig("IPC2014")) {
+        // This is the configuration that was used at IPC 2014 (without
         // consideration of the MDP-ESP problem that is described in our AAAI
         // 2015 paper, so it can be used for planner comparison)
 
@@ -255,7 +255,7 @@ void SearchEngine::estimateStateValue(State const& _rootState,
 ******************************************************************/
 
 // Currently, we only consider goals and dead ends (i.e., reward locks with min
-// or max reward). This makes sense on the IPPC 2011 domains, yet we might want
+// or max reward). This makes sense on the IPC 2011 domains, yet we might want
 // to change it in the future so keep an eye on it. Nevertheless, isARewardLock
 // is sound as is (and incomplete independently from this decision).
 bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {

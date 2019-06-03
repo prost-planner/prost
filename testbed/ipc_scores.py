@@ -1,8 +1,8 @@
 
-class IPPCScores(object):
-    """Compute the IPPC quality score.
+class IPCScores(object):
+    """Compute the IPC quality score.
 
-    The IPPC score is computed over the list of runs for each task. Since
+    The IPC score is computed over the list of runs for each task. Since
     filters only work on individual runs, we can't compute the score with a
     single filter, but it is possible by using two filters: *store_rewards* saves
     the list of rewards per task in a dictionary whereas *add_score* uses the
@@ -41,7 +41,7 @@ class IPPCScores(object):
         return True
 
     def add_score(self, run):
-        run['ippc_score'] = self._compute_score(
+        run['ipc_score'] = self._compute_score(
             run.get('average_reward'),
             run.get('min_score'), # We should change the names in the properties files to use 'reward'
             run.get('max_score'),

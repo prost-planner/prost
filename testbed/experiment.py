@@ -41,14 +41,14 @@ grid_engine = "slurm"
 
 # A list of domains that are used in this experiment. Each entry must correspond
 # to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
-# predefined benchmark sets, such as IPPC2018 and IPPC_ALL.
-benchmark= IPPC2011
+# predefined benchmark sets, such as IPC2018 and IPC_ALL.
+benchmark= IPC2011
 
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 configs = [
-    "IPPC2011",                                         # The configuration that participated at IPPC 2011
-    "IPPC2014",                                         # The configuration that participated at IPPC 2014
+    "IPC2011",                                         # The configuration that participated at IPC 2011
+    "IPC2014",                                         # The configuration that participated at IPC 2014
 #    "UCT -init [Single -h [RandomWalk]]",               # The configuration that is closest to "plain UCT"
 #    "UCT -init [Expand -h [IDS]] -rec [MPA]",           # Best UCT configuration according to Keller's dissertation
 #    "DP-UCT -init [Single -h [Uniform]]"                # A configuration that works well in wildfire and sysadmin

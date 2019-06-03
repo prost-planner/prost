@@ -3,18 +3,18 @@
 
 """
 
-Separate the domains according to their first IPPC appearance.
+Separate the domains according to their first IPC appearance.
 All domains are in the directory "benchmarks/".
 
 Domain are defined by their instances. Each instance object
 contains the domain file, the problem file, the directory,
 and the min- and max-scores.
 
-Domains are listed alphabetically. IPPC tracks are listed
+Domains are listed alphabetically. IPC tracks are listed
 chronologically.
 
-(Note that some domains used in the IPPC 2014 are originally
-from the IPPC 2011.)
+(Note that some domains used in the IPC 2014 are originally
+from the IPC 2011.)
 
 """
 
@@ -370,8 +370,8 @@ WILDLIFE_PRESERVE_2018 = [
 ]
 
 
-# Domains used in the IPPC 2011.
-IPPC2011 =  CROSSING_TRAFFIC_2011 + \
+# Domains used in the IPC 2011.
+IPC2011 =  CROSSING_TRAFFIC_2011 + \
             ELEVATORS_2011 + \
             GAME_OF_LIFE_2011 + \
             NAVIGATION_2011 + \
@@ -380,8 +380,8 @@ IPPC2011 =  CROSSING_TRAFFIC_2011 + \
             SYSADMIN_2011 + \
             TRAFFIC_2011
 
-# Domains used in the IPPC 2014.
-IPPC2014 =  ACADEMIC_ADVISING_2014 + \
+# Domains used in the IPC 2014.
+IPC2014 =  ACADEMIC_ADVISING_2014 + \
             CROSSING_TRAFFIC_2011 + \
             ELEVATORS_2011 + \
             SKILL_TEACHING_2011 + \
@@ -390,8 +390,8 @@ IPPC2014 =  ACADEMIC_ADVISING_2014 + \
             TRIANGLE_TIREWORLD_2014 + \
             WILDFIRE_2014
 
-# Domains used in the IPPC 2018.
-IPPC2018 = ACADEMIC_ADVISING_2018 + \
+# Domains used in the IPC 2018.
+IPC2018 = ACADEMIC_ADVISING_2018 + \
            CHROMATIC_DICE_2018 +  \
            COOPERATIVE_RECON_2018 + \
            EARTH_OBSERVATION_2018 + \
@@ -400,5 +400,5 @@ IPPC2018 = ACADEMIC_ADVISING_2018 + \
            RED_FINNED_BLUE_EYES_2018 + \
            WILDLIFE_PRESERVE_2018
 
-# Domains used in some IPPC, removing duplicates.
-IPPC_ALL = list(set().union(IPPC2011 + IPPC2014 + IPPC2018))
+# Domains used in some IPC, removing duplicates.
+IPC_ALL = list(set().union(IPC2011 + IPC2014 + IPC2018))

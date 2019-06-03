@@ -1,4 +1,4 @@
-#include "ippc_client.h"
+#include "ipc_client.h"
 
 #include "parser.h"
 #include "prost_planner.h"
@@ -19,7 +19,7 @@
 
 using namespace std;
 
-IPPCClient::IPPCClient(std::string _hostName, unsigned short _port)
+IPCClient::IPCClient(std::string _hostName, unsigned short _port)
     : hostName(_hostName),
       port(_port),
       socket(-1),
@@ -28,9 +28,9 @@ IPPCClient::IPPCClient(std::string _hostName, unsigned short _port)
 
 // This destructor is required here to allow forward declaration of
 // ProstPlanner in header because of usage of unique_ptr<ProstPlanner>
-IPPCClient::~IPPCClient() = default;
+IPCClient::~IPCClient() = default;
 
-void IPPCClient::run(string const& instanceName, string& plannerDesc) {
+void IPCClient::run(string const& instanceName, string& plannerDesc) {
     // Init connection to the rddlsim server
     initConnection();
 
@@ -66,7 +66,7 @@ void IPPCClient::run(string const& instanceName, string& plannerDesc) {
                                Server Communication
 ******************************************************************************/
 
-void IPPCClient::initConnection() {
+void IPCClient::initConnection() {
     assert(socket == -1);
     try {
         socket = connectToServer();
@@ -80,7 +80,7 @@ void IPPCClient::initConnection() {
     }
 }
 
-int IPPCClient::connectToServer() {
+int IPCClient::connectToServer() {
     struct hostent* host = ::gethostbyname(hostName.c_str());
     if (!host) {
         return -1;
@@ -103,7 +103,7 @@ int IPPCClient::connectToServer() {
     return res;
 }
 
-void IPPCClient::closeConnection() {
+void IPCClient::closeConnection() {
     if (socket == -1) {
         SystemUtils::abort("Error: couldn't disconnect from server.");
     }
@@ -114,7 +114,7 @@ void IPPCClient::closeConnection() {
                      Session and rounds management
 ******************************************************************************/
 
-void IPPCClient::initSession(string const& instanceName, string& plannerDesc) {
+void IPCClient::initSession(string const& instanceName, string& plannerDesc) {
     stringstream os;
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
        << "<session-request>"
@@ -162,7 +162,7 @@ void IPPCClient::initSession(string const& instanceName, string& plannerDesc) {
     planner->initSession(numberOfRounds, remainingTime);
 }
 
-void IPPCClient::finishSession() {
+void IPCClient::finishSession() {
     XMLNode const* sessionEndResponse = XMLNode::readNode(socket);
 
     if (sessionEndResponse->getName() != "session-end") {
@@ -180,7 +180,7 @@ void IPPCClient::finishSession() {
     planner->finishSession(totalReward);
 }
 
-void IPPCClient::initRound(vector<double>& initialState,
+void IPCClient::initRound(vector<double>& initialState,
                            double& immediateReward) {
     stringstream os;
     os.str("");
@@ -217,7 +217,7 @@ void IPPCClient::initRound(vector<double>& initialState,
     planner->initRound(remainingTime);
 }
 
-void IPPCClient::finishRound(XMLNode const* node, double& immediateReward) {
+void IPCClient::finishRound(XMLNode const* node, double& immediateReward) {
     // TODO: Move immediate rewards
     string s;
     if (!node->dissect("immediate-reward", s)) {
@@ -239,7 +239,7 @@ void IPPCClient::finishRound(XMLNode const* node, double& immediateReward) {
                          Submission of actions
 ******************************************************************************/
 
-bool IPPCClient::submitAction(vector<string>& actions,
+bool IPCClient::submitAction(vector<string>& actions,
                               vector<double>& nextState,
                               double& immediateReward) {
     stringstream os;
@@ -287,7 +287,7 @@ bool IPPCClient::submitAction(vector<string>& actions,
                              Receiving of states
 ******************************************************************************/
 
-void IPPCClient::readState(XMLNode const* node, vector<double>& nextState,
+void IPCClient::readState(XMLNode const* node, vector<double>& nextState,
                            double& immediateReward) {
     assert(node);
     assert(node->getName() == "turn");
@@ -358,7 +358,7 @@ void IPPCClient::readState(XMLNode const* node, vector<double>& nextState,
     }
 }
 
-void IPPCClient::readVariable(XMLNode const* node,
+void IPCClient::readVariable(XMLNode const* node,
                               map<string, string>& result) {
     string name;
     if (node->getName() != "observed-fluent") {
@@ -403,7 +403,7 @@ void IPPCClient::readVariable(XMLNode const* node,
                              Parser Interaction
 ******************************************************************************/
 
-void IPPCClient::executeParser(string const& taskDesc) {
+void IPCClient::executeParser(string const& taskDesc) {
 #ifdef NDEBUG
     std::string parserExec = "./rddl-parser-release ";
 #else

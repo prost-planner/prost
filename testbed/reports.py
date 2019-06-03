@@ -5,7 +5,7 @@ import os
 import platform
 
 from additional_filters import domain_as_category, improvement
-from ippc_scores import IPPCScores
+from ipc_scores import IPCScores
 
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 from lab.experiment import Experiment
@@ -20,7 +20,7 @@ class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
 
 # Attributes to be displayed in the report.
-ATTRIBUTES = ['ippc_score',
+ATTRIBUTES = ['ipc_score',
               'numRuns',
               'reward_step-all',
               'round_reward-all',
@@ -47,20 +47,20 @@ exp.add_parse_again_step()
 # writes them to *-eval/properties.
 exp.add_fetcher(name='fetch')
 
-# Make a basic table report with IPPC scores.
-ippc_scores = IPPCScores()
+# Make a basic table report with IPC scores.
+ipc_scores = IPCScores()
 
 exp.add_report(
     BaseReport(attributes=ATTRIBUTES,
-               filter=[ippc_scores.store_rewards,
-                       ippc_scores.add_score]),
+               filter=[ipc_scores.store_rewards,
+                       ipc_scores.add_score]),
     outfile='report.html')
 
 # Make a scatter plot report.
 exp.add_report(
     ScatterPlotReport(
         attributes=["average_reward"],
-        filter_algorithm=["IPPC2011", "IPPC2014"],
+        filter_algorithm=["IPC2011", "IPC2014"],
         xscale='linear',
         yscale='linear',
         get_category=domain_as_category,),
@@ -70,7 +70,7 @@ exp.add_report(
 exp.add_report(
     ScatterPlotReport(
         attributes=["time"],
-        filter_algorithm=["IPPC2011", "IPPC2014"],
+        filter_algorithm=["IPC2011", "IPC2014"],
         xscale='linear',
         yscale='linear',
     get_category=improvement),

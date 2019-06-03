@@ -28,12 +28,12 @@ will build the unit tests and execute them.
 
 ===[ Running PROST ]===
 
-The PROST solver requires the IPPC 2011/2014 competition server to run.
+The PROST solver requires the IPC 2011/2014 competition server to run.
 You can get this server (and some additional RDDL/planning tools) from
 https://code.google.com/p/rddlsim/ (more detailed instructions can be
 found further in this guide).
 
-If your IPPC server is running (on the default port 2323) you can run
+If your IPC server is running (on the default port 2323) you can run
 the PROST solver by changing to the testbed folder and running
 
 	./plan.py <instance-name> "[PROST -se <PROST-config>]"
@@ -46,12 +46,12 @@ Note that there are several configs for PROST available, type
 
 for an overview of all available solvers and their options.
 
-===[ Installing the IPPC Server ]===
+===[ Installing the IPC Server ]===
 
-Extract the IPPC source to any directory, go to the extracted directory
+Extract the IPC source to any directory, go to the extracted directory
 and simply run 'compile'. This compiles the RDDLSim tools, including the
 server (a more detailed setup guide can be found in the RDDLSim dir). If
-you have compiled the IPPC source, go to the testbed folder in the
+you have compiled the IPC source, go to the testbed folder in the
 directory where you installed PROST, create a symlink to the server with
 
     ln -s <RDDLSIM_ROOT>
@@ -62,7 +62,7 @@ e.g. by typing
 
     ./run-server benchmarks/ippc-all/
 
-to load all instances of IPPC 2011 and 2014.
+to load all instances of IPC 2011 and 2014.
 
 ===[ Create your own search engine ]===
 
@@ -95,11 +95,11 @@ make to automatically compile and run your tests.
 There are some scripts to compare your algorithm to other methods
 implemented in PROST. You can use the analyze_results.py script (from
 the scripts folder) to compare to 1.) those algorithms that are in the
-highscore folder (which also contains the minimum policy of IPPC 2011)
+highscore folder (which also contains the minimum policy of IPC 2011)
 and 2.) all algorithms that are in your <resultdir> by running:
 
 	analyze_results.py <resultdir> <texfile>
 
 which creates a texfile that contains both an instance-by-instance
-comparison and a table with IPPC scores.
+comparison and a table with IPC scores.
 
