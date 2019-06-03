@@ -3,6 +3,7 @@
 
 import os
 import shutil
+import subprocess
 import sys
 import json
 
@@ -58,8 +59,10 @@ configs = [
 # papers and theses to obtain acceptable confidence intervalls
 numRuns = "100"
 
-# The current revision (used for appropriate naming only)
-revision = "rev3b168b35"
+# The current revision (used for appropriate naming only). You can also set this manually
+out = subprocess.check_output(["hg", "log","-l1"]).splitlines()
+revision = out[0].split(":")[2].strip()
+#revision = "rev3b168b35"
 
 # The timeout per task in hh:mm:ss
 timeout = "4:00:00"
