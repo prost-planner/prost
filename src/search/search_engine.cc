@@ -105,7 +105,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // and code improvements that have been implemented since then are
         // contained, though)
 
-        desc = desc.substr(8, desc.size());
+        desc = desc.substr(7, desc.size());
         desc =
             "THTS -act [UCB1] -out [MC] -backup [MC] -init [Expand -h [IDS -sd "
             "15] -iv 5 -hw 1.0] -ndn H -sd 15" +
@@ -115,7 +115,7 @@ SearchEngine* SearchEngine::fromString(string& desc) {
         // consideration of the MDP-ESP problem that is described in our AAAI
         // 2015 paper, so it can be used for planner comparison)
 
-        desc = desc.substr(8, desc.size());
+        desc = desc.substr(7, desc.size());
         desc =
             "THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]]" +
             desc;
