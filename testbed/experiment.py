@@ -277,10 +277,20 @@ def run_experiments(filename):
         print "Invalid grid engine!"
         exit()
 
+def build_planner():
+    # TODO: Is there any argument that can be passed?
+    try:
+        subprocess.check_call(['../build.py'])
+    except subprocess.CalledProcessError as e:
+        print "./build.py failed!"
+        print "PROST planner could not be compiled."
+    return
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print >> sys.stderr, "Usage: create-jobs.py"
         exit()
+    build_planner()
     instances = []
     for instance in benchmark:
         domain_name = instance.path
