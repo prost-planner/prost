@@ -2,9 +2,6 @@
 
 #include "search_engine.h"
 
-//#include "iterative_deepening_search.h"
-//#include "minimal_lookahead_search.h"
-
 #include "utils/math_utils.h"
 #include "utils/stopwatch.h"
 #include "utils/string_utils.h"
