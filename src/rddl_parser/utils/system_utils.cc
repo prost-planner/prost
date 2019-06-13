@@ -17,7 +17,6 @@
 #include "sys/types.h"
 #include "sys/vtimes.h"
 
-
 clock_t SystemUtils::start = 0;
 clock_t SystemUtils::lastCPU = 0;
 clock_t SystemUtils::lastSysCPU = 0;

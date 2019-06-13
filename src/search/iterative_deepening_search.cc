@@ -99,8 +99,8 @@ void IDS::learn() {
     assert(rewardCache.empty());
 
     if (maxSearchDepth > 1) {
-        // Determine the maximal search depth based on the average time the
-        // search needed on the training set
+        // Determine the maximal search depth based on the average time
+        // the search needed on the training set
         maxSearchDepth = 0;
 
         for (size_t index = 2; index < elapsedTime.size(); ++index) {

@@ -73,7 +73,7 @@ int ActionSelection::selectAction(SearchNode* node) {
         _selectAction(node);
     }
 
-    assert(!bestActionIndices.empty());    
+    assert(!bestActionIndices.empty());
     int selectedIndex = MathUtils::rnd->randomElement(bestActionIndices);
 
     if ((thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) &&
