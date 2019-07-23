@@ -12,7 +12,7 @@ Libraries: BuDDy (http://sourceforge.net/projects/buddy/)
 On Linux, you can install BuDDy and all other dependencies with the
 command
 
-sudo apt install mercurial g++ make bison flex libbdd-dev
+sudo apt install mercurial g++ cmake bison flex libbdd-dev
 
 If you cannot install BuDDy this way, it is likely you have to adapt the
 file src/cmake_modules/FindBDD.cmake to make sure that the BuDDy library
@@ -82,7 +82,7 @@ script that can be found in the root directory of the repository. For
 instance, to start planning for the first elevators instance of IPC 2011
 with the PROST version from IPC 2014, run
 
-./prost.py elevators_inst_mdp__1 [Prost -s 1 -se [IPPC2014]]
+./prost.py elevators_inst_mdp__1 "[Prost -s 1 -se [IPPC2014]]"
 
 Note that there are many PROST configuration implemented. Run the
 prost.py script without any parameters for an overview of all available
