@@ -1,6 +1,6 @@
-"""
+'''
 File with aditional filters for the Prost reports using Lab.
-"""
+'''
 
 
 def domain_as_category(run1, run2):

@@ -59,8 +59,8 @@ exp.add_report(
 # Make a scatter plot report.
 exp.add_report(
     ScatterPlotReport(
-        attributes=["average_reward"],
-        filter_algorithm=["IPC2011", "IPC2014"],
+        attributes=['average_reward'],
+        filter_algorithm=['IPC2011', 'IPC2014'],
         xscale='linear',
         yscale='linear',
         get_category=domain_as_category,),
@@ -69,8 +69,8 @@ exp.add_report(
 # Make a scatter plot report.
 exp.add_report(
     ScatterPlotReport(
-        attributes=["time"],
-        filter_algorithm=["IPC2011", "IPC2014"],
+        attributes=['time'],
+        filter_algorithm=['IPC2011', 'IPC2014'],
         xscale='linear',
         yscale='linear',
     get_category=improvement),

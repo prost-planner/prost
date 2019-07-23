@@ -5,9 +5,9 @@
 # PROST probabilistic planning system.
 #
 
-"""
+'''
 Parse runs of PROST.
-"""
+'''
 
 import re
 
@@ -44,9 +44,9 @@ def _get_flags(flags_string):
 
 
 def add_repeated_pattern(self, name, regex, file='run.log', type=int, flags='M'):
-    """
+    '''
     *regex* must contain at most one group.
-    """
+    '''
     flags = _get_flags(flags)
 
     def find_all_occurences(content, props):
@@ -69,9 +69,9 @@ def reduce_to_min(list_name, single_name):
     return reduce_to_minimum
 
 def add_list_pattern(parser, name, regex, file='run.log', flags='M'):
-    """
+    '''
     *regex* must contain at most one group.
-    """
+    '''
     flags = _get_flags(flags)
 
     def parse_repeated_list(content, props):

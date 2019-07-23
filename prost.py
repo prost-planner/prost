@@ -28,8 +28,8 @@ def main():
         parser_file = "builds/release/rddl_parser/rddl-parser"
         search_file = "builds/release/search/search"
 
-    shutil.copy2(parser_file, "./"+parser_name)
-    shutil.copy2(search_file, "./"+search_name)
+    shutil.copy2(parser_file, "./" + parser_name)
+    shutil.copy2(search_file, "./" + search_name)
 
     print "./" + search_name + " " + " ".join(search_params)
     exitcode = subprocess.call("./" + search_name + " " + " ".join(search_params), shell=True)

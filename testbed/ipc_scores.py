@@ -1,6 +1,6 @@
 
 class IPCScores(object):
-    """Compute the IPC quality score.
+    '''Compute the IPC quality score.
 
     The IPC score is computed over the list of runs for each task. Since
     filters only work on individual runs, we can't compute the score with a
@@ -8,7 +8,7 @@ class IPCScores(object):
     the list of rewards per task in a dictionary whereas *add_score* uses the
     stored rewards to compute IPC quality scores and adds them to the runs.
 
-    """
+    '''
 
     def __init__(self):
         # We are using normal dict on purpose.
