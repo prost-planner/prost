@@ -20,16 +20,16 @@ class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
 
 # Attributes to be displayed in the report.
-ATTRIBUTES = ['ipc_score',
-              'numRuns',
-              'reward_step-all',
-              'round_reward-all',
-              'round_reward_99',
-              'total_reward',
-              'average_reward',
-              'time',]
+ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
+              Attribute('num_runs', min_wins=False),
+              Attribute('reward_step-all', min_wins=False),
+              Attribute('round_reward-all', min_wins=False),
+              Attribute('round_reward_99', min_wins=False),
+              Attribute('total_reward', min_wins=False),
+              Attribute('average_reward', min_wins=False),
+              Attribute('time', min_wins=True),]
 
-EXP_PATH = '/home/blaas/planners/prost-dev/testbed/results/rev3b168b35'
+#EXP_PATH = 'results/rev3b168b35'
 
 # TODO better error handling
 if not EXP_PATH:
@@ -65,15 +65,5 @@ exp.add_report(
         yscale='linear',
         get_category=domain_as_category,),
     outfile='scatterplot.png')
-
-# Make a scatter plot report.
-exp.add_report(
-    ScatterPlotReport(
-        attributes=['time'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
-        xscale='linear',
-        yscale='linear',
-    get_category=improvement),
-    outfile='scatterplot2.png')
 
 exp.run_steps()
