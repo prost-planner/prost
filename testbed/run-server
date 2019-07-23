@@ -1,12 +1,9 @@
-# Starts the rddlsim server, which is available as a svn repository at
-# https://rddlsim.googlecode.com/svn. Must be downloaded and compiled, and the
-# lib and bin directories must be copied to testbed/rddlsim for this script to
-# work. If you have any questions on rddlsim, please contact Scott Sanner
-# (ssanner [@] gmail.com)
+# Starts the rddlsim server, which is available as a git repository at
+# https://github.com/ssanner/rddlsim. See the README file for information
+# on the installation of rddlsim.
 
-Home=rddlsim
-libDir=${Home}/lib
-CP=${Home}/bin
+libDir=$RDDLSIM_ROOT/lib
+CP=$RDDLSIM_ROOT/bin
 CYGWIN_SEP=";"
 UNIX_SEP=":"
 

@@ -1,94 +1,110 @@
 Guide to set up and run the PROST planner. If you have any questions
 that are not answered by this file or under
 https://bitbucket.org/tkeller/prost/wiki/Installation, please do not
-hesitate to contact tho.keller [@] unibas.ch.
+hesitate to contact tho.keller [at] unibas.ch.
+
+
 
 ===[ Prerequisites ]===
 
 Libraries: BuDDy (http://sourceforge.net/projects/buddy/)
 
-NOTE: make sure to install BuDDy in /lib or update the PROST makefile so
-that it finds the buddy library, otherwise it will compile fine but give
-an error on running the PROST solver. On Linux, you install all
-dependecies (including BuDDy) with the command
+On Linux, you can install BuDDy and all other dependencies with the
+command
 
-sudo apt-get install mercurial g++ make bison flex libbdd-dev
+sudo apt install mercurial g++ make bison flex libbdd-dev
 
-===[ Compiling the PROST planner ]===
+If you cannot install BuDDy this way, it is likely you have to adapt the
+file src/cmake_modules/FindBDD.cmake to make sure that the BuDDy library
+can be found.
+
+
+
+===[ Installing the PROST planner ]===
 
 Prost consists of two parts: a parser component that can be found in the
 directory src/rddl_parser, and a search component that can be found in
-src/search.
+src/search. The parser version in src/rddl_prefix_parser is deprecated
+and can be ignored in most cases.
 
-Both parts can be compiled by going into the respective source directory
-and running make.
+Both the parser and the search component are compiled with the build.py
+script in the root directory of the repository.
 
-Running make debug will compile the debug version, and running make test
-will build the unit tests and execute them.
+Running
 
-===[ Running PROST ]===
+./build.py
 
-The PROST solver requires the IPPC 2011/2014 competition server to run.
-You can get this server (and some additional RDDL/planning tools) from
-https://code.google.com/p/rddlsim/ (more detailed instructions can be
-found further in this guide).
+will compile the release version, and
 
-If your IPPC server is running (on the default port 2323) you can run
-the PROST solver by changing to the testbed folder and running
+./build.py --debug
 
-	./plan.py <instance-name> "[PROST -se <PROST-config>]"
+will compile the debug version.
 
-, where <instance-name> is the name of the RDDL instance and
-<PROST-config> the configuration of PROST you want to run.
-Note that there are several configs for PROST available, type
 
-	./plan.py
 
-for an overview of all available solvers and their options.
+===[ Installing the rddlsim server ]===
 
-===[ Installing the IPPC Server ]===
+The PROST solver requires the rddlsim server to run. You can obtain
+rddlsim by cloning the repository with
 
-Extract the IPPC source to any directory, go to the extracted directory
-and simply run 'compile'. This compiles the RDDLSim tools, including the
-server (a more detailed setup guide can be found in the RDDLSim dir). If
-you have compiled the IPPC source, go to the testbed folder in the
-directory where you installed PROST, create a symlink to the server with
+git clone https://github.com/ssanner/rddlsim /path/to/rddlsim,
 
-    ln -s <RDDLSIM_ROOT>
+where /path/to/rddlsim refers to the directory on your machine where you
+install rddlsim. After the repository is cloned, run
 
-where <RDDLSIM_ROOT> is the folder where you installed rddlsim. You can
-then use the run-server script in the testbed folder to run rddlsim,
-e.g. by typing
+./compile
 
-    ./run-server benchmarks/ippc-all/
+once in /path/to/rddlsim.
 
-to load all instances of IPPC 2011 and 2014.
+The Prost repo contains the script testbed/run-server that can be used
+to start rddlsim. To work properly, it requires that you set an
+environment variable RDDLSIM_ROOT that points to /path/to/rddlsim, e.g.
+by adding
+
+export RDDLSIM_ROOT=/path/to/rddlsim
+
+to the file ~/.bashrc.
+
+
+
+===[ Running PROST and rddlsim ]===
+
+Running
+
+./run-server benchmarks/elevators-2011/
+
+will then start rddlsim with all instances of the elevators domain of
+IPC 2011 (all other RDDL domains that were used in an IPC can also be
+found in the testbed/benchmarks folder).
+
+If your IPPC server is running, you can start PROST with the prost.py
+script that can be found in the root directory of the repository. For
+instance, to start planning for the first elevators instance of IPC 2011
+with the PROST version from IPC 2014, run
+
+./prost.py elevators_inst_mdp__1 [Prost -s 1 -se [IPPC2014]]
+
+Note that there are many PROST configuration implemented. Run the
+prost.py script without any parameters for an overview of all available
+solvers and their options.
+
+
 
 ===[ Create your own search engine ]===
 
-The simplest way to implement your own search engine, derive a class
-from SearchEngine and implement the pure virtual method estimateQValues
-as a function that assigns a Q-Value estimate to each action. After you
-have added your search engine to the SearchEngine::fromString method
-with a unique string, PROST will use your search engine if called with
-that string and execute that action with the highest Q-Value estimate in
-each step.
+The simplest way to implement your own search engine is to derive a
+class from SearchEngine and implement the pure virtual method
+estimateQValues as a function that assigns a Q-Value estimate to each
+action. After you have added your search engine to the
+SearchEngine::fromString method with a unique string, PROST will use
+your search engine if called with that string and execute the action
+with the highest Q-Value estimate in each step.
 
 Have a look at thts.h if you are interested in creating a search
 engine that can be modelled within the THTS framework (see the ICAPS
 2013 paper by Keller and Helmert for more information on THTS).
 
-===[ Test your own search engine ]===
 
-We use the Google Test framework to implement unit tests for our code.
-All tests are contained in /src/test/ and will be run automatically by
-compiling the debug version of the planner (i.e. calling make in
-src/search/). If you want to implement your own unit tests you have to
-keep the following naming conventions: - No underscore (_) in test case
-names and test names. - Every test should end with *Test.cc
-
-The first convention is necessary by the framework and the second rule allows
-make to automatically compile and run your tests.
 
 ===[ Compare your search engine ]===
 
@@ -102,4 +118,8 @@ and 2.) all algorithms that are in your <resultdir> by running:
 
 which creates a texfile that contains both an instance-by-instance
 comparison and a table with IPPC scores.
+
+We are currently also working on incorporating Lab
+(https://bitbucket.org/jendrikseipp/lab) into the Prost planner, which
+provides much more powerful scripts to analyze results.
 
