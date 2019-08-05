@@ -66,4 +66,16 @@ exp.add_report(
         get_category=domain_as_category,),
     outfile='scatterplot.png')
 
+# Make a scatter plot report for IPC scores using filters.
+exp.add_report(
+    ScatterPlotReport(
+        attributes=['ipc_score'],
+        filter_algorithm=['IPC2011', 'IPC2014'],
+        filter=[ipc_scores.store_rewards,
+                ipc_scores.add_score],
+        xscale='linear',
+        yscale='linear',
+        get_category=domain_as_category,),
+    outfile='scatterplot-ipc-score.png')
+
 exp.run_steps()
