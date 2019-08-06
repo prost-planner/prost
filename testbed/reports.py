@@ -14,6 +14,8 @@ from lab.reports import Attribute
 from downward.reports.absolute import AbsoluteReport
 from downward.reports.scatter import ScatterPlotReport
 
+from prost_plots import plot_reward_per_round
+
 
 # Create custom report class with suitable info and error attributes.
 class BaseReport(AbsoluteReport):
@@ -29,7 +31,7 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
               Attribute('average_reward', min_wins=False),
               Attribute('time', min_wins=True),]
 
-#EXP_PATH = 'results/rev3b168b35'
+EXP_PATH = 'results/rev3b168b35'
 
 # TODO better error handling
 if not EXP_PATH:
@@ -77,5 +79,8 @@ exp.add_report(
         yscale='linear',
         get_category=domain_as_category,),
     outfile='scatterplot-ipc-score.png')
+
+exp.add_step('reward-per-round-plot',
+             plot_reward_per_round, EXP_PATH, 'IPPC2011', 'IPPC2014')
 
 exp.run_steps()
