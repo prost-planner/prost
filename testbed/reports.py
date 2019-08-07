@@ -80,7 +80,15 @@ exp.add_report(
         get_category=domain_as_category,),
     outfile='scatterplot-ipc-score.png')
 
+
+# Make a plot of reward per round.
+# Instances to be plotted are defined using a filter functuon.
+def plot_ippc2011(run):
+    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPPC2014':
+        return True
+    return False
+
 exp.add_step('reward-per-round-plot',
-             plot_reward_per_round, EXP_PATH, 'IPPC2011', 'IPPC2014')
+             plot_reward_per_round, EXP_PATH, plot_ippc2011, 'algorithm')
 
 exp.run_steps()
