@@ -14,7 +14,7 @@ from lab.reports import Attribute
 from downward.reports.absolute import AbsoluteReport
 from downward.reports.scatter import ScatterPlotReport
 
-from prost_plots import plot_reward_per_round
+from prost_plots import *
 
 
 # Create custom report class with suitable info and error attributes.
@@ -82,13 +82,16 @@ exp.add_report(
 
 
 # Make a plot of reward per round.
-# Instances to be plotted are defined using a filter functuon.
 def plot_ippc2011(run):
     if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPPC2014':
         return True
     return False
 
+list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
-             plot_reward_per_round, EXP_PATH, plot_ippc2011, 'algorithm')
+             list_plot.plot_reward_per_round, [PlotProblem('crossing_traffic_inst_mdp__3', linestyle='--'),
+                                                PlotProblem('crossing_traffic_inst_mdp__4', linestyle='-'),
+                                                PlotAlgorithm('IPPC2014', color='b', marker='o'),
+                                                PlotAlgorithm('IPPC2011', color='r', marker='*')])
 
 exp.run_steps()
