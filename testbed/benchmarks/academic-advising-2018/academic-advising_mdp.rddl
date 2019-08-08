@@ -120,7 +120,7 @@ domain academic-advising_mdp {
         ( forall_{ ?c : course } [ take-course(?c) => ~passed(?c) ] );
 
         // replaces max-nondef-actions
-        ( ( sum_{ ?c : course } [take-course(?c)] ) <= COURSES_PER_SEMESTER );
+        ( ( sum_{ ?c : course } [ take-course(?c) ] ) <= COURSES_PER_SEMESTER );
     };
 }     
  
