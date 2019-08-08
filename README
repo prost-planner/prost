@@ -12,7 +12,7 @@ Libraries: BuDDy (http://sourceforge.net/projects/buddy/)
 On Linux, you can install BuDDy and all other dependencies with the
 command
 
-sudo apt install mercurial g++ cmake bison flex default-jre libbdd-dev
+sudo apt install mercurial g++ cmake bison flex libbdd-dev
 
 If you cannot install BuDDy this way, it is likely you have to adapt the
 file src/cmake_modules/FindBDD.cmake to make sure that the BuDDy library
@@ -44,13 +44,23 @@ will compile the debug version.
 
 ===[ Installing the rddlsim server ]===
 
-The PROST solver requires the rddlsim server to run. You can obtain
-rddlsim by cloning the repository with
+The PROST solver requires the rddlsim server to run. We refer to the
+github repository of rddlsim for the latest installation information.
+Without any guarantee for success, you can try the following
+installation instructions:
+
+A java runtime environment is required to run rddlsim, which can (for
+instance) be installed with
+
+sudo apt install default-jre
+
+Now you have to obtain rddlsim by cloning the repository with
 
 git clone https://github.com/ssanner/rddlsim /path/to/rddlsim,
 
-where /path/to/rddlsim refers to the directory on your machine where you
-install rddlsim. After the repository is cloned, run
+where /path/to/rddlsim refers to a directory on your machine where you
+install rddlsim (you can replace this with any directory on your
+machine). After the repository is cloned, run
 
 ./compile
 
