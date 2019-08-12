@@ -1,24 +1,38 @@
 #! /usr/bin/env python2.7
 
-import glob
-import os
-import platform
+"""Example of report using the Lab framework and Matplotlib.
 
-from additional_filters import domain_as_category, improvement
+As a prerequisite, you must have Lab installed and in your PYTHONPATH.
+You can find more information in the official website of Lab:
+
+    https://lab.readthedocs.io
+
+You can use this script to produce tables, scatter plots, and plots of list
+attributes in several different formats.  You can also modify the file
+'parser.py' to parse different attributes and properties of each run.
+Similarly, you can extend or adapt 'prost_plots.py' to plot your data in a way
+that suits better to you.
+
+"""
+
+from additional_filters import domain_as_category
 from ipc_scores import IPCScores
 
-from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 from lab.experiment import Experiment
 from lab.reports import Attribute
 
 from downward.reports.absolute import AbsoluteReport
 from downward.reports.scatter import ScatterPlotReport
 
-from prost_plots import *
+from prost_plots import ListPlot, PlotAttribute, PlotAlgorithm, PlotDomain, PlotProblem
 
 
 # Create custom report class with suitable info and error attributes.
-class BaseReport(AbsoluteReport):
+class ProstBaseReport(AbsoluteReport):
+    """Base report for Prost with information attributes that are present in any run
+    and in any algorithm.
+
+    """
     INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
 
 # Attributes to be displayed in the report.
@@ -33,7 +47,6 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
 
 EXP_PATH = 'results/rev3b168b35'
 
-# TODO better error handling
 if not EXP_PATH:
     print 'Please define a valid experiment path.'
     exit(1)
@@ -53,9 +66,9 @@ exp.add_fetcher(name='fetch')
 ipc_scores = IPCScores()
 
 exp.add_report(
-    BaseReport(attributes=ATTRIBUTES,
-               filter=[ipc_scores.store_rewards,
-                       ipc_scores.add_score]),
+    ProstBaseReport(attributes=ATTRIBUTES,
+                    filter=[ipc_scores.store_rewards,
+                            ipc_scores.add_score]),
     outfile='report.html')
 
 # Make a scatter plot report.
@@ -81,8 +94,17 @@ exp.add_report(
     outfile='scatterplot-ipc-score.png')
 
 
-# Make a plot of reward per round.
+# Plot list attributes. From now on, we do not use Lab reports anymore.
 def plot_ippc2011(run):
+    """Example of filter for the list plot.
+
+    A filter function simply needs to receive a run as input and output True or
+    False.  The runs returning True will be considered in the plots, while the
+    ones returning False will be ignored.
+
+    NOTE: Filters for list plots receive only a single run as input.
+
+    """
     if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPPC2014':
         return True
     return False
@@ -95,6 +117,6 @@ exp.add_step('reward-per-round-plot',
               PlotAlgorithm('IPPC2014', color='b', marker='o'),
               PlotAlgorithm('IPPC2011', color='r', marker='*')],
              'round_reward-all',
-             outfile = 'plot.pdf')
+             outfile='plot.pdf')
 
 exp.run_steps()
