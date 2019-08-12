@@ -89,9 +89,12 @@ def plot_ippc2011(run):
 
 list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
-             list_plot.plot_reward_per_round, [PlotProblem('crossing_traffic_inst_mdp__3', linestyle='--'),
-                                                PlotProblem('crossing_traffic_inst_mdp__4', linestyle='-'),
-                                                PlotAlgorithm('IPPC2014', color='b', marker='o'),
-                                                PlotAlgorithm('IPPC2011', color='r', marker='*')])
+             list_plot.plot_list_attribute,
+             [PlotProblem('crossing_traffic_inst_mdp__3', linestyle='--'),
+              PlotProblem('crossing_traffic_inst_mdp__4', linestyle='-'),
+              PlotAlgorithm('IPPC2014', color='b', marker='o'),
+              PlotAlgorithm('IPPC2011', color='r', marker='*')],
+             'round_reward-all',
+             outfile = 'plot.pdf')
 
 exp.run_steps()

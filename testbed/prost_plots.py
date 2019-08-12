@@ -28,7 +28,7 @@ class ListPlot(object):
                 new_properties[run] = properties[run]
         return new_properties
 
-    def plot_reward_per_round(self, lst):
+    def plot_list_attribute(self, lst, attribute_name, outfile=None):
         # First, we collect all tuples of attributes that we want to match and
         # keep the style of every attribute match.
         values_per_attr = defaultdict(set)
@@ -41,15 +41,37 @@ class ListPlot(object):
         # Then, we compute the cartesian product over all possible attribute
         # values.
         matches = [dict(zip(values_per_attr, x)) for x in product(*values_per_attr.values())]
+
+
+        # We set up some properties of the plot to become more similar to the
+        # Lab plots
+        plt.rc('font', family='serif')
+
         for key, run in self.properties.iteritems():
             match, t = self._get_matching_tuple(run, matches)
             if match:
                 color, marker, linestyle = self.retrieve_style(run, t, map_to_style)
-                y = run['round_reward-all']
+                # We might overwrite the key several times if the attribute
+                # styles is ill-defined.
+                legend = '-'.join([v for k, v in t.iteritems()])
+                assert isinstance(run[attribute_name], list)
+                y = run[attribute_name]
                 x = np.arange(len(y))
-                plt.plot(x, y, c=color, marker=marker, linestyle=linestyle)
+                plt.plot(x, y,
+                         c=color, marker=marker, linestyle=linestyle,
+                         label=legend)
 
-        plt.show()
+        # Add legend
+        leg = plt.legend(loc='best', handlelength=3.5)
+
+        plt.tight_layout()
+        if outfile == None:
+            if leg:
+                leg.draggable()
+            plt.show()
+        else:
+            assert isinstance(outfile, str)
+            plt.savefig(outfile)
 
 
     def _get_matching_tuple(self, run, matches):
@@ -67,7 +89,6 @@ class ListPlot(object):
         color = marker = linestyle = None
         # We get the first value for each of the variables.  We do not check for
         # consistency
-        print (t)
         for k, v in map_to_style.iteritems():
             if k[1] != t[k[0]]:
                 continue
