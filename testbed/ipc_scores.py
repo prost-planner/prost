@@ -14,10 +14,11 @@ class IPCScores(object):
         # We are using normal dict on purpose.
         self.tasks_to_rewards = dict()
 
-    def _get_task(self, run):
-        return (run['domain'], run['problem'])
 
-    # TODO add this function corretly to "add_score"
+    def _get_task(self, run):
+        return self.tasks_to_rewards.get((run['domain'], run['problem']))
+
+
     def _compute_score(self, reward, min_reward, max_reward, all_rewards):
         if reward is None or reward <= min_reward:
             # If the planner reward is worse than the minimum,
@@ -29,6 +30,7 @@ class IPCScores(object):
             max_reward = max(all_rewards)
         return (reward - min_reward)/(max_reward - min_reward)
 
+
     def store_rewards(self, run):
         score = run.get('average_reward')
         task = self._get_task(run)
@@ -39,6 +41,7 @@ class IPCScores(object):
             else:
                 self.tasks_to_rewards[task].append(score)
         return True
+
 
     def add_score(self, run):
         run['ipc_score'] = self._compute_score(
