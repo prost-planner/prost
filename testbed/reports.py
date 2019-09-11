@@ -49,7 +49,9 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
               Attribute('time', min_wins=True),]
 
 if len(sys.argv) < 2:
-    print 'Usage: ./reports.py [EXP PATH] [STEPS]'
+    print 'Usage: ./reports.py [EXP PATH] [STEPS]\n'
+    print 'Run the script only with a valid experiment path to see the steps in detail.'
+    print '(Note that the generic usage reported by Lab is different from the one for this script.)'
     exit(1)
 
 EXP_PATH = sys.argv[1]
