@@ -15,6 +15,9 @@ that suits better to you.
 
 """
 
+import os
+import sys
+
 from additional_filters import domain_as_category
 from ipc_scores import IPCScores
 
@@ -45,9 +48,16 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
               Attribute('average_reward', min_wins=False),
               Attribute('time', min_wins=True),]
 
-EXP_PATH = 'results/rev3b168b35'
+if len(sys.argv) < 2:
+    print 'Usage: ./reports.py [EXP PATH] [STEPS]'
+    exit(1)
 
-if not EXP_PATH:
+EXP_PATH = sys.argv[1]
+# That is the hacky part: To avoid changing Lab, we *delete* the experiment path
+# from the arguments list!
+del sys.argv[1]
+
+if not os.path.isdir(EXP_PATH):
     print 'Please define a valid experiment path.'
     exit(1)
 
