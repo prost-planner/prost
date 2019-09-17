@@ -22,7 +22,7 @@ from additional_filters import domain_as_category
 from ipc_scores import IPCScores
 
 from lab.experiment import Experiment
-from lab.reports import Attribute
+from lab.reports import Attribute, arithmetic_mean
 
 from downward.reports.absolute import AbsoluteReport
 from downward.reports.scatter import ScatterPlotReport
@@ -39,7 +39,7 @@ class ProstBaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
 
 # Attributes to be displayed in the report.
-ATTRIBUTES = [Attribute('ipc_score', min_wins=False),
+ATTRIBUTES = [Attribute('ipc_score', min_wins=False, functions=arithmetic_mean),
               Attribute('num_runs', min_wins=False),
               Attribute('reward_step-all', min_wins=False),
               Attribute('round_reward-all', min_wins=False),
@@ -124,10 +124,9 @@ def plot_ippc2011(run):
 list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
              list_plot.plot_list_attribute,
-             [PlotProblem('crossing_traffic_inst_mdp__3', linestyle='--'),
-              PlotProblem('crossing_traffic_inst_mdp__4', linestyle='-'),
-              PlotAlgorithm('IPPC2014', color='b', marker='o'),
-              PlotAlgorithm('IPPC2011', color='r', marker='*')],
+             [PlotProblem('manufacturer_inst_mdp__01', linestyle='--'),
+              PlotAlgorithm('IPC2014', color='b', marker='o'),
+              PlotAlgorithm('IPC2011', color='r', marker='*')],
              'round_reward-all',
              outfile='plot.pdf')
 
