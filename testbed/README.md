@@ -1,10 +1,10 @@
 # Experiments
 The [testbed](.) folder contains scripts to perform experiments, analyze results, and generate reports.
-<br>
+
 ## 1. Running Experiments
 The script [experiment.py](experiment.py) allows to run an experiment within the environment [SLURM](https://slurm.schedmd.com/documentation.html). Make sure that you have set all desired properties in the file [experiment.py](experiment.py)(experiment.py) before. Different benchmark suites are specified in [benchmark_suite.py](benchmark_suite.py). If you want to run your own benchmark suite, you can add it to the folder [benchmarks](benchmarks) and register it in the file [benchmark_suite.py](benchmark_suite.py).
 
 Logs of your experiments are written to the [results](results/) folder in the default folder structure of [Downward Lab](https://lab.readthedocs.io/en/latest/index.html) .
-<br>
+
 ## 2. Creating Reports
 To create reports, you can use the [standard-report.py](standard-report.py) script. For more information, see [Downward Lab](https://lab.readthedocs.io/en/latest/index.html). The [standard-report.py](standard-report.py) script is an example for creating more sophisticated reports and plots.
