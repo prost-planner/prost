@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 
 class IPCScores(object):
     '''Compute the IPC quality score.
@@ -12,11 +14,11 @@ class IPCScores(object):
 
     def __init__(self):
         # We are using normal dict on purpose.
-        self.tasks_to_rewards = dict()
+        self.tasks_to_rewards = defaultdict(list)
 
 
     def _get_task(self, run):
-        return self.tasks_to_rewards.get((run['domain'], run['problem']))
+        return (run['domain'], run['problem'])
 
 
     def _compute_score(self, reward, min_reward, max_reward, all_rewards):
@@ -36,10 +38,7 @@ class IPCScores(object):
         task = self._get_task(run)
 
         if score is not None:
-            if task not in self.tasks_to_rewards:
-                self.tasks_to_rewards[task] = [score]
-            else:
-                self.tasks_to_rewards[task].append(score)
+            self.tasks_to_rewards[task].append(score)
         return True
 
 
