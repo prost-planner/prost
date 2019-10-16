@@ -7,4 +7,4 @@ The script [experiment.py](experiment.py) allows to run an experiment within the
 Logs of your experiments are written to a results folder in the default folder structure of [Downward Lab](https://lab.readthedocs.io/en/latest/index.html) .
 
 ## 2. Creating Reports
-To create reports, you can use the [standard-report.py](standard-report.py) script. For more information, see [Downward Lab](https://lab.readthedocs.io/en/latest/index.html). The [standard-report.py](standard-report.py) script is an example for creating more sophisticated reports and plots.
+To create reports, you can use the [standard-report.py](standard-report.py) script. For more information, see [Downward Lab](https://lab.readthedocs.io/en/latest/index.html). The [report.py](report.py) script is an example for creating more sophisticated reports and plots.
