@@ -43,7 +43,7 @@ public:
     }
 
     // TODO: For now, this is only here to set the timeout from ProstPlanner
-    // (necessary for IPPC 2014). Generally, I'd like a TerminationManager class
+    // (necessary for IPC 2014). Generally, I'd like a TerminationManager class
     // that administrates termination criteria for each kind of search engine.
     virtual void setTimeout(double _timeout) {
         timeout = _timeout;

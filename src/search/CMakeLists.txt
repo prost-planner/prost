@@ -29,7 +29,7 @@ set(SEARCH_SOURCES
   depth_first_search
   evaluatables
   initializer
-  ippc_client
+  ipc_client
   iterative_deepening_search
   logical_expressions
   minimal_lookahead_search
