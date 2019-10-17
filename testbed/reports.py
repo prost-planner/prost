@@ -87,7 +87,7 @@ exp.add_report(
 exp.add_report(
     ScatterPlotReport(
         attributes=['average_reward'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
+        filter_algorithm=['IPPC2011', 'IPPC2014'],
         xscale='linear',
         yscale='linear',
         get_category=domain_as_category,),
@@ -97,7 +97,7 @@ exp.add_report(
 exp.add_report(
     ScatterPlotReport(
         attributes=['ipc_score'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
+        filter_algorithm=['IPPC2011', 'IPPC2014'],
         filter=[ipc_scores.store_rewards,
                 ipc_scores.add_score],
         xscale='linear',
@@ -125,8 +125,8 @@ list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
              list_plot.plot_list_attribute,
              [PlotProblem('manufacturer_inst_mdp__01', linestyle='--'),
-              PlotAlgorithm('IPC2014', color='b', marker='o'),
-              PlotAlgorithm('IPC2011', color='r', marker='*')],
+              PlotAlgorithm('IPPC2014', color='b', marker='o'),
+              PlotAlgorithm('IPPC2011', color='r', marker='*')],
              'round_reward-all',
              outfile='plot.pdf')
 
