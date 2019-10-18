@@ -46,7 +46,8 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False, functions=arithmetic_mean),
               Attribute('round_reward_99', min_wins=False),
               Attribute('total_reward', min_wins=False),
               Attribute('average_reward', min_wins=False),
-              Attribute('time', min_wins=True),]
+              Attribute('time', min_wins=True),
+              Attribute('run_dir'),]
 
 if len(sys.argv) < 2:
     print 'Usage: ./reports.py [EXP PATH] [STEPS]\n'
