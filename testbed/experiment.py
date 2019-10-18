@@ -50,10 +50,10 @@ configs = [
 num_runs = '100'
 
 # Average time per step which depends on the horizion and number of runs
-# As a rule of thumb, we provide 75*2.5*H seconds for each instance 
-# (exceptions are possible), where H is the finite horizon. As a result 
-# of a discussion among the participants and organizers, we decided to 
-# increase the average deliberation time significantly (this was 50*H seconds before). 
+# As a rule of thumb, we provide 75*2.5*H seconds for each instance
+# (exceptions are possible), where H is the finite horizon. As a result
+# of a discussion among the participants and organizers, we decided to
+# increase the average deliberation time significantly (this was 50*H seconds before).
 step_time = '2.5'
 
 # Time to wait for the rddl server to setup in sec
@@ -170,7 +170,7 @@ def create_tasks(filename, instances):
     properties['algorithms'] = configs
     properties['memory_limit'] = memout
     properties['name'] = name
-    properties['num_runs'] = num_runs
+    properties['num_runs'] = int(num_runs)
     properties['partition'] = partition
     properties['revision'] = revision
     properties['run_debug'] = run_debug
