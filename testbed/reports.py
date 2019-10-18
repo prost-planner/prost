@@ -125,7 +125,7 @@ def plot_ippc2011(run):
 list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
              list_plot.plot_list_attribute,
-             [PlotProblem('manufacturer_inst_mdp__01', linestyle='--'),
+             [PlotProblem('game_of_life_inst_mdp__1', linestyle='--'),
               PlotAlgorithm('IPPC2014', color='b', marker='o'),
               PlotAlgorithm('IPPC2011', color='r', marker='*')],
              'round_reward-all',

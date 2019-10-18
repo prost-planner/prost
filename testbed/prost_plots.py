@@ -58,7 +58,7 @@ class ListPlot(object):
 
     """
     def __init__(self, path, filters=None):
-        self.eval_path = path + '-eval/'
+        self.eval_path = self._cleanup_path(path) + '-eval/'
         if not os.path.exists(self.eval_path+'properties'):
             # We do not want to throw and error if the properties file does not
             # exist yet.
@@ -166,6 +166,11 @@ class ListPlot(object):
             linestyle = '-'
         return color, marker, linestyle
 
+    def _cleanup_path(self, path):
+        # Simply parses '/path/to/exp/' into '/path/to/exp'
+        if path[-1] == '/':
+            path = path[:-1]
+        return path
 
 
 # Right now, PlotAttribute and the other related classes are simply storing the
