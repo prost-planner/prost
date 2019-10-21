@@ -129,6 +129,6 @@ exp.add_step('reward-per-round-plot',
               PlotAlgorithm('IPPC2014', color='b', marker='o'),
               PlotAlgorithm('IPPC2011', color='r', marker='*')],
              'round_reward-all',
-             outfile='plot.pdf')
+             outfile='prost-plot.pdf')
 
 exp.run_steps()

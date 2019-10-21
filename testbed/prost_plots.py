@@ -127,7 +127,7 @@ class ListPlot(object):
             plt.show()
         else:
             assert isinstance(outfile, str)
-            plt.savefig(outfile)
+            plt.savefig(self.eval_path + outfile)
 
 
     def _retrieve_style(self, t, map_to_style):
