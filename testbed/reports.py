@@ -88,7 +88,7 @@ exp.add_report(
 exp.add_report(
     ScatterPlotReport(
         attributes=['average_reward'],
-        filter_algorithm=['IPPC2011', 'IPPC2014'],
+        filter_algorithm=['IPC2011', 'IPC2014'],
         xscale='linear',
         yscale='linear',
         get_category=domain_as_category,),
@@ -98,7 +98,7 @@ exp.add_report(
 exp.add_report(
     ScatterPlotReport(
         attributes=['ipc_score'],
-        filter_algorithm=['IPPC2011', 'IPPC2014'],
+        filter_algorithm=['IPC2011', 'IPC2014'],
         filter=[ipc_scores.store_rewards,
                 ipc_scores.add_score],
         xscale='linear',
@@ -118,7 +118,7 @@ def plot_ippc2011(run):
     NOTE: Filters for list plots receive only a single run as input.
 
     """
-    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPPC2014':
+    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPC2014':
         return True
     return False
 
@@ -126,8 +126,8 @@ list_plot = ListPlot(EXP_PATH)
 exp.add_step('reward-per-round-plot',
              list_plot.plot_list_attribute,
              [PlotProblem('game_of_life_inst_mdp__1', linestyle='--'),
-              PlotAlgorithm('IPPC2014', color='b', marker='o'),
-              PlotAlgorithm('IPPC2011', color='r', marker='*')],
+              PlotAlgorithm('IPC2014', color='b', marker='o'),
+              PlotAlgorithm('IPC2011', color='r', marker='*')],
              'round_reward-all',
              outfile='prost-plot.pdf')
 

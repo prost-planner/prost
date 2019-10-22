@@ -38,8 +38,8 @@ benchmark = IPC_ALL
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 configs = [
-    'IPPC2011',                                        # The configuration that participated at IPC 2011
-    'IPPC2014',                                        # The configuration that participated at IPC 2014
+    'IPC2011',                                        # The configuration that participated at IPC 2011
+    'IPC2014',                                        # The configuration that participated at IPC 2014
    #'UCT -init [Single -h [RandomWalk]]',              # The configuration that is closest to "plain UCT"
    #'UCT -init [Expand -h [IDS]] -rec [MPA]',          # Best UCT configuration according to Keller's dissertation
    #'DP-UCT -init [Single -h [Uniform]]'               # A configuration that works well in wildfire and sysadmin
