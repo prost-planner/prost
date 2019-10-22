@@ -1,4 +1,4 @@
-#include "ippc_client.h"
+#include "ipc_client.h"
 
 #include "utils/stopwatch.h"
 
@@ -481,15 +481,15 @@ void printUsage() {
 
     cout << "There are also some shortcuts for popular search engines:" << endl
          << endl;
-    cout << "  [IPPC2011] := [THTS -act [UCB1] -out [MC] -backup [MC] -init "
+    cout << "  [IPC2011] := [THTS -act [UCB1] -out [MC] -backup [MC] -init "
             "[Expand -h [IDS -sd 15] -iv 5 -hw 1.0] -ndn H -sd 15]"
          << endl;
-    cout << "    The PROST configuration that won IPPC 2011." << endl << endl;
+    cout << "    The PROST configuration that won IPC 2011." << endl << endl;
 
-    cout << "  [IPPC2014] := [THTS -act [UCB1] -out [UMC] -backup [PB] -init "
+    cout << "  [IPC2014] := [THTS -act [UCB1] -out [UMC] -backup [PB] -init "
             "[Expand -h [IDS]]]"
          << endl;
-    cout << "    The PROST configuration that won IPPC 2014." << endl << endl;
+    cout << "    The PROST configuration that won IPC 2014." << endl << endl;
 
     cout << "  [UCTStar <options>] := [THTS -act [UCB1] -out [UMC] -backup "
             "[PB] <options>]"
@@ -580,7 +580,7 @@ int main(int argc, char** argv) {
     }
 
     // Create connector to rddlsim and run
-    IPPCClient* client = new IPPCClient(hostName, port);
+    IPCClient* client = new IPCClient(hostName, port);
     client->run(problemFileName, plannerDesc);
 
     cout << "PROST complete running time: " << totalTime << endl;

@@ -2,7 +2,7 @@
 #define ITERATIVE_DEEPENING_SEARCH_H
 
 // Implements an iterative deepending search engine. This was used as
-// initialization for UCT in IPPC 2011 (and IPPC 2014) and is described in the
+// initialization for UCT in IPC 2011 (and IPC 2014) and is described in the
 // paper by Keller and Eyerich (ICAPS 2012).
 
 #include "search_engine.h"

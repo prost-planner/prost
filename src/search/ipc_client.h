@@ -9,10 +9,10 @@
 class ProstPlanner;
 class XMLNode;
 
-class IPPCClient {
+class IPCClient {
 public:
-    IPPCClient(std::string _hostName, unsigned short _port);
-    ~IPPCClient();
+    IPCClient(std::string _hostName, unsigned short _port);
+    ~IPCClient();
 
     void run(std::string const& instanceName, std::string& plannerDesc);
 
