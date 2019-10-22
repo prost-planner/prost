@@ -1,0 +1,14 @@
+*~
+*.o
+*.pyc
+*.q
+*.log
+*.err
+
+builds/
+
+testbed/rddlsim
+testbed/results
+testbed/benchmarks/test
+
+scripts/tex
