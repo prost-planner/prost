@@ -23,7 +23,6 @@ include_directories("logical_expressions_includes")
 include_directories("utils")
 
 set(SEARCH_SOURCES
-  main
   action_selection
   backup_function
   depth_first_search
@@ -52,6 +51,12 @@ set(SEARCH_SOURCES
   utils/system_utils
  )
 
+set(SEARCH_TESTS
+  ../doctest/doctest
+  tests/evaluate_test
+  tests/probability_distribution_test
+)
+
 # Linking BDD library required for reward lock detection
 set(GPP_LINK_FLAGS "${GPP_LINK_FLAGS} -lbdd")
 
@@ -59,7 +64,15 @@ set(GPP_LINK_FLAGS "${GPP_LINK_FLAGS} -lbdd")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GPP_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GPP_LINK_FLAGS}")
 
-add_executable(search ${SEARCH_SOURCES})
+# disable doctest in release build
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DDOCTEST_CONFIG_DISABLE")
+
+# only enable unit tests in debug build
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_executable(search ${SEARCH_SOURCES} ${SEARCH_TESTS} main)
+ELSE()
+    add_executable(search ${SEARCH_SOURCES} main)
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 # Linking BDD
 target_link_libraries(search bdd)

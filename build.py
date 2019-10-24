@@ -17,7 +17,6 @@ for config_file in sorted(glob.glob(os.path.join(script_dir, "*build_configs.py"
 DEFAULT_CONFIG_NAME = CONFIGS.pop("DEFAULT")
 RELEASE_CONFIG_NAME = CONFIGS.pop("RELEASE")
 DEBUG_CONFIG_NAME = CONFIGS.pop("DEBUG")
-TEST_CONFIG_NAME = CONFIGS.pop("TEST")
 
 CMAKE = "cmake"
 if os.name == "posix":
@@ -66,6 +65,13 @@ def build(config_name, cmake_parameters, make_parameters):
 
         subprocess.check_call([MAKE] + make_parameters, cwd=build_path)
         print("Built configuration " + config_name + " successfully")
+        # Run unit tests for debug build
+        if config_name == DEBUG_CONFIG_NAME:
+            # run parser unit tests
+            exitcode = subprocess.call("./builds/debug/rddl_parser/rddl-parser -dt-exit", shell=True)
+            # run search unit tests
+            subprocess.call("./prost.py --debug -dt-exit", shell=True)
+
     except subprocess.CalledProcessError as sCPE:
         print("Built configuration " + config_name + " failed due to CalledProcessError")
 
@@ -81,8 +87,6 @@ def main():
             config_names.add(RELEASE_CONFIG_NAME)
         elif arg == "--debug":
             config_names.add(DEBUG_CONFIG_NAME)
-        elif arg == "--test":
-            config_names.add(TEST_CONFIG_NAME)
         elif arg == "--all":
             config_names |= set(CONFIGS.keys())
         elif arg in CONFIGS:
