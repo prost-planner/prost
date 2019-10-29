@@ -13,6 +13,10 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
+#define DOCTEST_CONFIG_IMPLEMENT
+#define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
+#include "../doctest/doctest.h"
+
 extern int yylex();
 extern int yyparse();
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
@@ -766,6 +770,15 @@ bool checkExtension(std::string s) {
 }
 
 int main (int argc, char** argv) {
+    // Run unit tests
+    doctest::Context context;
+    context.applyCommandLine(argc, argv);
+    int res = context.run();
+
+    if (context.shouldExit()) {
+        return res;
+    }
+
     Timer t;
     std::cout << "Parsing..." << std::endl;
     if (argc < 3) {

@@ -30,6 +30,11 @@ set(RDDL_PARSER_SOURCES
   utils/timer
  )
 
+set(RDDL_PARSER_TESTS
+  ../doctest/doctest
+  tests/probability_distribution_test
+)
+
 set(FlexInput "lexer.l") #${CMAKE_CURRENT_BINARY_DIR}/parser.tab.hh")
 set(BisonInput "parser.ypp")
 
@@ -46,5 +51,13 @@ ADD_FLEX_BISON_DEPENDENCY(scanner parser)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GPP_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GPP_LINK_FLAGS}")
 
-add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
+# disable doctest in release build
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DDOCTEST_CONFIG_DISABLE")
+
+# only enable unit tests in debug build
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TESTS} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
+ELSE()
+    add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
