@@ -23,8 +23,9 @@ email = 'my.name@unibas.ch'
 
 # The current revision (used for appropriate naming only). You can also
 # set this manually
-out = subprocess.check_output(['hg', 'log','-l1']).splitlines()
-revision = out[0].split(':')[2].strip()
+out = subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).splitlines()
+revision = out[0]
+print("Revision: " + revision)
 
 #revision = 'rev3b168b35'
 # Set to true if you want to run the experiment in debug mode
