@@ -544,17 +544,15 @@ void printUsage() {
 }
 
 int main(int argc, char** argv) {
-
     doctest::Context context;
     context.applyCommandLine(argc, argv);
-    int res = context.run();
-
-    if (context.shouldExit()) {
-        return res;
-    }
 
     Stopwatch totalTime;
     if (argc < 3) {
+        int res = context.run();
+        if (context.shouldExit()) {
+            return res;
+        }
         printUsage();
         return 1;
     }
