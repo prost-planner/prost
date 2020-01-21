@@ -42,7 +42,6 @@ private:
     inline void parseActionState(std::stringstream& desc) const;
     inline void parseHashKeys(std::stringstream& desc) const;
     inline void parseTrainingSet(std::stringstream& desc) const;
-    void resetStatics() const;
 };
 
 #endif
