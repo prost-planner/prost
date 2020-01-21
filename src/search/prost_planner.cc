@@ -23,7 +23,6 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
       bitSize(sizeof(long) * 8),
       tmMethod(NONE) {
     setSeed((int)time(nullptr));
-    resetStaticMembers();
 
     StringUtils::trim(plannerDesc);
     assert(plannerDesc[0] == '[' && plannerDesc[plannerDesc.size() - 1] == ']');

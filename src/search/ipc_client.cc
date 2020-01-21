@@ -31,6 +31,8 @@ IPCClient::IPCClient(std::string _hostName, unsigned short _port)
 IPCClient::~IPCClient() = default;
 
 void IPCClient::run(string const& instanceName, string& plannerDesc) {
+    // Reset static members from possible earlier runs
+    ProstPlanner::resetStaticMembers();
     // Init connection to the rddlsim server
     initConnection();
 
