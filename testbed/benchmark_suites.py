@@ -18,6 +18,8 @@ from the IPC 2011.)
 
 '''
 
+import os
+
 class Benchmark(object):
     def __init__(self, domain, problem, domain_path=None, horizon=40, min_score=None, max_score=None):
         self.domain = domain
@@ -26,6 +28,13 @@ class Benchmark(object):
         self.horizon = horizon
         self.min_score = min_score
         self.max_score = max_score
+
+    def get_domain_path(self):
+        return os.getcwd() + "/benchmarks/{}/{}".format(self.path, self.domain)
+
+    def get_problem_path(self):
+        return os.getcwd() + "/benchmarks/{}/{}".format(self.path, self.problem)
+
 
 ACADEMIC_ADVISING_2014 = [
     Benchmark('academic_advising_mdp.rddl', 'academic_advising_inst_mdp__1.rddl', 'academic-advising-2014', 40, -200.0, None),
