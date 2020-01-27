@@ -291,4 +291,4 @@ if __name__ == '__main__':
     create_tasks(filename, instances)
 
     # Run experiment
-    # run_experiment(filename)
+    run_experiment(filename)
