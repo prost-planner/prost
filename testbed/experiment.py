@@ -25,9 +25,7 @@ email = 'my.name@unibas.ch'
 # set this manually
 out = subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).splitlines()
 revision = out[0]
-print("Revision: " + revision)
 
-#revision = 'rev3b168b35'
 # Set to true if you want to run the experiment in debug mode
 run_debug = False
 
@@ -39,8 +37,8 @@ benchmark = IPC_ALL
 # The search engine configurations that are started in this experiment.
 # (each of these is run on each instance in the benchmark folder)
 configs = [
-    'IPC2011',                                        # The configuration that participated at IPC 2011
-    'IPC2014',                                        # The configuration that participated at IPC 2014
+    'IPC2011',                                         # The configuration that participated at IPC 2011
+    'IPC2014',                                         # The configuration that participated at IPC 2014
    #'UCT -init [Single -h [RandomWalk]]',              # The configuration that is closest to "plain UCT"
    #'UCT -init [Expand -h [IDS]] -rec [MPA]',          # Best UCT configuration according to Keller's dissertation
    #'DP-UCT -init [Single -h [Uniform]]'               # A configuration that works well in wildfire and sysadmin
@@ -81,31 +79,33 @@ memout = '3872M'
 # The experiment's name
 name = 'prost_' + revision
 
+# Directory of testbed folder
+testbed_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Directory results are written to
-results_dir = os.path.join('results', revision)
+results_dir = os.path.join(testbed_dir, 'results', name)
 
 # Path to executable
 prost_file = os.path.join(results_dir, 'prost')
 
-# Directory server logs are written to
-server_log_dir = os.path.join('results', revision, 'server_logs')
-
 # The file where the grid engine's stderr is directed to
-errfile = 'stderr.log'
+errfile = os.path.join(results_dir, 'slurm.err')
 
 # The file where the grid engine's stdout is directed to
-logfile = 'stdout.log'
+logfile = os.path.join(results_dir, 'slurm.log')
 
 # Template for the string that is executed for each job
 TASK_TEMPLATE = ('export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && '
-                 './run-server benchmarks/%(benchmark)s %(port)s %(num_runs)s 0 1 %(run_time)s %(server_log_dir)s 0 '
-                 '> %(server_log)s '
-                 '2> %(server_err)s &'
-                 ' sleep %(sleep_time)s &&'
-                 ' ./%(prost_file)s %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] '
-                 '> %(run_log)s '
-                 '2> %(run_err)s &&'
-                 'cat > %(driver_log)s')
+                 'cd %(run_dir)s && '
+                 '%(testbed_dir)s/run-server %(testbed_dir)s/benchmarks/%(benchmark)s %(port)s %(num_runs)s 0 1 %(run_time)s %(run_dir)s 0 '
+                 '> %(run_dir)s/%(server_log)s '
+                 '2> %(run_dir)s/%(server_err)s & '
+                 'cd %(run_dir)s && '
+                 'sleep %(sleep_time)s &&'
+                 '%(prost_file)s %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] '
+                 '> %(run_dir)s/%(run_log)s '
+                 '2> %(run_dir)s/%(run_err)s && '
+                 'cat > %(run_dir)s/%(driver_log)s')
 
 # Template for slurm specific commands
 SLURM_TEMPLATE = '''#! /bin/bash -l
@@ -135,26 +135,26 @@ SLURM_TEMPLATE = '''#! /bin/bash -l
 def build_planner():
     try:
         if run_debug:
-            subprocess.check_call(['../build.py', '--debug'])
+            subprocess.check_call([os.path.join(testbed_dir, '../build.py'), '--debug'])
         else:
-            subprocess.check_call(['../build.py'])
+            subprocess.check_call([os.path.join(testbed_dir, '../build.py')])
     except subprocess.CalledProcessError as e:
-        print './build.py failed!'
-        print 'PROST planner could not be compiled.'
+        print('./build.py failed!')
+        print('PROST planner could not be compiled.')
     return
 
 def copy_binaries():
     if run_debug:
         parser_name = 'rddl-parser-debug'
-        parser_file = '../builds/debug/rddl_parser/rddl-parser'
-        search_file = '../builds/debug/search/search'
+        parser_file = os.path.join(testbed_dir, '../builds/debug/rddl_parser/rddl-parser')
+        search_file = ios.path.join(testbed_dir, '../builds/debug/search/search')
     else:
         parser_name = 'rddl-parser-release'
-        parser_file = '../builds/release/rddl_parser/rddl-parser'
-        search_file = '../builds/release/search/search'
+        parser_file = os.path.join(testbed_dir, '../builds/release/rddl_parser/rddl-parser')
+        search_file = os.path.join(testbed_dir, '../builds/release/search/search')
 
-    shutil.copy2(parser_file, os.path.join('.', parser_name))
-    shutil.copy2(search_file, os.path.join('.', results_dir, 'prost'))
+    shutil.copy2(parser_file, os.path.join(results_dir, parser_name))
+    shutil.copy2(search_file, os.path.join(results_dir, 'prost'))
 
 def create_tasks(filename, instances):
     port = 2000
@@ -190,12 +190,12 @@ def create_tasks(filename, instances):
             run_dir = os.path.join(results_dir, run_batch, run)
             if not os.path.exists(run_dir):
                 os.makedirs(run_dir)
+                if run_debug:
+                    os.symlink(os.path.join(results_dir, 'rddl-parser-debug'), os.path.join(run_dir, 'rddl-parser-debug'))
+                else:
+                    os.symlink(os.path.join(results_dir, 'rddl-parser-release'), os.path.join(run_dir, 'rddl-parser-release'))
 
-            server_log = os.path.join(run_dir, 'server.log')
-            server_err = os.path.join(run_dir, 'server.err')
-            run_log = os.path.join(run_dir, 'run.log')
-            run_err = os.path.join(run_dir, 'run.err')
-            driver_log = os.path.join(run_dir, 'driver.log')
+
             run_time = int(instance[2] * float(num_runs) * float(step_time))
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark =instance[0],
@@ -204,13 +204,14 @@ def create_tasks(filename, instances):
                                         num_runs = num_runs,
                                         run_time = run_time,
                                         prost_file=prost_file,
-                                        server_log_dir=server_log_dir,
-                                        server_log=server_log,
-                                        server_err=server_err,
+                                        server_log='server.log',
+                                        server_err='server.err',
                                         sleep_time=sleep_time,
-                                        run_log=run_log,
-                                        run_err=run_err,
-                                        driver_log=driver_log)
+                                        run_dir=run_dir,
+                                        run_log='run.log',
+                                        run_err='run.err',
+                                        testbed_dir=testbed_dir,
+                                        driver_log='driver.log')
 
 
             # Create properties file of the run.
@@ -250,6 +251,7 @@ def create_tasks(filename, instances):
                                 timeout=timeout,
                                 num_tasks=str(len(tasks)),
                                 email=email)
+    jobs += '\n'
 
     for task_id,task in zip(range(1, len(tasks) + 1), tasks):
         jobs += 'if [ ' + str(task_id) + ' -eq $SLURM_ARRAY_TASK_ID ]; then\n'
@@ -271,7 +273,6 @@ if __name__ == '__main__':
 
     # Create results and log directory
     subprocess.check_call(['mkdir', '-p', results_dir])
-    subprocess.check_call(['mkdir', '-p', server_log_dir])
 
     # Compile and copy planner
     build_planner()
