@@ -10,5 +10,6 @@ builds/
 testbed/rddlsim
 testbed/results
 testbed/benchmarks/test
+testbed/data
 
 scripts/tex
