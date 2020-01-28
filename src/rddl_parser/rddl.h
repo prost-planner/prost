@@ -36,7 +36,7 @@ public:
                 LogicalExpression* logicalExpression);
 
     void execute(std::string outFile, double seed, int numStates,
-                 int numSimulations, bool useIPC2018Rules);
+                 int numSimulations, double timeout, bool useIPC2018Rules);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);

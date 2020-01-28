@@ -12,7 +12,7 @@ class TaskAnalyzer {
 public:
     TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
-    void analyzeTask(int numStates, int numSimulations);
+    void analyzeTask(int numStates, int numSimulations, double timeout);
 
 protected:
     RDDLTask* task;

@@ -698,7 +698,8 @@ void RDDLTask::print(std::ostream& out) {
 }
 
 void RDDLTask::execute(std::string outFile, double seed, int numStates,
-                       int numSimulations, bool useIPC2018Rules) {
+                       int numSimulations, double timeout,
+                       bool useIPC2018Rules) {
     Timer t;
     srand(seed);
 
@@ -717,7 +718,7 @@ void RDDLTask::execute(std::string outFile, double seed, int numStates,
     t.reset();
     std::cout << "analyzing task..." << std::endl;
     TaskAnalyzer analyzer(this);
-    analyzer.analyzeTask(numStates, numSimulations);
+    analyzer.analyzeTask(numStates, numSimulations, timeout);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
