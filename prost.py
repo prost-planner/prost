@@ -31,7 +31,7 @@ def main():
     shutil.copy2(parser_file, "./" + parser_name)
     shutil.copy2(search_file, "./" + search_name)
 
-    print "./" + search_name + " " + " ".join(search_params)
+    print("./" + search_name + " " + " ".join(search_params))
     exitcode = subprocess.call("./" + search_name + " " + " ".join(search_params), shell=True)
 
     os.remove("./" + parser_name)

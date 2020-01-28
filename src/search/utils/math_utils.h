@@ -59,6 +59,9 @@ public:
         return true;
     }
 
+    // Reset the random number generator
+    static void resetRNG();
+
     // Random number generator
     static std::unique_ptr<Random<>> rnd;
 
