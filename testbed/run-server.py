@@ -30,9 +30,9 @@ def parse_arguments():
                         help='Directory where log files are written.')
     parser.add_argument('-e', '--monitor-execution', action='store', default = '0', type=str,
                         help='If execution is monitored, a client must specify at the beginning of each round if it counts.')
-    parser.add_argument('-Xms', '--initial-memory-alloc', action='store', default = '100M',
+    parser.add_argument('-Xms', '--init-memory', action='store', default = '100M',
                         help='Initial amount of memory allocated by the Java VM.')
-    parser.add_argument('-Xmx', '--maximum-memory-alloc', action='store', default = '500M',
+    parser.add_argument('-Xmx', '--max-memory', action='store', default = '500M',
                         help='Maximum amount of memory that can be allocated by the Java VM.')
     args = parser.parse_args()
     return args
@@ -58,7 +58,7 @@ if __name__== "__main__":
         # If we want to run all benchmarks, we set up a temporary folder with
         # symlinks to all tasks from the 'benchmarks/' directory.
         print ('Running all benchmarks...')
-        if args.benchmark is not None:
+        if args.benchmark:
             print ('The "benchmark" argument will be ignored!')
 
         if not os.path.exists('tmp-benchmark'):
@@ -77,7 +77,7 @@ if __name__== "__main__":
         directory = 'tmp-benchmark/'
 
     else:
-        if args.benchmark == None:
+        if not args.benchmark:
             print ('No benchmark specified.')
             sys.exit()
         print ('Running benchmark %s...' % args.benchmark)
