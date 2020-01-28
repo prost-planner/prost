@@ -63,7 +63,7 @@ void RewardFunction::initialize() {
     // cout << endl;
 }
 
-void Evaluatable::simplify(map<ParametrizedVariable*, double>& replace) {
+void Evaluatable::simplify(Simplifications& replace) {
     formula = formula->simplify(replace);
 
     initialize();

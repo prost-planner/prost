@@ -99,7 +99,7 @@ void Preprocessor::preprocess(bool const& output) {
 void Preprocessor::prepareEvaluatables() {
     // Before we create the CPFs we remove those that simplify to their initial
     // value and replace them by their initial value in all other evaluatables
-    map<ParametrizedVariable*, double> replacements;
+    map<ParametrizedVariable*, LogicalExpression*> replacements;
     bool simplifyAgain = true;
     while (simplifyAgain) {
         simplifyAgain = false;
@@ -110,7 +110,7 @@ void Preprocessor::prepareEvaluatables() {
                 MathUtils::doubleIsEqual(cpf->head->initialValue, nc->value)) {
                 simplifyAgain = true;
                 assert(replacements.find(cpf->head) == replacements.end());
-                replacements[cpf->head] = nc->value;
+                replacements[cpf->head] = nc;
                 swap(cpf, task->CPFs[task->CPFs.size() - 1]);
                 task->CPFs.pop_back();
                 break;
@@ -280,7 +280,7 @@ void Preprocessor::prepareActions() {
     // value due to a primitive static SAC (i.e., an action precondition of the
     // form ~a).
     vector<ActionFluent*> finalActionFluents;
-    map<ParametrizedVariable*, double> replacements;
+    map<ParametrizedVariable*, LogicalExpression*> replacements;
 
     if (task->primitiveStaticSACs.empty()) {
         finalActionFluents = task->actionFluents;
@@ -291,7 +291,8 @@ void Preprocessor::prepareActions() {
                 task->primitiveStaticSACs.end()) {
                 finalActionFluents.push_back(task->actionFluents[index]);
             } else {
-                replacements[task->actionFluents[index]] = 0.0;
+                replacements[task->actionFluents[index]] =
+                        new NumericConstant(0.0);
             }
         }
 
@@ -459,7 +460,8 @@ void Preprocessor::prepareActions() {
                     state[task->actionFluents[j]->index] =
                         legalActionStates[i][j];
                 } else {
-                    replacements[task->actionFluents[j]] = 0.0;
+                    replacements[task->actionFluents[j]] =
+                            new NumericConstant(0.0);
                 }
             }
             task->actionStates.push_back(state);
@@ -706,7 +708,7 @@ void Preprocessor::calculateCPFDomains() {
 
 void Preprocessor::finalizeEvaluatables() {
     // Remove all CPFs with a domain that only includes their initial value
-    map<ParametrizedVariable*, double> replacements;
+    map<ParametrizedVariable*, LogicalExpression*> replacements;
     for (vector<ConditionalProbabilityFunction*>::iterator it =
              task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
@@ -717,7 +719,8 @@ void Preprocessor::finalizeEvaluatables() {
             assert(MathUtils::doubleIsEqual(*((*it)->domain.begin()),
                                             (*it)->getInitialValue()));
 
-            replacements[(*it)->head] = (*it)->getInitialValue();
+            replacements[(*it)->head] =
+                    new NumericConstant((*it)->getInitialValue());
             task->CPFs.erase(it);
             --it;
         }
@@ -769,7 +772,7 @@ void Preprocessor::finalizeEvaluatables() {
 
 void Preprocessor::determinize() {
     // Calculate determinzation of CPFs.
-    map<ParametrizedVariable*, double> replacementsDummy;
+    map<ParametrizedVariable*, LogicalExpression*> replacementsDummy;
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =

@@ -20,7 +20,7 @@ struct Evaluatable {
     virtual void initialize();
 
     // Simplification
-    virtual void simplify(std::map<ParametrizedVariable*, double>& replace);
+    virtual void simplify(Simplifications& replace);
 
     bool isActionIndependent() const {
         return dependentActionFluents.empty();
