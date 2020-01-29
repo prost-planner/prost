@@ -8,37 +8,48 @@ import sys
 import os
 
 def parse_arguments():
-    formatter = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog,max_help_position=32)
-    parser = argparse.ArgumentParser(description = 'Run RDDL server from directory defined '
-                                                   'by environment variable RDDLSIM_ROOT.',
-                                     formatter_class = formatter)
-    parser.add_argument('--all-benchmarks', action='store_true', default=False,
-                        help="Run all benchmarks.")
+    formatter = lambda prog : argparse.ArgumentDefaultsHelpFormatter(
+        prog, max_help_position=38)
+    parser = argparse.ArgumentParser(
+        description = 'Run rddlsim from directory defined '
+                      'by environment variable RDDLSIM_ROOT.',
+        formatter_class = formatter)
+    parser.add_argument('--all-ipc-benchmarks', action='store_true',
+                        default=False, help='Run all benchmarks.')
     parser.add_argument('-b', '--benchmark', action='store', default=None,
                         help='Path to RDDL files.')
-    parser.add_argument('-p', '--port', action='store', default = '2323', type=str,
-                        help='Port number where the server listens.')
-    parser.add_argument('-r', '--num-rounds', action='store', default = '30', type=str,
-                        help='Number of rounds.')
+    parser.add_argument('-p', '--port', action='store', default = '2323',
+                        type=str, help='Port number where rddlsim listens.')
+    parser.add_argument('-r', '--num-rounds', action='store', default = '30',
+                        type=str, help='Number of rounds.')
     parser.add_argument('-s', '--seed', action='store', default = '0', type=str,
-                        help='Random seed of the server.')
-    parser.add_argument('-ss', '--separate-session', action='store', default = '0', type=str,
-                        help='The server terminates after a separate session with a client finishes.')
-    parser.add_argument('-t', '--timeout', action='store', default = '5', type=str,
-                        help='Timeout in seconds. If "0" is passed then no timeout is used.')
-    parser.add_argument('-l', '--log-dir', action='store', default = '/logs',
+                        help='Random seed.')
+    parser.add_argument('--separate-session', action='store_true',
+                        default = False, help='rddlsim terminates '
+                        'after a separate session with a client finishes.')
+    parser.add_argument('-t', '--timeout', action='store', default = '0',
+                        type=str, help='Total timeout in seconds. No timeout is '
+                        'used if timeout is "0".')
+    parser.add_argument('-l', '--log-dir', action='store',
+                        default = './rddlsim_logs',
                         help='Directory where log files are written.')
-    parser.add_argument('-e', '--monitor-execution', action='store', default = '0', type=str,
-                        help='If execution is monitored, a client must specify at the beginning of each round if it counts.')
-    parser.add_argument('-Xms', '--init-memory', action='store', default = '100M',
-                        help='Initial amount of memory allocated by the Java VM.')
-    parser.add_argument('-Xmx', '--max-memory', action='store', default = '500M',
-                        help='Maximum amount of memory that can be allocated by the Java VM.')
+    parser.add_argument('--monitor-execution', action='store_true',
+                        default = False, help='Force client to specify if a '
+                        'round is considered.')
+    parser.add_argument('-Xms', '--init-memory', action='store',
+                        default = '100', help='Initial amount of memory in MB '
+                        'allocated by the Java VM.')
+    parser.add_argument('-Xmx', '--max-memory', action='store',
+                        default = '500', help='Maximum amount of memory in MB '
+                        'that may be allocated by the Java VM.')
+    parser.add_argument('--keep-tmp-files', action='store_true', default = False,
+                        help='Keep tmp_benchmark and rddlsim log directories '
+                        'after rddlsim terminates.')
     args = parser.parse_args()
     return args
 
-if __name__== "__main__":
-    # Check if the environment variable "RDDLSIM_ROOT" exists
+if __name__== '__main__':
+    # Check if the environment variable RDDLSIM_ROOT exists
     try:
         rddlsim_root = os.environ['RDDLSIM_ROOT']
     except KeyError:
@@ -54,12 +65,26 @@ if __name__== "__main__":
     jars = os.listdir(lib_dir)
     full_jars = [os.path.join(lib_dir, jar) for jar in jars]
 
-    if args.all_benchmarks:
+    # Create log_dir folder if it doesn't exist
+    log_dir = os.path.abspath(args.log_dir)
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+
+    # Turn bool arguments into a 0/1
+    separate_session = '0'
+    if args.separate_session:
+        separate_session = '1'
+
+    monitor_execution = '0'
+    if args.monitor_execution:
+        monitor_execution = '1'
+
+    if args.all_ipc_benchmarks:
         # If we want to run all benchmarks, we set up a temporary folder with
         # symlinks to all tasks from the 'benchmarks/' directory.
-        print ('Running all benchmarks...')
+        print('Running all benchmarks...')
         if args.benchmark:
-            print ('The "benchmark" argument will be ignored!')
+            print('The "benchmark" argument will be ignored!')
 
         if not os.path.exists('tmp-benchmark'):
             os.mkdir('tmp-benchmark')
@@ -68,31 +93,43 @@ if __name__== "__main__":
             for file in files:
                 src_file = '{}/{}/{}'.format(os.getcwd(), subdir, file)
                 year = subdir.split('-')[-1]
-                symlink_name = 'tmp-benchmark/' + file.replace('.rddl', '_'+year+'.rddl')
+                symlink_name = 'tmp-benchmark/'
+                symlink_name += file.replace('.rddl', '_' + year + '.rddl')
                 try:
                     os.symlink(src_file,  symlink_name)
                 except OSError:
-                    print ("Error: {1} probably already exists.".format(src_file, symlink_name))
+                    err_msg = 'Error: {1} probably already exists.'.format(
+                        src_file, symlink_name)
+                    print(err_msg)
 
         directory = 'tmp-benchmark/'
 
     else:
         if not args.benchmark:
-            print ('No benchmark specified.')
+            print('No benchmark specified.')
             sys.exit()
-        print ('Running benchmark %s...' % args.benchmark)
+        print('Running benchmark {}...'.format(args.benchmark))
         directory = args.benchmark
 
     try:
-        subprocess.check_call(["java", "-Xms{}".format(args.initial_memory_alloc),
-                               "-Xmx{}".format(args.maximum_memory_alloc), "-classpath",
-                               "{}:{}".format(bin_dir, ":".join(full_jars)),
-                               "rddl.competition.Server", directory, args.port,
-                               args.num_rounds, args.seed, args.separate_session, args.timeout,
-                               args.log_dir, args.monitor_execution])
+        subprocess.check_call(['java', '-Xms{}M'.format(args.init_memory),
+                               '-Xmx{}M'.format(args.max_memory), '-classpath',
+                               '{}:{}'.format(bin_dir, ':'.join(full_jars)),
+                               'rddl.competition.Server', directory, args.port,
+                               args.num_rounds, args.seed, separate_session,
+                               args.timeout, log_dir, monitor_execution])
     except KeyboardInterrupt:
-        if args.all_benchmarks:
-            # Delete temporary directory
-            print ("Delete temporary directory with symlinks.")
+        pass
+    except subprocess.CalledProcessError as e:
+        if (e.output):
+            print(e.output)
+    
+    if not args.keep_tmp_files:
+        # Delete server log files
+        print('Deleting server logs')
+        shutil.rmtree(log_dir)
+        if args.all_ipc_benchmarks:
+            # Delete temporary benchmark directory
+            print('Delete temporary directory with symlinks.')
             shutil.rmtree('tmp-benchmark')
-        print ("Finishing RDDLsim.")
+    print('Finishing rddlsim.')
