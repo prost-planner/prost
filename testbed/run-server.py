@@ -113,6 +113,9 @@ if __name__== '__main__':
                                log_dir, args.monitor_execution])
     except KeyboardInterrupt:
         pass
+    except subprocess.CalledProcessError as e:
+        if (e.output):
+            print(e.output)
     
     if not args.keep_tmp_files:
         # Delete server log files
