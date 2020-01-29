@@ -11,9 +11,10 @@
 
 using namespace std;
 
-void TaskAnalyzer::analyzeTask(int numStates, int numSimulations) {
+void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout) {
     State currentState(task->CPFs);
     int remainingSteps = task->horizon;
+    Timer t;
 
     for (int simCounter = 0; simCounter < numSimulations;) {
         State nextState(task->CPFs.size());
@@ -31,6 +32,12 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations) {
             currentState = State(task->CPFs);
             remainingSteps = task->horizon;
             ++simCounter;
+        }
+
+        if (MathUtils::doubleIsGreater(t(), timeout)) {
+            cout << "Stopping analysis after " << t << " seconds and "
+                 << numSimulations << " simulations." << endl;
+            break;
         }
     }
 
