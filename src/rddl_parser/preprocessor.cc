@@ -99,7 +99,7 @@ void Preprocessor::preprocess(bool const& output) {
 void Preprocessor::prepareEvaluatables() {
     // Before we create the CPFs we remove those that simplify to their initial
     // value and replace them by their initial value in all other evaluatables
-    map<ParametrizedVariable*, LogicalExpression*> replacements;
+    Simplifications replacements;
     bool simplifyAgain = true;
     while (simplifyAgain) {
         simplifyAgain = false;
@@ -280,7 +280,7 @@ void Preprocessor::prepareActions() {
     // value due to a primitive static SAC (i.e., an action precondition of the
     // form ~a).
     vector<ActionFluent*> finalActionFluents;
-    map<ParametrizedVariable*, LogicalExpression*> replacements;
+    Simplifications replacements;
 
     if (task->primitiveStaticSACs.empty()) {
         finalActionFluents = task->actionFluents;
@@ -708,7 +708,7 @@ void Preprocessor::calculateCPFDomains() {
 
 void Preprocessor::finalizeEvaluatables() {
     // Remove all CPFs with a domain that only includes their initial value
-    map<ParametrizedVariable*, LogicalExpression*> replacements;
+    Simplifications replacements;
     for (vector<ConditionalProbabilityFunction*>::iterator it =
              task->CPFs.begin(); it != task->CPFs.end(); ++it) {
         assert(!(*it)->getDomainSize() == 0);
@@ -772,7 +772,7 @@ void Preprocessor::finalizeEvaluatables() {
 
 void Preprocessor::determinize() {
     // Calculate determinzation of CPFs.
-    map<ParametrizedVariable*, LogicalExpression*> replacementsDummy;
+    Simplifications replacementsDummy;
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =
