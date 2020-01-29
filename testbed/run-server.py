@@ -11,7 +11,7 @@ def parse_arguments():
     formatter = lambda prog : argparse.ArgumentDefaultsHelpFormatter(
         prog, max_help_position=38)
     parser = argparse.ArgumentParser(
-        description = 'Run RDDL server from directory defined '
+        description = 'Run rddlsim from directory defined '
                       'by environment variable RDDLSIM_ROOT.',
         formatter_class = formatter)
     parser.add_argument('--all-ipc-benchmarks', action='store_true',
@@ -19,13 +19,13 @@ def parse_arguments():
     parser.add_argument('-b', '--benchmark', action='store', default=None,
                         help='Path to RDDL files.')
     parser.add_argument('-p', '--port', action='store', default = '2323',
-                        type=str, help='Port number where the server listens.')
+                        type=str, help='Port number where rddlsim listens.')
     parser.add_argument('-r', '--num-rounds', action='store', default = '30',
                         type=str, help='Number of rounds.')
     parser.add_argument('-s', '--seed', action='store', default = '0', type=str,
                         help='Random seed.')
-    parser.add_argument('-ss', '--separate-session', action='store',
-                        default = '0', type=str, help='The server terminates '
+    parser.add_argument('--separate-session', action='store_true',
+                        default = False, help='rddlsim terminates '
                         'after a separate session with a client finishes.')
     parser.add_argument('-t', '--timeout', action='store', default = '0',
                         type=str, help='Total timeout in seconds. No timeout is '
@@ -33,19 +33,18 @@ def parse_arguments():
     parser.add_argument('-l', '--log-dir', action='store',
                         default = './rddlsim_logs',
                         help='Directory where log files are written.')
-    parser.add_argument('-e', '--monitor-execution', action='store',
-                        default = '0', type=str, help='If execution is '
-                        'monitored, a client must specify for each round if '
-                        'the round is considered.')
+    parser.add_argument('--monitor-execution', action='store_true',
+                        default = False, help='Force client to specify if a '
+                        'round is considered.')
     parser.add_argument('-Xms', '--init-memory', action='store',
                         default = '100', help='Initial amount of memory in MB '
                         'allocated by the Java VM.')
     parser.add_argument('-Xmx', '--max-memory', action='store',
                         default = '500', help='Maximum amount of memory in MB '
                         'that may be allocated by the Java VM.')
-    parser.add_argument('-k', '--keep-tmp-files', action='store_true',
-                        default = False, help='Delete tmp_benchmark and rddlsim'
-                        ' log directories if false')
+    parser.add_argument('--keep-tmp-files', action='store_true', default = False,
+                        help='Keep tmp_benchmark and rddlsim log directories '
+                        'after rddlsim terminates.')
     args = parser.parse_args()
     return args
 
@@ -70,6 +69,15 @@ if __name__== '__main__':
     log_dir = os.path.abspath(args.log_dir)
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
+
+    # Turn bool arguments into a 0/1
+    separate_session = '0'
+    if args.separate_session:
+        separate_session = '1'
+
+    monitor_execution = '0'
+    if args.monitor_execution:
+        monitor_execution = '1'
 
     if args.all_ipc_benchmarks:
         # If we want to run all benchmarks, we set up a temporary folder with
@@ -108,9 +116,8 @@ if __name__== '__main__':
                                '-Xmx{}M'.format(args.max_memory), '-classpath',
                                '{}:{}'.format(bin_dir, ':'.join(full_jars)),
                                'rddl.competition.Server', directory, args.port,
-                               args.num_rounds, args.seed,
-                               args.separate_session, args.timeout,
-                               log_dir, args.monitor_execution])
+                               args.num_rounds, args.seed, separate_session,
+                               args.timeout, log_dir, monitor_execution])
     except KeyboardInterrupt:
         pass
     except subprocess.CalledProcessError as e:
@@ -125,4 +132,4 @@ if __name__== '__main__':
             # Delete temporary benchmark directory
             print('Delete temporary directory with symlinks.')
             shutil.rmtree('tmp-benchmark')
-    print('Finishing RDDLsim.')
+    print('Finishing rddlsim.')
