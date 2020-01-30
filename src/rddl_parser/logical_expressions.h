@@ -6,23 +6,24 @@
 #include <string>
 #include <vector>
 
-class Instantiator;
-class RDDLTask;
-class StateFluent;
 class ActionFluent;
-class NumericConstant;
-class Object;
-class State;
-class KleeneState;
 class ActionState;
 class DiscretePD;
+class Instantiator;
+class KleeneState;
+class LogicalExpression;
+class NumericConstant;
+class Object;
 class ParametrizedVariable;
+class RDDLTask;
+class State;
+class StateFluent;
 
-using Instantiations = std::map<std::string, Object*>;
-using Simplifications = std::map<ParametrizedVariable*, double>;
-using StateFluentSet = std::set<StateFluent*>;
 using ActionFluentSet = std::set<ActionFluent*>;
 using Domains = std::vector<std::set<double>>;
+using Instantiations = std::map<std::string, Object*>;
+using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
+using StateFluentSet = std::set<StateFluent*>;
 
 class LogicalExpression {
 public:

@@ -15,14 +15,14 @@ LogicalExpression* ParametrizedVariable::simplify(
 
 LogicalExpression* StateFluent::simplify(Simplifications& replace) {
     if (replace.find(this) != replace.end()) {
-        return new NumericConstant(replace[this]);
+        return replace[this];
     }
     return this;
 }
 
 LogicalExpression* ActionFluent::simplify(Simplifications& replace) {
     if (replace.find(this) != replace.end()) {
-        return new NumericConstant(replace[this]);
+        return replace[this];
     }
     return this;
 }

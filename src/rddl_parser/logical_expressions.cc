@@ -63,32 +63,8 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
 ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
                                            std::vector<Parameter*> _params,
                                            double _initialValue)
-    : LogicalExpression(),
-      variableName(source.variableName),
-      fullName(source.variableName),
-      params(_params),
-      variableType(source.variableType),
-      valueType(source.valueType),
-      initialValue(_initialValue) {
-    assert(params.size() == source.params.size());
-    for (unsigned int i = 0; i < params.size(); ++i) {
-        if (!params[i]->type) {
-            params[i]->type = source.params[i]->type;
-        } else {
-            assert(params[i]->type->isSubtypeOf(source.params[i]->type));
-        }
-    }
-
-    if (!params.empty()) {
-        fullName += "(";
-        for (unsigned int i = 0; i < params.size(); ++i) {
-            fullName += params[i]->name;
-            if (i != params.size() - 1) {
-                fullName += ", ";
-            }
-        }
-        fullName += ")";
-    }
+    : ParametrizedVariable(source, _params) {
+    initialValue = _initialValue;
 }
 
 bool Type::isSubtypeOf(Type* const& other) const {
