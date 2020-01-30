@@ -75,8 +75,13 @@ timeout = '9:00:00'
 memout = '3872M'
 
 
-
 ############ (USUALLY) NO NEED TO CHANGE THE FOLLOWING ############
+
+# The memory limit in kb
+if memout[-1] == 'M':
+    memout_kb = int(memout[:-1]) * 1024
+elif memout[-1] == 'G':
+    memout_kb = int(memout[:-1]) * 1024 * 1024
 
 # The experiment's name
 name = 'prost_' + revision
@@ -102,7 +107,7 @@ TASK_TEMPLATE = ('export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && '
                  '> %(server_log)s '
                  '2> %(server_err)s &'
                  ' sleep %(sleep_time)s &&'
-                 ' ./%(prost_file)s %(instance)s -p %(port)s [PROST -s 1 -se [%(config)s]] '
+                 ' ./%(prost_file)s %(instance)s -p %(port)s [PROST -s 1 -ram %(memout)s -se [%(config)s]] '
                  '> %(run_log)s '
                  '2> %(run_err)s &&'
                  'cat > %(driver_log)s')
@@ -201,6 +206,7 @@ def create_tasks(filename, instances):
                                         benchmark =instance[0],
                                         instance=instance[1],
                                         port=port,
+                                        memout=memout_kb,
                                         num_runs = num_runs,
                                         run_time = run_time,
                                         prost_file=prost_file,
