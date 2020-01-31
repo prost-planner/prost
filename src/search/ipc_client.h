@@ -11,7 +11,8 @@ class XMLNode;
 
 class IPCClient {
 public:
-    IPCClient(std::string _hostName, unsigned short _port);
+    IPCClient(std::string _hostName, unsigned short _port,
+            std::string parserOptions);
     ~IPCClient();
 
     void run(std::string const& instanceName, std::string& plannerDesc);
@@ -44,6 +45,8 @@ private:
     std::string hostName;
     unsigned short port;
     int socket;
+
+    std::string parserOptions;
 
     int numberOfRounds;
 
