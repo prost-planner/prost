@@ -23,7 +23,7 @@ email = 'my.name@unibas.ch'
 
 # The current revision (used for appropriate naming only). You can also
 # set this manually
-out = subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).splitlines()
+out = subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).decode("utf-8").splitlines()
 revision = out[0]
 print("Revision: " + revision)
 
@@ -263,7 +263,7 @@ def create_tasks(filename, instances):
         jobs += '    exit $?\n'
         jobs += 'fi\n'
 
-    f = file(filename, 'w')
+    f = open(filename, 'w')
     f.write(str(jobs))
     f.close()
 
