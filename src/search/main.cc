@@ -567,6 +567,7 @@ int main(int argc, char** argv) {
     // init optionals to default values
     string hostName = "localhost";
     unsigned short port = 2323;
+    string parserOptions = "";
 
     bool allParamsRead = false;
     string plannerDesc;
@@ -582,6 +583,8 @@ int main(int argc, char** argv) {
                 hostName = string(argv[++i]);
             } else if (nextOption == "-p" || nextOption == "--port") {
                 port = (unsigned short)(atoi(string(argv[++i]).c_str()));
+            } else if (nextOption == "--parser-options") {
+                parserOptions = string(argv[++i]);
             } else {
                 cerr << "Unknown option: " << nextOption << endl;
                 printUsage();
@@ -591,7 +594,7 @@ int main(int argc, char** argv) {
     }
 
     // Create connector to rddlsim and run
-    IPCClient* client = new IPCClient(hostName, port);
+    IPCClient* client = new IPCClient(hostName, port, parserOptions);
     client->run(problemFileName, plannerDesc);
 
     cout << "PROST complete running time: " << totalTime << endl;
