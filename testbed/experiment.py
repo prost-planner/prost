@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
+import json
 import os
 import shutil
 import subprocess
 import sys
-import json
 
 from benchmark_suites import *
 
@@ -43,23 +44,17 @@ configs = [
 ]
 
 # The number of runs (should be at least 100 to obtain acceptable confidence)
-num_runs = '100'
+num_runs = 100
 
 # Average time per step which depends on the horizion and number of runs
 # As a rule of thumb, we provide 75*2.5*H seconds for each instance
 # (exceptions are possible), where H is the finite horizon. As a result
 # of a discussion among the participants and organizers, we decided to
 # increase the average deliberation time significantly (this was 50*H seconds before).
-step_time = '2.5'
+step_time = 2.5
 
 # Time to wait for the rddl server to setup in sec
-sleep_time = '100'
-
-
-# The timeout per task in hh:mm:ss
-# Should be greater than max(horizon) * num_runs * step_time + sleep_time
-# Default this is 120 * 100 * 2.5s + 300s = 30300s = 505min ~ 8.5h
-timeout = '9:00:00'
+sleep_time = 100
 
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
@@ -80,6 +75,9 @@ if memout[-1] == 'M':
     memout_kb = int(memout[:-1]) * 1024
 elif memout[-1] == 'G':
     memout_kb = int(memout[:-1]) * 1024 * 1024
+
+# A soft memory limit that is used with ulimit
+soft_memout_kb = int(0.98*memout_kb)
 
 # The experiment's name
 name = 'prost_' + revision
@@ -102,11 +100,11 @@ log_file = os.path.join(results_dir, 'slurm.log')
 # Template for the string that is executed for each job
 TASK_TEMPLATE = ('export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && '
                  'cd %(run_dir)s && '
-                 '%(testbed_dir)s/run-server.py -b %(testbed_dir)s/benchmarks/%(benchmark)s -p %(port)s -r %(num_runs)s -s 0 --separate-session -t %(run_time)s -l %(run_dir)s '
+                 '%(testbed_dir)s/run-server.py -b %(testbed_dir)s/benchmarks/%(benchmark)s -p %(port)s -r %(num_runs)d -s 0 --separate-session -t %(run_time)d -l %(run_dir)s '
                  '> %(run_dir)s/server.log '
                  '2> %(run_dir)s/server.err & '
                  'cd %(run_dir)s && '
-                 'sleep %(sleep_time)s &&'
+                 'sleep %(sleep_time)d &&'
                  '%(prost_file)s %(instance)s -p %(port)s --parser-options \"-ipc2018 %(use_ipc2018_parser)s\" [PROST -s 1 -ram %(memout)s -se [%(config)s]] '
                  '> %(run_dir)s/run.log '
                  '2> %(run_dir)s/run.err && '
@@ -135,6 +133,7 @@ SLURM_TEMPLATE = '''#! /bin/bash -l
 #SBATCH --mail-type=%(mail_type)s
 #SBATCH --mail-user=%(email)s
 ### Extra options.
+ulimit -Sv %(soft_memory_limit)s
 '''
 
 def build_planner():
@@ -161,7 +160,7 @@ def copy_binaries():
     shutil.copy2(parser_file, os.path.join(results_dir, parser_name))
     shutil.copy2(search_file, os.path.join(results_dir, 'prost'))
 
-def create_tasks(filename, instances):
+def create_tasks(filename, instances, timeout):
     port = 2000
     tasks = []
     domains_in_benchmark = set()
@@ -176,7 +175,7 @@ def create_tasks(filename, instances):
     properties['algorithms'] = configs
     properties['memory_limit'] = memout
     properties['name'] = name
-    properties['num_runs'] = int(num_runs)
+    properties['num_runs'] = num_runs
     properties['partition'] = partition
     properties['revision'] = revision
     properties['run_debug'] = run_debug
@@ -200,7 +199,7 @@ def create_tasks(filename, instances):
                 else:
                     os.symlink(os.path.join(results_dir, 'rddl-parser-release'), os.path.join(run_dir, 'rddl-parser-release'))
 
-            run_time = int(instance[2] * float(num_runs) * float(step_time))
+            run_time = int(instance[2] * num_runs * step_time)
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark =instance[0],
                                         instance=instance[1],
@@ -252,7 +251,8 @@ def create_tasks(filename, instances):
                                 timeout=timeout,
                                 num_tasks=str(len(tasks)),
                                 email=email,
-                                mail_type=mail_type)
+                                mail_type=mail_type,
+                                soft_memory_limit=soft_memout_kb)
     jobs += '\n'
 
     for task_id,task in zip(range(1, len(tasks) + 1), tasks):
@@ -282,16 +282,23 @@ if __name__ == '__main__':
 
     # Generate tasks
     instances = []
+    max_horizon = 0
     for instance in benchmark:
         domain_name = instance.path
         problem_name = instance.problem.replace('.rddl','')
         problem_horizon = instance.horizon
+        max_horizon = max(max_horizon, problem_horizon)
         problem_min_score = instance.min_score
         problem_max_score = instance.max_score
         use_ipc2018_parser = int(domain_name.endswith('2018'))
         instances.append((domain_name, problem_name, problem_horizon, problem_min_score, problem_max_score, use_ipc2018_parser))
+        
+    # The slurm timeout makes sure that no job runs longer than necessary.
+    # We compute the maximal time an instance may take, and pass this as
+    # the timeout (with a 5% safety net)
+    timeout = str(datetime.timedelta(seconds=1.05 * max_horizon * num_runs * step_time + sleep_time))
     filename = os.path.join(results_dir, 'experiment_' + revision)
-    create_tasks(filename, instances)
+    create_tasks(filename, instances, timeout)
 
     # Run experiment
     run_experiment(filename)
