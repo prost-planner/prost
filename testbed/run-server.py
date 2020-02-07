@@ -42,9 +42,6 @@ def parse_arguments():
     parser.add_argument('-Xmx', '--max-memory', action='store',
                         default = '500', help='Maximum amount of memory in MB '
                         'that may be allocated by the Java VM.')
-    parser.add_argument('--keep-tmp-files', action='store_true', default = False,
-                        help='Keep tmp_benchmark and rddlsim log directories '
-                        'after rddlsim terminates.')
     args = parser.parse_args()
     return args
 
@@ -124,12 +121,8 @@ if __name__== '__main__':
         if (e.output):
             print(e.output)
     
-    if not args.keep_tmp_files:
-        # Delete server log files
-        print('Deleting server logs')
-        shutil.rmtree(log_dir)
-        if args.all_ipc_benchmarks:
-            # Delete temporary benchmark directory
-            print('Delete temporary directory with symlinks.')
-            shutil.rmtree('tmp-benchmark')
+    if args.all_ipc_benchmarks:
+        # Delete temporary benchmark directory
+        print('Delete temporary directory with symlinks.')
+        shutil.rmtree('tmp-benchmark')
     print('Finishing rddlsim.')
