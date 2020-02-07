@@ -99,6 +99,7 @@ log_file = os.path.join(results_dir, 'slurm.log')
 
 # Template for the string that is executed for each job
 TASK_TEMPLATE = ('export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && '
+                 'touch %(run_dir)s/driver.log && '
                  'cd %(run_dir)s && '
                  '%(testbed_dir)s/run-server.py -b %(testbed_dir)s/benchmarks/%(benchmark)s -p %(port)s -r %(num_runs)d -s 0 --separate-session -t %(run_time)d -l %(run_dir)s '
                  '> %(run_dir)s/server.log '
@@ -107,8 +108,7 @@ TASK_TEMPLATE = ('export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && '
                  'sleep %(sleep_time)d &&'
                  '%(prost_file)s %(instance)s -p %(port)s --parser-options \"-ipc2018 %(use_ipc2018_parser)s\" [PROST -s 1 -ram %(memout)s -se [%(config)s]] '
                  '> %(run_dir)s/run.log '
-                 '2> %(run_dir)s/run.err && '
-                 'cat > %(run_dir)s/driver.log')
+                 '2> %(run_dir)s/run.err')
 
 # Template for slurm specific commands
 SLURM_TEMPLATE = '''#! /bin/bash -l
