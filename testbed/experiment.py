@@ -56,6 +56,12 @@ step_time = 2.5
 # Time to wait for the rddl server to setup in sec
 sleep_time = 100
 
+# If enabled, rddlsim ensures that the total runtime is no longer
+# than num_runs * step_time * horizon seconds. Otherwise, the planner
+# also has step_time seconds per step, but there is no guarantee that
+# the total runtime isn't exceeded.
+rddlsim_enforces_runtime = False  
+
 # The maximum amount of available memory per task. The value's format is
 # either "<mem>M" or "<mem>G", where <mem> is an integer number, M
 # stands for MByte and G for GByte. Note that PROST additionally has an
@@ -199,7 +205,9 @@ def create_tasks(filename, instances, timeout):
                 else:
                     os.symlink(os.path.join(results_dir, 'rddl-parser-release'), os.path.join(run_dir, 'rddl-parser-release'))
 
-            run_time = int(instance[2] * num_runs * step_time)
+            run_time = 0
+            if rddlsim_enforces_runtime:
+                run_time = int(instance[2] * num_runs * step_time)
             task = TASK_TEMPLATE % dict(config=config,
                                         benchmark =instance[0],
                                         instance=instance[1],
