@@ -51,6 +51,7 @@ public:
 
     virtual void setUseRewardLockDetection(bool _useRewardLockDetection) {
         useRewardLockDetection = _useRewardLockDetection;
+        goalTestActionIndex = 0;
     }
 
     virtual void setCacheRewardLocks(bool _cacheRewardLocks) {
