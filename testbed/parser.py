@@ -22,7 +22,7 @@ SINGLE_PATTERNS = [
 
 # List of repeated patterns (list attributes)
 REPEATED_PATTERNS = [
-    ('round_reward-all', '>>> END OF ROUND .* -- REWARD RECEIVED: (.+\n', float),
+    ('round_reward-all', 'END OF ROUND .* -- REWARD RECEIVED: (.+)\n', float),
 ]
 
 # List of repeated patterns that should be splitted.
