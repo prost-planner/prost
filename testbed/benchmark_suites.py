@@ -246,27 +246,27 @@ RECON_2011 = [
     Benchmark('recon_mdp.rddl', 'recon_inst_mdp__10.rddl', 'recon-2011', 40, 0.0, None),
 ]
 
-RED_FINNED_BLUE_EYES_2018 = [
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__01.rddl', 'red-finned-blue-eyes-2018', 60, -3233.33333, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__02.rddl', 'red-finned-blue-eyes-2018', 60, 542.8, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__03.rddl', 'red-finned-blue-eyes-2018', 60, -6624.4, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__04.rddl', 'red-finned-blue-eyes-2018', 60, -5152.0, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__05.rddl', 'red-finned-blue-eyes-2018', 60, -4486.26666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__06.rddl', 'red-finned-blue-eyes-2018', 80, -9000.66666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__07.rddl', 'red-finned-blue-eyes-2018', 80, 11796.1333333, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__08.rddl', 'red-finned-blue-eyes-2018', 80, -7258.8, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__09.rddl', 'red-finned-blue-eyes-2018', 80, -7496.13333333, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__10.rddl', 'red-finned-blue-eyes-2018', 80, 3910.93333333, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__11.rddl', 'red-finned-blue-eyes-2018', 100, -481.866666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__12.rddl', 'red-finned-blue-eyes-2018', 100, 1886.0, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__13.rddl', 'red-finned-blue-eyes-2018', 100, -6857.86666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__14.rddl', 'red-finned-blue-eyes-2018', 100, 4011.86666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__15.rddl', 'red-finned-blue-eyes-2018', 100, -8514.66666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__16.rddl', 'red-finned-blue-eyes-2018', 120, 18367.6, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__17.rddl', 'red-finned-blue-eyes-2018', 120, 8665.6, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__18.rddl', 'red-finned-blue-eyes-2018', 120, -11896.6666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__19.rddl', 'red-finned-blue-eyes-2018', 120, -6029.46666667, None),
-    Benchmark('red-finned-blue-eyes_mdp.rddl', 'red-finned-blue-eyes_inst_mdp__20.rddl', 'red-finned-blue-eyes-2018', 120, -1241.86666667, None),
+RED_FINNED_BLUE_EYE_2018 = [
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__01.rddl', 'red-finned-blue-eye-2018', 60, -3233.33333, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__02.rddl', 'red-finned-blue-eye-2018', 60, 542.8, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__03.rddl', 'red-finned-blue-eye-2018', 60, -6624.4, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__04.rddl', 'red-finned-blue-eye-2018', 60, -5152.0, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__05.rddl', 'red-finned-blue-eye-2018', 60, -4486.26666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__06.rddl', 'red-finned-blue-eye-2018', 80, -9000.66666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__07.rddl', 'red-finned-blue-eye-2018', 80, 11796.1333333, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__08.rddl', 'red-finned-blue-eye-2018', 80, -7258.8, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__09.rddl', 'red-finned-blue-eye-2018', 80, -7496.13333333, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__10.rddl', 'red-finned-blue-eye-2018', 80, 3910.93333333, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__11.rddl', 'red-finned-blue-eye-2018', 100, -481.866666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__12.rddl', 'red-finned-blue-eye-2018', 100, 1886.0, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__13.rddl', 'red-finned-blue-eye-2018', 100, -6857.86666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__14.rddl', 'red-finned-blue-eye-2018', 100, 4011.86666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__15.rddl', 'red-finned-blue-eye-2018', 100, -8514.66666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__16.rddl', 'red-finned-blue-eye-2018', 120, 18367.6, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__17.rddl', 'red-finned-blue-eye-2018', 120, 8665.6, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__18.rddl', 'red-finned-blue-eye-2018', 120, -11896.6666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__19.rddl', 'red-finned-blue-eye-2018', 120, -6029.46666667, None),
+    Benchmark('red-finned-blue-eye_mdp.rddl', 'red-finned-blue-eye_inst_mdp__20.rddl', 'red-finned-blue-eye-2018', 120, -1241.86666667, None),
 ]
 
 SKILL_TEACHING_2011 = [
@@ -398,7 +398,7 @@ IPC2018 = ACADEMIC_ADVISING_2018 + \
           EARTH_OBSERVATION_2018 + \
           MANUFACTURER_2018 + \
           PUSH_YOUR_LUCK_2018 + \
-          RED_FINNED_BLUE_EYES_2018 + \
+          RED_FINNED_BLUE_EYE_2018 + \
           WILDLIFE_PRESERVE_2018
 
 # Domains used in some IPC, removing duplicates.
