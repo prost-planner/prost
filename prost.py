@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -32,8 +32,9 @@ def main():
     shutil.copy2(search_file, "./" + search_name)
 
     search_params = ["\"{}\"".format(p) if  " " in p else p for p in search_params]
-    print("./" + search_name + " " + " ".join(search_params))
-    exitcode = subprocess.call("./" + search_name + " " + " ".join(search_params), shell=True)
+    call_string = "./{} {}".format(search_name, " ".join(search_params))
+    print(call_string)
+    exitcode = subprocess.call(call_string, shell=True)
 
     os.remove("./" + parser_name)
     os.remove("./" + search_name)
