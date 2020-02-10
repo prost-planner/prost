@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """Example of report using the Lab framework and Matplotlib.
 
@@ -50,9 +50,9 @@ ATTRIBUTES = [Attribute('ipc_score', min_wins=False, functions=arithmetic_mean),
               Attribute('run_dir'),]
 
 if len(sys.argv) < 2:
-    print 'Usage: ./reports.py [EXP PATH] [STEPS]\n'
-    print 'Run the script only with a valid experiment path to see the steps in detail.'
-    print '(Note that the generic usage reported by Lab is different from the one for this script.)'
+    print('Usage: ./reports.py [EXP PATH] [STEPS]\n')
+    print('Run the script only with a valid experiment path to see the steps in detail.')
+    print('(Note that the generic usage reported by Lab is different from the one for this script.)')
     exit(1)
 
 EXP_PATH = sys.argv[1]
@@ -61,7 +61,7 @@ EXP_PATH = sys.argv[1]
 del sys.argv[1]
 
 if not os.path.isdir(EXP_PATH):
-    print 'Please define a valid experiment path.'
+    print('Please define a valid experiment path.')
     exit(1)
 
 # Create a new experiment.

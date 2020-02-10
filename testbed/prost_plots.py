@@ -62,9 +62,9 @@ class ListPlot(object):
         if not os.path.exists(self.eval_path+'properties'):
             # We do not want to throw and error if the properties file does not
             # exist yet.
-            print 'ATTENTION: Properties file does not exist yet.', \
+            print('ATTENTION: Properties file does not exist yet.', \
                   'Running any Prost plot will result in an error.', \
-                  'Please run the other steps first and then rerun the Prost plot steps.'
+                  'Please run the other steps first and then rerun the Prost plot steps.')
         else:
             with open(self.eval_path+'properties') as json_file:
                 self.properties = json.load(json_file)
