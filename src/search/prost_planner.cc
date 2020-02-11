@@ -2,6 +2,7 @@
 
 #include "search_engine.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/stopwatch.h"
 #include "utils/string_utils.h"
@@ -57,6 +58,18 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
         } else if (param == "-se") {
             setSearchEngine(SearchEngine::fromString(value));
             searchEngineDefined = true;
+        } else if (param == "-log") {
+            if (value == "SILENT") {
+                Logger::runVerbosity = Verbosity::SILENT;
+            } else if (value == "NORMAL") {
+                Logger::runVerbosity = Verbosity::NORMAL;
+            } else if (value == "VERBOSE") {
+                Logger::runVerbosity = Verbosity::VERBOSE;
+            } else if (value == "DEBUG") {
+                Logger::runVerbosity = Verbosity::DEBUG;
+            } else {
+                SystemUtils::abort("No valid value for -log: " + value);
+            }
         } else {
             SystemUtils::abort("Unused parameter value pair: " + param + " / " +
                                value);
