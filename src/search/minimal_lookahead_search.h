@@ -21,7 +21,7 @@ public:
 
     // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
-                    std::string indent = "") const;
+                    std::string indent = "") const override;
 
     // Caching
     typedef std::unordered_map<State, std::vector<double>,
