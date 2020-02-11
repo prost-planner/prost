@@ -2,6 +2,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -94,14 +95,17 @@ void Initializer::setMaxSearchDepth(int maxSearchDepth) {
                             Print
 ******************************************************************/
 
-void Initializer::printStats(std::ostream& out, bool const& printRoundStats,
-                             std::string indent) const {
-    out << indent << "Initializer: " << name << std::endl;
-    out << indent << "Heuristic weight: " << heuristicWeight << std::endl;
-    out << indent << "Number of initial visits: " << numberOfInitialVisits
-        << std::endl;
-    out << indent << "Heuristic: " << std::endl;
-    heuristic->printStats(out, printRoundStats, indent + "  ");
+void Initializer::printStats(
+        bool const& printRoundStats, std::string indent) const {
+    Logger::log(indent + "Initializer: " + name);
+    Logger::log(indent + "Heuristic weight: " +
+                std::to_string(heuristicWeight));
+    Logger::log(indent + "Number of initial visits: " +
+                std::to_string(numberOfInitialVisits));
+    if (heuristic) {
+        Logger::log(indent + "Heuristic:");
+        heuristic->printStats(printRoundStats, indent + "  ");
+    }
 }
 
 /******************************************************************

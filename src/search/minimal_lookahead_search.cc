@@ -1,5 +1,7 @@
 #include "minimal_lookahead_search.h"
 
+#include "utils/logger.h"
+
 using namespace std;
 
 MinimalLookaheadSearch::HashMap MinimalLookaheadSearch::rewardCache;
@@ -134,9 +136,8 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
     }
 }
 
-void MinimalLookaheadSearch::printStats(ostream& out,
-                                        bool const& /*printRoundStats*/,
+void MinimalLookaheadSearch::printStats(bool const& /*printRoundStats*/,
                                         string indent) const {
-    out << indent << "Cache hits: " << cacheHits << " (in " << numberOfRuns
-        << " runs)" << endl;
+    Logger::log(indent + "Cache hits: " + to_string(cacheHits) + " (in " +
+                to_string(numberOfRuns) + " runs)");
 }

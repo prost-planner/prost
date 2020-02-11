@@ -495,7 +495,7 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
                    Statistics and Prints
 ******************************************************************/
 
-void SearchEngine::printStats(ostream& out, bool const& /*printRoundStats*/,
+void SearchEngine::printStats(bool const& /*printRoundStats*/,
                               string indent) const {
     out << indent << "Statistics of " << name << ":" << endl;
 }

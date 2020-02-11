@@ -2,6 +2,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -111,9 +112,10 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
     // std::cout << std::endl;
 }
 
-void BackupFunction::printStats(std::ostream& out, std::string indent) {
+void BackupFunction::printStats( std::string indent) {
     if (useBackupLock) {
-        out << indent << "Skipped backups: " << skippedBackups << std::endl;
+        Logger::log(indent + "Skipped backups: " +
+                    std::to_string(skippedBackups));
     }
 }
 

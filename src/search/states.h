@@ -398,6 +398,9 @@ struct ActionState {
         return state[index];
     }
 
+    std::string toString() const;
+    std::string toCompactString() const;
+
     void printCompact(std::ostream& out) const;
     void print(std::ostream& out) const;
 

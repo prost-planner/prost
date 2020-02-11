@@ -96,6 +96,28 @@ void KleeneState::print(ostream& out) const {
     }
 }
 
+string ActionState::toCompactString() const {
+    if (scheduledActionFluents.empty()) {
+        return "noop()";
+    } else {
+        stringstream ss;
+        for (ActionFluent const *af : scheduledActionFluents) {
+            ss << af->name << " ";
+        }
+        return ss.str();
+    }
+}
+
+string ActionState::toString() const {
+    stringstream ss;
+    ss << toCompactString() << ": " << endl
+       << "Index : " << index << endl
+       << "Relevant preconditions: " << endl;
+    for (DeterministicEvaluatable const* precond : actionPreconditions) {
+        ss << precond->name << endl;
+    }
+}
+
 void ActionState::printCompact(ostream& out) const {
     if (scheduledActionFluents.empty()) {
         out << "noop() ";

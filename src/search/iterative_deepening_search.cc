@@ -4,6 +4,7 @@
 #include "minimal_lookahead_search.h"
 #include "prost_planner.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/system_utils.h"
 
@@ -358,20 +359,22 @@ void IDS::resetStats() {
     }
 }
 
-void IDS::printStats(ostream& out, bool const& printRoundStats,
-                     string indent) const {
-    SearchEngine::printStats(out, printRoundStats, indent);
+void IDS::printStats(
+        bool const& printRoundStats, string indent) const {
+    SearchEngine::printStats(printRoundStats, indent);
     if (mlh) {
-        mlh->printStats(out, printRoundStats, indent);
-        out << indent << "Cache hits of IDS: " << cacheHits << endl;
+        mlh->printStats(printRoundStats, indent);
+        Logger::log(indent + "Cache hits of IDS: " + to_string(cacheHits));
     } else {
         if (numberOfRuns > 0) {
-            out << indent << "Average search depth: "
-                << static_cast<double>(accumulatedSearchDepth) /
-                   static_cast<double>(numberOfRuns)
-                << " (in " << numberOfRuns << " runs)" << endl;
+            double avg = static_cast<double>(accumulatedSearchDepth) /
+                         numberOfRuns;
+            Logger::log(indent + "Average search depth: " +
+                        to_string(avg) + " (in " + to_string(numberOfRuns) +
+                        " runs)");
         }
-        out << indent << "Maximal search depth: " << maxSearchDepth << endl;
-        out << indent << "Cache hits: " << cacheHits << endl;
+        Logger::log(indent + "Maximal search depth: " +
+                    to_string(maxSearchDepth));
+        Logger::log(indent + "Cache hits: " + to_string(cacheHits));
     }
 }

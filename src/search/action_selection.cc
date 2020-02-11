@@ -4,6 +4,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -287,15 +288,17 @@ bool UCB1ActionSelection::setValueFromString(std::string& param,
                               Print
 ******************************************************************/
 
-void ActionSelection::printStats(std::ostream& out, std::string indent) {
+void ActionSelection::printStats(std::string indent) {
     if (thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) {
-        out << indent << "Action Selection:" << std::endl;
-        out << indent << "Exploitation in Root: " << exploitInRoot << std::endl;
-        out << indent << "Exploration in Root: " << exploreInRoot << std::endl;
-        out << indent << "Percentage Exploration in Root: "
-            << ((double)((double)exploreInRoot) /
-                ((double)exploreInRoot + (double)exploitInRoot))
-            << std::endl;
+        Logger::log(indent + "Action Selection:");
+        Logger::log(indent + "Exploitation in Root: " +
+                    std::to_string(exploitInRoot));
+        Logger::log(indent + "Exploration in Root: " +
+                    std::to_string(exploreInRoot));
+        double perc = static_cast<double>(exploreInRoot) /
+                      (exploreInRoot + exploitInRoot);
+        Logger::log(indent + "Percentage Exploration in Root: " +
+                    std::to_string(perc));
     }
 }
 

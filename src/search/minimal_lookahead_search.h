@@ -20,7 +20,7 @@ public:
                          std::vector<double>& qValues) override;
 
     // Print
-    void printStats(std::ostream& out, bool const& printRoundStats,
+    void printStats(bool const& printRoundStats,
                     std::string indent = "") const override;
 
     // Caching

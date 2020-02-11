@@ -33,7 +33,7 @@ public:
                                       int varIndex, int lastProbVarIndex) = 0;
 
     // Prints statistics
-    virtual void printStats(std::ostream& /*out*/, std::string /*indent*/) {}
+    virtual void printStats(std::string /*indent*/) {}
 
 protected:
     OutcomeSelection(THTS* _thts) : thts(_thts) {}

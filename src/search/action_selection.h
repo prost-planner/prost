@@ -49,7 +49,7 @@ public:
     void selectActionBasedOnVisitDifference(SearchNode* node);
 
     // Prints statistics
-    virtual void printStats(std::ostream& /*out*/, std::string /*indent*/);
+    virtual void printStats(std::string indent);
 
 protected:
     ActionSelection(THTS* _thts)

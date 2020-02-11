@@ -43,8 +43,8 @@ public:
     virtual void setMaxSearchDepth(int maxSearchDepth);
 
     // Print
-    virtual void printStats(std::ostream& out, bool const& printRoundStats,
-                            std::string indent = "") const;
+    virtual void printStats(
+            bool const& printRoundStats, std::string indent = "") const;
 
     // Initialize (or continue to initialize) node
     virtual void initialize(SearchNode* node, State const& current) = 0;

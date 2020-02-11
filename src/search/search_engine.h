@@ -286,7 +286,7 @@ public:
     virtual void resetStats() {}
 
     // Print
-    virtual void printStats(std::ostream& out, bool const& printRoundStats,
+    virtual void printStats(bool const& printRoundStats,
                             std::string indent = "") const;
 
     static void printDeadEndBDD() {

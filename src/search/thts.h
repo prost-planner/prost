@@ -70,15 +70,8 @@ struct SearchNode {
         return futureReward;
     }
 
-    void print(std::ostream& out, std::string indent = "") const {
-        if (solved) {
-            out << indent << "SOLVED with: " << getExpectedRewardEstimate()
-                << " (in " << numberOfVisits << " real visits)" << std::endl;
-        } else {
-            out << indent << getExpectedRewardEstimate() << " (in "
-                << numberOfVisits << " real visits)" << std::endl;
-        }
-    }
+    std::string toString() const;
+    void print(std::ostream& out, std::string indent = "") const;
 
     std::vector<SearchNode*> children;
 
@@ -182,7 +175,7 @@ public:
     }
 
     // Print
-    void printStats(std::ostream& out, bool const& printRoundStats,
+    void printStats(bool const& printRoundStats,
                     std::string indent = "") const override;
 
 private:
