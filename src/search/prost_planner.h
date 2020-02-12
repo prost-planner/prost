@@ -42,7 +42,9 @@ public:
     void setSeed(int _seed);
 
     void setRAMLimit(int _ramLimit) {
-        ramLimit = _ramLimit;
+        // Since we cannot guarantee that no further memory is allocated after
+        // caching is disabled, we keep a buffer of 25% of the available memory
+        ramLimit = 0.75 * _ramLimit;
     }
 
     void setBitSize(int _bitSize) {

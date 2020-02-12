@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import errno
@@ -26,13 +26,15 @@ elif os.name == "nt":
     MAKE = "nmake"
     CMAKE_GENERATOR = "NMake Makefiles"
 else:
-    print("Unsupported OS: " + os.name)
+    print("Unsupported OS: {}".format(os.name))
     sys.exit(1)
 
 # TODO: Print usage
 
+
 def get_project_root_path():
     import __main__
+
     return os.path.dirname(__main__.__file__)
 
 
@@ -49,7 +51,7 @@ def get_build_path(config_name):
 
 
 def build(config_name, cmake_parameters, make_parameters):
-    print("Building configuration " + config_name)
+    print("Building configuration {}".format(config_name))
     build_path = get_build_path(config_name)
     rel_src_path = os.path.relpath(get_src_path(), build_path)
     try:
@@ -61,19 +63,25 @@ def build(config_name, cmake_parameters, make_parameters):
             raise
 
     try:
-        subprocess.check_call([CMAKE, "-G", CMAKE_GENERATOR] + cmake_parameters + [rel_src_path], cwd=build_path)
+        subprocess.check_call(
+            [CMAKE, "-G", CMAKE_GENERATOR] + cmake_parameters + [rel_src_path],
+            cwd=build_path,
+        )
 
         subprocess.check_call([MAKE] + make_parameters, cwd=build_path)
-        print("Built configuration " + config_name + " successfully")
+        print("Built configuration {} successfully".format(config_name))
         # Run unit tests for debug build
         if config_name == DEBUG_CONFIG_NAME:
             # run parser unit tests
-            exitcode = subprocess.call("./builds/debug/rddl_parser/rddl-parser -dt-exit", shell=True)
+            exitcode = subprocess.call(
+                "./builds/debug/rddl_parser/rddl-parser -dt-exit", shell=True
+            )
             # run search unit tests
             subprocess.call("./prost.py --debug -dt-exit", shell=True)
 
     except subprocess.CalledProcessError as sCPE:
-        print("Built configuration " + config_name + " failed due to CalledProcessError")
+        print("Building configuration {} failed due to CalledProcessError".format(config_name))
+
 
 
 def main():

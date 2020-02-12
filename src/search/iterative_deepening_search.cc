@@ -1,6 +1,7 @@
 #include "iterative_deepening_search.h"
 
 #include "depth_first_search.h"
+#include "minimal_lookahead_search.h"
 #include "prost_planner.h"
 
 #include "utils/math_utils.h"
@@ -18,17 +19,18 @@ using namespace std;
 
 IDS::HashMap IDS::rewardCache;
 
-IDS::IDS()
-    : DeterministicSearchEngine("IDS"),
-      isLearning(false),
-      stopwatch(),
-      maxSearchDepthForThisStep(0),
-      ramLimitReached(false),
-      strictTerminationTimeout(0.1),
-      terminateWithReasonableAction(true),
-      accumulatedSearchDepth(0),
-      cacheHits(0),
-      numberOfRuns(0) {
+IDS::IDS() :
+    DeterministicSearchEngine("IDS"),
+    mlh(nullptr),
+    isLearning(false),
+    stopwatch(),
+    maxSearchDepthForThisStep(0),
+    ramLimitReached(false),
+    strictTerminationTimeout(0.1),
+    terminateWithReasonableAction(true),
+    accumulatedSearchDepth(0),
+    cacheHits(0),
+    numberOfRuns(0) {
     setTimeout(0.005);
 
     if (rewardCache.bucket_count() < 520241) {
@@ -66,6 +68,9 @@ void IDS::setMaxSearchDepth(int newValue) {
 void IDS::setCachingEnabled(bool newValue) {
     SearchEngine::setCachingEnabled(newValue);
     dfs->setCachingEnabled(newValue);
+    if (mlh) {
+        mlh->setCachingEnabled(newValue);
+    }
 }
 
 /******************************************************************
@@ -76,6 +81,9 @@ void IDS::disableCaching() {
     dfs->disableCaching();
     SearchEngine::disableCaching();
     ramLimitReached = true;
+    if (mlh) {
+        mlh->disableCaching();
+    }
 }
 
 void IDS::learn() {
@@ -118,14 +126,27 @@ void IDS::learn() {
             }
             maxSearchDepth = index;
         }
-    } else {
-        maxSearchDepth = 1;
     }
-    setMaxSearchDepth(maxSearchDepth);
-    cout << name << ": Setting max search depth to " << maxSearchDepth << "!"
-         << endl;
+
+    if (maxSearchDepth <= 1) {
+        cout << name << ": Max search depth is too low: "
+             << maxSearchDepth << ". Replacing IDS with minimal "
+             << "lookahead search." << endl;
+        createMinimalLookaheadSearch();
+    } else {
+        setMaxSearchDepth(maxSearchDepth);
+        cout << name << ": Setting max search depth to "
+             << maxSearchDepth << "!" << endl;
+    }
     resetStats();
     cout << name << ": ...finished" << endl;
+}
+
+void IDS::createMinimalLookaheadSearch() {
+    assert(!mlh);
+    mlh = new MinimalLookaheadSearch();
+    mlh->setCachingEnabled(cachingEnabled);
+    rewardCache.clear();
 }
 
 /******************************************************************
@@ -133,6 +154,14 @@ void IDS::learn() {
 ******************************************************************/
 
 void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
+    if (mlh) {
+        // It would also be possible to check the rewardCache first and use the
+        // result from there if there is one, but then we mix apples and
+        // oranges in the heuristic computation which is presumably worse than
+        // just sticking to the result of mlh always.
+        return mlh->estimateQValue(state, actionIndex, qValue);
+    }
+
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
@@ -174,6 +203,14 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
 void IDS::estimateQValues(State const& state,
                           vector<int> const& actionsToExpand,
                           vector<double>& qValues) {
+    if (mlh) {
+        // It would also be possible to check the rewardCache first and use the
+        // result from there if there is one, but then we mix apples and
+        // oranges in the heuristic computation which is presumably worse than
+        // just sticking to the result of mlh always.
+        return mlh->estimateQValues(state, actionsToExpand, qValues);
+    }
+
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end()) {
         ++cacheHits;
@@ -233,10 +270,12 @@ bool IDS::moreIterations(int const& stepsToGo) {
     // readjust the maximal search depth
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-        if (stepsToGo == 1) {
+        if (maxSearchDepth == 1) {
             cout << name << ": Timeout violated (" << time
                  << "s) on minimal search depth. "
-                 << " Cannot decrease max search depth anymore." << endl;
+                 << " Cannot decrease max search depth anymore."
+                 << "Replacing IDS with minimal lookahead search." << endl;
+            createMinimalLookaheadSearch();
         } else {
             cout << name << ": Timeout violated (" << time
                  << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
@@ -274,10 +313,12 @@ bool IDS::moreIterations(int const& stepsToGo,
     // readjust the maximal search depth
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
-        if (stepsToGo == 1) {
+        if (maxSearchDepth == 1) {
             cout << name << ": Timeout violated (" << time
                  << "s) on minimal search depth. "
-                 << " Cannot decrease max search depth anymore." << endl;
+                 << " Cannot decrease max search depth anymore."
+                 << "Replacing IDS with minimal lookahead search." << endl;
+            createMinimalLookaheadSearch();
         } else {
             cout << name << ": Timeout violated (" << time
                  << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
@@ -312,17 +353,25 @@ void IDS::resetStats() {
     accumulatedSearchDepth = 0;
     cacheHits = 0;
     numberOfRuns = 0;
+    if (mlh) {
+        mlh->resetStats();
+    }
 }
 
 void IDS::printStats(ostream& out, bool const& printRoundStats,
                      string indent) const {
     SearchEngine::printStats(out, printRoundStats, indent);
-    if (numberOfRuns > 0) {
-        out << indent << "Average search depth: "
-            << static_cast<double>(accumulatedSearchDepth) /
+    if (mlh) {
+        mlh->printStats(out, printRoundStats, indent);
+        out << indent << "Cache hits of IDS: " << cacheHits << endl;
+    } else {
+        if (numberOfRuns > 0) {
+            out << indent << "Average search depth: "
+                << static_cast<double>(accumulatedSearchDepth) /
                    static_cast<double>(numberOfRuns)
-            << " (in " << numberOfRuns << " runs)" << endl;
+                << " (in " << numberOfRuns << " runs)" << endl;
+        }
+        out << indent << "Maximal search depth: " << maxSearchDepth << endl;
+        out << indent << "Cache hits: " << cacheHits << endl;
     }
-    out << indent << "Maximal search depth: " << maxSearchDepth << endl;
-    out << indent << "Cache hits: " << cacheHits << endl;
 }

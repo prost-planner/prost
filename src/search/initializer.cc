@@ -1,7 +1,6 @@
 #include "initializer.h"
 
 #include "thts.h"
-#include "uniform_evaluation_search.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
@@ -73,13 +72,6 @@ void Initializer::disableCaching() {
 
 void Initializer::learn() {
     heuristic->learn();
-
-    if (heuristic->getMaxSearchDepth() == 0) {
-        UniformEvaluationSearch* _heuristic = new UniformEvaluationSearch();
-        setHeuristic(_heuristic);
-        std::cout << "Search depth is too low for selected heuristic!"
-                  << std::endl;
-    }
 }
 
 /******************************************************************
