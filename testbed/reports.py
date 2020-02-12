@@ -36,23 +36,31 @@ class ProstBaseReport(AbsoluteReport):
     and in any algorithm.
 
     """
-    INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
+
+    INFO_ATTRIBUTES = ["time_limit", "memory_limit"]
+
 
 # Attributes to be displayed in the report.
-ATTRIBUTES = [Attribute('ipc_score', min_wins=False, functions=arithmetic_mean),
-              Attribute('num_runs', min_wins=False),
-              Attribute('reward_step-all', min_wins=False),
-              Attribute('round_reward-all', min_wins=False),
-              Attribute('round_reward_99', min_wins=False),
-              Attribute('total_reward', min_wins=False),
-              Attribute('average_reward', min_wins=False),
-              Attribute('time', min_wins=True),
-              Attribute('run_dir'),]
+ATTRIBUTES = [
+    Attribute("ipc_score", min_wins=False, functions=arithmetic_mean),
+    Attribute("num_runs", min_wins=False),
+    Attribute("reward_step-all", min_wins=False),
+    Attribute("round_reward-all", min_wins=False),
+    Attribute("round_reward_99", min_wins=False),
+    Attribute("total_reward", min_wins=False),
+    Attribute("average_reward", min_wins=False),
+    Attribute("time", min_wins=True),
+    Attribute("run_dir"),
+]
 
 if len(sys.argv) < 2:
-    print('Usage: ./reports.py [EXP PATH] [STEPS]\n')
-    print('Run the script only with a valid experiment path to see the steps in detail.')
-    print('(Note that the generic usage reported by Lab is different from the one for this script.)')
+    print("Usage: ./reports.py [EXP PATH] [STEPS]\n")
+    print(
+        "Run the script only with a valid experiment path to see the steps in detail."
+    )
+    print(
+        "(Note that the generic usage reported by Lab is different from the one for this script.)"
+    )
     exit(1)
 
 EXP_PATH = sys.argv[1]
@@ -61,50 +69,54 @@ EXP_PATH = sys.argv[1]
 del sys.argv[1]
 
 if not os.path.isdir(EXP_PATH):
-    print('Please define a valid experiment path.')
+    print("Please define a valid experiment path.")
     exit(1)
 
 # Create a new experiment.
 exp = Experiment(path=EXP_PATH)
 
 # Add Prost parser.
-exp.add_parser('parser.py')
+exp.add_parser("parser.py")
 exp.add_parse_again_step()
 
 # Add step that collects properties from run directories and
 # writes them to *-eval/properties.
-exp.add_fetcher(name='fetch')
+exp.add_fetcher(name="fetch")
 
 # Make a basic table report with IPC scores.
 ipc_scores = IPCScores()
 
 exp.add_report(
-    ProstBaseReport(attributes=ATTRIBUTES,
-                    filter=[ipc_scores.store_rewards,
-                            ipc_scores.add_score]),
-    outfile='report.html')
+    ProstBaseReport(
+        attributes=ATTRIBUTES, filter=[ipc_scores.store_rewards, ipc_scores.add_score]
+    ),
+    outfile="report.html",
+)
 
 # Make a scatter plot report.
 exp.add_report(
     ScatterPlotReport(
-        attributes=['average_reward'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
-        xscale='linear',
-        yscale='linear',
-        get_category=domain_as_category,),
-    outfile='scatterplot.png')
+        attributes=["average_reward"],
+        filter_algorithm=["IPC2011", "IPC2014"],
+        xscale="linear",
+        yscale="linear",
+        get_category=domain_as_category,
+    ),
+    outfile="scatterplot.png",
+)
 
 # Make a scatter plot report for IPC scores using filters.
 exp.add_report(
     ScatterPlotReport(
-        attributes=['ipc_score'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
-        filter=[ipc_scores.store_rewards,
-                ipc_scores.add_score],
-        xscale='linear',
-        yscale='linear',
-        get_category=domain_as_category,),
-    outfile='scatterplot-ipc-score.png')
+        attributes=["ipc_score"],
+        filter_algorithm=["IPC2011", "IPC2014"],
+        filter=[ipc_scores.store_rewards, ipc_scores.add_score],
+        xscale="linear",
+        yscale="linear",
+        get_category=domain_as_category,
+    ),
+    outfile="scatterplot-ipc-score.png",
+)
 
 
 # Plot list attributes. From now on, we do not use Lab reports anymore.
@@ -118,17 +130,22 @@ def plot_ippc2011(run):
     NOTE: Filters for list plots receive only a single run as input.
 
     """
-    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPC2014':
+    if run["domain"] == "crossing-traffic-2011" and run["algorithm"] == "IPC2014":
         return True
     return False
 
+
 list_plot = ListPlot(EXP_PATH)
-exp.add_step('reward-per-round-plot',
-             list_plot.plot_list_attribute,
-             [PlotProblem('game_of_life_inst_mdp__1', linestyle='--'),
-              PlotAlgorithm('IPC2014', color='b', marker='o'),
-              PlotAlgorithm('IPC2011', color='r', marker='*')],
-             'round_reward-all',
-             outfile='prost-plot.pdf')
+exp.add_step(
+    "reward-per-round-plot",
+    list_plot.plot_list_attribute,
+    [
+        PlotProblem("game_of_life_inst_mdp__1", linestyle="--"),
+        PlotAlgorithm("IPC2014", color="b", marker="o"),
+        PlotAlgorithm("IPC2011", color="r", marker="*"),
+    ],
+    "round_reward-all",
+    outfile="prost-plot.pdf",
+)
 
 exp.run_steps()

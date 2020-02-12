@@ -1,7 +1,7 @@
 #ifndef ITERATIVE_DEEPENING_SEARCH_H
 #define ITERATIVE_DEEPENING_SEARCH_H
 
-// Implements an iterative deepending search engine. This was used as
+// Implements an iterative deepening search engine. This was used as
 // initialization for UCT in IPC 2011 (and IPC 2014) and is described in the
 // paper by Keller and Eyerich (ICAPS 2012).
 
@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 class DepthFirstSearch;
+class MinimalLookaheadSearch;
 
 class IDS : public DeterministicSearchEngine {
 public:
@@ -51,17 +52,16 @@ public:
     }
 
     // Reset statistic variables
-    void resetStats();
+    void resetStats() override;
 
     // Print
     void printStats(std::ostream& out, bool const& printRoundStats,
-                    std::string indent = "") const;
+                    std::string indent = "") const override;
 
     // Caching
-    typedef std::unordered_map<State, std::vector<double>,
-                               State::HashWithoutRemSteps,
-                               State::EqualWithoutRemSteps>
-        HashMap;
+    using HashMap = std::unordered_map<State, std::vector<double>,
+                                       State::HashWithoutRemSteps,
+                                       State::EqualWithoutRemSteps>;
     static HashMap rewardCache;
 
 protected:
@@ -71,8 +71,14 @@ protected:
                         std::vector<double>& qValues);
     inline bool moreIterations(int const& stepsToGo);
 
+    void createMinimalLookaheadSearch();
+
     // The depth first search engine
     DepthFirstSearch* dfs;
+
+    // If maxSearchDepth is no larger than 1, a MinimalLookahead search engine
+    // is faster and better informed, so this one is used
+    MinimalLookaheadSearch* mlh;
 
     // Learning related variables
     bool isLearning;
