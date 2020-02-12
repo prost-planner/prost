@@ -11,16 +11,17 @@ def domain_as_category(run1, run2):
     NOTE: run2['domain'] has the same value, because we always
 
     """
-    return run1['domain']
+    return run1["domain"]
+
 
 def time_improvement(run1, run2):
     """Compare and order two runs based on their time improvement.
 
     """
-    time1 = run1.get('time', 4000)
-    time2 = run2.get('time', 4000)
+    time1 = run1.get("time", 4000)
+    time2 = run2.get("time", 4000)
     if time1 > time2:
-        return 'better'
+        return "better"
     if time1 == time2:
-        return 'equal'
-    return 'worse'
+        return "equal"
+    return "worse"

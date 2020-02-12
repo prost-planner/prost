@@ -5,9 +5,9 @@
 # PROST probabilistic planning system.
 #
 
-'''
+"""
 Parse runs of PROST.
-'''
+"""
 
 import re
 
@@ -15,26 +15,27 @@ from lab.parser import Parser
 
 # List of patterns that occurr only once.
 SINGLE_PATTERNS = [
-    ('time', 'PROST complete running time: (.+)s\n', float),
-    ('total_reward', 'TOTAL REWARD: (.+)\n', float),
-    ('average_reward', 'AVERAGE REWARD: (.+)\n', float),
+    ("time", "PROST complete running time: (.+)s\n", float),
+    ("total_reward", "TOTAL REWARD: (.+)\n", float),
+    ("average_reward", "AVERAGE REWARD: (.+)\n", float),
 ]
 
 # List of repeated patterns (list attributes)
 REPEATED_PATTERNS = [
-    ('round_reward-all', 'END OF ROUND .* -- REWARD RECEIVED: (.+)\n', float),
+    ("round_reward-all", "END OF ROUND .* -- REWARD RECEIVED: (.+)\n", float),
 ]
 
 # List of repeated patterns that should be splitted.
 # They must have suffix '-all' in their names.
 SPLITTED_PATTERNS = [
-    'round_reward-all',
+    "round_reward-all",
 ]
 
 # List of attributes which are list of lists
 LIST_PATTERNS = [
-    ('reward_step-all', 'Round .*: (.+) = .*$'),
+    ("reward_step-all", "Round .*: (.+) = .*$"),
 ]
+
 
 def _get_flags(flags_string):
     flags = 0
@@ -43,10 +44,10 @@ def _get_flags(flags_string):
     return flags
 
 
-def add_repeated_pattern(self, name, regex, file='run.log', type=int, flags='M'):
-    '''
+def add_repeated_pattern(self, name, regex, file="run.log", type=int, flags="M"):
+    """
     *regex* must contain at most one group.
-    '''
+    """
     flags = _get_flags(flags)
 
     def find_all_occurences(content, props):
@@ -54,11 +55,12 @@ def add_repeated_pattern(self, name, regex, file='run.log', type=int, flags='M')
         match_list = [type(m) for m in matches]
         props[name] = match_list
         if name in SPLITTED_PATTERNS:
-            new_name = name.replace('-all', '_')
+            new_name = name.replace("-all", "_")
             for cont, value in enumerate(match_list):
-                props[new_name+str(cont)] = value
+                props[new_name + str(cont)] = value
 
     parser.add_function(find_all_occurences, file=file)
+
 
 def reduce_to_min(list_name, single_name):
     def reduce_to_minimum(content, props):
@@ -68,10 +70,11 @@ def reduce_to_min(list_name, single_name):
 
     return reduce_to_minimum
 
-def add_list_pattern(parser, name, regex, file='run.log', flags='M'):
-    '''
+
+def add_list_pattern(parser, name, regex, file="run.log", flags="M"):
+    """
     *regex* must contain at most one group.
-    '''
+    """
     flags = _get_flags(flags)
 
     def parse_repeated_list(content, props):
@@ -85,7 +88,8 @@ def add_list_pattern(parser, name, regex, file='run.log', flags='M'):
 
     parser.add_function(parse_repeated_list, file=file)
 
-print('Running Prost parser.')
+
+print("Running Prost parser.")
 parser = Parser()
 for name, pattern, pattern_type in SINGLE_PATTERNS:
     parser.add_pattern(name, pattern, type=pattern_type)
