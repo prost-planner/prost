@@ -70,6 +70,11 @@ rddlsim_enforces_runtime = False
 # reliable.
 memout = "3872M"
 
+# This is the first port that is used for TCP/IP communication with
+# rddlsim. Make sure to set this in a way that a number of ports equal to
+# the number of tasks of this experiment, starting with port, are open.
+port = 2000
+
 
 ############ (USUALLY) NO NEED TO CHANGE THE FOLLOWING ############
 
@@ -180,7 +185,7 @@ def copy_binaries():
 
 
 def create_tasks(filename, instances, timeout):
-    port = 2000
+    global port
     tasks = []
     domains_in_benchmark = set()
     for task in benchmark:

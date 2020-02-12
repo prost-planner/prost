@@ -44,10 +44,10 @@ class ProstBaseReport(AbsoluteReport):
 ATTRIBUTES = [
     Attribute("ipc_score", min_wins=False, functions=arithmetic_mean),
     Attribute("num_runs", min_wins=False),
-    Attribute("reward_step-all", min_wins=False),
+    #Attribute("reward_step-all", min_wins=False),
     Attribute("round_reward-all", min_wins=False),
-    Attribute("round_reward_99", min_wins=False),
-    Attribute("total_reward", min_wins=False),
+    #Attribute("round_reward_99", min_wins=False),
+    #Attribute("total_reward", min_wins=False),
     Attribute("average_reward", min_wins=False),
     Attribute("time", min_wins=True),
     Attribute("run_dir"),
@@ -72,6 +72,12 @@ if not os.path.isdir(EXP_PATH):
     print("Please define a valid experiment path.")
     exit(1)
 
+suffix = ""
+if EXP_PATH.startswith("results/prost_"):
+    suffix = "_{}".format(EXP_PATH[14:])
+    if suffix[-1] == "/":
+        suffix = suffix[:-1]
+
 # Create a new experiment.
 exp = Experiment(path=EXP_PATH)
 
@@ -90,7 +96,7 @@ exp.add_report(
     ProstBaseReport(
         attributes=ATTRIBUTES, filter=[ipc_scores.store_rewards, ipc_scores.add_score]
     ),
-    outfile="report.html",
+    outfile="report{}.html".format(suffix),
 )
 
 # Make a scatter plot report.
@@ -102,7 +108,7 @@ exp.add_report(
         yscale="linear",
         get_category=domain_as_category,
     ),
-    outfile="scatterplot.png",
+    outfile="scatterplot{}.png".format(suffix),
 )
 
 # Make a scatter plot report for IPC scores using filters.
@@ -115,7 +121,7 @@ exp.add_report(
         yscale="linear",
         get_category=domain_as_category,
     ),
-    outfile="scatterplot-ipc-score.png",
+    outfile="scatterplot-ipc-score{}.png".format(suffix),
 )
 
 
