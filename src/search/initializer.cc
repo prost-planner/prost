@@ -97,13 +97,13 @@ void Initializer::setMaxSearchDepth(int maxSearchDepth) {
 
 void Initializer::printStats(
         bool const& printRoundStats, std::string indent) const {
-    Logger::log(indent + "Initializer: " + name);
-    Logger::log(indent + "Heuristic weight: " +
-                std::to_string(heuristicWeight));
-    Logger::log(indent + "Number of initial visits: " +
-                std::to_string(numberOfInitialVisits));
+    Logger::logLine(indent + "Initializer: " + name, Verbosity::NORMAL);
+    Logger::logLine(indent + "Heuristic weight: " +
+                    std::to_string(heuristicWeight), Verbosity::NORMAL);
+    Logger::logLine(indent + "Number of initial visits: " +
+                    std::to_string(numberOfInitialVisits), Verbosity::NORMAL);
     if (heuristic) {
-        Logger::log(indent + "Heuristic:");
+        Logger::logLine(indent + "Heuristic:", Verbosity::NORMAL);
         heuristic->printStats(printRoundStats, indent + "  ");
     }
 }
@@ -113,8 +113,8 @@ void Initializer::printStats(
 ******************************************************************/
 
 void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
-    // std::cout << "initializing state: " << std::endl;
-    // current.print(std::cout);
+    // Logger::logLine("initializing state:", Verbosity::DEBUG);
+    // Logger::logLine(current.toString(), Verbosity::DEBUG);
 
     assert(node->children.empty());
     node->children.resize(SearchEngine::numberOfActions, nullptr);
@@ -136,12 +136,13 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
             node->futureReward = std::max(node->futureReward,
                                           node->children[index]->futureReward);
 
-            // std::cout << "Initialized child ";
-            // SearchEngine::actionStates[index].printCompact(std::cout);
-            // node->children[index]->print(std::cout);
+            // Logger::logLine("Initialized child " +
+            //                 SearchEngine::actionStates[index].toCompactString(),
+            //                 Verbosity::DEBUG);
+            // Logger::logLine(node->children[index]->toString(), Verbosity::DEBUG);
         }
     }
-    // std::cout << std::endl;
+    //Logger::logLine("", Verbosity::DEBUG);
 
     node->initialized = true;
 }
@@ -152,8 +153,8 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
 
 void SingleChildInitializer::initialize(SearchNode* node,
                                         State const& current) {
-    // std::cout << "initializing state: " << std::endl;
-    // current.print(std::cout);
+    // Logger::logLine("initializing state: ", Verbosity::DEBUG);
+    // Logger::logLine(current.toString(), Verbosity::DEBUG);
 
     std::vector<int> candidates;
 
@@ -192,8 +193,8 @@ void SingleChildInitializer::initialize(SearchNode* node,
 
     node->initialized = (candidates.size() == 1);
 
-    // std::cout << "Initialized child ";
-    // SearchEngine::actionStates[actionIndex].printCompact(std::cout);
-    // node->children[actionIndex]->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("Initialized child " +
+    //                 SearchEngine::actionStates[actionIndex].toCompactString(),
+    //                 Verbosity::DEBUG);
+    // Logger::logLine(node->children[actionIndex]->toString(), Verbosity::DEBUG);
 }

@@ -71,7 +71,6 @@ struct SearchNode {
     }
 
     std::string toString() const;
-    void print(std::ostream& out, std::string indent = "") const;
 
     std::vector<SearchNode*> children;
 

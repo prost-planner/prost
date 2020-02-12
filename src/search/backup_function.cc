@@ -64,9 +64,8 @@ void BackupFunction::backupDecisionNodeLeaf(SearchNode* node,
     node->futureReward = futReward;
     node->solved = useSolveLabeling;
 
-    // std::cout << "updated dec node leaf:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated dec node leaf:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 void BackupFunction::backupDecisionNode(SearchNode* node) {
@@ -105,17 +104,17 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
         lockBackup = useBackupLock;
     }
 
-    // std::cout << "updated dec node with " << node->stepsToGo
-    //           << " steps-to-go and immediate reward " <<
-    //           node->immediateReward << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated dec node with " +
+    //                 std::to_string(node->stepsToGo) +
+    //                 " steps-to-go and immediate reward " +
+    //                 std::to_string(node->immediateReward), Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 void BackupFunction::printStats( std::string indent) {
     if (useBackupLock) {
-        Logger::log(indent + "Skipped backups: " +
-                    std::to_string(skippedBackups));
+        Logger::logLine(indent + "Skipped backups: " +
+                        std::to_string(skippedBackups), Verbosity::NORMAL);
     }
 }
 
@@ -144,9 +143,8 @@ void MCBackupFunction::backupChanceNode(SearchNode* node,
         initialLearningRate * (futReward - node->futureReward) /
             (1.0 + (learningRateDecay * (double)node->numberOfVisits));
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 /******************************************************************
@@ -172,9 +170,8 @@ void MaxMCBackupFunction::backupChanceNode(SearchNode* node,
 
     node->futureReward /= numberOfChildVisits;
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 /******************************************************************
@@ -211,7 +208,6 @@ void PBBackupFunction::backupChanceNode(SearchNode* node,
     node->futureReward /= probSum;
     node->solved = MathUtils::doubleIsEqual(solvedSum, 1.0);
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }

@@ -138,6 +138,6 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
 
 void MinimalLookaheadSearch::printStats(bool const& /*printRoundStats*/,
                                         string indent) const {
-    Logger::log(indent + "Cache hits: " + to_string(cacheHits) + " (in " +
-                to_string(numberOfRuns) + " runs)");
+    Logger::logLine(indent + "Cache hits: " + to_string(cacheHits) + " (in " +
+                    to_string(numberOfRuns) + " runs)", Verbosity::NORMAL);
 }

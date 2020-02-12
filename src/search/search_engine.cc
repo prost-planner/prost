@@ -9,6 +9,7 @@
 #include "thts.h"
 #include "uniform_evaluation_search.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -293,8 +294,8 @@ bool ProbabilisticSearchEngine::isARewardLock(State const& current) const {
         KleeneState::calcStateHashKey(currentInKleene);
         KleeneState::calcStateFluentHashKeys(currentInKleene);
 
-        // cout << "Checking state: " << endl;
-        // printKleeneState(cout, currentInKleene);
+        // Logger::logLine("Checking state: ", Verbosity::DEBUG);
+        // Logger::logLine(currentInKleene.toString(), Verbosity::DEBUG);
 
         return checkGoal(currentInKleene);
     }
@@ -497,317 +498,298 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
 
 void SearchEngine::printStats(bool const& /*printRoundStats*/,
                               string indent) const {
-    out << indent << "Statistics of " << name << ":" << endl;
+    Logger::logLine(indent + "Statistics of " + name + ":", Verbosity::NORMAL);
 }
 
-void SearchEngine::printTask(ostream& out) {
-    out.unsetf(ios::floatfield);
-    out.precision(numeric_limits<double>::digits10);
+void SearchEngine::printTask() {
+    std::cout.unsetf(std::ios::floatfield);
+    std::cout.precision(std::numeric_limits<double>::digits10);
 
-    out << "----------------Actions---------------" << endl << endl;
-    out << "Action fluents: " << endl;
-    for (size_t index = 0; index < actionFluents.size(); ++index) {
-        actionFluents[index]->print(out);
-        out << endl;
+    Logger::logLine("----------------Actions---------------");
+    Logger::logLine();
+    Logger::logLine("Action fluents:");
+    for (ActionFluent const* af : actionFluents) {
+        Logger::logLine(af->name);
     }
-    out << "---------------" << endl << endl;
-    out << "Legal Action Combinations: " << endl;
-    for (size_t index = 0; index < actionStates.size(); ++index) {
-        actionStates[index].print(out);
-        out << "---------------" << endl;
-    }
-    out << endl;
-    out << "-----------------CPFs-----------------" << endl << endl;
-    for (size_t index = 0; index < State::numberOfDeterministicStateFluents;
-         ++index) {
-        printDeterministicCPFInDetail(out, index);
-        out << endl << "--------------" << endl;
+    Logger::logSmallSeparator();
+    Logger::logLine();
+    Logger::logLine("Legal Action Combinations:");
+    for (ActionState const& state : actionStates) {
+        Logger::logLine(state.toString());
+        Logger::logSmallSeparator();
     }
 
-    for (size_t index = 0; index < State::numberOfProbabilisticStateFluents;
-         ++index) {
-        printProbabilisticCPFInDetail(out, index);
-        out << endl << "--------------" << endl;
+    Logger::logLine();
+    Logger::logLine("-----------------CPFs-----------------");
+    Logger::logLine();
+
+    int numDetStateFluents = State::numberOfDeterministicStateFluents;
+    for (size_t index = 0; index < numDetStateFluents; ++index) {
+        printDeterministicCPFInDetail(index);
+        Logger::logSmallSeparator();
     }
 
-    out << endl << "Reward CPF:" << endl;
-    printRewardCPFInDetail(out);
-    out << endl << endl;
+    int numProbStateFluents = State::numberOfProbabilisticStateFluents;
+    for (size_t index = 0; index < numProbStateFluents; ++index) {
+        printProbabilisticCPFInDetail(index);
+        Logger::logSmallSeparator();
+    }
+    Logger::logLine();
 
-    out << "------State Fluent Hash Key Map-------" << endl << endl;
+    Logger::logLine("Reward CPF:");
+    printRewardCPFInDetail();
 
-    for (size_t varIndex = 0;
-         varIndex < State::numberOfDeterministicStateFluents; ++varIndex) {
-        out << "a change of deterministic state fluent " << varIndex
-            << " influences variables ";
-        for (size_t influencedVarIndex = 0;
-             influencedVarIndex <
-             State::stateFluentHashKeysOfDeterministicStateFluents[varIndex]
-                 .size();
-             ++influencedVarIndex) {
-            out << State::stateFluentHashKeysOfDeterministicStateFluents
-                       [varIndex][influencedVarIndex]
-                           .first
-                << " (";
-            out << State::stateFluentHashKeysOfDeterministicStateFluents
-                       [varIndex][influencedVarIndex]
-                           .second
-                << ") ";
+    Logger::logLine();
+    Logger::logLine("------State Fluent Hash Key Map-------");
+    Logger::logLine();
+
+    for (size_t index = 0; index < numDetStateFluents; ++index) {
+        Logger::log("a change of deterministic state fluent " +
+                    to_string(index) + " influences variables ");
+        vector<pair<int, long>> const& influencedVars =
+            State::stateFluentHashKeysOfDeterministicStateFluents[index];
+
+        for (pair<int, long> const& influencedVar : influencedVars) {
+            Logger::log(to_string(influencedVar.first) + " (" +
+                        to_string(influencedVar.second) + ") ");
         }
-        out << endl;
+        Logger::logLine();
     }
-    out << endl;
+    Logger::logLine();
 
-    for (size_t varIndex = 0;
-         varIndex < State::numberOfProbabilisticStateFluents; ++varIndex) {
-        out << "a change of probabilistic state fluent " << varIndex
-            << " influences variables ";
-        for (size_t influencedVarIndex = 0;
-             influencedVarIndex <
-             State::stateFluentHashKeysOfProbabilisticStateFluents[varIndex]
-                 .size();
-             ++influencedVarIndex) {
-            out << State::stateFluentHashKeysOfProbabilisticStateFluents
-                       [varIndex][influencedVarIndex]
-                           .first
-                << " (";
-            out << State::stateFluentHashKeysOfProbabilisticStateFluents
-                       [varIndex][influencedVarIndex]
-                           .second
-                << ") ";
+    for (size_t index = 0; index < numProbStateFluents; ++index) {
+        Logger::log("a change of probabilistic state fluent " +
+                    to_string(index) + " influences variables ");
+        vector<pair<int, long>> const& influencedVars =
+            State::stateFluentHashKeysOfProbabilisticStateFluents[index];
+
+        for (pair<int, long> const& influencedVar : influencedVars) {
+            Logger::log(to_string(influencedVar.first) + " (" +
+                        to_string(influencedVar.second) + ") ");
         }
-        out << endl;
+        Logger::logLine();
     }
-    out << endl << endl;
+    Logger::logLine();
 
-    for (size_t varIndex = 0;
-         varIndex < KleeneState::indexToStateFluentHashKeyMap.size();
-         ++varIndex) {
-        out << "a change of variable " << varIndex
-            << " influences variables in Kleene states ";
-        for (size_t influencedVarIndex = 0;
-             influencedVarIndex <
-             KleeneState::indexToStateFluentHashKeyMap[varIndex].size();
-             ++influencedVarIndex) {
-            out << KleeneState::indexToStateFluentHashKeyMap[varIndex]
-                                                            [influencedVarIndex]
-                                                                .first
-                << " ("
-                << KleeneState::indexToStateFluentHashKeyMap[varIndex]
-                                                            [influencedVarIndex]
-                                                                .second
-                << ") ";
+    for (size_t index = 0; index < KleeneState::stateSize; ++index) {
+        Logger::log("a change of variable " + to_string(index) +
+                    " influences variables in Kleene states ");
+        vector<pair<int, long>> const& influencedVars =
+            KleeneState::indexToStateFluentHashKeyMap[index];
+
+        for (pair<int, long> const& influencedVar : influencedVars) {
+            Logger::log(to_string(influencedVar.first) + " (" +
+                        to_string(influencedVar.second) + ") ");
         }
-        out << endl;
+        Logger::logLine();
     }
-    out << endl;
+    Logger::logLine();
 
-    out << "---------Action Preconditions---------" << endl << endl;
+    Logger::logLine();
+    Logger::logLine("---------Action Preconditions---------");
+    Logger::logLine();
+
     for (size_t index = 0; index < actionPreconditions.size(); ++index) {
-        printActionPreconditionInDetail(out, index);
-        out << endl << "--------------" << endl;
+        printActionPreconditionInDetail(index);
+        Logger::logSmallSeparator();
     }
 
-    out << "----------Initial State---------------" << endl << endl;
-    initialState.print(out);
-    out << endl;
+    Logger::logLine();
+    Logger::logLine("----------Initial State---------------");
+    Logger::logLine();
+    Logger::logLine(initialState.toString());
 
-    out << "Hashing of States is "
-        << (State::stateHashingPossible ? "" : "not ") << "possible." << endl;
-    out << "Hashing of KleeneStates is "
-        << (KleeneState::stateHashingPossible ? "" : "not ") << "possible."
-        << endl;
+    if (State::stateHashingPossible) {
+        Logger::logLine("Hashing of States is possible.");
+    } else {
+        Logger::logLine("Hashing of States is not possible.");
+    }
+    if (KleeneState::stateHashingPossible) {
+        Logger::logLine("Hashing of KleeneStates is possible.");
+    } else {
+        Logger::logLine("Hashing of KleeneStates is not possible.");
+    }
+
 
     if (rewardLockDetected) {
         if (goalTestActionIndex >= 0) {
-            out << "Both a goal and a dead end were found in the training "
-                   "phase."
-                << endl;
+            Logger::logLine(
+                "A goal and a dead end were found in the training phase.");
         } else {
-            out << "A dead end but no goal was found in the training phase."
-                << endl;
+            Logger::logLine(
+                "A dead end but no goal was found in the training phase.");
         }
     } else {
-        out << "No reward locks detected in the training phase." << endl;
+        Logger::logLine("No reward locks detected in the training phase.");
     }
 
     if (ProbabilisticSearchEngine::hasUnreasonableActions &&
         DeterministicSearchEngine::hasUnreasonableActions) {
-        out << "This task contains unreasonable actions." << endl;
+        Logger::logLine("This task contains unreasonable actions.");
     } else if (ProbabilisticSearchEngine::hasUnreasonableActions) {
         assert(false);
     } else if (DeterministicSearchEngine::hasUnreasonableActions) {
-        out << "This task contains unreasonable actions only in the "
-               "determinization."
-            << endl;
+        Logger::logLine(
+            "Only the determinization contains unreasonable actions.");
     } else {
-        out << "This task does not contain unreasonable actions." << endl;
+        Logger::logLine("This task does not contain unreasonable actions.");
     }
 
-    out << "The final reward is determined ";
+    Logger::log("The final reward is determined ");
     switch (finalRewardCalculationMethod) {
     case NOOP:
-        out << "by applying NOOP." << endl;
+        Logger::logLine("by applying NOOP.");
         break;
     case FIRST_APPLICABLE:
-        out << "by applying the first applicable action." << endl;
+        Logger::logLine("by applying the first applicable action.");
         break;
     case BEST_OF_CANDIDATE_SET:
-        out << "as the maximum over the candidate set: " << endl;
-        for (size_t i = 0; i < candidatesForOptimalFinalAction.size(); ++i) {
-            out << "  ";
-            actionStates[candidatesForOptimalFinalAction[i]].printCompact(out);
-            out << endl;
+        Logger::logLine("as the maximum over the candidate set: ");
+        for (int candidate : candidatesForOptimalFinalAction) {
+            Logger::logLine("  " + actionStates[candidate].toCompactString());
         }
         break;
     }
-    out << endl;
+    Logger::logLine();
 }
 
-void SearchEngine::printDeterministicCPFInDetail(ostream& out,
-                                                 int const& index) {
-    printEvaluatableInDetail(out, deterministicCPFs[index]);
-    out << endl;
+void SearchEngine::printDeterministicCPFInDetail(int index) {
+    printEvaluatableInDetail(deterministicCPFs[index]);
+    Logger::logLine();
 
-    out << "  Domain: ";
-    for (size_t i = 0; i < deterministicCPFs[index]->head->values.size(); ++i) {
-        out << deterministicCPFs[index]->head->values[i] << " ";
+    Logger::log("  Domain: ");
+    for (std::string const& val : deterministicCPFs[index]->head->values) {
+        Logger::log(val + " ");
     }
-    out << endl;
+    Logger::logLine();
 
     if (State::stateHashingPossible) {
-        out << "  HashKeyBase: ";
-        for (size_t i = 0;
-             i < State::stateHashKeysOfDeterministicStateFluents[index].size();
-             ++i) {
-            out << i << ": "
-                << State::stateHashKeysOfDeterministicStateFluents[index][i];
-            if (i !=
-                State::stateHashKeysOfDeterministicStateFluents[index].size() -
-                    1) {
-                out << ", ";
+        Logger::log("  HashKeyBase: ");
+        std::vector<long> const& stateHashKeys =
+            State::stateHashKeysOfDeterministicStateFluents[index];
+        for (size_t i = 0; i < stateHashKeys.size(); ++i) {
+            Logger::log(to_string(i) + ": " + to_string(stateHashKeys[i]));
+            if (i != stateHashKeys.size() - 1) {
+                Logger::log(", ");
             } else {
-                out << endl;
+                Logger::logLine();
             }
         }
     }
 
     if (KleeneState::stateHashingPossible) {
-        out << "  KleeneHashKeyBase: " << KleeneState::hashKeyBases[index]
-            << endl;
+        Logger::logLine("  KleeneHashKeyBase: " +
+                    to_string(KleeneState::hashKeyBases[index]));
     }
 }
 
-void SearchEngine::printProbabilisticCPFInDetail(ostream& out,
-                                                 int const& index) {
-    printEvaluatableInDetail(out, probabilisticCPFs[index]);
-    out << "  Determinized formula: " << endl;
-    determinizedCPFs[index]->formula->print(out);
-    out << endl;
+void SearchEngine::printProbabilisticCPFInDetail(int index) {
+    printEvaluatableInDetail(probabilisticCPFs[index]);
+    Logger::logLine();
 
-    out << "  Domain: ";
-    for (size_t i = 0; i < probabilisticCPFs[index]->head->values.size(); ++i) {
-        out << probabilisticCPFs[index]->head->values[i] << " ";
+    Logger::logLine("  Determinized formula: ");
+
+    // TODO: Replace print() method with toString()
+    stringstream ss;
+    determinizedCPFs[index]->formula->print(ss);
+    ss << endl;
+    Logger::logLine(ss.str());
+
+    Logger::log("  Domain: ");
+    for (std::string const& val : probabilisticCPFs[index]->head->values) {
+        Logger::log(val + " ");
     }
-    out << endl;
+    Logger::logLine();
 
     if (State::stateHashingPossible) {
-        out << "  HashKeyBase: ";
-        for (size_t i = 0;
-             i < State::stateHashKeysOfProbabilisticStateFluents[index].size();
-             ++i) {
-            out << i << ": "
-                << State::stateHashKeysOfProbabilisticStateFluents[index][i];
-            if (i !=
-                State::stateHashKeysOfProbabilisticStateFluents[index].size() -
-                    1) {
-                out << ", ";
+        Logger::log("  HashKeyBase: ");
+        std::vector<long> const& stateHashKeys =
+            State::stateHashKeysOfProbabilisticStateFluents[index];
+        for (size_t i = 0; i < stateHashKeys.size(); ++i) {
+            Logger::log(to_string(i) + ": " + to_string(stateHashKeys[i]));
+            if (i != stateHashKeys.size() - 1) {
+                Logger::log(", ");
             } else {
-                out << endl;
+                Logger::logLine();
             }
         }
     }
 
     if (KleeneState::stateHashingPossible) {
-        out << "  KleeneHashKeyBase: "
-            << KleeneState::hashKeyBases
-                   [index + State::numberOfDeterministicStateFluents]
-            << endl;
+        index += State::numberOfDeterministicStateFluents;
+        Logger::logLine("  KleeneHashKeyBase: " +
+                    to_string(KleeneState::hashKeyBases[index]));
     }
 }
 
-void SearchEngine::printRewardCPFInDetail(ostream& out) {
-    printEvaluatableInDetail(out, rewardCPF);
+void SearchEngine::printRewardCPFInDetail() {
+    printEvaluatableInDetail(rewardCPF);
 
-    out << "Minimal reward: " << rewardCPF->getMinVal() << endl;
-    out << "Maximal reward: " << rewardCPF->getMaxVal() << endl;
-    out << "Is action independent: " << rewardCPF->isActionIndependent()
-        << endl;
-
-    out << endl;
+    Logger::logLine("Minimal reward: " + to_string(rewardCPF->getMinVal()));
+    Logger::logLine("Maximal reward: " + to_string(rewardCPF->getMaxVal()));
+    Logger::logLine("Is action independent: " + to_string(rewardCPF->isActionIndependent()));
+    Logger::logLine();
 }
 
-void SearchEngine::printActionPreconditionInDetail(ostream& out,
-                                                   int const& index) {
-    printEvaluatableInDetail(out, actionPreconditions[index]);
-
-    out << endl;
+void SearchEngine::printActionPreconditionInDetail(int index) {
+    printEvaluatableInDetail(actionPreconditions[index]);
+    Logger::logLine();
 }
 
-void SearchEngine::printEvaluatableInDetail(ostream& out, Evaluatable* eval) {
-    out << eval->name << endl;
-    out << "  HashIndex: " << eval->hashIndex << ",";
+void SearchEngine::printEvaluatableInDetail(Evaluatable* eval) {
+    Logger::logLine(eval->name);
+    Logger::log("  HashIndex: " + to_string(eval->hashIndex) + ",");
 
     if (!eval->isProbabilistic()) {
-        out << " deterministic,";
+        Logger::log(" deterministic,");
     } else {
-        out << " probabilistic,";
+        Logger::log(" probabilistic,");
     }
 
     switch (eval->cachingType) {
     case Evaluatable::NONE:
-        out << " no caching,";
+        Logger::log(" no caching,");
         break;
     case Evaluatable::MAP:
     case Evaluatable::DISABLED_MAP:
-        out << " caching in maps,";
+        Logger::log(" caching in maps,");
         break;
     case Evaluatable::VECTOR:
-        out << " caching in vectors,"; // << eval->evaluationCacheVector.size()
-                                       // << ",";
+        Logger::log(" caching in vectors,");
         break;
     }
 
     switch (eval->kleeneCachingType) {
     case Evaluatable::NONE:
-        out << " no Kleene caching.";
+        Logger::log(" no Kleene caching.");
         break;
     case Evaluatable::MAP:
     case Evaluatable::DISABLED_MAP:
-        out << " Kleene caching in maps.";
+        Logger::log(" Kleene caching in maps.");
         break;
     case Evaluatable::VECTOR:
-        out << " Kleene caching in vectors of size "
-            << eval->kleeneEvaluationCacheVector.size() << ".";
+        Logger::log(" Kleene caching in vectors of size " +
+                    to_string(eval->kleeneEvaluationCacheVector.size()) + ".");
         break;
     }
-
-    out << endl << endl;
+    Logger::logLine();
+    Logger::logLine();
 
     if (!eval->actionHashKeyMap.empty()) {
-        out << "  Action Hash Key Map: " << endl;
+        Logger::logLine("  Action Hash Key Map:");
         for (size_t i = 0; i < eval->actionHashKeyMap.size(); ++i) {
             if (eval->actionHashKeyMap[i] != 0) {
-                out << "    ";
-                actionStates[i].printCompact(out);
-                out << " : " << eval->actionHashKeyMap[i] << endl;
+                Logger::logLine("    " + actionStates[i].toCompactString() +
+                                " : " + to_string(eval->actionHashKeyMap[i]));
             }
         }
     } else {
-        out << "  Has no positive dependencies on actions." << endl;
+        Logger::logLine("  Has no positive dependencies on actions.");
     }
 
-    out << "  Formula: " << endl;
-    eval->formula->print(out);
-    out << endl;
+    // TODO: Replace print() method with toString()
+    stringstream ss;
+    ss << "  Formula: " << endl;
+    eval->formula->print(ss);
+    Logger::logLine(ss.str());
 }

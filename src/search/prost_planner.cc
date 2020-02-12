@@ -68,7 +68,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
             } else if (value == "DEBUG") {
                 Logger::runVerbosity = Verbosity::DEBUG;
             } else {
-                SystemUtils::abort("No valid value for -log: " + value);
+                SystemUtils::abort("No valid value for -logLine: " + value);
             }
         } else {
             SystemUtils::abort("Unused parameter value pair: " + param + " / " +
@@ -89,7 +89,7 @@ void ProstPlanner::setSeed(int _seed) {
 
 void ProstPlanner::init() {
     Stopwatch time;
-    cout << "learning..." << endl;
+    Logger::logLine("learning...");
 
     cout.precision(6);
 
@@ -106,10 +106,11 @@ void ProstPlanner::init() {
         }
         fdd_extdomain(domains, KleeneState::stateSize);
     }
-    cout << "...finished (" << time << ")." << endl << endl;
+    Logger::logLine("...finished (" + to_string(time()) + ").");
+    Logger::logLine();
 
-    cout << "Final task: " << endl;
-    SearchEngine::printTask(cout);
+    Logger::logLine("Final task: ");
+    SearchEngine::printTask();
 
     cout.precision(6);
 }
@@ -156,24 +157,29 @@ void ProstPlanner::initSession(int _numberOfRounds, long /*totalTime*/) {
 }
 
 void ProstPlanner::finishSession(double& totalReward) {
-    cout << "***********************************************" << endl
-         << "Immediate rewards:" << endl;
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
+    Logger::logLine("Immediate rewards:");
     for (size_t i = 0; i < immediateRewards.size(); ++i) {
         double rewardSum = 0.0;
-        cout << "Round " << i << ": ";
-        for (size_t j = 0; j < immediateRewards[i].size(); ++j) {
-            cout << immediateRewards[i][j] << " ";
-            rewardSum += immediateRewards[i][j];
+        Logger::log("Round " + to_string(i) + ": ", Verbosity::SILENT);
+        for (double rew : immediateRewards[i]) {
+            Logger::log(to_string(rew) + " ", Verbosity::SILENT);
+            rewardSum += rew;
         }
-        cout << " = " << rewardSum << endl;
+        Logger::logLine(" = " + to_string(rewardSum), Verbosity::SILENT);
     }
-    cout << endl;
+    Logger::logLine("", Verbosity::SILENT);
 
-    double avgReward = totalReward / (double)numberOfRounds;
+    double avgReward = totalReward / numberOfRounds;
 
-    cout << ">>>           TOTAL REWARD: " << totalReward << endl
-         << ">>>          AVERAGE REWARD: " << avgReward << endl
-         << "***********************************************" << endl;
+    Logger::logLine(">>>           TOTAL REWARD: " + to_string(totalReward),
+                    Verbosity::SILENT);
+    Logger::logLine(">>>          AVERAGE REWARD: " + to_string(avgReward),
+                    Verbosity::SILENT);
+
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
 }
 
 void ProstPlanner::initRound(long const& remainingTime) {
@@ -181,18 +187,23 @@ void ProstPlanner::initRound(long const& remainingTime) {
     currentStep = -1;
     stepsToGo = SearchEngine::horizon + 1;
 
-    cout << "***********************************************" << endl
-         << ">>> STARTING ROUND " << (currentRound + 1) << " -- REMAINING TIME "
-         << (remainingTime / 1000) << "s" << endl
-         << "***********************************************" << endl;
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
+    Logger::logLine(">>> STARTING ROUND " + to_string(currentRound + 1) +
+                    " -- REMAINING TIME " + to_string(remainingTime / 1000) +
+                    "s", Verbosity::SILENT);
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
 }
 
 void ProstPlanner::finishRound(double const& roundReward) {
-    cout << "***********************************************" << endl
-         << ">>> END OF ROUND " << (currentRound + 1)
-         << " -- REWARD RECEIVED: " << roundReward << endl
-         << "***********************************************\n"
-         << endl;
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
+    Logger::logLine(">>> END OF ROUND " + to_string(currentRound + 1) +
+                    " -- REWARD RECEIVED: " + to_string(roundReward),
+                    Verbosity::SILENT);
+    Logger::logLine("***********************************************",
+                    Verbosity::SILENT);
 }
 
 void ProstPlanner::initStep(vector<double> const& nextStateVec,
@@ -200,10 +211,12 @@ void ProstPlanner::initStep(vector<double> const& nextStateVec,
     ++currentStep;
     --stepsToGo;
 
-    cout << "***********************************************" << endl
-         << "Planning step " << (currentStep + 1) << "/"
-         << SearchEngine::horizon << " in round " << (currentRound + 1) << "/"
-         << numberOfRounds << endl;
+    Logger::logLine("***********************************************",
+                    Verbosity::NORMAL);
+    Logger::logLine("Planning step " + to_string(currentStep + 1) + "/" +
+                    to_string(SearchEngine::horizon) + " in round " +
+                    to_string(currentRound + 1) + "/" +
+                    to_string(numberOfRounds), Verbosity::NORMAL);
 
     monitorRAMUsage();
 
@@ -214,9 +227,12 @@ void ProstPlanner::initStep(vector<double> const& nextStateVec,
     State::calcStateFluentHashKeys(currentState);
     State::calcStateHashKey(currentState);
 
-    cout << "Current state: ";
-    currentState.printCompact(cout);
-    cout << endl;
+    if (Logger::runVerbosity >= Verbosity::VERBOSE) {
+        Logger::logLine("Current state: " + currentState.toString());
+    } else {
+        Logger::logLine("Current state: " + currentState.toCompactString(),
+                        Verbosity::NORMAL);
+    }
 
     manageTimeouts(remainingTime);
 }
@@ -242,10 +258,9 @@ void ProstPlanner::monitorRAMUsage() {
         }
 
         searchEngine->disableCaching();
-        cout << endl
-             << "CACHING ABORTED IN STEP " << (currentStep + 1) << " OF ROUND "
-             << (currentRound + 1) << endl
-             << endl;
+        Logger::logLine(
+            "CACHING ABORTED IN STEP " + to_string(currentStep + 1) +
+            " OF ROUND " + to_string(currentRound + 1), Verbosity::SILENT);
     }
 }
 
@@ -266,8 +281,9 @@ void ProstPlanner::manageTimeouts(long const& remainingTime) {
         --remainingTimeFactor;
         break;
     }
-    cout << "Setting time for this decision to " << timeForThisStep << "s."
-         << endl;
+    Logger::logLine("Setting time for this decision to " +
+                    to_string(timeForThisStep) + "s.", Verbosity::NORMAL);
+
     searchEngine->setTimeout(timeForThisStep);
 }
 
@@ -277,29 +293,43 @@ void ProstPlanner::finishStep(double const& immediateReward) {
 
     immediateRewards[currentRound][currentStep] = immediateReward;
 
-    // searchEngine->print(cout);
+    int usedRAM = SystemUtils::getRAMUsedByThis();
+    int bucketsProbStateValue =
+        ProbabilisticSearchEngine::stateValueCache.bucket_count();
+    int bucketsDetStateValue =
+        DeterministicSearchEngine::stateValueCache.bucket_count();
+    int bucketsProbApplActions =
+        ProbabilisticSearchEngine::applicableActionsCache.bucket_count();
+    int bucketsDetApplActions =
+        DeterministicSearchEngine::applicableActionsCache.bucket_count();
+    // int bucketsMLSRewardCache =
+    //     MinimalLookaheadSearch::rewardCache.bucket_count();
+    // int bucketsIDSRewardCache =
+    //          IDS::rewardCache.bucket_count();
 
-    cout << endl << "Used RAM: " << SystemUtils::getRAMUsedByThis() << endl;
-    // cout << "Buckets in probabilistic state value cache: " <<
-    // ProbabilisticSearchEngine::stateValueCache.bucket_count() << endl;
-    // cout << "Buckets in deterministic state value cache: " <<
-    // DeterministicSearchEngine::stateValueCache.bucket_count() << endl;
-    // cout << "Buckets in probabilistic applicable actions cache: " <<
-    // ProbabilisticSearchEngine::applicableActionsCache.bucket_count() << endl;
-    // cout << "Buckets in deterministic applicable actions cache: " <<
-    // DeterministicSearchEngine::applicableActionsCache.bucket_count() << endl;
-    // cout << "Buckets in MLS reward cache: " <<
-    // MinimalLookaheadSearch::rewardCache.bucket_count() << endl;
-    // cout << "Buckets in IDS reward cache: " <<
-    // IDS::rewardCache.bucket_count() << endl;
+    Logger::logLine("Used RAM: " + to_string(usedRAM), Verbosity::NORMAL);
+    Logger::logLine("Buckets in probabilistic state value cache: " +
+                    to_string(bucketsProbStateValue), Verbosity::DEBUG);
+    Logger::logLine("Buckets in deterministic state value cache: " +
+                    to_string(bucketsDetStateValue), Verbosity::DEBUG);
+    Logger::logLine("Buckets in probabilistic applicable actions cache: " +
+                    to_string(bucketsProbApplActions), Verbosity::DEBUG);
+    Logger::logLine("Buckets in deterministic applicable actions cache: " +
+                    to_string(bucketsDetApplActions), Verbosity::DEBUG);
+    // Logger::logLine("Buckets in MLS reward cache: " +
+    //                 to_string(bucketsMLSRewardCache), Verbosity::DEBUG);
+    // Logger::logLine("Buckets in IDS reward cache: " +
+    //                 to_string(bucketsIDSRewardCache), Verbosity::DEBUG);
 
-    int& submittedActionIndex = chosenActionIndices[currentRound][currentStep];
-    cout << endl << "Submitted action: ";
-    SearchEngine::actionStates[submittedActionIndex].printCompact(cout);
-    cout << endl
-         << "Immediate reward: " << immediateReward << endl
-         << "***********************************************" << endl
-         << endl;
+    int submittedActionIndex = chosenActionIndices[currentRound][currentStep];
+    Logger::logLine(
+        "Submitted action: " +
+        SearchEngine::actionStates[submittedActionIndex].toCompactString(),
+        Verbosity::SILENT);
+    Logger::logLine("Immediate reward: " + to_string(immediateReward),
+                    Verbosity::NORMAL);
+    Logger::logLine("***********************************************",
+                    Verbosity::NORMAL);
 }
 
 void ProstPlanner::resetStaticMembers() {

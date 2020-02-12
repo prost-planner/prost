@@ -16,6 +16,7 @@
 #include <sstream>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <logger.h>
 
 using namespace std;
 
@@ -413,7 +414,7 @@ void IPCClient::executeParser(string const& taskDesc) {
 #else
     std::string parserExec = "./rddl-parser-debug ";
 #endif
-    std::cout << "RUNNING RDDL PARSER AT " << parserExec << endl;
+    Logger::log("RUNNING RDDL PARSER AT " + parserExec, Verbosity::NORMAL);
     // Generate temporary input file for parser
     std::ofstream taskFile;
     stringstream taskFileNameStream;
@@ -430,7 +431,6 @@ void IPCClient::executeParser(string const& taskDesc) {
     stringstream callString;
     callString << parserExec << taskFileName << " ./"
                << parserOut << " " << parserOptions;
-    std::cout << callString.str() << std::endl;
     int result = std::system(callString.str().c_str());
     if (result != 0) {
         SystemUtils::abort("Error: " + parserExec + " had an error");

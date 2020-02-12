@@ -110,8 +110,8 @@ LogicalExpression* LogicalExpression::createFromString(string& desc) {
         return new MultiConditionChecker(conditions, effects);
     }
 
-    cout << desc << endl;
-    assert(false);
+    SystemUtils::abort(
+        "Failed to create LogicalExpression from string:" + desc);
     return nullptr;
 }
 

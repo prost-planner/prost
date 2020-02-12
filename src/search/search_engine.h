@@ -298,15 +298,12 @@ public:
     }
 
     // Print task
-    static void printTask(std::ostream& out);
-    static void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval);
-    static void printDeterministicCPFInDetail(std::ostream& out,
-                                              int const& index);
-    static void printProbabilisticCPFInDetail(std::ostream& out,
-                                              int const& index);
-    static void printRewardCPFInDetail(std::ostream& out);
-    static void printActionPreconditionInDetail(std::ostream& out,
-                                                int const& index);
+    static void printTask();
+    static void printEvaluatableInDetail(Evaluatable* eval);
+    static void printDeterministicCPFInDetail(int index);
+    static void printProbabilisticCPFInDetail(int index);
+    static void printRewardCPFInDetail();
+    static void printActionPreconditionInDetail(int index);
 };
 
 /*****************************************************************

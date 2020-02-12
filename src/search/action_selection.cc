@@ -290,15 +290,15 @@ bool UCB1ActionSelection::setValueFromString(std::string& param,
 
 void ActionSelection::printStats(std::string indent) {
     if (thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) {
-        Logger::log(indent + "Action Selection:");
-        Logger::log(indent + "Exploitation in Root: " +
-                    std::to_string(exploitInRoot));
-        Logger::log(indent + "Exploration in Root: " +
-                    std::to_string(exploreInRoot));
+        Logger::logLine(indent + "Action Selection:", Verbosity::NORMAL);
+        Logger::logLine(indent + "Exploitation in Root: " +
+                        std::to_string(exploitInRoot), Verbosity::NORMAL);
+        Logger::logLine(indent + "Exploration in Root: " +
+                        std::to_string(exploreInRoot), Verbosity::NORMAL);
         double perc = static_cast<double>(exploreInRoot) /
                       (exploreInRoot + exploitInRoot);
-        Logger::log(indent + "Percentage Exploration in Root: " +
-                    std::to_string(perc));
+        Logger::logLine(indent + "Percentage Exploration in Root: " +
+                        std::to_string(perc), Verbosity::NORMAL);
     }
 }
 

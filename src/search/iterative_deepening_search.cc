@@ -89,7 +89,7 @@ void IDS::disableCaching() {
 
 void IDS::learn() {
     dfs->learn();
-    cout << name << ": learning..." << endl;
+    Logger::logLine(name + ": learning...", Verbosity::NORMAL);
 
     isLearning = true;
     bool cachingEnabledBeforeLearning = cachingIsEnabled();
@@ -120,8 +120,10 @@ void IDS::learn() {
             double timeSum = std::accumulate(times.begin(), times.end(), 0.0);
             double avgTime = timeSum / static_cast<double>(times.size());
 
-            cout << name << ": Search Depth " << index << ": " << timeSum
-                 << " / " << times.size() << " = " << avgTime << endl;
+            Logger::logLine(
+                name + ": Search Depth " + to_string(index) + ": " +
+                to_string(timeSum) + " / " + to_string(times.size()) +
+                " = " + to_string(avgTime), Verbosity::NORMAL);
             if (MathUtils::doubleIsGreaterOrEqual(avgTime, timeout)) {
                 break;
             }
@@ -130,17 +132,17 @@ void IDS::learn() {
     }
 
     if (maxSearchDepth <= 1) {
-        cout << name << ": Max search depth is too low: "
-             << maxSearchDepth << ". Replacing IDS with minimal "
-             << "lookahead search." << endl;
+        Logger::logLine(name + ": Learned max search depth is too low: " +
+                        to_string(maxSearchDepth) + ". Replacing IDS with " +
+                        "minimal lookahead search.", Verbosity::SILENT);
         createMinimalLookaheadSearch();
     } else {
         setMaxSearchDepth(maxSearchDepth);
-        cout << name << ": Setting max search depth to "
-             << maxSearchDepth << "!" << endl;
+        Logger::logLine(name + ": Setting max search depth to: " +
+                        to_string(maxSearchDepth), Verbosity::SILENT);
     }
     resetStats();
-    cout << name << ": ...finished" << endl;
+    Logger::logLine(name + ": ...finished", Verbosity::NORMAL);
 }
 
 void IDS::createMinimalLookaheadSearch() {
@@ -272,15 +274,16 @@ bool IDS::moreIterations(int const& stepsToGo) {
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         if (maxSearchDepth == 1) {
-            cout << name << ": Timeout violated (" << time
-                 << "s) on minimal search depth. "
-                 << " Cannot decrease max search depth anymore."
-                 << "Replacing IDS with minimal lookahead search." << endl;
+            Logger::logLine(
+                name + ": Timeout violated (" + to_string(time) + "s). " +
+                "on minimal search depth. Cannot decrease max search depth " +
+                "anymore. Replacing IDS with minimal lookahead search.",
+                Verbosity::SILENT);
             createMinimalLookaheadSearch();
         } else {
-            cout << name << ": Timeout violated (" << time
-                 << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
-                 << endl;
+            Logger::logLine(name + ": Timeout violated (" + to_string(time) +
+                            "s). Setting max search depth to: " +
+                            to_string(stepsToGo - 1), Verbosity::SILENT);
             setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
@@ -315,15 +318,16 @@ bool IDS::moreIterations(int const& stepsToGo,
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         if (maxSearchDepth == 1) {
-            cout << name << ": Timeout violated (" << time
-                 << "s) on minimal search depth. "
-                 << " Cannot decrease max search depth anymore."
-                 << "Replacing IDS with minimal lookahead search." << endl;
+            Logger::logLine(
+                name + ": Timeout violated (" + to_string(time) + "s). " +
+                "on minimal search depth. Cannot decrease max search depth " +
+                "anymore. Replacing IDS with minimal lookahead search.",
+                Verbosity::SILENT);
             createMinimalLookaheadSearch();
         } else {
-            cout << name << ": Timeout violated (" << time
-                 << "s). Setting max search depth to " << (stepsToGo - 1) << "!"
-                 << endl;
+            Logger::logLine(name + ": Timeout violated (" + to_string(time) +
+                            "s). Setting max search depth to: " +
+                            to_string(stepsToGo - 1), Verbosity::SILENT);
             setMaxSearchDepth(stepsToGo - 1);
         }
         return false;
@@ -364,17 +368,19 @@ void IDS::printStats(
     SearchEngine::printStats(printRoundStats, indent);
     if (mlh) {
         mlh->printStats(printRoundStats, indent);
-        Logger::log(indent + "Cache hits of IDS: " + to_string(cacheHits));
+        Logger::logLine(indent + "Cache hits of IDS: " + to_string(cacheHits),
+                        Verbosity::NORMAL);
     } else {
         if (numberOfRuns > 0) {
             double avg = static_cast<double>(accumulatedSearchDepth) /
                          numberOfRuns;
-            Logger::log(indent + "Average search depth: " +
-                        to_string(avg) + " (in " + to_string(numberOfRuns) +
-                        " runs)");
+            Logger::logLine(indent + "Average search depth: " +
+                            to_string(avg) + " (in " + to_string(numberOfRuns) +
+                            " runs)", Verbosity::NORMAL);
         }
-        Logger::log(indent + "Maximal search depth: " +
-                    to_string(maxSearchDepth));
-        Logger::log(indent + "Cache hits: " + to_string(cacheHits));
+        Logger::logLine(indent + "Maximal search depth: " +
+                        to_string(maxSearchDepth), Verbosity::NORMAL);
+        Logger::logLine(indent + "Cache hits: " + to_string(cacheHits),
+                        Verbosity::NORMAL);
     }
 }
