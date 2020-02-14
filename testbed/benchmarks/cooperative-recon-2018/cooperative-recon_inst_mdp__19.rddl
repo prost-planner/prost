@@ -179,7 +179,7 @@ instance cooperative-recon_inst_mdp__19 {
     };
 
     init-state { 
-        agent-at(a00, x05, y-1);
+        agent-at(a00, x05, y01);
         agent-at(a01, x00, y00);
 
     };
