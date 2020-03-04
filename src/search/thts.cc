@@ -651,40 +651,41 @@ void THTS::printConfig(std::string indent) const {
 
     switch(terminationMethod) {
         case TerminationMethod::TIME:
-            Logger::logLine(indent + "termination method: TIME",
+            Logger::logLine(indent + "Termination method: TIME",
                             Verbosity::VERBOSE);
-            Logger::logLine(indent + "timeout: " + std::to_string(timeout),
+            Logger::logLine(indent + "Timeout: " + std::to_string(timeout),
                             Verbosity::VERBOSE);
             break;
         case TerminationMethod::NUMBER_OF_TRIALS:
-            Logger::logLine(indent + "termination method: NUM TRIALS",
+            Logger::logLine(indent + "Termination method: NUM TRIALS",
                             Verbosity::VERBOSE);
             Logger::logLine(
-                indent + "max num trials: " + std::to_string(maxNumberOfTrials),
+                indent + "Max num trials: " + std::to_string(maxNumberOfTrials),
                 Verbosity::VERBOSE);
             break;
         case TerminationMethod::TIME_AND_NUMBER_OF_TRIALS:
             Logger::logLine(
-                indent + "termination method: TIME AND NUM TRIALS",
+                indent + "Termination method: TIME AND NUM TRIALS",
                 Verbosity::VERBOSE);
-            Logger::logLine(indent + "timeout: " + std::to_string(timeout),
-                            Verbosity::VERBOSE);
             Logger::logLine(
-                indent + "max num trials: " + std::to_string(maxNumberOfTrials),
+                indent + "Timeout: " + std::to_string(timeout),
+                Verbosity::VERBOSE);
+            Logger::logLine(
+                indent + "Max num trials: " + std::to_string(maxNumberOfTrials),
                 Verbosity::VERBOSE);
             break;
     }
     Logger::logLine(
-        indent + "max num search nodes: " + std::to_string(maxNumberOfNodes),
+        indent + "Max num search nodes: " + std::to_string(maxNumberOfNodes),
         Verbosity::VERBOSE);
     Logger::logLine(
-        indent + "node pool size: " + std::to_string(nodePool.size()),
+        indent + "Node pool size: " + std::to_string(nodePool.size()),
         Verbosity::VERBOSE);
 
     actionSelection->printConfig(indent);
     outcomeSelection->printConfig(indent);
-    Logger::logLine(indent + "trial length: CountDecisionNodes", Verbosity::VERBOSE);
-    Logger::logLine(indent + "  decision node count: " +
+    Logger::logLine(indent + "Trial length: CountDecisionNodes", Verbosity::VERBOSE);
+    Logger::logLine(indent + "  Decision node count: " +
                     std::to_string(numberOfNewDecisionNodesPerTrial),
                     Verbosity::VERBOSE);
     initializer->printConfig(indent);

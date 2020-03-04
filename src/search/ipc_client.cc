@@ -414,7 +414,8 @@ void IPCClient::executeParser(string const& taskDesc) {
 #else
     std::string parserExec = "./rddl-parser-debug ";
 #endif
-    Logger::log("RUNNING RDDL PARSER AT " + parserExec, Verbosity::NORMAL);
+    Logger::logLine(
+        "Running RDDL parser at " + parserExec, Verbosity::VERBOSE);
     // Generate temporary input file for parser
     std::ofstream taskFile;
     stringstream taskFileNameStream;

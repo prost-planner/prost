@@ -214,26 +214,26 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
 }
 
 void SearchEngine::printConfig(string indent) const {
-    Logger::logLine(indent + "configuration of " + name + ":",
+    Logger::logLine(indent + "Configuration of " + name + ":",
                     Verbosity::VERBOSE);
     indent += "  ";
     if (cachingEnabled) {
-        Logger::logLine(indent + "caching: enabled", Verbosity::VERBOSE);
+        Logger::logLine(indent + "Caching: enabled", Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "caching: disabled", Verbosity::VERBOSE);
+        Logger::logLine(indent + "Caching: disabled", Verbosity::VERBOSE);
     }
     if (useRewardLockDetection) {
-        Logger::logLine(indent + "reward lock detection: enabled",
+        Logger::logLine(indent + "Reward lock detection: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "reward lock detection: disabled",
+        Logger::logLine(indent + "Reward lock detection: disabled",
                         Verbosity::VERBOSE);
     }
     if (cacheRewardLocks) {
-        Logger::logLine(indent + "reward lock caching: enabled",
+        Logger::logLine(indent + "Reward lock caching: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "reward lock caching: enabled",
+        Logger::logLine(indent + "Reward lock caching: enabled",
                         Verbosity::VERBOSE);
     }
 }

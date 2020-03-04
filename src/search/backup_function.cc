@@ -206,21 +206,21 @@ void PBBackupFunction::backupChanceNode(SearchNode* node,
 }
 
 void BackupFunction::printConfig(std::string indent) const {
-    Logger::logLine(indent + "backup function: " + name, Verbosity::VERBOSE);
+    Logger::logLine(indent + "Backup function: " + name, Verbosity::VERBOSE);
 
     indent += "  ";
     if (useSolveLabeling) {
-        Logger::logLine(indent + "solve labeling: enabled",
+        Logger::logLine(indent + "Solve labeling: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "solve labeling: disabled",
+        Logger::logLine(indent + "Solve labeling: disabled",
                         Verbosity::VERBOSE);
     }
     if (useBackupLock) {
-        Logger::logLine(indent + "backup lock: enabled",
+        Logger::logLine(indent + "Backup lock: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "backup lock: disabled",
+        Logger::logLine(indent + "Backup lock: disabled",
                         Verbosity::VERBOSE);
     }
 }

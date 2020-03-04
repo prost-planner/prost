@@ -85,7 +85,8 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
     }
 }
 
-void ProstPlanner::setSeed(int seed) {
+void ProstPlanner::setSeed(int _seed) {
+    seed = _seed;
     MathUtils::rnd->seed(seed);
 }
 
@@ -116,8 +117,7 @@ void ProstPlanner::init() {
     Logger::logLine("Final task: ", Verbosity::VERBOSE);
     SearchEngine::printTask();
 
-    Logger::logSeparator(Verbosity::VERBOSE);
-    searchEngine->printConfig("");
+    printConfig();
 }
 
 vector<string> ProstPlanner::plan() {
@@ -343,6 +343,46 @@ void ProstPlanner::manageTimeouts(long const& remainingTime) {
                     to_string(timeForThisStep) + "s.", Verbosity::NORMAL);
 
     searchEngine->setTimeout(timeForThisStep);
+}
+
+void ProstPlanner::printConfig() const {
+    Logger::logSeparator(Verbosity::VERBOSE);
+    Logger::logLine("Configuration of PROST planner:", Verbosity::VERBOSE);
+    Logger::logLine(
+        "  Random seed: " + std::to_string(seed), Verbosity::VERBOSE);
+    Logger::logLine(
+        "  RAM limit: " + std::to_string(ramLimit), Verbosity::VERBOSE);
+    Logger::logLine(
+        "  Bit size: " + std::to_string(bitSize), Verbosity::VERBOSE);
+
+    switch(tmMethod) {
+        case UNIFORM:
+            Logger::logLine("  Timeout method: UNIFORM", Verbosity::VERBOSE);
+            break;
+        case NONE:
+            Logger::logLine("  Timeout method: NONE", Verbosity::VERBOSE);
+            break;
+    }
+    switch (Logger::runVerbosity) {
+        case Verbosity::SUPPRESS:
+            SystemUtils::abort("ERROR: Log level must not be SUPPRESS!");
+            break;
+        case Verbosity::SILENT:
+            Logger::logLine("  Log level: SILENT", Verbosity::VERBOSE);
+            break;
+        case Verbosity::NORMAL:
+            Logger::logLine("  Log level: NORMAL", Verbosity::VERBOSE);
+            break;
+        case Verbosity::VERBOSE:
+            Logger::logLine("  Log level: VERBOSE", Verbosity::VERBOSE);
+            break;
+        case Verbosity::DEBUG:
+            Logger::logLine("  Log level: VERBOSE", Verbosity::DEBUG);
+            break;
+    }
+
+    Logger::logLine("", Verbosity::VERBOSE);
+    searchEngine->printConfig("  ");
 }
 
 void ProstPlanner::resetStaticMembers() {

@@ -49,7 +49,7 @@ RecommendationFunction* RecommendationFunction::fromString(std::string& desc,
 }
 
 void RecommendationFunction::printConfig(std::string indent) const {
-    Logger::logLine(indent + "recommendation function: " + name, Verbosity::VERBOSE);
+    Logger::logLine(indent + "Recommendation function: " + name, Verbosity::VERBOSE);
 }
 
 /******************************************************************

@@ -313,17 +313,17 @@ bool UCB1ActionSelection::setValueFromString(std::string& param,
 ******************************************************************/
 
 void ActionSelection::printConfig(std::string indent) const {
-    Logger::logLine(indent + "action selection: " + name, Verbosity::VERBOSE);
+    Logger::logLine(indent + "Action selection: " + name, Verbosity::VERBOSE);
 
     indent += "  ";
     if (selectLeastVisitedActionInRoot) {
-        Logger::logLine(indent + "uniform selection in root state: enabled",
+        Logger::logLine(indent + "Uniform selection in root state: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "uniform selection in root state: disabled",
+        Logger::logLine(indent + "Uniform selection in root state: disabled",
                         Verbosity::VERBOSE);
     }
-    Logger::logLine(indent + "maximal visit difference factor: " +
+    Logger::logLine(indent + "Maximal visit difference factor: " +
                     std::to_string(maxVisitDiff), Verbosity::VERBOSE);
 }
 
@@ -333,25 +333,25 @@ void UCB1ActionSelection::printConfig(std::string indent) const {
     indent += "  ";
     switch (explorationRate) {
         case LOG:
-            Logger::logLine(indent + "exploration rate: LOG",
+            Logger::logLine(indent + "Exploration rate: LOG",
                             Verbosity::VERBOSE);
             break;
         case SQRT:
-            Logger::logLine(indent + "exploration rate: SQRT",
+            Logger::logLine(indent + "Exploration rate: SQRT",
                             Verbosity::VERBOSE);
             break;
         case LIN:
-            Logger::logLine(indent + "exploration rate: LIN",
+            Logger::logLine(indent + "Exploration rate: LIN",
                             Verbosity::VERBOSE);
             break;
         case LNQUAD:
-            Logger::logLine(indent + "exploration rate: LNQUAD",
+            Logger::logLine(indent + "Exploration rate: LNQUAD",
                             Verbosity::VERBOSE);
             break;
     }
 
     Logger::logLine(
-        indent + "magic constant: " + std::to_string(magicConstantScaleFactor),
+        indent + "Magic constant: " + std::to_string(magicConstantScaleFactor),
         Verbosity::VERBOSE);
 }
 

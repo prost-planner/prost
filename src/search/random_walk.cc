@@ -77,6 +77,6 @@ void RandomWalk::printConfig(std::string indent) const {
     indent += "  ";
 
     Logger::logLine(
-        indent + "number of iterations: " + std::to_string(numberOfIterations),
+        indent + "Number of iterations: " + std::to_string(numberOfIterations),
         Verbosity::VERBOSE);
 }

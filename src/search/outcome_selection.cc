@@ -100,5 +100,5 @@ vector<int> UnsolvedMCOutcomeSelection::computeBlacklist(
 }
 
 void OutcomeSelection::printConfig(std::string indent) const {
-    Logger::logLine(indent + "outcome selection: " + name, Verbosity::VERBOSE);
+    Logger::logLine(indent + "Outcome selection: " + name, Verbosity::VERBOSE);
 }

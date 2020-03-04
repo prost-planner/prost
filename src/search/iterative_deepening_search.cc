@@ -81,7 +81,7 @@ void IDS::disableCaching() {
 
 void IDS::learn() {
     dfs->learn();
-    Logger::logLine(name + ": learning...", Verbosity::NORMAL);
+    Logger::logLine(name + ": learning...", Verbosity::VERBOSE);
 
     isLearning = true;
     bool cachingEnabledBeforeLearning = cachingIsEnabled();
@@ -115,7 +115,7 @@ void IDS::learn() {
             Logger::logLine(
                 name + ": Search Depth " + to_string(index) + ": " +
                 to_string(timeSum) + " / " + to_string(times.size()) +
-                " = " + to_string(avgTime), Verbosity::NORMAL);
+                " = " + to_string(avgTime), Verbosity::VERBOSE);
             if (MathUtils::doubleIsGreaterOrEqual(avgTime, timeout)) {
                 break;
             }
@@ -133,7 +133,7 @@ void IDS::learn() {
         Logger::logLine(name + ": Setting max search depth to: " +
                         to_string(maxSearchDepth), Verbosity::SILENT);
     }
-    Logger::logLine(name + ": ...finished", Verbosity::NORMAL);
+    Logger::logLine(name + ": ...finished", Verbosity::VERBOSE);
 }
 
 void IDS::initRound() {
@@ -392,18 +392,18 @@ void IDS::printConfig(std::string indent) const {
     SearchEngine::printConfig(indent);
     indent += "  ";
 
-    Logger::logLine(indent + "max search depth: " + to_string(maxSearchDepth),
+    Logger::logLine(indent + "Max search depth: " + to_string(maxSearchDepth),
                     Verbosity::VERBOSE);
     Logger::logLine(
-        indent + "strict timeout: " + to_string(strictTerminationTimeout),
+        indent + "Strict timeout: " + to_string(strictTerminationTimeout),
         Verbosity::VERBOSE);
-    Logger::logLine(indent + "timeout: " + to_string(timeout),
+    Logger::logLine(indent + "Timeout: " + to_string(timeout),
                     Verbosity::VERBOSE);
     if (terminateWithReasonableAction) {
-        Logger::logLine(indent + "terminate with reasonable action: enabled",
+        Logger::logLine(indent + "Terminate with reasonable action: enabled",
                         Verbosity::VERBOSE);
     } else {
-        Logger::logLine(indent + "terminate with reasonable action: disabled",
+        Logger::logLine(indent + "Terminate with reasonable action: disabled",
                         Verbosity::VERBOSE);
     }
 }

@@ -39,11 +39,13 @@ public:
         searchEngine = _searchEngine;
     }
 
-    void setSeed(int seed);
+    void setSeed(int _seed);
 
     void setRAMLimit(int _ramLimit) {
         // Since we cannot guarantee that no further memory is allocated after
         // caching is disabled, we keep a buffer of 25% of the available memory
+        // TODO: We should be able to guarantee this instead and use all
+        //  available memory instead
         ramLimit = 0.75 * _ramLimit;
     }
 
@@ -66,6 +68,8 @@ private:
     // Assigns a timeout for the next decision
     void manageTimeouts(long const& remainingTime);
 
+    void printConfig() const;
+
     SearchEngine* searchEngine;
 
     State currentState;
@@ -82,6 +86,7 @@ private:
     // Parameter
     int ramLimit;
     int bitSize;
+    int seed;
     TimeoutManagementMethod tmMethod;
 
     std::vector<std::vector<double>> immediateRewards;

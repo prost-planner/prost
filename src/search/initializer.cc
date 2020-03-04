@@ -120,12 +120,12 @@ void Initializer::setMaxSearchDepth(int maxSearchDepth) {
 ******************************************************************/
 
 void Initializer::printConfig(std::string indent) const {
-    Logger::logLine(indent + "initializer: " + name, Verbosity::VERBOSE);
+    Logger::logLine(indent + "Initializer: " + name, Verbosity::VERBOSE);
 
     indent += "  ";
-    Logger::logLine(indent + "heuristic weight: " +
+    Logger::logLine(indent + "Heuristic weight: " +
                     std::to_string(heuristicWeight), Verbosity::VERBOSE);
-    Logger::logLine(indent + "number of initial visits: " +
+    Logger::logLine(indent + "Number of initial visits: " +
                     std::to_string(numberOfInitialVisits), Verbosity::VERBOSE);
     assert(heuristic);
     heuristic->printConfig(indent);

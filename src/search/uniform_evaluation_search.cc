@@ -44,6 +44,6 @@ void UniformEvaluationSearch::printConfig(std::string indent) const {
     indent += "  ";
 
     Logger::logLine(
-        indent + "initial value: " + std::to_string(initialValue),
+        indent + "Initial value: " + std::to_string(initialValue),
         Verbosity::VERBOSE);
 }
