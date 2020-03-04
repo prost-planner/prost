@@ -111,6 +111,14 @@ public:
     // Learns parameter values from a random training set
     void learn() override;
 
+    // Notify the search engine that a new round starts or ends
+    void initRound() override;
+    void finishRound() override;
+
+    // Notify the search engine that a new step starts or ends
+    void initStep(State const& current) override;
+    void finishStep() override;
+
     // Start the search engine as main search engine
     void estimateBestActions(State const& _rootState,
                              std::vector<int>& bestActions) override;
@@ -137,7 +145,7 @@ public:
     void setRecommendationFunction(
         RecommendationFunction* _recommendationFunction);
 
-    void setMaxSearchDepth(int _maxSearchDepth);
+    void setMaxSearchDepth(int _maxSearchDepth) override;
     void setTerminationMethod(THTS::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
     }
@@ -174,8 +182,9 @@ public:
     }
 
     // Print
-    void printStats(bool const& printRoundStats,
-                    std::string indent = "") const override;
+    void printConfig(std::string indent) const override;
+    void printRoundStatistics(std::string indent) const override;
+    void printStepStatistics(std::string indent) const override;
 
 private:
     // Main search functions
@@ -183,9 +192,6 @@ private:
     void visitChanceNode(SearchNode* node);
     void visitDummyChanceNode(SearchNode* node);
 
-    // Initialization of different search phases
-    void initRound();
-    void initStep(State const& _rootState);
     void initTrial();
     void initTrialStep();
 
@@ -194,8 +200,7 @@ private:
         return initializedDecisionNodes < numberOfNewDecisionNodesPerTrial;
     }
 
-    // Determines if the current state has been solved before or can be solved
-    // now
+    // Determines if the current state has been solved before
     bool currentStateIsSolved(SearchNode* node);
 
     // If the root state is a reward lock or has only one reasonable action,
@@ -264,13 +269,19 @@ private:
     int numberOfNewDecisionNodesPerTrial;
     int maxNumberOfNodes;
 
-    // Statistics
-    int numberOfRuns;
+    // Per step statistics
     int cacheHits;
-    int accumulatedNumberOfStepsToGoInFirstSolvedRootState;
-    bool firstSolvedFound;
-    int accumulatedNumberOfTrialsInRootState;
-    int accumulatedNumberOfSearchNodesInRootState;
+    double lastSearchTime;
+    bool uniquePolicyDueToLastAction;
+    bool uniquePolicyDueToRewardLock;
+    bool uniquePolicyDueToPreconds;
+
+    // Per round statistics
+    int stepsToGoInFirstSolvedState;
+    int numTrialsInInitialState;
+    int numSearchNodesInInitialState;
+    int numRewardLockStates;
+    int numSingleApplicableActionStates;
 
     // Tests which access private members
     friend class THTSTest;

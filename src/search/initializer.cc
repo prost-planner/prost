@@ -60,6 +60,7 @@ bool Initializer::setValueFromString(std::string& param, std::string& value) {
 }
 
 Initializer::~Initializer() {
+    assert(heuristic);
     delete heuristic;
 }
 
@@ -68,11 +69,33 @@ Initializer::~Initializer() {
 ******************************************************************/
 
 void Initializer::disableCaching() {
+    assert(heuristic);
     heuristic->disableCaching();
 }
 
 void Initializer::learn() {
+    assert(heuristic);
     heuristic->learn();
+}
+
+void Initializer::initRound() {
+    assert(heuristic);
+    heuristic->initRound();
+}
+
+void Initializer::finishRound() {
+    assert(heuristic);
+    heuristic->finishRound();
+}
+
+void Initializer::initStep(State const& current) {
+    assert(heuristic);
+    heuristic->initStep(current);
+}
+
+void Initializer::finishStep() {
+    assert(heuristic);
+    heuristic->finishStep();
 }
 
 /******************************************************************
@@ -84,6 +107,7 @@ void Initializer::setHeuristic(SearchEngine* _heuristic) {
         delete heuristic;
     }
     heuristic = _heuristic;
+    heuristic->prependName("THTS heuristic ");
 }
 
 void Initializer::setMaxSearchDepth(int maxSearchDepth) {
@@ -95,17 +119,26 @@ void Initializer::setMaxSearchDepth(int maxSearchDepth) {
                             Print
 ******************************************************************/
 
-void Initializer::printStats(
-        bool const& printRoundStats, std::string indent) const {
-    Logger::logLine(indent + "Initializer: " + name, Verbosity::NORMAL);
-    Logger::logLine(indent + "Heuristic weight: " +
-                    std::to_string(heuristicWeight), Verbosity::NORMAL);
-    Logger::logLine(indent + "Number of initial visits: " +
-                    std::to_string(numberOfInitialVisits), Verbosity::NORMAL);
-    if (heuristic) {
-        Logger::logLine(indent + "Heuristic:", Verbosity::NORMAL);
-        heuristic->printStats(printRoundStats, indent + "  ");
-    }
+void Initializer::printConfig(std::string indent) const {
+    Logger::logLine(indent + "initializer: " + name, Verbosity::VERBOSE);
+
+    indent += "  ";
+    Logger::logLine(indent + "heuristic weight: " +
+                    std::to_string(heuristicWeight), Verbosity::VERBOSE);
+    Logger::logLine(indent + "number of initial visits: " +
+                    std::to_string(numberOfInitialVisits), Verbosity::VERBOSE);
+    assert(heuristic);
+    heuristic->printConfig(indent);
+}
+
+void Initializer::printStepStatistics(std::string indent) const {
+    assert(heuristic);
+    heuristic->printStepStatistics(indent);
+}
+
+void Initializer::printRoundStatistics(std::string indent) const {
+    assert(heuristic);
+    heuristic->printRoundStatistics(indent);
 }
 
 /******************************************************************

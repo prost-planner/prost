@@ -34,9 +34,12 @@ public:
     virtual void disableCaching() {}
 
     virtual void initRound() {
-        exploreInRoot = 0;
-        exploitInRoot = 0;
+        // Reset per round statistics
+        percentageExplorationInInitialState = 0.0;
     }
+    virtual void finishRound() {}
+    virtual void initStep();
+    virtual void finishStep();
     virtual void initTrial() {}
 
     // Action selection
@@ -49,17 +52,25 @@ public:
     void selectActionBasedOnVisitDifference(SearchNode* node);
 
     // Prints statistics
-    virtual void printStats(std::string indent);
+    virtual void printConfig(std::string indent) const;
+    virtual void printStepStatistics(std::string indent) const;
+    virtual void printRoundStatistics(std::string indent) const;
 
 protected:
-    ActionSelection(THTS* _thts)
+    ActionSelection(THTS* _thts, std::string _name)
         : thts(_thts),
+          name(_name),
           selectLeastVisitedActionInRoot(false),
           maxVisitDiff(50),
-          exploreInRoot(0),
-          exploitInRoot(0) {}
+          currentRootNode(nullptr),
+          numExplorationInRoot(0),
+          numExploitationInRoot(0),
+          percentageExplorationInInitialState(0.0) {}
 
     THTS* thts;
+
+    // Name, used for output only
+    std::string name;
 
     // Vector for decision node children of equal quality
     std::vector<int> bestActionIndices;
@@ -71,13 +82,20 @@ protected:
     // one with the lowest number of visits
     int maxVisitDiff;
 
-    int exploreInRoot;
-    int exploitInRoot;
+    SearchNode const* currentRootNode;
+
+    // Per step statistics
+    int numExplorationInRoot;
+    int numExploitationInRoot;
+
+    // Per round statistics
+    double percentageExplorationInInitialState;
 };
 
 class BFSActionSelection : public ActionSelection {
 public:
-    BFSActionSelection(THTS* _thts) : ActionSelection(_thts) {}
+    BFSActionSelection(THTS* _thts)
+        : ActionSelection(_thts, "BFS action selection") {}
 
     // Action selection
     void _selectAction(SearchNode* node) override {
@@ -91,12 +109,12 @@ public:
     enum ExplorationRate { LOG, SQRT, LIN, LNQUAD };
 
     UCB1ActionSelection(THTS* _thts)
-        : ActionSelection(_thts),
+        : ActionSelection(_thts, "UCB1 action selection"),
           explorationRate(LOG),
           magicConstantScaleFactor(1.0) {}
 
     // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // Parameter setter
     virtual void setMagicConstantScaleFactor(double _magicConstantScaleFactor) {
@@ -109,6 +127,9 @@ public:
 
     // Action selection
     void _selectAction(SearchNode* node) override;
+
+    // Printer
+    void printConfig(std::string indent) const override;
 
 protected:
     // Parameter

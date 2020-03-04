@@ -26,20 +26,26 @@ public:
     // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}
 
-    virtual void initRound() {}
-
     virtual void recommend(SearchNode const* rootNode,
                            std::vector<int>& bestActions) = 0;
+    // Prints statistics
+    virtual void printConfig(std::string indent) const;
 
 protected:
-    RecommendationFunction(THTS* thts) : thts(thts) {}
+    RecommendationFunction(THTS* _thts, std::string _name)
+        : thts(_thts),
+          name(_name) {}
 
     THTS* thts;
+
+    // Name, used for output only
+    std::string name;
 };
 
 class ExpectedBestArmRecommendation : public RecommendationFunction {
 public:
-    ExpectedBestArmRecommendation(THTS* thts) : RecommendationFunction(thts) {}
+    ExpectedBestArmRecommendation(THTS* _thts)
+        : RecommendationFunction(_thts, "EBA recommendation function") {}
 
     void recommend(SearchNode const* rootNode,
                    std::vector<int>& bestActions) override;
@@ -47,7 +53,8 @@ public:
 
 class MostPlayedArmRecommendation : public RecommendationFunction {
 public:
-    MostPlayedArmRecommendation(THTS* thts) : RecommendationFunction(thts) {}
+    MostPlayedArmRecommendation(THTS* _thts)
+        : RecommendationFunction(_thts, "MPA recommendation function") {}
 
     void recommend(SearchNode const* rootNode,
                    std::vector<int>& bestActions) override;

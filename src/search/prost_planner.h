@@ -39,7 +39,7 @@ public:
         searchEngine = _searchEngine;
     }
 
-    void setSeed(int _seed);
+    void setSeed(int seed);
 
     void setRAMLimit(int _ramLimit) {
         // Since we cannot guarantee that no further memory is allocated after
@@ -82,7 +82,6 @@ private:
     // Parameter
     int ramLimit;
     int bitSize;
-    int seed;
     TimeoutManagementMethod tmMethod;
 
     std::vector<std::vector<double>> immediateRewards;

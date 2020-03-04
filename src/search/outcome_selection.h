@@ -26,6 +26,9 @@ public:
     virtual void disableCaching() {}
 
     virtual void initRound() {}
+    virtual void finishRound() {}
+    virtual void initStep() {}
+    virtual void finishStep() {}
     virtual void initTrial() {}
 
     // Outcome selection
@@ -33,17 +36,25 @@ public:
                                       int varIndex, int lastProbVarIndex) = 0;
 
     // Prints statistics
-    virtual void printStats(std::string /*indent*/) {}
+    virtual void printConfig(std::string indent) const;
+    virtual void printStepStatistics(std::string /*indent*/) const {}
+    virtual void printRoundStatistics(std::string /*indent*/) const {}
 
 protected:
-    OutcomeSelection(THTS* _thts) : thts(_thts) {}
+    OutcomeSelection(THTS* _thts, std::string _name)
+        : thts(_thts),
+          name(_name) {}
 
     THTS* thts;
+
+    // Name, used for output only
+    std::string name;
 };
 
 class MCOutcomeSelection : public OutcomeSelection {
 public:
-    MCOutcomeSelection(THTS* _thts) : OutcomeSelection(_thts) {}
+    MCOutcomeSelection(THTS* _thts)
+        : OutcomeSelection(_thts, "MonteCarlo outcome selection") {}
 
     SearchNode* selectOutcome(SearchNode* node, PDState& nextState,
                               int varIndex, int lastProbVarIndex) override;
@@ -59,7 +70,10 @@ public:
 
 class UnsolvedMCOutcomeSelection : public MCOutcomeSelection {
 public:
-    UnsolvedMCOutcomeSelection(THTS* _thts) : MCOutcomeSelection(_thts) {}
+    UnsolvedMCOutcomeSelection(THTS* _thts)
+        : MCOutcomeSelection(_thts) {
+        name = "UnsolvedMonteCarlo outcome selection";
+    }
 
     // Unsolved outcome selection ignores values which are already solved.
     std::vector<int> computeBlacklist(SearchNode* node,

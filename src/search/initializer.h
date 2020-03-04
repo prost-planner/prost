@@ -25,7 +25,10 @@ public:
     // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching();
 
-    virtual void initRound() {}
+    virtual void initRound();
+    virtual void finishRound();
+    virtual void initStep(State const& current);
+    virtual void finishStep();
     virtual void initTrial() {}
 
     // Parameter setter
@@ -39,12 +42,12 @@ public:
         numberOfInitialVisits = _numberOfInitialVisits;
     }
 
-    // Functions that pass/return parameters to/from the used heuristic
     virtual void setMaxSearchDepth(int maxSearchDepth);
 
     // Print
-    virtual void printStats(
-            bool const& printRoundStats, std::string indent = "") const;
+    virtual void printConfig(std::string indent) const;
+    virtual void printStepStatistics(std::string indent) const;
+    virtual void printRoundStatistics(std::string indent) const;
 
     // Initialize (or continue to initialize) node
     virtual void initialize(SearchNode* node, State const& current) = 0;
@@ -68,14 +71,14 @@ protected:
 
 class ExpandNodeInitializer : public Initializer {
 public:
-    ExpandNodeInitializer(THTS* _thts) : Initializer(_thts, "ExpandNode") {}
+    ExpandNodeInitializer(THTS* _thts) : Initializer(_thts, "ExpandNode initializer") {}
 
     void initialize(SearchNode* node, State const& current) override;
 };
 
 class SingleChildInitializer : public Initializer {
 public:
-    SingleChildInitializer(THTS* _thts) : Initializer(_thts, "SingleChild") {}
+    SingleChildInitializer(THTS* _thts) : Initializer(_thts, "SingleChild initializer") {}
 
     void initialize(SearchNode* node, State const& current) override;
 };

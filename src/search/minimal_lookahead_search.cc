@@ -7,7 +7,10 @@ using namespace std;
 MinimalLookaheadSearch::HashMap MinimalLookaheadSearch::rewardCache;
 
 MinimalLookaheadSearch::MinimalLookaheadSearch()
-    : DeterministicSearchEngine("MLS"), numberOfRuns(0), cacheHits(0) {
+    : DeterministicSearchEngine("MLS"),
+      numberOfRuns(0),
+      cacheHits(0),
+      numberOfRunsInCurrentRound(0) {
     if (rewardCache.bucket_count() < 520241) {
         rewardCache.reserve(520241);
     }
@@ -136,8 +139,21 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
     }
 }
 
-void MinimalLookaheadSearch::printStats(bool const& /*printRoundStats*/,
-                                        string indent) const {
-    Logger::logLine(indent + "Cache hits: " + to_string(cacheHits) + " (in " +
-                    to_string(numberOfRuns) + " runs)", Verbosity::NORMAL);
+void MinimalLookaheadSearch::printRoundStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Total number of runs: " +
+        to_string(numberOfRunsInCurrentRound),
+        Verbosity::SILENT);
+}
+
+void MinimalLookaheadSearch::printStepStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " step statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Number of runs: " + to_string(numberOfRuns),
+        Verbosity::NORMAL);
+    Logger::logLine(
+        indent + "Cache hits: " + to_string(cacheHits), Verbosity::VERBOSE);
 }

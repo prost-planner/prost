@@ -776,7 +776,8 @@ void Preprocessor::determinize() {
     for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
         if (task->CPFs[index]->isProbabilistic()) {
             task->CPFs[index]->determinization =
-                task->CPFs[index]->formula->determinizeMostLikely(task->actionStates);
+                task->CPFs[index]->formula->determinizeMostLikely(
+                    task->actionStates);
             task->CPFs[index]->determinization =
                 task->CPFs[index]->determinization->simplify(replacementsDummy);
         }
@@ -784,7 +785,7 @@ void Preprocessor::determinize() {
 }
 
 /*****************************************************************
-               Calculation of non-trivial properties
+           Compute Candidates for Final Action
 *****************************************************************/
 
 void Preprocessor::determineTaskProperties() {
@@ -1132,6 +1133,10 @@ long Preprocessor::calculateStateFluentHashKey(Evaluatable* eval,
     }
     return res;
 }
+
+/*****************************************************************
+                   Compute Bounds on Reward
+*****************************************************************/
 
 void Preprocessor::calculateMinAndMaxReward() const {
     // Compute the domain of the rewardCPF for deadend / goal detection (we only

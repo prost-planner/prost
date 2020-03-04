@@ -213,6 +213,31 @@ bool SearchEngine::setValueFromString(string& param, string& value) {
     return false;
 }
 
+void SearchEngine::printConfig(string indent) const {
+    Logger::logLine(indent + "configuration of " + name + ":",
+                    Verbosity::VERBOSE);
+    indent += "  ";
+    if (cachingEnabled) {
+        Logger::logLine(indent + "caching: enabled", Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "caching: disabled", Verbosity::VERBOSE);
+    }
+    if (useRewardLockDetection) {
+        Logger::logLine(indent + "reward lock detection: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "reward lock detection: disabled",
+                        Verbosity::VERBOSE);
+    }
+    if (cacheRewardLocks) {
+        Logger::logLine(indent + "reward lock caching: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "reward lock caching: enabled",
+                        Verbosity::VERBOSE);
+    }
+}
+
 /******************************************************************
                        Main Search Functions
 ******************************************************************/
@@ -495,11 +520,6 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
 /******************************************************************
                    Statistics and Prints
 ******************************************************************/
-
-void SearchEngine::printStats(bool const& /*printRoundStats*/,
-                              string indent) const {
-    Logger::logLine(indent + "Statistics of " + name + ":", Verbosity::NORMAL);
-}
 
 void SearchEngine::printTask() {
     std::cout.unsetf(std::ios::floatfield);

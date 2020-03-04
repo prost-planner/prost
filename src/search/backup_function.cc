@@ -111,13 +111,6 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
     // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
-void BackupFunction::printStats( std::string indent) {
-    if (useBackupLock) {
-        Logger::logLine(indent + "Skipped backups: " +
-                        std::to_string(skippedBackups), Verbosity::NORMAL);
-    }
-}
-
 /******************************************************************
                        Monte-Carlo Backups
 ******************************************************************/
@@ -210,4 +203,48 @@ void PBBackupFunction::backupChanceNode(SearchNode* node,
 
     // Logger::logLine("updated chance node:", Verbosity::DEBUG);
     // Logger::logLine(node->toString(), Verbosity::DEBUG);
+}
+
+void BackupFunction::printConfig(std::string indent) const {
+    Logger::logLine(indent + "backup function: " + name, Verbosity::VERBOSE);
+
+    indent += "  ";
+    if (useSolveLabeling) {
+        Logger::logLine(indent + "solve labeling: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "solve labeling: disabled",
+                        Verbosity::VERBOSE);
+    }
+    if (useBackupLock) {
+        Logger::logLine(indent + "backup lock: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "backup lock: disabled",
+                        Verbosity::VERBOSE);
+    }
+}
+
+void MCBackupFunction::printConfig(std::string indent) const {
+    BackupFunction::printConfig(indent);
+
+    indent += "  ";
+    Logger::logLine(indent + "initial learning rate: " +
+                    std::to_string(initialLearningRate),
+                    Verbosity::VERBOSE);
+    Logger::logLine(indent + "learning rate decay: " +
+                    std::to_string(learningRateDecay),
+                    Verbosity::VERBOSE);
+}
+
+void BackupFunction::printStepStatistics(std::string indent) const {
+    if (useBackupLock) {
+        Logger::logLine(
+            indent + name + " step statistics:", Verbosity::VERBOSE);
+        indent += "  ";
+        Logger::logLine(
+            indent + "Skipped backups: " + std::to_string(skippedBackups),
+            Verbosity::VERBOSE);
+        Logger::logLine("", Verbosity::VERBOSE);
+    }
 }

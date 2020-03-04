@@ -21,10 +21,6 @@ std::string SearchNode::toString() const {
     return ss.str();
 }
 
-/******************************************************************
-                     Search Engine Creation
-******************************************************************/
-
 THTS::THTS(std::string _name)
     : ProbabilisticSearchEngine(_name),
       actionSelection(nullptr),
@@ -46,12 +42,15 @@ THTS::THTS(std::string _name)
       terminationMethod(THTS::TIME),
       maxNumberOfTrials(0),
       numberOfNewDecisionNodesPerTrial(1),
-      numberOfRuns(0),
       cacheHits(0),
-      accumulatedNumberOfStepsToGoInFirstSolvedRootState(0),
-      firstSolvedFound(false),
-      accumulatedNumberOfTrialsInRootState(0),
-      accumulatedNumberOfSearchNodesInRootState(0) {
+      uniquePolicyDueToLastAction(false),
+      uniquePolicyDueToRewardLock(false),
+      uniquePolicyDueToPreconds(false),
+      stepsToGoInFirstSolvedState(-1),
+      numTrialsInInitialState(0),
+      numSearchNodesInInitialState(0),
+      numRewardLockStates(0),
+      numSingleApplicableActionStates(0) {
     setMaxNumberOfNodes(24000000);
     setTimeout(1.0);
     setRecommendationFunction(new ExpectedBestArmRecommendation(this));
@@ -147,10 +146,6 @@ void THTS::setRecommendationFunction(
     recommendationFunction = _recommendationFunction;
 }
 
-/******************************************************************
-                 Search Engine Administration
-******************************************************************/
-
 void THTS::disableCaching() {
     actionSelection->disableCaching();
     outcomeSelection->disableCaching();
@@ -179,22 +174,31 @@ void THTS::learn() {
     Logger::logLine(name + ": ...finished");
 }
 
-/******************************************************************
-                 Initialization of search phases
-******************************************************************/
-
 void THTS::initRound() {
-    firstSolvedFound = false;
+    // Reset per round statistics
+    stepsToGoInFirstSolvedState = -1;
+    numTrialsInInitialState = 0;
+    numSearchNodesInInitialState = 0;
+    numRewardLockStates = 0;
+    numSingleApplicableActionStates = 0;
 
+    // Notify ingredients of new round
     actionSelection->initRound();
     outcomeSelection->initRound();
     backupFunction->initRound();
     initializer->initRound();
-    recommendationFunction->initRound();
 }
 
-void THTS::initStep(State const& _rootState) {
-    PDState rootState(_rootState);
+void THTS::finishRound() {
+    // Notify ingredients of end of round
+    actionSelection->finishRound();
+    outcomeSelection->finishRound();
+    backupFunction->finishRound();
+    initializer->finishRound();
+}
+
+void THTS::initStep(State const& current) {
+    PDState rootState(current);
     // Adjust maximal search depth and set root state
     if (rootState.stepsToGo() > maxSearchDepth) {
         maxSearchDepthForThisStep = maxSearchDepth;
@@ -212,15 +216,36 @@ void THTS::initStep(State const& _rootState) {
     stepsToGoInNextState = maxSearchDepthForThisStep - 1;
     states[stepsToGoInNextState].reset(stepsToGoInNextState);
 
-    // Reset step dependent counter
     currentTrial = 0;
-    cacheHits = 0;
 
-    // Reset search nodes and create root node
+    // Reset per step statistics
+    cacheHits = 0;
+    lastSearchTime = 0.0;
+    uniquePolicyDueToLastAction = false;
+    uniquePolicyDueToRewardLock = false;
+    uniquePolicyDueToPreconds = false;
+
+    // Create root node
     currentRootNode = createRootNode();
 
-    Logger::logLine(name + ": Maximal search depth set to " +
-                    std::to_string(maxSearchDepthForThisStep));
+    // Notify ingredients of new step
+    actionSelection->initStep();
+    outcomeSelection->initStep();
+    backupFunction->initStep();
+    initializer->initStep(current);
+}
+
+void THTS::finishStep() {
+    if (uniquePolicyDueToRewardLock) {
+        ++numRewardLockStates;
+    } else if (uniquePolicyDueToPreconds) {
+        ++numSingleApplicableActionStates;
+    }
+
+    actionSelection->finishStep();
+    outcomeSelection->finishStep();
+    backupFunction->finishStep();
+    initializer->finishStep();
 }
 
 inline void THTS::initTrial() {
@@ -234,7 +259,7 @@ inline void THTS::initTrial() {
     trialReward = 0.0;
     tipNodeOfTrial = nullptr;
 
-    // Init trial in ingredients
+    // Notify ingredients of new trial
     actionSelection->initTrial();
     outcomeSelection->initTrial();
     backupFunction->initTrial();
@@ -247,43 +272,21 @@ inline void THTS::initTrialStep() {
     states[stepsToGoInNextState].reset(stepsToGoInNextState);
 }
 
-/******************************************************************
-                       Main Search Functions
-******************************************************************/
-
-void THTS::estimateBestActions(State const& _rootState,
+void THTS::estimateBestActions(State const& /*_rootState*/,
                                std::vector<int>& bestActions) {
     assert(bestActions.empty());
-
     stopwatch.reset();
-
-    // Init round (if this is the first call in a round)
-    if (_rootState.stepsToGo() == SearchEngine::horizon) {
-        initRound();
-    }
-
-    // Init step (this function is currently only called once per step) TODO:
-    // maybe we should call initRound, initStep and printStats from "outside"
-    // such that we can also use this as a heuristic without generating too much
-    // output
-    initStep(_rootState);
 
     // Check if there is an obviously optimal policy (as, e.g., in the last step
     // or in a reward lock)
     int uniquePolicyOpIndex = getUniquePolicy();
     if (uniquePolicyOpIndex != -1) {
-        ActionState const& action = SearchEngine::actionStates[uniquePolicyOpIndex];
-        Logger::logLine("Returning unique policy: " + action.toCompactString(),
-                        Verbosity::NORMAL);
-        Logger::logLine("", Verbosity::NORMAL);
         bestActions.push_back(uniquePolicyOpIndex);
         currentRootNode = nullptr;
-        printStats(_rootState.stepsToGo() == 1);
         return;
     }
 
-    // Start the main loop that starts trials until some termination criterion
-    // is fullfilled
+    // Perform trials until some termination criterion is fullfilled
     while (moreTrials()) {
         // Logger::logSeparator(Verbosity::DEBUG);
         // Logger::logLine("TRIAL " + std::to_string(currentTrial+1),
@@ -305,28 +308,23 @@ void THTS::estimateBestActions(State const& _rootState,
     recommendationFunction->recommend(currentRootNode, bestActions);
     assert(!bestActions.empty());
 
+    int stepsToGo = currentRootNode->stepsToGo;
     // Update statistics
-    ++numberOfRuns;
-
-    if (currentRootNode->solved && !firstSolvedFound) {
+    if (currentRootNode->solved && (stepsToGoInFirstSolvedState == -1)) {
         // TODO: This is the first root state that was solved, so everything
-        // that could happen in the future is also solved. We should (at least
-        // in this case) make sure that we keep the tree and simply follow the
-        // optimal policy.
-        firstSolvedFound = true;
-        accumulatedNumberOfStepsToGoInFirstSolvedRootState +=
-            _rootState.stepsToGo();
+        //  that could happen in the future is also solved. We should (at least
+        //  in this case) make sure that we keep the tree and simply follow the
+        //  optimal policy.
+        stepsToGoInFirstSolvedState = stepsToGo;
     }
 
-    if (_rootState.stepsToGo() == SearchEngine::horizon) {
-        accumulatedNumberOfTrialsInRootState += currentTrial;
-        accumulatedNumberOfSearchNodesInRootState += lastUsedNodePoolIndex;
+    if (stepsToGo == SearchEngine::horizon) {
+        numTrialsInInitialState = currentTrial;
+        numSearchNodesInInitialState = lastUsedNodePoolIndex;
     }
 
-    // Print statistics
-    Logger::logLine("Search time: " + std::to_string(stopwatch()),
-                    Verbosity::NORMAL);
-    printStats(_rootState.stepsToGo() == 1);
+    // Memorize search time
+    lastSearchTime = stopwatch();
 }
 
 bool THTS::moreTrials() {
@@ -548,14 +546,9 @@ void THTS::visitDummyChanceNode(SearchNode* node) {
     backupFunction->backupChanceNode(node, trialReward);
 }
 
-/******************************************************************
-                      Root State Analysis
-******************************************************************/
-
 int THTS::getUniquePolicy() {
     if (stepsToGoInCurrentState == 1) {
-        Logger::logLine("Returning the optimal last action!",
-                        Verbosity::NORMAL);
+        uniquePolicyDueToLastAction = true;
         return getOptimalFinalActionIndex(states[1]);
     }
 
@@ -563,15 +556,12 @@ int THTS::getUniquePolicy() {
         getApplicableActions(states[stepsToGoInCurrentState]);
 
     if (isARewardLock(states[stepsToGoInCurrentState])) {
-        Logger::logLine("Current root state is a reward lock state!",
-                        Verbosity::NORMAL);
-        Logger::logLine(states[stepsToGoInCurrentState].toString());
+        uniquePolicyDueToRewardLock = true;
         for (unsigned int i = 0; i < actionsToExpand.size(); ++i) {
             if (actionsToExpand[i] == i) {
                 return i;
             }
         }
-
         assert(false);
     }
 
@@ -580,18 +570,13 @@ int THTS::getUniquePolicy() {
     assert(!applicableActionIndices.empty());
 
     if (applicableActionIndices.size() == 1) {
-        Logger::logLine("Only one reasonable action in current root state!",
-                        Verbosity::NORMAL);
+        uniquePolicyDueToPreconds = true;
         return applicableActionIndices[0];
     }
 
-    // There is more than one applicable action
+    // There is no clear, unique policy
     return -1;
 }
-
-/******************************************************************
-                        Memory management
-******************************************************************/
 
 SearchNode* THTS::createRootNode() {
     for (SearchNode* node : nodePool) {
@@ -653,71 +638,149 @@ SearchNode* THTS::createChanceNode(double const& prob) {
     return res;
 }
 
-/******************************************************************
-                       Parameter Setter
-******************************************************************/
-
 void THTS::setMaxSearchDepth(int _maxSearchDepth) {
     SearchEngine::setMaxSearchDepth(_maxSearchDepth);
 
-    if (initializer) {
-        initializer->setMaxSearchDepth(_maxSearchDepth);
+    assert(initializer);
+    initializer->setMaxSearchDepth(_maxSearchDepth);
+}
+
+void THTS::printConfig(std::string indent) const {
+    SearchEngine::printConfig(indent);
+    indent += "  ";
+
+    switch(terminationMethod) {
+        case TerminationMethod::TIME:
+            Logger::logLine(indent + "termination method: TIME",
+                            Verbosity::VERBOSE);
+            Logger::logLine(indent + "timeout: " + std::to_string(timeout),
+                            Verbosity::VERBOSE);
+            break;
+        case TerminationMethod::NUMBER_OF_TRIALS:
+            Logger::logLine(indent + "termination method: NUM TRIALS",
+                            Verbosity::VERBOSE);
+            Logger::logLine(
+                indent + "max num trials: " + std::to_string(maxNumberOfTrials),
+                Verbosity::VERBOSE);
+            break;
+        case TerminationMethod::TIME_AND_NUMBER_OF_TRIALS:
+            Logger::logLine(
+                indent + "termination method: TIME AND NUM TRIALS",
+                Verbosity::VERBOSE);
+            Logger::logLine(indent + "timeout: " + std::to_string(timeout),
+                            Verbosity::VERBOSE);
+            Logger::logLine(
+                indent + "max num trials: " + std::to_string(maxNumberOfTrials),
+                Verbosity::VERBOSE);
+            break;
+    }
+    Logger::logLine(
+        indent + "max num search nodes: " + std::to_string(maxNumberOfNodes),
+        Verbosity::VERBOSE);
+    Logger::logLine(
+        indent + "node pool size: " + std::to_string(nodePool.size()),
+        Verbosity::VERBOSE);
+
+    actionSelection->printConfig(indent);
+    outcomeSelection->printConfig(indent);
+    Logger::logLine(indent + "trial length: CountDecisionNodes", Verbosity::VERBOSE);
+    Logger::logLine(indent + "  decision node count: " +
+                    std::to_string(numberOfNewDecisionNodesPerTrial),
+                    Verbosity::VERBOSE);
+    initializer->printConfig(indent);
+    backupFunction->printConfig(indent);
+    recommendationFunction->printConfig(indent);
+}
+
+void THTS::printStepStatistics(std::string indent) const {
+    if (uniquePolicyDueToLastAction) {
+        Logger::logLine(
+            indent + "Policy unique due to optimal last action",
+            Verbosity::NORMAL);
+    } else if (uniquePolicyDueToRewardLock) {
+        Logger::logLine(
+            indent + "Policy unique due to reward lock", Verbosity::NORMAL);
+        Logger::logLine(
+            indent + states[stepsToGoInCurrentState].toString(),
+            Verbosity::VERBOSE);
+    } else if (uniquePolicyDueToPreconds) {
+        Logger::logLine(
+            indent + "Policy unique due to single reasonable action",
+            Verbosity::NORMAL);
+    } else {
+        Logger::logLine(
+            indent + name + " step statistics:", Verbosity::NORMAL);
+        indent += "  ";
+        Logger::logLine(
+            indent + "Performed trials: " + std::to_string(currentTrial),
+            Verbosity::NORMAL);
+        Logger::logLine(
+            indent + "Created search nodes: " +
+            std::to_string(lastUsedNodePoolIndex),
+            Verbosity::NORMAL);
+        Logger::logLine(
+            indent + "Search time: " + std::to_string(lastSearchTime),
+            Verbosity::NORMAL);
+        Logger::logLine(
+            indent + "Cache hits: " + std::to_string(cacheHits),
+            Verbosity::VERBOSE);
+        Logger::logLine(
+            indent + "Max search depth: " + std::to_string(maxSearchDepth),
+            Verbosity::VERBOSE);
+
+        if (currentRootNode) {
+            Logger::logLine(indent + "Q-value estimates:", Verbosity::VERBOSE);
+            Logger::logLine(
+                indent + "  Root node: " + getCurrentRootNode()->toString(),
+                Verbosity::VERBOSE);
+
+            for (size_t i = 0; i < currentRootNode->children.size(); ++i) {
+                SearchNode const *child = currentRootNode->children[i];
+                if (child) {
+                    ActionState const &action = SearchEngine::actionStates[i];
+                    Logger::logLine(
+                        indent + "    " + action.toCompactString() + ": " +
+                        child->toString(), Verbosity::VERBOSE);
+                }
+            }
+        }
+
+        Logger::logLine("", Verbosity::VERBOSE);
+        actionSelection->printStepStatistics(indent);
+        outcomeSelection->printStepStatistics(indent);
+        initializer->printStepStatistics(indent);
+        backupFunction->printStepStatistics(indent);
     }
 }
 
-/******************************************************************
-                            Print
-******************************************************************/
+void THTS::printRoundStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Number of remaining steps in first solved state: " +
+        std::to_string(stepsToGoInFirstSolvedState),
+        Verbosity::SILENT);
+    Logger::logLine(
+        indent + "Number of trials in initial state: " +
+        std::to_string(numTrialsInInitialState),
+        Verbosity::SILENT);
+    Logger::logLine(
+        indent + "Number of search nodes in initial state: " +
+        std::to_string(numSearchNodesInInitialState),
+        Verbosity::SILENT);
 
-void THTS::printStats(bool const& printRoundStats, std::string indent) const {
-    SearchEngine::printStats(printRoundStats, indent);
+    Logger::logLine(
+        indent + "Number of reward lock states: " +
+        std::to_string(numRewardLockStates),
+        Verbosity::NORMAL);
+    Logger::logLine(
+        indent + "Number of states with only one applicable action: " +
+        std::to_string(numSingleApplicableActionStates),
+        Verbosity::NORMAL);
 
-    if (currentTrial > 0) {
-        Logger::logLine(indent + "Performed trials: " +
-                        std::to_string(currentTrial), Verbosity::NORMAL);
-        Logger::logLine(indent + "Created SearchNodes: " +
-                        std::to_string(lastUsedNodePoolIndex),
-                        Verbosity::NORMAL);
-        Logger::logLine(indent + "Cache Hits: " + std::to_string(cacheHits),
-                        Verbosity::NORMAL);
-
-        actionSelection->printStats(indent);
-        outcomeSelection->printStats(indent);
-        backupFunction->printStats(indent);
-    }
-    if (initializer) {
-        initializer->printStats(printRoundStats, indent + "  ");
-    }
-
-    if (currentRootNode) {
-        Logger::logLine(
-            indent + "Root Node:" + getCurrentRootNode()->toString());
-        Logger::logLine(indent + "Q-Value Estimates:");
-        for (size_t i = 0; i < currentRootNode->children.size(); ++i) {
-            if (currentRootNode->children[i]) {
-                Logger::logLine(
-                    indent + SearchEngine::actionStates[i].toCompactString() +
-                    ": " + currentRootNode->children[i]->toString());
-            }
-        }
-    }
-
-    if (printRoundStats) {
-        Logger::logLine("***********************", Verbosity::SILENT);
-        Logger::logLine(indent + "Round statistics of THTS:", Verbosity::SILENT);
-        Logger::logLine(
-            indent + "Accumulated number of remaining steps in first solved" +
-            " root state: " +
-            std::to_string(accumulatedNumberOfStepsToGoInFirstSolvedRootState),
-            Verbosity::SILENT);
-        Logger::logLine(
-            indent + "Accumulated number of trials in root state: " +
-            std::to_string(accumulatedNumberOfTrialsInRootState),
-            Verbosity::SILENT);
-        Logger::logLine(
-            indent + "Accumulated number of search nodes in root state: " +
-            std::to_string(accumulatedNumberOfSearchNodesInRootState),
-            Verbosity::SILENT);
-        Logger::logLine("***********************", Verbosity::SILENT);
-    }
+    Logger::logLine("", Verbosity::VERBOSE);
+    actionSelection->printRoundStatistics(indent);
+    outcomeSelection->printRoundStatistics(indent);
+    initializer->printRoundStatistics(indent);
+    backupFunction->printRoundStatistics(indent);
 }

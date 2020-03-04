@@ -2,11 +2,9 @@
 
 #include <limits>
 
-using namespace std;
+#include "utils/logger.h"
 
-/******************************************************************
-                     Search Engine Creation
-******************************************************************/
+using namespace std;
 
 UniformEvaluationSearch::UniformEvaluationSearch()
     : DeterministicSearchEngine("UniformEvaluation"), initialValue(0.0) {}
@@ -24,10 +22,6 @@ bool UniformEvaluationSearch::setValueFromString(string& param, string& value) {
     return SearchEngine::setValueFromString(param, value);
 }
 
-/******************************************************************
-                       Main Search Functions
-******************************************************************/
-
 void UniformEvaluationSearch::estimateBestActions(
     State const& _rootState, std::vector<int>& bestActions) {
     // All applicable actions are equally good
@@ -43,4 +37,13 @@ void UniformEvaluationSearch::estimateQValues(
             qValues[index] = initialValue * (double)state.stepsToGo();
         }
     }
+}
+
+void UniformEvaluationSearch::printConfig(std::string indent) const {
+    SearchEngine::printConfig(indent);
+    indent += "  ";
+
+    Logger::logLine(
+        indent + "initial value: " + std::to_string(initialValue),
+        Verbosity::VERBOSE);
 }

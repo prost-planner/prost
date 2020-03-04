@@ -35,6 +35,11 @@ public:
         initialValue = _initialValue;
     }
 
+    // Print
+    void printConfig(std::string indent) const override;
+    void printRoundStatistics(std::string /*indent*/) const override {}
+    void printStepStatistics(std::string /*indent*/) const override {}
+
 private:
     // Parameter
     double initialValue;

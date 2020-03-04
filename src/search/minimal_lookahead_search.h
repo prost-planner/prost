@@ -9,6 +9,20 @@ class MinimalLookaheadSearch : public DeterministicSearchEngine {
 public:
     MinimalLookaheadSearch();
 
+    // Notify the search engine that a new round starts
+    void initRound() override {
+        numberOfRunsInCurrentRound = 0;
+    }
+
+    // Notify the search engine that a new step starts or ends
+    void initStep(State const& /*current*/) override {
+        numberOfRuns = 0;
+        cacheHits = 0;
+    }
+    void finishStep() override {
+        numberOfRunsInCurrentRound += numberOfRuns;
+    }
+
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
                         double& qValue) override;
@@ -20,8 +34,8 @@ public:
                          std::vector<double>& qValues) override;
 
     // Print
-    void printStats(bool const& printRoundStats,
-                    std::string indent = "") const override;
+    void printRoundStatistics(std::string indent) const override;
+    void printStepStatistics(std::string indent) const override;
 
     // Caching
     typedef std::unordered_map<State, std::vector<double>,
@@ -31,9 +45,12 @@ public:
     static HashMap rewardCache;
 
 protected:
-    // Statistics
+    // Per step statistics
     int numberOfRuns;
     int cacheHits;
+
+    // Per round statistics
+    int numberOfRunsInCurrentRound;
 };
 
 #endif

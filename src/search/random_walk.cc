@@ -1,8 +1,6 @@
 #include "random_walk.h"
 
-/******************************************************************
-                     Search Engine Creation
-******************************************************************/
+#include "utils/logger.h"
 
 RandomWalk::RandomWalk() :
     ProbabilisticSearchEngine("RandomWalk"),
@@ -18,10 +16,6 @@ bool RandomWalk::setValueFromString(std::string& param,
 
     return SearchEngine::setValueFromString(param, value);
 }
-
-/******************************************************************
-                       Main Search Functions
-******************************************************************/
 
 void RandomWalk::estimateQValue(State const& state, int actionIndex,
                                 double& qValue) {
@@ -76,4 +70,13 @@ void RandomWalk::sampleSuccessorState(PDState const& current,
     }
     State::calcStateFluentHashKeys(next);
     State::calcStateHashKey(next);
+}
+
+void RandomWalk::printConfig(std::string indent) const {
+    SearchEngine::printConfig(indent);
+    indent += "  ";
+
+    Logger::logLine(
+        indent + "number of iterations: " + std::to_string(numberOfIterations),
+        Verbosity::VERBOSE);
 }

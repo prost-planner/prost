@@ -28,6 +28,11 @@ public:
         numberOfIterations = _numberOfIterations;
     }
 
+    // Print
+    void printConfig(std::string indent) const override;
+    void printRoundStatistics(std::string /*indent*/) const override {}
+    void printStepStatistics(std::string /*indent*/) const override {}
+
 private:
     void performRandomWalks(PDState const& root, int firstActionIndex,
                             double& result) const;

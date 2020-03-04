@@ -14,10 +14,6 @@
 
 using namespace std;
 
-/******************************************************************
-                     Search Engine Creation
-******************************************************************/
-
 IDS::HashMap IDS::rewardCache;
 
 IDS::IDS() :
@@ -27,11 +23,15 @@ IDS::IDS() :
     stopwatch(),
     maxSearchDepthForThisStep(0),
     ramLimitReached(false),
+    isInitialState(false),
     strictTerminationTimeout(0.1),
     terminateWithReasonableAction(true),
-    accumulatedSearchDepth(0),
-    cacheHits(0),
-    numberOfRuns(0) {
+    accumulatedSearchDepthInCurrentStep(0),
+    numberOfRunsInCurrentStep(0),
+    cacheHitsInCurrentStep(0),
+    avgSearchDepthInInitialState(0.0),
+    accumulatedSearchDepthInCurrentRound(0),
+    numberOfRunsInCurrentRound(0) {
     setTimeout(0.005);
 
     if (rewardCache.bucket_count() < 520241) {
@@ -56,10 +56,6 @@ bool IDS::setValueFromString(string& param, string& value) {
     return SearchEngine::setValueFromString(param, value);
 }
 
-/******************************************************************
-                            Parameter
-******************************************************************/
-
 void IDS::setMaxSearchDepth(int newValue) {
     dfs->setMaxSearchDepth(newValue);
     SearchEngine::setMaxSearchDepth(newValue);
@@ -73,10 +69,6 @@ void IDS::setCachingEnabled(bool newValue) {
         mlh->setCachingEnabled(newValue);
     }
 }
-
-/******************************************************************
-                 Search Engine Administration
-******************************************************************/
 
 void IDS::disableCaching() {
     dfs->disableCaching();
@@ -141,20 +133,66 @@ void IDS::learn() {
         Logger::logLine(name + ": Setting max search depth to: " +
                         to_string(maxSearchDepth), Verbosity::SILENT);
     }
-    resetStats();
     Logger::logLine(name + ": ...finished", Verbosity::NORMAL);
+}
+
+void IDS::initRound() {
+    // Reset per round statistics
+    avgSearchDepthInInitialState = 0.0;
+    accumulatedSearchDepthInCurrentRound = 0;
+    numberOfRunsInCurrentRound = 0;
+
+    dfs->initRound();
+    if (mlh) {
+        mlh->initRound();
+    }
+}
+
+void IDS::finishRound() {
+    dfs->finishRound();
+    if (mlh) {
+        mlh->finishRound();
+    }
+}
+
+void IDS::initStep(State const& current) {
+    isInitialState = (current.stepsToGo() == SearchEngine::horizon);
+
+    // Reset per step statistics
+    accumulatedSearchDepthInCurrentStep = 0;
+    numberOfRunsInCurrentStep = 0;
+    cacheHitsInCurrentStep = 0;
+
+    dfs->initStep(current);
+    if (mlh) {
+        mlh->initStep(current);
+    }
+}
+
+void IDS::finishStep() {
+    accumulatedSearchDepthInCurrentRound +=
+        accumulatedSearchDepthInCurrentStep;
+    numberOfRunsInCurrentRound += numberOfRunsInCurrentStep;
+
+    if (isInitialState && (numberOfRunsInCurrentStep > 0)) {
+        avgSearchDepthInInitialState =
+            static_cast<double>(accumulatedSearchDepthInCurrentStep) /
+            static_cast<double>(numberOfRunsInCurrentStep);
+    }
+
+    dfs->finishStep();
+    if (mlh) {
+        mlh->finishStep();
+    }
 }
 
 void IDS::createMinimalLookaheadSearch() {
     assert(!mlh);
     mlh = new MinimalLookaheadSearch();
+    mlh->prependName("Replacement of " + name + " ");
     mlh->setCachingEnabled(cachingEnabled);
     rewardCache.clear();
 }
-
-/******************************************************************
-                       Main Search Functions
-******************************************************************/
 
 void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
     if (mlh) {
@@ -168,7 +206,7 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end() &&
         !MathUtils::doubleIsMinusInfinity(it->second[actionIndex])) {
-        ++cacheHits;
+        ++cacheHitsInCurrentStep;
         qValue =
             it->second[actionIndex] * static_cast<double>(state.stepsToGo());
     } else {
@@ -198,8 +236,8 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         }
         qValue *= static_cast<double>(state.stepsToGo());
 
-        accumulatedSearchDepth += currentState.stepsToGo();
-        ++numberOfRuns;
+        accumulatedSearchDepthInCurrentStep += currentState.stepsToGo();
+        ++numberOfRunsInCurrentStep;
     }
 }
 
@@ -216,7 +254,7 @@ void IDS::estimateQValues(State const& state,
 
     HashMap::iterator it = rewardCache.find(state);
     if (it != rewardCache.end()) {
-        ++cacheHits;
+        ++cacheHitsInCurrentStep;
         assert(qValues.size() == it->second.size());
         for (size_t index = 0; index < qValues.size(); ++index) {
             if (actionsToExpand[index] == index) {
@@ -261,8 +299,8 @@ void IDS::estimateQValues(State const& state,
             }
         }
 
-        accumulatedSearchDepth += currentState.stepsToGo();
-        ++numberOfRuns;
+        accumulatedSearchDepthInCurrentStep += currentState.stepsToGo();
+        ++numberOfRunsInCurrentStep;
     }
 }
 
@@ -350,37 +388,75 @@ bool IDS::moreIterations(int const& stepsToGo,
     return stepsToGo < maxSearchDepthForThisStep;
 }
 
-/******************************************************************
-                   Statistics and Prints
-******************************************************************/
+void IDS::printConfig(std::string indent) const {
+    SearchEngine::printConfig(indent);
+    indent += "  ";
 
-void IDS::resetStats() {
-    accumulatedSearchDepth = 0;
-    cacheHits = 0;
-    numberOfRuns = 0;
-    if (mlh) {
-        mlh->resetStats();
+    Logger::logLine(indent + "max search depth: " + to_string(maxSearchDepth),
+                    Verbosity::VERBOSE);
+    Logger::logLine(
+        indent + "strict timeout: " + to_string(strictTerminationTimeout),
+        Verbosity::VERBOSE);
+    Logger::logLine(indent + "timeout: " + to_string(timeout),
+                    Verbosity::VERBOSE);
+    if (terminateWithReasonableAction) {
+        Logger::logLine(indent + "terminate with reasonable action: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "terminate with reasonable action: disabled",
+                        Verbosity::VERBOSE);
     }
 }
 
-void IDS::printStats(
-        bool const& printRoundStats, string indent) const {
-    SearchEngine::printStats(printRoundStats, indent);
+void IDS::printStepStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " step statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Number of runs: " + to_string(numberOfRunsInCurrentStep),
+        Verbosity::NORMAL);
+    Logger::logLine(
+        indent + "Cache hits: " + to_string(cacheHitsInCurrentStep),
+        Verbosity::VERBOSE);
+
+    if (numberOfRunsInCurrentStep > 0) {
+        double avg = static_cast<double>(accumulatedSearchDepthInCurrentStep) /
+                     static_cast<double>(numberOfRunsInCurrentStep);
+        Logger::logLine(
+            indent + "Average search depth: " + to_string(avg),
+            Verbosity::NORMAL);
+    }
+    Logger::logLine("", Verbosity::VERBOSE);
+
     if (mlh) {
-        mlh->printStats(printRoundStats, indent);
-        Logger::logLine(indent + "Cache hits of IDS: " + to_string(cacheHits),
-                        Verbosity::NORMAL);
-    } else {
-        if (numberOfRuns > 0) {
-            double avg = static_cast<double>(accumulatedSearchDepth) /
-                         numberOfRuns;
-            Logger::logLine(indent + "Average search depth: " +
-                            to_string(avg) + " (in " + to_string(numberOfRuns) +
-                            " runs)", Verbosity::NORMAL);
-        }
-        Logger::logLine(indent + "Maximal search depth: " +
-                        to_string(maxSearchDepth), Verbosity::NORMAL);
-        Logger::logLine(indent + "Cache hits: " + to_string(cacheHits),
-                        Verbosity::NORMAL);
+        mlh->printStepStatistics(indent);
+    }
+}
+
+void IDS::printRoundStatistics(std::string indent) const {
+    // Summary statistics of this round's initial state
+    Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Average search depth in initial state: " +
+        to_string(avgSearchDepthInInitialState),
+        Verbosity::SILENT);
+
+    // Accumulated values of this round
+    Logger::logLine(
+        indent + "Total number of runs: " +
+        to_string(numberOfRunsInCurrentRound),
+        Verbosity::SILENT);
+    if (numberOfRunsInCurrentRound > 0) {
+        double avg =
+            static_cast<double>(accumulatedSearchDepthInCurrentRound) /
+            static_cast<double>(numberOfRunsInCurrentRound);
+        Logger::logLine(
+            indent + "Total average search depth: " + to_string(avg),
+            Verbosity::SILENT);
+    }
+    Logger::logLine("", Verbosity::VERBOSE);
+
+    if (mlh) {
+        mlh->printRoundStatistics(indent);
     }
 }
