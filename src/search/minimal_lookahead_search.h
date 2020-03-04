@@ -33,6 +33,10 @@ public:
                          std::vector<int> const& actionsToExpand,
                          std::vector<double>& qValues) override;
 
+    bool usesBDDs() const override {
+        return false;
+    }
+
     // Print
     void printRoundStatistics(std::string indent) const override;
     void printStepStatistics(std::string indent) const override;
@@ -45,6 +49,9 @@ public:
     static HashMap rewardCache;
 
 protected:
+    void printRewardCacheUsage(
+            std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
+
     // Per step statistics
     int numberOfRuns;
     int cacheHits;

@@ -598,9 +598,8 @@ int main(int argc, char** argv) {
     IPCClient* client = new IPCClient(hostName, port, parserOptions);
     client->run(problemFileName, plannerDesc);
 
-    double elapsedTime = totalTime();
     Logger::log(
-        "PROST complete running time: " + to_string(elapsedTime),
+        "PROST complete running time: " + to_string(totalTime()),
         Verbosity::SILENT);
     return 0;
 }

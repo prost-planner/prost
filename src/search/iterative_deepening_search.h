@@ -11,6 +11,7 @@
 #include "utils/stopwatch.h"
 
 #include <unordered_map>
+#include <logger.h>
 
 class DepthFirstSearch;
 class MinimalLookaheadSearch;
@@ -25,9 +26,8 @@ public:
     // This is called when caching is disabled because memory becomes sparse.
     void disableCaching() override;
 
-    // This is called initially to learn parameter values from a random training
-    // set.
-    void learn() override;
+    // Notify the search engine that the session starts
+    void initSession() override;
 
     // Notify the search engine that a new round starts or ends
     void initRound() override;
@@ -59,6 +59,10 @@ public:
         terminateWithReasonableAction = newValue;
     }
 
+    bool usesBDDs() const override {
+        return false;
+    }
+
     // Print
     void printConfig(std::string indent) const override;
     void printRoundStatistics(std::string indent) const override;
@@ -78,6 +82,9 @@ protected:
     inline bool moreIterations(int const& stepsToGo);
 
     void createMinimalLookaheadSearch();
+
+    void printRewardCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
 
     // The depth first search engine
     DepthFirstSearch* dfs;

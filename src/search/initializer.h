@@ -19,12 +19,10 @@ public:
     // Set parameters from command line
     virtual bool setValueFromString(std::string& param, std::string& value);
 
-    // Learns parameter values from a random training set
-    virtual void learn();
-
     // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching();
 
+    virtual void initSession();
     virtual void initRound();
     virtual void finishRound();
     virtual void initStep(State const& current);

@@ -9,7 +9,6 @@
 #include "thts.h"
 #include "uniform_evaluation_search.h"
 
-#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -236,6 +235,62 @@ void SearchEngine::printConfig(string indent) const {
         Logger::logLine(indent + "Reward lock caching: enabled",
                         Verbosity::VERBOSE);
     }
+}
+
+void ProbabilisticSearchEngine::printStateValueCacheUsage(
+        std::string indent, Verbosity verbosity) const {
+    long entriesProbStateValue =
+            ProbabilisticSearchEngine::stateValueCache.size();
+    long bucketsProbStateValue =
+            ProbabilisticSearchEngine::stateValueCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in probabilistic state value cache: " +
+            std::to_string(entriesProbStateValue), verbosity);
+    Logger::logLine(
+            indent + "Buckets in probabilistic state value cache: " +
+            std::to_string(bucketsProbStateValue), verbosity);
+}
+
+void ProbabilisticSearchEngine::printApplicableActionCacheUsage(
+        std::string indent, Verbosity verbosity) const {
+    long entriesProbApplActions =
+            ProbabilisticSearchEngine::applicableActionsCache.size();
+    long bucketsProbApplActions =
+            ProbabilisticSearchEngine::applicableActionsCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in probabilistic applicable actions cache: " +
+            std::to_string(entriesProbApplActions), verbosity);
+    Logger::logLine(
+            indent + "Buckets in probabilistic applicable actions cache: " +
+            std::to_string(bucketsProbApplActions), verbosity);
+}
+
+void DeterministicSearchEngine::printStateValueCacheUsage(
+        std::string indent, Verbosity verbosity) const {
+    long entriesDetStateValue =
+            DeterministicSearchEngine::stateValueCache.size();
+    long bucketsDetStateValue =
+            DeterministicSearchEngine::stateValueCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in deterministic state value cache: " +
+            to_string(entriesDetStateValue), verbosity);
+    Logger::logLine(
+            indent + "Buckets in deterministic state value cache: " +
+            to_string(bucketsDetStateValue), verbosity);
+}
+
+void DeterministicSearchEngine::printApplicableActionCacheUsage(
+        std::string indent, Verbosity verbosity) const {
+    long entriesDetApplActions =
+            DeterministicSearchEngine::applicableActionsCache.size();
+    long bucketsDetApplActions =
+            DeterministicSearchEngine::applicableActionsCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in deterministic applicable actions cache: " +
+            to_string(entriesDetApplActions), verbosity);
+    Logger::logLine(
+            indent + "Buckets in deterministic applicable actions cache: " +
+            to_string(bucketsDetApplActions), verbosity);
 }
 
 /******************************************************************

@@ -108,8 +108,8 @@ public:
     //  This is called when caching is disabled because memory becomes sparse
     void disableCaching() override;
 
-    // Learns parameter values from a random training set
-    void learn() override;
+    // Notify the search engine that the session starts
+    void initSession() override;
 
     // Notify the search engine that a new round starts or ends
     void initRound() override;

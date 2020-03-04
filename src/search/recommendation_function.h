@@ -20,8 +20,7 @@ public:
         return false;
     }
 
-    // Learn parameter values from a random training set
-    virtual void learn() {}
+    virtual void initSession() {}
 
     // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}

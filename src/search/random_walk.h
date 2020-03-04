@@ -23,6 +23,10 @@ public:
                          std::vector<int> const& actionsToExpand,
                          std::vector<double>& qValues) override;
 
+    bool usesBDDs() const override {
+        return false;
+    }
+
     // Parameter Setter
     virtual void setNumberOfIterations(int _numberOfIterations) {
         numberOfIterations = _numberOfIterations;

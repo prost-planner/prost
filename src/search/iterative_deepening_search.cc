@@ -79,8 +79,8 @@ void IDS::disableCaching() {
     }
 }
 
-void IDS::learn() {
-    dfs->learn();
+void IDS::initSession() {
+    dfs->initSession();
     Logger::logLine(name + ": learning...", Verbosity::VERBOSE);
 
     isLearning = true;
@@ -411,6 +411,11 @@ void IDS::printConfig(std::string indent) const {
 void IDS::printStepStatistics(std::string indent) const {
     Logger::logLine(indent + name + " step statistics:", Verbosity::NORMAL);
     indent += "  ";
+
+    printStateValueCacheUsage(indent);
+    printApplicableActionCacheUsage(indent);
+    printRewardCacheUsage(indent);
+
     Logger::logLine(
         indent + "Number of runs: " + to_string(numberOfRunsInCurrentStep),
         Verbosity::NORMAL);
@@ -432,10 +437,30 @@ void IDS::printStepStatistics(std::string indent) const {
     }
 }
 
+void IDS::printRewardCacheUsage(std::string indent, Verbosity verbosity) const {
+    long entriesIDSRewardCache =
+            IDS::rewardCache.size();
+    long bucketsIDSRewardCache =
+            IDS::rewardCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in IDS reward cache: " +
+            to_string(entriesIDSRewardCache), verbosity);
+    Logger::logLine(
+            indent + "Buckets in IDS reward cache: " +
+            to_string(bucketsIDSRewardCache), verbosity);
+}
+
 void IDS::printRoundStatistics(std::string indent) const {
     // Summary statistics of this round's initial state
     Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
     indent += "  ";
+
+    if (Logger::runVerbosity < Verbosity::VERBOSE) {
+        printStateValueCacheUsage(indent, Verbosity::SILENT);
+        printApplicableActionCacheUsage(indent, Verbosity::SILENT);
+        printRewardCacheUsage(indent, Verbosity::SILENT);
+    }
+
     Logger::logLine(
         indent + "Average search depth in initial state: " +
         to_string(avgSearchDepthInInitialState),

@@ -14,10 +14,7 @@ public:
 
     ProstPlanner(std::string& plannerDesc);
 
-    // Initialized the planner
-    void init();
-
-    // These are called at the beginning and end of a session
+    // Start or end the session
     void initSession(int _numberOfRounds, long totalTime);
     void finishSession(double& totalReward);
 
@@ -77,6 +74,7 @@ private:
     int currentRound;
     int currentStep;
     int stepsToGo;
+    int executedActionIndex;
     int numberOfRounds;
 
     bool cachingEnabled;
@@ -88,9 +86,6 @@ private:
     int bitSize;
     int seed;
     TimeoutManagementMethod tmMethod;
-
-    std::vector<std::vector<double>> immediateRewards;
-    std::vector<std::vector<int>> chosenActionIndices;
 };
 
 #endif

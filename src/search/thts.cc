@@ -155,7 +155,7 @@ void THTS::disableCaching() {
     SearchEngine::disableCaching();
 }
 
-void THTS::learn() {
+void THTS::initSession() {
     // All ingredients must have been specified
     if (!actionSelection || !outcomeSelection || !backupFunction ||
         !initializer || !recommendationFunction) {
@@ -165,13 +165,11 @@ void THTS::learn() {
             "must be defined in a THTS search engine!");
     }
 
-    Logger::logLine(name + ": learning...");
-    actionSelection->learn();
-    outcomeSelection->learn();
-    backupFunction->learn();
-    initializer->learn();
-    recommendationFunction->learn();
-    Logger::logLine(name + ": ...finished");
+    actionSelection->initSession();
+    outcomeSelection->initSession();
+    backupFunction->initSession();
+    initializer->initSession();
+    recommendationFunction->initSession();
 }
 
 void THTS::initRound() {
@@ -712,6 +710,10 @@ void THTS::printStepStatistics(std::string indent) const {
         Logger::logLine(
             indent + name + " step statistics:", Verbosity::NORMAL);
         indent += "  ";
+
+        printStateValueCacheUsage(indent);
+        printApplicableActionCacheUsage(indent);
+
         Logger::logLine(
             indent + "Performed trials: " + std::to_string(currentTrial),
             Verbosity::NORMAL);
@@ -757,6 +759,12 @@ void THTS::printStepStatistics(std::string indent) const {
 void THTS::printRoundStatistics(std::string indent) const {
     Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
     indent += "  ";
+
+    if (Logger::runVerbosity < Verbosity::VERBOSE) {
+        printStateValueCacheUsage(indent, Verbosity::SILENT);
+        printApplicableActionCacheUsage(indent, Verbosity::SILENT);
+    }
+
     Logger::logLine(
         indent + "Number of remaining steps in first solved state: " +
         std::to_string(stepsToGoInFirstSolvedState),

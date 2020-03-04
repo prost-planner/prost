@@ -35,6 +35,10 @@ public:
         initialValue = _initialValue;
     }
 
+    bool usesBDDs() const override {
+        return false;
+    }
+
     // Print
     void printConfig(std::string indent) const override;
     void printRoundStatistics(std::string /*indent*/) const override {}

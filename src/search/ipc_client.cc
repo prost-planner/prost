@@ -163,7 +163,6 @@ void IPCClient::initSession(string const& instanceName, string& plannerDesc) {
     delete serverResponse;
     // in c++ 14 we would use make_unique<ProstPlanner>
     planner = std::unique_ptr<ProstPlanner>(new ProstPlanner(plannerDesc));
-    planner->init();
     planner->initSession(numberOfRounds, remainingTime);
 }
 

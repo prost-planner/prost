@@ -73,9 +73,9 @@ void Initializer::disableCaching() {
     heuristic->disableCaching();
 }
 
-void Initializer::learn() {
+void Initializer::initSession() {
     assert(heuristic);
-    heuristic->learn();
+    heuristic->initSession();
 }
 
 void Initializer::initRound() {

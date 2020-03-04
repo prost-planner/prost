@@ -20,6 +20,7 @@ ProstPlanner::ProstPlanner(string& plannerDesc)
       currentRound(-1),
       currentStep(-1),
       stepsToGo(SearchEngine::horizon),
+      executedActionIndex(-1),
       numberOfRounds(-1),
       cachingEnabled(true),
       ramLimit(2097152),
@@ -90,13 +91,20 @@ void ProstPlanner::setSeed(int _seed) {
     MathUtils::rnd->seed(seed);
 }
 
-void ProstPlanner::init() {
-    Stopwatch time;
-    Logger::logLine("learning...");
+void ProstPlanner::initSession(int _numberOfRounds, long /*totalTime*/) {
+    Logger::logSeparator(Verbosity::VERBOSE);
+    Logger::logLine("Final task: ", Verbosity::VERBOSE);
+    SearchEngine::printTask();
+
+    currentRound = -1;
+    numberOfRounds = _numberOfRounds;
+    if (tmMethod == UNIFORM) {
+        remainingTimeFactor = numberOfRounds * SearchEngine::horizon;
+    }
 
     cout.precision(6);
 
-    searchEngine->learn();
+    searchEngine->initSession();
 
     if (searchEngine->usesBDDs()) {
         // TODO: These numbers are rather random. Since I know only little on
@@ -109,72 +117,12 @@ void ProstPlanner::init() {
         }
         fdd_extdomain(domains, KleeneState::stateSize);
     }
-    Logger::logLine(
-        "...finished (" + to_string(time()) + ").", Verbosity::VERBOSE);
-    Logger::logLine("", Verbosity::VERBOSE);
-
-    Logger::logSeparator(Verbosity::VERBOSE);
-    Logger::logLine("Final task: ", Verbosity::VERBOSE);
-    SearchEngine::printTask();
 
     printConfig();
 }
 
-vector<string> ProstPlanner::plan() {
-    // Call the search engine
-    vector<int> bestActions;
-    searchEngine->estimateBestActions(currentState, bestActions);
-    chosenActionIndices[currentRound][currentStep] =
-        MathUtils::rnd->randomElement(bestActions);
-
-    // PROST's communication with the environment works with strings, so we
-    // collect the names of all true action fluents of the chosen action
-    int& chosenActionIndex = chosenActionIndices[currentRound][currentStep];
-    vector<string> result;
-    for (size_t i = 0; i < SearchEngine::actionStates[chosenActionIndex]
-                               .scheduledActionFluents.size();
-         ++i) {
-        result.push_back(SearchEngine::actionStates[chosenActionIndex]
-                             .scheduledActionFluents[i]
-                             ->name);
-    }
-
-    // assert(false);
-    // SystemUtils::abort("");
-    return result;
-}
-
-void ProstPlanner::initSession(int _numberOfRounds, long /*totalTime*/) {
-    currentRound = -1;
-    numberOfRounds = _numberOfRounds;
-    immediateRewards = vector<vector<double>>(
-        numberOfRounds, vector<double>(SearchEngine::horizon, 0.0));
-    chosenActionIndices = vector<vector<int>>(
-        numberOfRounds, vector<int>(SearchEngine::horizon, -1));
-
-    switch (tmMethod) {
-    case NONE:
-        break;
-    case UNIFORM:
-        remainingTimeFactor = numberOfRounds * SearchEngine::horizon;
-        break;
-    }
-}
-
 void ProstPlanner::finishSession(double& totalReward) {
     Logger::logSeparator(Verbosity::NORMAL);
-    Logger::logLine("Immediate rewards:");
-    for (size_t i = 0; i < immediateRewards.size(); ++i) {
-        double rewardSum = 0.0;
-        Logger::log("Round " + to_string(i) + ": ", Verbosity::SILENT);
-        for (double rew : immediateRewards[i]) {
-            Logger::log(to_string(rew) + " ", Verbosity::SILENT);
-            rewardSum += rew;
-        }
-        Logger::logLine(" = " + to_string(rewardSum), Verbosity::SILENT);
-    }
-    Logger::logLine("", Verbosity::NORMAL);
-
     double avgReward = totalReward / numberOfRounds;
 
     Logger::logLine(">>> TOTAL REWARD: " + to_string(totalReward),
@@ -247,52 +195,40 @@ void ProstPlanner::initStep(vector<double> const& nextStateVec,
 }
 
 void ProstPlanner::finishStep(double const& immediateReward) {
-    assert(currentRound < immediateRewards.size());
-    assert(currentStep < immediateRewards[currentRound].size());
-
-    immediateRewards[currentRound][currentStep] = immediateReward;
-
     int usedRAM = SystemUtils::getRAMUsedByThis();
-    long bucketsProbStateValue =
-        ProbabilisticSearchEngine::stateValueCache.bucket_count();
-    long bucketsDetStateValue =
-        DeterministicSearchEngine::stateValueCache.bucket_count();
-    long bucketsProbApplActions =
-        ProbabilisticSearchEngine::applicableActionsCache.bucket_count();
-    long bucketsDetApplActions =
-        DeterministicSearchEngine::applicableActionsCache.bucket_count();
-    long bucketsMLSRewardCache =
-        MinimalLookaheadSearch::rewardCache.bucket_count();
-    long bucketsIDSRewardCache =
-        IDS::rewardCache.bucket_count();
+    Logger::logLine("Used RAM: " + to_string(usedRAM), Verbosity::NORMAL);
 
     Logger::logLine("", Verbosity::NORMAL);
     searchEngine->printStepStatistics("");
 
-    Logger::logLine("Used RAM: " + to_string(usedRAM), Verbosity::NORMAL);
-    Logger::logLine("Buckets in probabilistic state value cache: " +
-                    to_string(bucketsProbStateValue), Verbosity::VERBOSE);
-    Logger::logLine("Buckets in deterministic state value cache: " +
-                    to_string(bucketsDetStateValue), Verbosity::VERBOSE);
-    Logger::logLine("Buckets in probabilistic applicable actions cache: " +
-                    to_string(bucketsProbApplActions), Verbosity::VERBOSE);
-    Logger::logLine("Buckets in deterministic applicable actions cache: " +
-                    to_string(bucketsDetApplActions), Verbosity::VERBOSE);
-    Logger::logLine("Buckets in MLS reward cache: " +
-                    to_string(bucketsMLSRewardCache), Verbosity::VERBOSE);
-    Logger::logLine("Buckets in IDS reward cache: " +
-                    to_string(bucketsIDSRewardCache), Verbosity::VERBOSE);
-
-    int submittedActionIndex = chosenActionIndices[currentRound][currentStep];
     Logger::logLine(
         "Submitted action: " +
-        SearchEngine::actionStates[submittedActionIndex].toCompactString(),
+        SearchEngine::actionStates[executedActionIndex].toCompactString(),
         Verbosity::SILENT);
     Logger::logLine("Immediate reward: " + to_string(immediateReward),
                     Verbosity::NORMAL);
 
     // Notify search engine
     searchEngine->finishStep();
+}
+
+vector<string> ProstPlanner::plan() {
+    // Call the search engine
+    vector<int> bestActions;
+    searchEngine->estimateBestActions(currentState, bestActions);
+
+    // Pick one of the recommended actions uniformly at random
+    executedActionIndex = MathUtils::rnd->randomElement(bestActions);
+    ActionState const& executedAction =
+            SearchEngine::actionStates[executedActionIndex];
+
+    // PROST's communication with the environment works with strings, so we
+    // collect the names of all true action fluents of the chosen action
+    vector<string> result;
+    for (ActionFluent const* af : executedAction.scheduledActionFluents) {
+        result.push_back(af->name);
+    }
+    return result;
 }
 
 void ProstPlanner::monitorRAMUsage() {
