@@ -79,7 +79,8 @@ public:
           learningRateDecay(1.0) {}
 
     // Set parameters from command line
-    virtual bool setValueFromString(std::string& param, std::string& value);
+    virtual bool setValueFromString(
+        std::string& param, std::string& value) override;
 
     // Parameter setter
     virtual void setInitialLearningRate(double _initialLearningRate) {

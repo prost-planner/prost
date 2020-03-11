@@ -193,7 +193,7 @@ public:
         }
     }
 
-    bool isProbabilistic() const {
+    bool isProbabilistic() const override {
         return false;
     }
 
@@ -259,7 +259,7 @@ public:
         }
     }
 
-    bool isProbabilistic() const {
+    bool isProbabilistic() const override {
         return true;
     }
 
@@ -299,7 +299,7 @@ public:
     DeterministicCPF(int _hashIndex, StateFluent* _head)
         : DeterministicEvaluatable(_head->name, _hashIndex), head(_head) {}
 
-    int getDomainSize() const {
+    int getDomainSize() const override {
         return head->values.size();
     }
 
@@ -312,7 +312,7 @@ public:
     ProbabilisticCPF(int _hashIndex, StateFluent* _head)
         : ProbabilisticEvaluatable(_head->name, _hashIndex), head(_head) {}
 
-    int getDomainSize() const {
+    int getDomainSize() const override {
         return head->values.size();
     }
 
