@@ -122,13 +122,14 @@ void ProstPlanner::initSession(int _numberOfRounds, long /*totalTime*/) {
 }
 
 void ProstPlanner::finishSession(double& totalReward) {
+    Logger::logLine("", Verbosity::NORMAL);
     Logger::logSeparator(Verbosity::NORMAL);
-    double avgReward = totalReward / numberOfRounds;
+    Logger::logLine(">>> END OF SESSION  -- TOTAL REWARD: " +
+                    to_string(totalReward), Verbosity::SILENT);
 
-    Logger::logLine(">>> TOTAL REWARD: " + to_string(totalReward),
-                    Verbosity::SILENT);
-    Logger::logLine(">>> AVERAGE REWARD: " + to_string(avgReward),
-                    Verbosity::SILENT);
+    double avgReward = totalReward / numberOfRounds;
+    Logger::logLine(">>> END OF SESSION  -- AVERAGE REWARD: " +
+                    to_string(avgReward), Verbosity::SILENT);
 }
 
 void ProstPlanner::initRound(long const& remainingTime) {

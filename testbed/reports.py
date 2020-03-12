@@ -39,14 +39,26 @@ class ProstBaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ['time_limit', 'memory_limit']
 
 # Attributes to be displayed in the report.
-ATTRIBUTES = [Attribute('ipc_score', min_wins=False, functions=arithmetic_mean),
-              Attribute('num_runs', min_wins=False),
-              Attribute('reward_step-all', min_wins=False),
-              Attribute('round_reward-all', min_wins=False),
-              Attribute('round_reward_99', min_wins=False),
+ATTRIBUTES = [Attribute('ipc_score', min_wins=False, function=arithmetic_mean),
+              Attribute('round_reward', min_wins=False),
               Attribute('total_reward', min_wins=False),
               Attribute('average_reward', min_wins=False),
-              Attribute('time', min_wins=True),
+              Attribute('total_time', min_wins=True),
+              Attribute('parser_time', min_wins=True),
+              Attribute('entries_prob_state_value_cache', min_wins=False),
+              Attribute('buckets_prob_state_value_cache', min_wins=False),
+              Attribute('entries_prob_applicable_actions_cache', min_wins=False),
+              Attribute('buckets_prob_applicable_actions_cache', min_wins=False),
+              Attribute('trial_initial_state', min_wins=False),
+              Attribute('search_nodes_initial_state', min_wins=False),
+              Attribute('entries_det_state_value_cache', min_wins=False),
+              Attribute('buckets_det_state_value_cache', min_wins=False),
+              Attribute('entries_det_applicable_actions_cache', min_wins=False),
+              Attribute('buckets_det_applicable_actions_cache', min_wins=False),
+              Attribute('entries_ids_reward_cache', min_wins=False),
+              Attribute('buckets_ids_reward_cache', min_wins=False),
+              Attribute('ids_avg_search_depth_initial_state', min_wins=False),
+              Attribute('ids_avg_search_depth_total', min_wins=False),
               Attribute('run_dir'),]
 
 if len(sys.argv) < 2:
@@ -85,50 +97,48 @@ exp.add_report(
     outfile='report.html')
 
 # Make a scatter plot report.
-exp.add_report(
-    ScatterPlotReport(
-        attributes=['average_reward'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
-        xscale='linear',
-        yscale='linear',
-        get_category=domain_as_category,),
-    outfile='scatterplot.png')
+# exp.add_report(
+#     ScatterPlotReport(
+#         attributes=['average_reward'],
+#         filter_algorithm=['IPC2011', 'IPC2014'],
+#         scale='linear',
+#         get_category=domain_as_category,),
+#     outfile='scatterplot.png')
 
 # Make a scatter plot report for IPC scores using filters.
-exp.add_report(
-    ScatterPlotReport(
-        attributes=['ipc_score'],
-        filter_algorithm=['IPC2011', 'IPC2014'],
-        filter=[ipc_scores.store_rewards,
-                ipc_scores.add_score],
-        xscale='linear',
-        yscale='linear',
-        get_category=domain_as_category,),
-    outfile='scatterplot-ipc-score.png')
+# exp.add_report(
+#     ScatterPlotReport(
+#         attributes=['ipc_score'],
+#         filter_algorithm=['IPC2011', 'IPC2014'],
+#         filter=[ipc_scores.store_rewards,
+#                 ipc_scores.add_score],
+#         scale='linear',
+#         get_category=domain_as_category,),
+#     outfile='scatterplot-ipc-score.png')
 
 
 # Plot list attributes. From now on, we do not use Lab reports anymore.
-def plot_ippc2011(run):
-    """Example of filter for the list plot.
+#def plot_ippc2011(run):
+#    """Example of filter for the list plot.
 
-    A filter function simply needs to receive a run as input and output True or
-    False.  The runs returning True will be considered in the plots, while the
-    ones returning False will be ignored.
+#    A filter function simply needs to receive a run as input and output True or
+#    False.  The runs returning True will be considered in the plots, while the
+#    ones returning False will be ignored.
 
-    NOTE: Filters for list plots receive only a single run as input.
+#    NOTE: Filters for list plots receive only a single run as input.
 
-    """
-    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPC2014':
-        return True
-    return False
+#    """
+#    if run['domain'] == 'crossing-traffic-2011' and run['algorithm'] == 'IPC2014':
+#        return True
+#    return False
 
-list_plot = ListPlot(EXP_PATH)
-exp.add_step('reward-per-round-plot',
-             list_plot.plot_list_attribute,
-             [PlotProblem('game_of_life_inst_mdp__1', linestyle='--'),
-              PlotAlgorithm('IPC2014', color='b', marker='o'),
-              PlotAlgorithm('IPC2011', color='r', marker='*')],
-             'round_reward-all',
-             outfile='prost-plot.pdf')
+#list_plot = ListPlot(EXP_PATH)
+#exp.add_step('reward-per-round-plot',
+#             list_plot.plot_list_attribute,
+#             [PlotProblem('game_of_life_inst_mdp__1', linestyle='--'),
+#              PlotAlgorithm('IPC2014', color='b', marker='o'),
+#              PlotAlgorithm('IPC2011', color='r', marker='*')],
+#             'round_reward-all',
+#             outfile='prost-plot.pdf')
 
 exp.run_steps()
