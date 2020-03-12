@@ -227,7 +227,7 @@ void THTS::initStep(State const& current) {
     currentRootNode = createRootNode();
 
     // Notify ingredients of new step
-    actionSelection->initStep();
+    actionSelection->initStep(current);
     outcomeSelection->initStep();
     backupFunction->initStep();
     initializer->initStep(current);
@@ -270,10 +270,12 @@ inline void THTS::initTrialStep() {
     states[stepsToGoInNextState].reset(stepsToGoInNextState);
 }
 
-void THTS::estimateBestActions(State const& /*_rootState*/,
+void THTS::estimateBestActions(State const& _rootState,
                                std::vector<int>& bestActions) {
     assert(bestActions.empty());
     stopwatch.reset();
+
+    int stepsToGo = _rootState.stepsToGo();
 
     // Check if there is an obviously optimal policy (as, e.g., in the last step
     // or in a reward lock)
@@ -281,6 +283,13 @@ void THTS::estimateBestActions(State const& /*_rootState*/,
     if (uniquePolicyOpIndex != -1) {
         bestActions.push_back(uniquePolicyOpIndex);
         currentRootNode = nullptr;
+
+        // Update statistics
+        if ((stepsToGoInFirstSolvedState == -1) &&
+            (uniquePolicyDueToLastAction || uniquePolicyDueToRewardLock)) {
+            stepsToGoInFirstSolvedState = stepsToGo;
+        }
+
         return;
     }
 
@@ -306,7 +315,6 @@ void THTS::estimateBestActions(State const& /*_rootState*/,
     recommendationFunction->recommend(currentRootNode, bestActions);
     assert(!bestActions.empty());
 
-    int stepsToGo = currentRootNode->stepsToGo;
     // Update statistics
     if (currentRootNode->solved && (stepsToGoInFirstSolvedState == -1)) {
         // TODO: This is the first root state that was solved, so everything

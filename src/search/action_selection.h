@@ -1,6 +1,8 @@
 #ifndef ACTION_SELECTION_H
 #define ACTION_SELECTION_H
 
+#include "states.h"
+
 #include <string>
 #include <vector>
 
@@ -36,7 +38,7 @@ public:
         percentageExplorationInInitialState = 0.0;
     }
     virtual void finishRound() {}
-    virtual void initStep();
+    virtual void initStep(State const& current);
     virtual void finishStep();
     virtual void initTrial() {}
 
@@ -61,6 +63,7 @@ protected:
           selectLeastVisitedActionInRoot(false),
           maxVisitDiff(50),
           currentRootNode(nullptr),
+          stepsToGoInCurrentState(-1),
           numExplorationInRoot(0),
           numExploitationInRoot(0),
           percentageExplorationInInitialState(0.0) {}
@@ -81,6 +84,8 @@ protected:
     int maxVisitDiff;
 
     SearchNode const* currentRootNode;
+
+    int stepsToGoInCurrentState;
 
     // Per step statistics
     int numExplorationInRoot;

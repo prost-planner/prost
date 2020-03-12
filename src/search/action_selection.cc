@@ -50,7 +50,8 @@ ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
     return result;
 }
 
-void ActionSelection::initStep() {
+void ActionSelection::initStep(State const& current) {
+    stepsToGoInCurrentState = current.stepsToGo();
     currentRootNode = thts->getCurrentRootNode();
 
     // Reset per step statistics
@@ -59,7 +60,7 @@ void ActionSelection::initStep() {
 }
 
 void ActionSelection::finishStep() {
-    if (currentRootNode->stepsToGo == SearchEngine::horizon) {
+    if (stepsToGoInCurrentState == SearchEngine::horizon) {
         percentageExplorationInInitialState =
             static_cast<double>(numExplorationInRoot) /
             static_cast<double>(numExplorationInRoot + numExploitationInRoot);
