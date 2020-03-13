@@ -19,7 +19,7 @@ class ConditionalProbabilityFunction;
 
 struct State {
     State(std::vector<ConditionalProbabilityFunction*> const& cpfs);
-    State(State const& other) : state(other.state) {}
+    State(State const& other) = default;
     State(int stateSize) : state(stateSize, 0.0) {}
 
     double& operator[](int const& index) {

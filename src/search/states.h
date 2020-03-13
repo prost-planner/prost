@@ -53,12 +53,7 @@ public:
         }
     }
 
-    State(State const& other)
-        : deterministicStateFluents(other.deterministicStateFluents),
-          probabilisticStateFluents(other.probabilisticStateFluents),
-          remSteps(other.remSteps),
-          stateFluentHashKeys(other.stateFluentHashKeys),
-          hashKey(other.hashKey) {}
+    State(State const& other) = default;
 
     virtual void setTo(State const& other) {
         for (unsigned int i = 0; i < numberOfDeterministicStateFluents; ++i) {
