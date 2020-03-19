@@ -23,7 +23,7 @@
    removed.
  */
 
-#include <iostream>
+#include <string>
 
 enum class Verbosity {
     SUPPRESS,
@@ -36,39 +36,36 @@ enum class Verbosity {
 struct Logger {
     static Verbosity runVerbosity;
 
-    // prints message to stdout if the verbosity of this run is
-    // at least as high as the verbosity of this message
+    // prints message plus an endline to stdout if the verbosity of this
+    // run is at least as high as the given verbosity
     static void logLine(std::string const &message = "",
-                        Verbosity verbosity = Verbosity::VERBOSE) {
-        if (runVerbosity >= verbosity) {
-            std::cout << message << std::endl;
-        }
-    }
+                        Verbosity verbosity = Verbosity::VERBOSE);
 
+    // prints message to stdout if the verobosity of this run is at least
+    // as high as the given verbosity, and otherwise logs altMessage if the
+    // verbosity is at least as the given altVerbosity
     static void logLineIf(
         std::string const &message, Verbosity verbosity,
-        std::string const &altMessage, Verbosity altVerbosity) {
-        if (runVerbosity >= verbosity) {
-            logLine(message, verbosity);
-        } else {
-            logLine(altMessage, altVerbosity);
-        }
-    }
+        std::string const &altMessage, Verbosity altVerbosity);
 
+    // prints message to stdout if the verbosity of this
+    // run is at least as high as the given verbosity
     static void log(std::string const &message,
-                    Verbosity verbosity = Verbosity::VERBOSE) {
-        if (runVerbosity >= verbosity) {
-            std::cout << message;
-        }
-    }
+                    Verbosity verbosity = Verbosity::VERBOSE);
 
-    static void logSeparator(Verbosity verbosity = Verbosity::VERBOSE) {
-        logLine("------------------------------------------------", verbosity);
-    }
+    // prints a separator to stdout if the verbosity of this
+    // run is at least as high as the given verbosity
+    static void logSeparator(Verbosity verbosity = Verbosity::VERBOSE);
 
-    static void logSmallSeparator(Verbosity verbosity = Verbosity::VERBOSE) {
-        logLine("----------------------", verbosity);
-    }
+    // prints a small separator to stdout if the verbosity of this
+    // run is at least as high as the given verbosity
+    static void logSmallSeparator(Verbosity verbosity = Verbosity::VERBOSE);
+
+    // prints an error message to stderr
+    static void logError(std::string const &message);
+
+    // prints a warning to stderr
+    static void logWarning(std::string const &message);
 };
 
 
