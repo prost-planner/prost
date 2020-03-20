@@ -47,6 +47,7 @@ THTS::THTS(std::string _name)
       uniquePolicyDueToRewardLock(false),
       uniquePolicyDueToPreconds(false),
       stepsToGoInFirstSolvedState(-1),
+      expectedRewardInFirstSolvedState(-std::numeric_limits<double>::max()),
       numTrialsInInitialState(0),
       numSearchNodesInInitialState(0),
       numRewardLockStates(0),
@@ -175,6 +176,7 @@ void THTS::initSession() {
 void THTS::initRound() {
     // Reset per round statistics
     stepsToGoInFirstSolvedState = -1;
+    expectedRewardInFirstSolvedState = -std::numeric_limits<double>::max();
     numTrialsInInitialState = 0;
     numSearchNodesInInitialState = 0;
     numRewardLockStates = 0;
@@ -288,6 +290,7 @@ void THTS::estimateBestActions(State const& _rootState,
         if ((stepsToGoInFirstSolvedState == -1) &&
             (uniquePolicyDueToLastAction || uniquePolicyDueToRewardLock)) {
             stepsToGoInFirstSolvedState = stepsToGo;
+            // expectedRewardInFirstSolvedState = TODO!
         }
 
         return;
@@ -322,6 +325,8 @@ void THTS::estimateBestActions(State const& _rootState,
         //  in this case) make sure that we keep the tree and simply follow the
         //  optimal policy.
         stepsToGoInFirstSolvedState = stepsToGo;
+        expectedRewardInFirstSolvedState =
+            currentRootNode->getExpectedRewardEstimate();
     }
 
     if (stepsToGo == SearchEngine::horizon) {
@@ -777,6 +782,12 @@ void THTS::printRoundStatistics(std::string indent) const {
         indent + "Number of remaining steps in first solved state: " +
         std::to_string(stepsToGoInFirstSolvedState),
         Verbosity::SILENT);
+    if (!MathUtils::doubleIsMinusInfinity(expectedRewardInFirstSolvedState)) {
+        Logger::logLine(
+            indent + "Expected reward in first solved state: " +
+            std::to_string(expectedRewardInFirstSolvedState),
+            Verbosity::SILENT);
+    }
     Logger::logLine(
         indent + "Number of trials in initial state: " +
         std::to_string(numTrialsInInitialState),

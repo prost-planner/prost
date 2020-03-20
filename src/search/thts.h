@@ -278,6 +278,7 @@ private:
 
     // Per round statistics
     int stepsToGoInFirstSolvedState;
+    double expectedRewardInFirstSolvedState;
     int numTrialsInInitialState;
     int numSearchNodesInInitialState;
     int numRewardLockStates;
