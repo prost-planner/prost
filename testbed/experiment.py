@@ -1,354 +1,316 @@
-#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Prost Lab uses the Lab package to conduct experiments with the
+# Prost planning system.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-import json
+"""
+A module for running Prost experiments.
+"""
 import os
-import shutil
-import subprocess
-import sys
+
+from collections import defaultdict, OrderedDict
+
+from cached_revision import CachedProstRevision
+from lab import tools
+from lab.experiment import Experiment, get_default_data_dir, Run
 
 from benchmark_suites import *
 
-############ SLURM PARAMETER ############
+class ProstRun(Run):
+    def __init__(self, exp, config, task, port, num_runs, rddlsim_seed, rddlsim_run_time, prost_seed, memory_limit):
+        Run.__init__(self, exp)
+        self.config = config
+        self.task = task
+        self.port = port
+        self.num_runs = num_runs
+        self.rddlsim_seed = rddlsim_seed
+        self.rddlsim_run_time = rddlsim_run_time
+        self.prost_seed = prost_seed
+        self.memory_limit = memory_limit
 
-# Load "infai" settings for partition and qos
-partition = "infai_2"
-# partition = 'gki_cpu-ivy'
-qos = "normal"
+        self._set_properties()
 
-# The email adress that receives an email when the experiment is finished
-email = "my.name@unibas.ch"
+        # Linking to instead of copying the PDDL files makes building
+        # the experiment twice as fast.
+        #self.add_resource("domain", self.task.domain_file, "domain.pddl", symlink=True)
+        #self.add_resource(
+        #    "problem", self.task.problem_file, "problem.pddl", symlink=True
+        #)
 
-# Specify when an email is sent. Possible values include NONE, END, or FAIL
-mail_type = "NONE"
+        use_ipc2018_parser = int(task.path.endswith("2018"))
 
-############ OTHER PARAMETERS ############
+        self.add_command(
+            "planner",
+            ["{" + config.cached_revision.get_wrapper_resource_name() + "}",
+             "{" + config.cached_revision.get_server_resource_name() + "}",
+             "{" + config.cached_revision.get_benchmark_dir_name() + "}/" + self.task.path,
+             str(self.port),
+             str(self.rddlsim_seed),
+             str(self.rddlsim_run_time),
+             "{" + config.cached_revision.get_planner_resource_name() + "}",
+             task.problem.replace('.rddl',''),
+             str(use_ipc2018_parser),
+             self.prost_seed,
+             self.memory_limit,
+             config.search_engine_desc]
+        )
 
-# Set to true if you want to run the experiment in debug mode
-run_debug = False
+        # self.add_command(
+        #     "server",
+        #     ["{" + config.cached_revision.get_server_resource_name() + "}", "-b",
+        #      "{" + config.cached_revision.get_benchmark_dir_name() + "}/" + self.task.path,
+        #      "-p", str(self.port), "-r", str(self.num_runs),
+        #      "-s", str(self.server_seed), "--separate-session",
+        #      "-t", str(self.server_run_time), "-l", "./"]
+        # )
+        
+        # self.add_command(
+        #     "planner",
+        #     [tools.get_python_executable(),
+        #      "{" + config.cached_revision.get_planner_resource_name() + "}",
+        #      task.problem.replace('.rddl',''), "-p", str(self.port),
+        #      "--parser-options", '"-ipc2018"', str(use_ipc2018_parser),
+        #      "[PROST", "-s", "1", "-ram", "TODO", "-se",
+        #      "[" + config.search_engine_desc + "]]"]
+        # )
 
-# A list of domains that are used in this experiment. Each entry must correspond
-# to a folder in testbed/benchmarks. See testbed/benchmark_suites.py for some
-# predefined benchmark sets, such as IPC2018 or IPC_ALL.
-benchmark = IPC_ALL
+    def _set_properties(self):
+#         self.set_property("algorithm", self.algo.name)
+#         self.set_property("repo", self.algo.cached_revision.repo)
+#         self.set_property("local_revision", self.algo.cached_revision.local_rev)
+#         self.set_property("global_revision", self.algo.cached_revision.global_rev)
+#         self.set_property("revision_summary", self.algo.cached_revision.summary)
+#         self.set_property("build_options", self.algo.cached_revision.build_options)
+#         self.set_property("driver_options", self.algo.driver_options)
+#         self.set_property("component_options", self.algo.component_options)
 
-# The search engine configurations that are started in this experiment.
-# (each of these is run on each instance in the benchmark folder)
-configs = [
-    "IPC2011",  # The configuration that participated at IPC 2011
-    "IPC2014",  # The configuration that participated at IPC 2014
-    #'UCT -init [Single -h [RandomWalk]]',              # The configuration that is closest to "plain UCT"
-    #'UCT -init [Expand -h [IDS]] -rec [MPA]',          # Best UCT configuration according to Keller's dissertation
-    #'DP-UCT -init [Single -h [Uniform]]'               # A configuration that works well in wildfire and sysadmin
-]
+#         for key, value in self.task.properties.items():
+#             self.set_property(key, value)
 
-# The number of runs (should be at least 100 to obtain acceptable confidence)
-num_runs = 100
+#         self.set_property("experiment_name", self.experiment.name)
 
-# Average time per step which depends on the horizion and number of runs
-# As a rule of thumb, we provide 75*2.5*H seconds for each instance
-# (exceptions are possible), where H is the finite horizon. As a result
-# of a discussion among the participants and organizers, we decided to
-# increase the average deliberation time significantly (this was 50*H seconds before).
-step_time = 2.5
-
-# Time to wait for the rddl server to setup in sec
-sleep_time = 100
-
-# If enabled, rddlsim ensures that the total runtime is no longer
-# than num_runs * step_time * horizon seconds. Otherwise, the planner
-# also has step_time seconds per step, but there is no guarantee that
-# the total runtime isn't exceeded.
-rddlsim_enforces_runtime = False
-
-# The maximum amount of available memory per task. The value's format is
-# either "<mem>M" or "<mem>G", where <mem> is an integer number, M
-# stands for MByte and G for GByte. Note that PROST additionally has an
-# internal memory management that aims to not use more memory than a
-# given value (see src/search/prost_planner.cc), but that is not very
-# reliable.
-memout = "3872M"
-
-# This is the first port that is used for TCP/IP communication with
-# rddlsim. Make sure to set this in a way that a number of ports equal to
-# the number of tasks of this experiment, starting with port, are open.
-port = 2000
-
-
-############ (USUALLY) NO NEED TO CHANGE THE FOLLOWING ############
-
-# The current revision (used for appropriate naming only).
-revision = (
-    subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
-    .decode("utf-8")
-    .splitlines()[0]
-)
-
-# The memory limit in kb
-if memout[-1] == "M":
-    memout_kb = int(memout[:-1]) * 1024
-elif memout[-1] == "G":
-    memout_kb = int(memout[:-1]) * 1024 * 1024
-
-# A soft memory limit that is used with ulimit
-soft_memout_kb = int(0.98 * memout_kb)
-
-# The experiment's name
-name = "prost_" + revision
-
-# Directory of testbed folder
-testbed_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Directory results are written to
-results_dir = os.path.join(testbed_dir, "results", name)
-
-# Path to executable
-prost_file = os.path.join(results_dir, "prost")
-
-# The file where the grid engine's stderr is directed to
-err_file = os.path.join(results_dir, "slurm.err")
-
-# The file where the grid engine's stdout is directed to
-log_file = os.path.join(results_dir, "slurm.log")
-
-# Template for the string that is executed for each job
-TASK_TEMPLATE = (
-    "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH && "
-    "touch %(run_dir)s/driver.log && "
-    "cd %(run_dir)s && "
-    "%(testbed_dir)s/run-server.py -b %(testbed_dir)s/benchmarks/%(benchmark)s -p %(port)s -r %(num_runs)d -s 0 --separate-session -t %(run_time)d -l %(run_dir)s "
-    "> %(run_dir)s/server.log "
-    "2> %(run_dir)s/server.err & "
-    "cd %(run_dir)s && "
-    "sleep %(sleep_time)d &&"
-    '%(prost_file)s %(instance)s -p %(port)s --parser-options "-ipc2018 %(use_ipc2018_parser)s" [PROST -s 1 -ram %(memout)s -se [%(config)s]] '
-    "> %(run_dir)s/run.log "
-    "2> %(run_dir)s/run.err"
-)
-
-# Template for slurm specific commands
-SLURM_TEMPLATE = """#! /bin/bash -l
-### Set name.
-#SBATCH --job-name=%(name)s
-### Redirect stdout and stderr.
-#SBATCH --error=%(err_file)s
-#SBATCH --output=%(log_file)s
-### Set partition.
-#SBATCH --partition=%(partition)s
-### Set quality-of-service group.
-#SBATCH --qos=%(qos)s
-### Set memory limit
-#SBATCH --mem-per-cpu=%(memout)s
-### Set timeout
-#SBATCH -t %(timeout)s
-### Number of tasks.
-#SBATCH --array=1-%(num_tasks)s
-### Adjustment to priority ([-2147483645, 2147483645]).
-#SBATCH --nice=5000
-### Send mail?
-#SBATCH --mail-type=%(mail_type)s
-#SBATCH --mail-user=%(email)s
-### Extra options.
-ulimit -Sv %(soft_memory_limit)s
-"""
+        self.set_property("id", [self.config.name, self.task.domain, self.task.problem])
 
 
-def build_planner():
-    try:
-        if run_debug:
-            subprocess.check_call([os.path.join(testbed_dir, "../build.py"), "--debug"])
+class ProstConfig(object):
+    def __init__(self, name, cached_revision, search_engine_desc):
+        self.name = name
+        self.cached_revision = cached_revision
+        self.search_engine_desc = search_engine_desc
+
+    def __eq__(self, other):
+        """Return true iff all components (excluding the name) match."""
+        return (
+            self.cached_revision == other.cached_revision
+            and self.search_engine_desc == other.search_engine_desc
+        )
+
+
+class ProstExperiment(Experiment):
+    """Conduct a Prost experiment.
+
+    The most important methods for customizing an experiment are
+    :meth:`.add_algorithm`, :meth:`.add_suite`, :meth:`.add_parser`,
+    :meth:`.add_step` and :meth:`.add_report`.
+
+    .. note::
+
+        To build the experiment, execute its runs and fetch the results,
+        add the following steps (previous Lab versions added these steps
+        automatically):
+
+        >>> exp = ProstExperiment(suites=IPC2014)
+        >>> exp.add_step('build', exp.build)
+        >>> exp.add_step('start', exp.start_runs)
+        >>> exp.add_fetcher(name='fetch')
+
+    """
+    def __init__(self, suites=IPC_ALL, num_runs=30, time_per_step=1.0, port=2000, rddlsim_seed=0, rddlsim_enforces_runtime=False, prost_seed=0, memory_limit="3584M", path=None, environment=None, revision_cache=None):
+        """
+        See :class:`lab.experiment.Experiment` for an explanation of
+        the *path* and *environment* parameters.
+
+        *revision_cache* is the directory for caching Prost
+        revisions. It defaults to ``<scriptdir>/data/revision-cache``.
+        This directory can become very large since each revision uses
+        about 30 MB.
+
+        >>> from lab.environments import BaselSlurmEnvironment
+        >>> env = BaselSlurmEnvironment(email="my.name@unibas.ch")
+        >>> exp = ProstExperiment(environment=env)
+
+        You can add parsers with :meth:`.add_parser()`. See
+        :ref:`parsing` for how to write custom parsers.
+
+        """
+        Experiment.__init__(self, path=path, environment=environment)
+
+        self.revision_cache = revision_cache or os.path.join(
+            get_default_data_dir(), "revision-cache"
+        )
+        
+        self.suites = suites
+        self.num_runs = num_runs
+        self.time_per_step=time_per_step
+        self.port = port
+        self.rddlsim_seed = rddlsim_seed
+        self.rddlsim_enforces_runtime = rddlsim_enforces_runtime
+        self.prost_seed = prost_seed
+        self.memory_limit = memory_limit
+
+        # Use OrderedDict to ensure that names are unique and ordered.
+        self.configs = OrderedDict()
+
+    def add_config(
+        self,
+        name,
+        repo,
+        rev,
+        search_engine_desc,
+        build_options=None,
+    ):
+        """Add a Prost algorithm to the experiment, i.e., a
+        planner configuration in a given repository at a given
+        revision.
+
+        *name* is a string describing the algorithm (e.g. ``"ipc14"``).
+
+        *repo* must be a path to a Prost repository.
+
+        *rev* must be a valid revision in the given repository (e.g.,
+        ``"master"``, ``"HEAD~3"``, ``"issue94"``).
+
+        *search_engine_desc* must be a string describing the used search engine.
+
+        If given, *build_options* must be a list of strings. They will
+        be passed to the ``build.py`` script. Options can be build names
+        (``"release"`` or ``"debug"``), ``build.py`` options (e.g.,
+        ``"--debug"``) or options for Make. If *build_options* is
+        omitted, the ``"release"`` version is built.
+
+        Example experiment setup to test Prost2011 in the latest revision 
+        on the master branch:
+
+        >>> import os
+        >>> from lab.cached_revision import get_version_control_system, MERCURIAL
+        >>> exp = ProstExperiment()
+        >>> repo = os.environ["PROST_REPO"]
+        >>> rev = "master"
+        >>> exp.add_config("ipc11", repo, rev, "IPC2011")
+
+        """
+        if not isinstance(name, tools.string_type):
+            logging.critical("Config name must be a string: {}".format(name))
+        if name in self.configs:
+            logging.critical("Config names must be unique: {}".format(name))
+        build_options = build_options or []
+        config = ProstConfig(
+            name,
+            CachedProstRevision(repo, rev, build_options),
+            search_engine_desc,
+        )
+
+        print("{}: {}".format(config.name, config.search_engine_desc))
+        for conf in self.configs.values():
+            if config == conf:
+                logging.critical(
+                    "Configs {conf.name} and {config.name} are "
+                    "identical.".format(**locals())
+                )
+        self.configs[name] = config
+
+    def build(self, **kwargs):
+        """Add Prost code, runs and write everything to disk.
+
+        This method is called by the second experiment step.
+
+        """
+        if not self.configs:
+            logging.critical("You must add at least one config.")
+
+        # We convert the problems in suites to strings to avoid errors when converting
+        # properties to JSON later. The clean but more complex solution would be to add
+        # a method to the JSONEncoder that recognizes and correctly serializes the class
+        # Problem.
+        #serialized_suites = {
+        #    benchmarks_dir: [str(problem) for problem in benchmarks]
+        #    for benchmarks_dir, benchmarks in self.suites
+        #}
+        #self.set_property("suite", serialized_suites)
+        self.set_property("configs", list(self.configs.keys()))
+
+        self._cache_revisions()
+        self._add_code()
+        self._add_runs()
+
+        Experiment.build(self, **kwargs)
+
+    def _get_unique_cached_revisions(self):
+        unique_cached_revs = set()
+        for config in self.configs.values():
+            unique_cached_revs.add(config.cached_revision)
+        return unique_cached_revs
+
+    def _cache_revisions(self):
+        for cached_rev in self._get_unique_cached_revisions():
+            cached_rev.cache(self.revision_cache)
+
+    def _add_code(self):
+        """Add the compiled code to the experiment."""
+        for cached_rev in self._get_unique_cached_revisions():
+            self.add_resource(
+                "", cached_rev.get_cached_path(), cached_rev.get_exp_path()
+            )
+            # Overwrite the script to set an environment variable.
+            self.add_resource(
+                cached_rev.get_planner_resource_name(),
+                cached_rev.get_cached_path("prost.py"),
+                cached_rev.get_exp_path("prost.py"),
+            )
+            self.add_resource(
+                cached_rev.get_server_resource_name(),
+                cached_rev.get_cached_path("testbed", "run-server.py"),
+                cached_rev.get_exp_path("testbed", "run-server.py"),
+            )
+            self.add_resource(
+                cached_rev.get_benchmark_dir_name(),
+                cached_rev.get_cached_path("testbed", "benchmarks"),
+                cached_rev.get_exp_path("testbed", "benchmarks"),
+            )
+            self.add_resource(
+                cached_rev.get_wrapper_resource_name(),
+                cached_rev.get_cached_path("testbed", "wrapper.sh"),
+                cached_rev.get_exp_path("testbed", "wrapper.sh"),
+            )
+
+    def _add_runs(self):
+        # The memory limit in kb
+        if self.memory_limit[-1] == "M":
+            memout_kb = int(self.memory_limit[:-1]) * 1024
+        elif self.memory_limit[-1] == "G":
+            memout_kb = int(self.memory_limit[:-1]) * 1024 * 1024
         else:
-            subprocess.check_call([os.path.join(testbed_dir, "../build.py")])
-    except subprocess.CalledProcessError as e:
-        print("./build.py failed!")
-        print("PROST planner could not be compiled.")
-    return
+            logging.critical("Memory limit must be given in MB or GB.")
 
-
-def copy_binaries():
-    if run_debug:
-        parser_name = "rddl-parser-debug"
-        parser_file = os.path.join(
-            testbed_dir, "../builds/debug/rddl_parser/rddl-parser"
-        )
-        search_file = ios.path.join(testbed_dir, "../builds/debug/search/search")
-    else:
-        parser_name = "rddl-parser-release"
-        parser_file = os.path.join(
-            testbed_dir, "../builds/release/rddl_parser/rddl-parser"
-        )
-        search_file = os.path.join(testbed_dir, "../builds/release/search/search")
-
-    shutil.copy2(parser_file, os.path.join(results_dir, parser_name))
-    shutil.copy2(search_file, os.path.join(results_dir, "prost"))
-
-
-def create_tasks(filename, instances, timeout):
-    global port
-    tasks = []
-    domains_in_benchmark = set()
-    for task in benchmark:
-        # The path in benchmark_suites is the directory name.
-        # We use this name to identify the domains instead of the RDDL domain file.
-        domains_in_benchmark.add(task.path)
-
-    # Create properties file of the whole experiment.
-    properties = dict()
-    properties["domains"] = list(domains_in_benchmark)
-    properties["algorithms"] = configs
-    properties["memory_limit"] = memout
-    properties["name"] = name
-    properties["num_runs"] = num_runs
-    properties["partition"] = partition
-    properties["revision"] = revision
-    properties["run_debug"] = run_debug
-    properties["time_limit"] = timeout
-    props_path = os.path.join(results_dir, "properties")
-    with open(props_path, "w") as fp:
-        json.dump(properties, fp, indent=2)
-
-    task_id = 1
-    lower = 1
-    upper = 100
-    for config in configs:
-        for instance in sorted(instances):
-            run_batch = "runs-{:0>5}-{:0>5}".format(lower, upper)
-            run = "{:0>5}".format(task_id)
-            run_dir = os.path.join(results_dir, run_batch, run)
-            if not os.path.exists(run_dir):
-                os.makedirs(run_dir)
-                if run_debug:
-                    os.symlink(
-                        os.path.join(results_dir, "rddl-parser-debug"),
-                        os.path.join(run_dir, "rddl-parser-debug"),
-                    )
-                else:
-                    os.symlink(
-                        os.path.join(results_dir, "rddl-parser-release"),
-                        os.path.join(run_dir, "rddl-parser-release"),
-                    )
-
-            run_time = 0
-            if rddlsim_enforces_runtime:
-                run_time = int(instance[2] * num_runs * step_time)
-            task = TASK_TEMPLATE % dict(
-                config=config,
-                benchmark=instance[0],
-                instance=instance[1],
-                port=port,
-                memout=memout_kb,
-                num_runs=num_runs,
-                run_time=run_time,
-                prost_file=prost_file,
-                sleep_time=sleep_time,
-                run_dir=run_dir,
-                testbed_dir=testbed_dir,
-                use_ipc2018_parser=instance[5],
-            )
-
-            # Create properties file of the run.
-            # Lab requires at least the attributes with the names:
-            # domain, problem and algorithm.
-            properties = dict()
-            properties["domain"] = instance[0]
-            properties["algorithm"] = config
-            properties["id"] = config, instance[0], instance[1]
-            properties["problem"] = instance[1]
-            properties["horizon"] = instance[2]
-            properties["max_score"] = instance[4]
-            properties["memory_limit"] = memout
-            properties["min_score"] = instance[3]
-            properties["num_runs"] = num_runs
-            properties["revision"] = revision
-            properties["run_dir"] = run_dir
-            properties["run_time"] = run_time
-            properties["time_limit"] = timeout
-            props_path = os.path.join(run_dir, "static-properties")
-            with open(props_path, "w") as fp:
-                json.dump(properties, fp, indent=2)
-
-            task_id += 1
-            if task_id > upper:
-                lower += 100
-                upper += 100
-            tasks.append(task)
-            port = port + 1
-
-    jobs = SLURM_TEMPLATE % dict(
-        name=name,
-        err_file=err_file,
-        log_file=log_file,
-        partition=partition,
-        qos=qos,
-        memout=memout,
-        timeout=timeout,
-        num_tasks=str(len(tasks)),
-        email=email,
-        mail_type=mail_type,
-        soft_memory_limit=soft_memout_kb,
-    )
-    jobs += "\n"
-
-    for task_id, task in zip(range(1, len(tasks) + 1), tasks):
-        jobs += "if [ " + str(task_id) + " -eq $SLURM_ARRAY_TASK_ID ]; then\n"
-        jobs += "    " + task + "\n"
-        jobs += "    exit $?\n"
-        jobs += "fi\n"
-
-    f = open(filename, "w")
-    f.write(str(jobs))
-    f.close()
-
-
-def run_experiment(filename):
-    subprocess.check_call(["sbatch", filename, "&"])
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        print >>sys.stderr, "Usage: create-jobs.py"
-        exit()
-
-    # Create results and log directory
-    subprocess.check_call(["mkdir", "-p", results_dir])
-
-    # Compile and copy planner
-    build_planner()
-    copy_binaries()
-
-    # Generate tasks
-    instances = []
-    max_horizon = 0
-    for instance in benchmark:
-        domain_name = instance.path
-        problem_name = instance.problem.replace(".rddl", "")
-        problem_horizon = instance.horizon
-        max_horizon = max(max_horizon, problem_horizon)
-        problem_min_score = instance.min_score
-        problem_max_score = instance.max_score
-        use_ipc2018_parser = int(domain_name.endswith("2018"))
-        instances.append(
-            (
-                domain_name,
-                problem_name,
-                problem_horizon,
-                problem_min_score,
-                problem_max_score,
-                use_ipc2018_parser,
-            )
-        )
-
-    # The slurm timeout makes sure that no job runs longer than necessary.
-    # We compute the maximal time an instance may take, and pass this as
-    # the timeout (with a 5% safety net)
-    timeout = str(
-        datetime.timedelta(
-            seconds=1.05 * max_horizon * num_runs * step_time + sleep_time
-        )
-    )
-    filename = os.path.join(results_dir, "experiment_" + revision)
-    create_tasks(filename, instances, timeout)
-
-    # Run experiment
-    run_experiment(filename)
+        
+        port = self.port
+        for config in self.configs.values():
+            for task in self.suites:
+                rddlsim_run_time = 0
+                if self.rddlsim_enforces_runtime:
+                    rddlsim_run_time = int(task.horizon * self.num_runs * self.time_per_step)
+                self.add_run(ProstRun(self, config, task, port, self.num_runs, self.rddlsim_seed, rddlsim_run_time, self.prost_seed, memout_kb))
+                port += 1

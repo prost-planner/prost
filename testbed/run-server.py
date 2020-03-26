@@ -49,7 +49,7 @@ def parse_arguments():
         "--separate-session",
         action="store_true",
         default=False,
-        help="rddlsim terminates " "after a separate session with a client finishes.",
+        help="rddlsim terminates after a separate session with a client finishes.",
     )
     parser.add_argument(
         "-t",
@@ -57,7 +57,7 @@ def parse_arguments():
         action="store",
         default="0",
         type=str,
-        help="Total timeout in seconds. No timeout is " 'used if timeout is "0".',
+        help='Total timeout in seconds. No timeout is used if timeout is "0".',
     )
     parser.add_argument(
         "-l",
@@ -70,21 +70,21 @@ def parse_arguments():
         "--monitor-execution",
         action="store_true",
         default=False,
-        help="Force client to specify if a " "round is considered.",
+        help="Force client to specify if a round is considered.",
     )
     parser.add_argument(
         "-Xms",
         "--init-memory",
         action="store",
         default="100",
-        help="Initial amount of memory in MB " "allocated by the Java VM.",
+        help="Initial amount of memory in MB allocated by the Java VM.",
     )
     parser.add_argument(
         "-Xmx",
         "--max-memory",
         action="store",
         default="500",
-        help="Maximum amount of memory in MB " "that may be allocated by the Java VM.",
+        help="Maximum amount of memory in MB that may be allocated by the Java VM.",
     )
     args = parser.parse_args()
     return args
