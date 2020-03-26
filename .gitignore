@@ -4,6 +4,7 @@
 *.q
 *.log
 *.err
+*.swp
 
 builds/
 

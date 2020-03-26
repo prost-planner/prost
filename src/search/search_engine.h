@@ -51,6 +51,11 @@ public:
 
     virtual void setUseRewardLockDetection(bool _useRewardLockDetection) {
         useRewardLockDetection = _useRewardLockDetection;
+        if (useRewardLockDetection) {
+            goalTestActionIndex = 0;
+        } else {
+            goalTestActionIndex = -1;
+        }
     }
 
     virtual void setCacheRewardLocks(bool _cacheRewardLocks) {
@@ -335,7 +340,7 @@ public:
     // it is not. Otherwise, the action with index i is unreasonable as the
     // action with index res[i] leads to the same distribution over successor
     // states (this is only checked if pruneUnreasonableActions is true).
-    std::vector<int> getApplicableActions(State const& state) const {
+    std::vector<int> getApplicableActions(State const& state) const override {
         std::vector<int> res(numberOfActions, 0);
 
         ActionHashMap::iterator it = applicableActionsCache.find(state);
@@ -508,7 +513,7 @@ protected:
     // it is not. Otherwise, the action with index i is unreasonable as the
     // action with index res[i] leads to the same distribution over successor
     // states (this is only checked if pruneUnreasonableActions is true).
-    std::vector<int> getApplicableActions(State const& state) const {
+    std::vector<int> getApplicableActions(State const& state) const override {
         std::vector<int> res(numberOfActions, 0);
 
         ActionHashMap::iterator it = applicableActionsCache.find(state);

@@ -19,10 +19,12 @@
 
 using namespace std;
 
-IPCClient::IPCClient(std::string _hostName, unsigned short _port)
+IPCClient::IPCClient(
+        string _hostName, unsigned short _port, string _parserOptions)
     : hostName(_hostName),
       port(_port),
       socket(-1),
+      parserOptions(_parserOptions),
       numberOfRounds(-1),
       remainingTime(0) {}
 
@@ -31,6 +33,8 @@ IPCClient::IPCClient(std::string _hostName, unsigned short _port)
 IPCClient::~IPCClient() = default;
 
 void IPCClient::run(string const& instanceName, string& plannerDesc) {
+    // Reset static members from possible earlier runs
+    ProstPlanner::resetStaticMembers();
     // Init connection to the rddlsim server
     initConnection();
 
@@ -424,7 +428,8 @@ void IPCClient::executeParser(string const& taskDesc) {
     string parserOut = parserOutStream.str();
 
     stringstream callString;
-    callString << parserExec << taskFileName << " ./" << parserOut;
+    callString << parserExec << taskFileName << " ./"
+               << parserOut << " " << parserOptions;
     std::cout << callString.str() << std::endl;
     int result = std::system(callString.str().c_str());
     if (result != 0) {

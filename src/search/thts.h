@@ -145,7 +145,7 @@ public:
     void setRecommendationFunction(
         RecommendationFunction* _recommendationFunction);
 
-    void setMaxSearchDepth(int _maxSearchDepth);
+    void setMaxSearchDepth(int _maxSearchDepth) override;
     void setTerminationMethod(THTS::TerminationMethod _terminationMethod) {
         terminationMethod = _terminationMethod;
     }

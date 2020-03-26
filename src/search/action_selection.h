@@ -96,7 +96,7 @@ public:
           magicConstantScaleFactor(1.0) {}
 
     // Set parameters from command line
-    bool setValueFromString(std::string& param, std::string& value);
+    bool setValueFromString(std::string& param, std::string& value) override;
 
     // Parameter setter
     virtual void setMagicConstantScaleFactor(double _magicConstantScaleFactor) {

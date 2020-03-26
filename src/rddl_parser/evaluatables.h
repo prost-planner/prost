@@ -6,7 +6,7 @@
 #include "logical_expressions.h"
 #include "probability_distribution.h"
 
-class ConditionalProbabilityFunction;
+struct ConditionalProbabilityFunction;
 
 struct Evaluatable {
     Evaluatable(std::string _name, LogicalExpression* _formula)
@@ -20,7 +20,7 @@ struct Evaluatable {
     virtual void initialize();
 
     // Simplification
-    virtual void simplify(std::map<ParametrizedVariable*, double>& replace);
+    virtual void simplify(Simplifications& replace);
 
     bool isActionIndependent() const {
         return dependentActionFluents.empty();
@@ -93,7 +93,7 @@ struct ActionPrecondition : public Evaluatable {
     ActionPrecondition(std::string _name, LogicalExpression* _formula)
         : Evaluatable(_name, _formula) {}
 
-    void initialize();
+    void initialize() override;
 
     bool containsArithmeticFunction() const {
         return hasArithmeticFunction;
@@ -113,7 +113,7 @@ struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula)
         : Evaluatable("Reward", _formula) {}
 
-    void initialize();
+    void initialize() override;
 
     double const& getMinVal() const {
         assert(!domain.empty());

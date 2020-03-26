@@ -1,4 +1,4 @@
-#include "../../doctest/doctest.h"
+#include "test_utils.cc"
 
 #include "../probability_distribution.h"
 
@@ -35,7 +35,7 @@ public:
     int counter;
 };
 
-TEST_CASE("Testing DiracDelta distributions") {
+TEST_CASE_FIXTURE(ProstUnitTest, "Testing DiracDelta distributions") {
     SUBCASE("Probability distribution only has a single value") {
         DiscretePD pd;
         pd.assignDiracDelta(5.0);
@@ -46,7 +46,7 @@ TEST_CASE("Testing DiracDelta distributions") {
     }
 }
 
-TEST_CASE("Testing Discrete probability distribution") {
+TEST_CASE_FIXTURE(ProstUnitTest, "Testing Discrete probability distribution") {
     MathUtils::rnd = std::unique_ptr<Random<>>(new RandomFake());
     DiscretePD pd;
     map<double, double> valueProbPairs = {{1.0, 0.2}, {2.0, 0.2}, {3.0, 0.6}};

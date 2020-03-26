@@ -770,18 +770,20 @@ bool checkExtension(std::string s) {
 }
 
 int main (int argc, char** argv) {
-    // Run unit tests
-    doctest::Context context;
-    context.applyCommandLine(argc, argv);
-    int res = context.run();
 
-    if (context.shouldExit()) {
-        return res;
-    }
 
     Timer t;
     std::cout << "Parsing..." << std::endl;
     if (argc < 3) {
+        // Run unit tests
+        doctest::Context context;
+        context.applyCommandLine(argc, argv);
+        int res = context.run();
+
+        if (context.shouldExit()) {
+            return res;
+        }
+
         SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <targetDir-or-targetFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
@@ -806,6 +808,7 @@ int main (int argc, char** argv) {
     double seed = time(nullptr);
     int numStates = 250;
     int numSimulations = 25;
+    double timeout = 10.0;
     bool useIPC2018Rules = false;
 
     // Read optionals
@@ -816,10 +819,14 @@ int main (int argc, char** argv) {
             std::cout << "Setting seed to " << seed << std::endl;
         } else if (nextOption == "-trainingSimulations") {
             numSimulations = atoi(std::string(argv[++index]).c_str());
-            std::cout << "Setting number of simulations for training set creation to " << numSimulations << std::endl;
+            std::cout << "Setting number of simulations for training set creation to "
+                      << numSimulations << std::endl;
         } else if (nextOption == "-trainingSetSize") {
             numStates = atoi(std::string(argv[++index]).c_str());
             std::cout << "Setting target training set size to " << numStates << std::endl;
+        } else if (nextOption == "-trainingTimeout") {
+            timeout = atof(std::string(argv[++index]).c_str());
+            std::cout << "Setting training timeout to " << timeout << std::endl;
         } else if (nextOption == "-ipc2018") {
             useIPC2018Rules = atoi(std::string(argv[++index]).c_str());
             std::cout << "Using IPC 2018 rules: " << useIPC2018Rules << std::endl;
@@ -835,7 +842,7 @@ int main (int argc, char** argv) {
     yyparse();
     std::cout << "...finished (" << t << ")." << std::endl;
 
-    rddlTask->execute(targetDir, seed, numStates, numSimulations, useIPC2018Rules);
+    rddlTask->execute(targetDir, seed, numStates, numSimulations, timeout, useIPC2018Rules);
     std::cout << "total time: " << t << std::endl;
 
     return EXIT_SUCCESS;

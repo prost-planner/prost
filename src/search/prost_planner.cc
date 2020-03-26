@@ -194,9 +194,8 @@ void ProstPlanner::initStep(vector<double> const& nextStateVec,
 
     monitorRAMUsage();
 
-    assert(nextStateVec.size() ==
-           State::numberOfDeterministicStateFluents +
-               State::numberOfProbabilisticStateFluents);
+    assert(nextStateVec.size() == State::numberOfDeterministicStateFluents +
+                                      State::numberOfProbabilisticStateFluents);
 
     currentState = State(nextStateVec, stepsToGo);
     State::calcStateFluentHashKeys(currentState);
@@ -288,4 +287,25 @@ void ProstPlanner::finishStep(double const& immediateReward) {
          << "Immediate reward: " << immediateReward << endl
          << "***********************************************" << endl
          << endl;
+}
+
+void ProstPlanner::resetStaticMembers() {
+    SearchEngine::actionFluents.clear();
+    SearchEngine::stateFluents.clear();
+    SearchEngine::probabilisticCPFs.clear();
+    SearchEngine::allCPFs.clear();
+    SearchEngine::determinizedCPFs.clear();
+    SearchEngine::deterministicCPFs.clear();
+    SearchEngine::actionPreconditions.clear();
+    SearchEngine::actionStates.clear();
+    SearchEngine::trainingSet.clear();
+    SearchEngine::actionPreconditions.clear();
+    SearchEngine::candidatesForOptimalFinalAction.clear();
+    State::stateFluentHashKeysOfDeterministicStateFluents.clear();
+    State::stateFluentHashKeysOfProbabilisticStateFluents.clear();
+    State::stateHashKeysOfDeterministicStateFluents.clear();
+    State::stateHashKeysOfProbabilisticStateFluents.clear();
+    KleeneState::hashKeyBases.clear();
+    KleeneState::indexToStateFluentHashKeyMap.clear();
+    MathUtils::resetRNG();
 }

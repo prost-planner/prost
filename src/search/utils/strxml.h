@@ -48,11 +48,11 @@ std::ostream& operator<<(std::ostream& os, const XMLNode* xn);
 struct XMLText : public XMLNode {
     XMLText(const std::string& _text) : text(_text) {}
 
-    std::string getText() const;
-    const std::string& getName() const;
-    const std::string& getParam(std::string name) const;
+    std::string getText() const override;
+    const std::string& getName() const override;
+    const std::string& getParam(std::string name) const override;
 
-    void print(std::ostream& os) const;
+    void print(std::ostream& os) const override;
 
     std::string text;
 };
@@ -61,14 +61,14 @@ struct XMLParent : public XMLNode {
     XMLParent(const std::string& _name) : name(_name) {}
     virtual ~XMLParent();
 
-    const XMLNode* getChild(int i) const;
-    const XMLNode* getChild(const std::string& name) const;
-    int size() const;
-    std::string getText() const;
-    const std::string& getName() const;
-    const std::string& getParam(std::string name) const;
+    const XMLNode* getChild(int i) const override;
+    const XMLNode* getChild(const std::string& name) const override;
+    int size() const override;
+    std::string getText() const override;
+    const std::string& getName() const override;
+    const std::string& getParam(std::string name) const override;
 
-    void print(std::ostream& os) const;
+    void print(std::ostream& os) const override;
 
     std::string name;
     str_str_map params;
