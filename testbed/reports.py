@@ -45,10 +45,10 @@ class ProstBaseReport(AbsoluteReport):
 ATTRIBUTES = [
     Attribute("ipc_score", min_wins=False, functions=arithmetic_mean),
     Attribute("num_runs", min_wins=False),
-    #Attribute("reward_step-all", min_wins=False),
+    # Attribute("reward_step-all", min_wins=False),
     Attribute("round_reward-all", min_wins=False),
-    #Attribute("round_reward_99", min_wins=False),
-    #Attribute("total_reward", min_wins=False),
+    # Attribute("round_reward_99", min_wins=False),
+    # Attribute("total_reward", min_wins=False),
     Attribute("average_reward", min_wins=False),
     Attribute("time", min_wins=True),
     Attribute("run_dir"),

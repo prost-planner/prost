@@ -20,6 +20,7 @@ from the IPC 2011.)
 
 import os
 
+
 class Benchmark(object):
     def __init__(
         self,
