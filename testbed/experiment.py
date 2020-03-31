@@ -29,6 +29,14 @@ from lab.experiment import Experiment, get_default_data_dir, Run
 
 from benchmark_suites import *
 
+def _get_planner_resource_name(cached_rev):
+    return "prost_" + cached_rev.name
+
+def _get_server_resource_name(cached_rev):
+    return "rddlsim_" + cached_rev.name
+
+def _get_wrapper_resource_name(cached_rev):
+    return "wrapper_" + cached_rev.name
 
 class ProstRun(Run):
     """Conduct an experiment with a given Prost configuration on a given task.
@@ -56,14 +64,14 @@ class ProstRun(Run):
         self.add_command(
             "planner",
             [
-                "{" + config.cached_revision.get_wrapper_resource_name() + "}",
-                "{" + config.cached_revision.get_server_resource_name() + "}",
+                "{" + _get_wrapper_resource_name(config.cached_revision) + "}",
+                "{" + _get_server_resource_name(config.cached_revision) + "}",
                 "./",
                 str(self.port),
                 str(self.experiment.rddlsim_seed),
                 str(self.rddlsim_runtime),
                 str(self.experiment.num_runs),
-                "{" + config.cached_revision.get_planner_resource_name() + "}",
+                "{" + _get_planner_resource_name(config.cached_revision) + "}",
                 task.problem.replace(".rddl", ""),
                 str(self.use_ipc2018_parser),
                 self.experiment.prost_seed,
@@ -262,24 +270,23 @@ class ProstExperiment(Experiment):
     def _add_code(self):
         """Add the compiled code to the experiment."""
         for cached_rev in self._get_unique_cached_revisions():
+            cache_path = os.path.join(self.revision_cache, cached_rev.name)
+            dest_path = "code-" + cached_rev.name
+            self.add_resource("", cache_path, dest_path)
             self.add_resource(
-                "", cached_rev.get_cached_path(), cached_rev.get_exp_path()
-            )
-            # Overwrite the script to set an environment variable.
-            self.add_resource(
-                cached_rev.get_planner_resource_name(),
-                cached_rev.get_cached_path("prost.py"),
-                cached_rev.get_exp_path("prost.py"),
-            )
-            self.add_resource(
-                cached_rev.get_server_resource_name(),
-                cached_rev.get_cached_path("testbed", "run-server.py"),
-                cached_rev.get_exp_path("testbed", "run-server.py"),
+                _get_planner_resource_name(cached_rev),
+                os.path.join(cache_path, "prost.py"),
+                os.path.join(dest_path, "prost.py"),
             )
             self.add_resource(
-                cached_rev.get_wrapper_resource_name(),
-                cached_rev.get_cached_path("testbed", "wrapper.sh"),
-                cached_rev.get_exp_path("testbed", "wrapper.sh"),
+                _get_server_resource_name(cached_rev),
+                os.path.join(cache_path, "testbed", "run-server.py"),
+                os.path.join(dest_path, "testbed", "run-server.py"),
+            )
+            self.add_resource(
+                _get_wrapper_resource_name(cached_rev),
+                os.path.join(cache_path, "testbed", "wrapper.sh"),
+                os.path.join(dest_path, "testbed", "wrapper.sh"),
             )
 
     def _add_runs(self):

@@ -18,22 +18,13 @@ class CachedProstRevision(CachedRevision):
     It provides methods for caching and compiling given revisions.
     """
 
-    def __init__(self, repo, local_rev, build_options):
+    def __init__(self, repo, rev, build_options):
         """
         * *repo*: Path to Prost repository.
-        * *local_rev*: Prost revision.
+        * *rev*: Prost revision.
         * *build_options*: List of build.py options.
         """
-        super().__init__(repo, local_rev, "build.py", build_options, ["scripts"])
-
-    def get_planner_resource_name(self):
-        return "prost_" + self._hashed_name
-
-    def get_server_resource_name(self):
-        return "rddlsim_" + self._hashed_name
-
-    def get_wrapper_resource_name(self):
-        return "wrapper_" + self._hashed_name
+        super().__init__(repo, rev, ["build.py"] + build_options, ["scripts"])
 
     def _cleanup(self):
         # Strip binaries.
