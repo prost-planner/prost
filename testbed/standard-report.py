@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """Example of report using the Lab framework and Matplotlib.
 

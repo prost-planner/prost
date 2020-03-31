@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 File with aditional filters for the Prost reports using Lab.
 

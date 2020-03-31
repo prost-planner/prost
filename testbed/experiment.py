@@ -60,6 +60,7 @@ class ProstRun(Run):
              str(self.port),
              str(self.rddlsim_seed),
              str(self.rddlsim_run_time),
+             str(self.num_runs),
              "{" + config.cached_revision.get_planner_resource_name() + "}",
              task.problem.replace('.rddl',''),
              str(use_ipc2018_parser),
