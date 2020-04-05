@@ -57,16 +57,19 @@ class ListPlot(object):
     """Handles the plot of an attribute in list format.
 
     """
+
     def __init__(self, path, filters=None):
-        self.eval_path = self._cleanup_path(path) + '-eval/'
-        if not os.path.exists(self.eval_path+'properties'):
+        self.eval_path = self._cleanup_path(path) + "-eval/"
+        if not os.path.exists(self.eval_path + "properties"):
             # We do not want to throw and error if the properties file does not
             # exist yet.
-            print('ATTENTION: Properties file does not exist yet.', \
-                  'Running any Prost plot will result in an error.', \
-                  'Please run the other steps first and then rerun the Prost plot steps.')
+            print(
+                "ATTENTION: Properties file does not exist yet.",
+                "Running any Prost plot will result in an error.",
+                "Please run the other steps first and then rerun the Prost plot steps.",
+            )
         else:
-            with open(self.eval_path+'properties') as json_file:
+            with open(self.eval_path + "properties") as json_file:
                 self.properties = json.load(json_file)
         if filters is None:
             filters = []
@@ -93,12 +96,13 @@ class ListPlot(object):
 
         # Then, we compute the cartesian product over all possible attribute
         # values.
-        matches = [dict(zip(values_per_attr, x)) for x in product(*values_per_attr.values())]
-
+        matches = [
+            dict(zip(values_per_attr, x)) for x in product(*values_per_attr.values())
+        ]
 
         # We set up some properties of the plot to become more similar to the
         # Lab plots
-        plt.rc('font', family='serif')
+        plt.rc("font", family="serif")
 
         # Loop over all the runs, verify which attributes and values are
         # matching with the ones we want to plot.  Then, we retrieve the style
@@ -109,16 +113,16 @@ class ListPlot(object):
                 color, marker, linestyle = self._retrieve_style(t, map_to_style)
                 # We might overwrite the key several times if the attribute
                 # styles is ill-defined.
-                legend = '-'.join([v for _, v in t.iteritems()])
+                legend = "-".join([v for _, v in t.iteritems()])
                 assert isinstance(run[attribute_name], list)
                 y = run[attribute_name]
                 x = np.arange(len(y))
-                plt.plot(x, y,
-                         c=color, marker=marker, linestyle=linestyle,
-                         label=legend)
+                plt.plot(
+                    x, y, c=color, marker=marker, linestyle=linestyle, label=legend
+                )
 
         # Add legend
-        leg = plt.legend(loc='best', handlelength=3.5)
+        leg = plt.legend(loc="best", handlelength=3.5)
 
         plt.tight_layout()
         if outfile is None:
@@ -128,7 +132,6 @@ class ListPlot(object):
         else:
             assert isinstance(outfile, str)
             plt.savefig(self.eval_path + outfile)
-
 
     def _retrieve_style(self, t, map_to_style):
         color = marker = linestyle = None
@@ -143,7 +146,7 @@ class ListPlot(object):
                 break
         if color is None:
             # If no attribute defined the color, we set it to black
-            color = 'black'
+            color = "black"
         for k, v in map_to_style.iteritems():
             if k[1] != t[k[0]]:
                 continue
@@ -153,7 +156,7 @@ class ListPlot(object):
                 break
         if marker is None:
             # If no attribute defined the marker, we set it to a circle
-            marker = 'o'
+            marker = "o"
         for k, v in map_to_style.iteritems():
             if k[1] != t[k[0]]:
                 continue
@@ -163,12 +166,12 @@ class ListPlot(object):
                 break
         if linestyle is None:
             # If no attribute defined the linestyle, we set it to a solid line
-            linestyle = '-'
+            linestyle = "-"
         return color, marker, linestyle
 
     def _cleanup_path(self, path):
         # Simply parses '/path/to/exp/' into '/path/to/exp'
-        if path[-1] == '/':
+        if path[-1] == "/":
             path = path[:-1]
         return path
 
@@ -180,6 +183,7 @@ class PlotAttribute(object):
     """
     Implements a filter for an attribute with a defined style for the plot.
     """
+
     def __init__(self, attribute, value, color=None, marker=None, linestyle=None):
         self.attribute = attribute
         self.value = value
@@ -189,28 +193,32 @@ class PlotAttribute(object):
 
     def __str__(self):
         return "attr: {}, value: {}, color: {}, marker: {}, linestyle: {}".format(
-            self.attribute, self.value, self.color, self.marker, self.linestyle)
+            self.attribute, self.value, self.color, self.marker, self.linestyle
+        )
 
 
 class PlotDomain(PlotAttribute):
     """
     Implements a filter specifically over the 'domain' attribute.
     """
+
     def __init__(self, value, color=None, marker=None, linestyle=None):
-        PlotAttribute.__init__(self, 'domain', value, color, marker, linestyle)
+        PlotAttribute.__init__(self, "domain", value, color, marker, linestyle)
 
 
 class PlotProblem(PlotAttribute):
     """
     Implements a filter specifically over the 'problem' (i.e., instance name) attribute.
     """
+
     def __init__(self, value, color=None, marker=None, linestyle=None):
-        PlotAttribute.__init__(self, 'problem', value, color, marker, linestyle)
+        PlotAttribute.__init__(self, "problem", value, color, marker, linestyle)
 
 
 class PlotAlgorithm(PlotAttribute):
     """
     Implements a filter specifically over the 'algorithm' (i.e., configuration) attribute.
     """
+
     def __init__(self, value, color=None, marker=None, linestyle=None):
-        PlotAttribute.__init__(self, 'algorithm', value, color, marker, linestyle)
+        PlotAttribute.__init__(self, "algorithm", value, color, marker, linestyle)
