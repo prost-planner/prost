@@ -843,7 +843,7 @@ int main (int argc, char** argv) {
     std::cout << "...finished (" << t << ")." << std::endl;
 
     rddlTask->execute(targetDir, seed, numStates, numSimulations, timeout, useIPC2018Rules);
-    std::cout << "total time: " << t << std::endl;
+    std::cout << "PROST parser complete running time: " << t << std::endl;
 
     return EXIT_SUCCESS;
 }

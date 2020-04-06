@@ -1,11 +1,16 @@
 #include "minimal_lookahead_search.h"
 
+#include "utils/logger.h"
+
 using namespace std;
 
 MinimalLookaheadSearch::HashMap MinimalLookaheadSearch::rewardCache;
 
 MinimalLookaheadSearch::MinimalLookaheadSearch()
-    : DeterministicSearchEngine("MLS"), numberOfRuns(0), cacheHits(0) {
+    : DeterministicSearchEngine("MLS"),
+      numberOfRuns(0),
+      cacheHits(0),
+      numberOfRunsInCurrentRound(0) {
     if (rewardCache.bucket_count() < 520241) {
         rewardCache.reserve(520241);
     }
@@ -134,9 +139,43 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
     }
 }
 
-void MinimalLookaheadSearch::printStats(ostream& out,
-                                        bool const& /*printRoundStats*/,
-                                        string indent) const {
-    out << indent << "Cache hits: " << cacheHits << " (in " << numberOfRuns
-        << " runs)" << endl;
+void MinimalLookaheadSearch::printRoundStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
+    indent += "  ";
+
+    if (Logger::runVerbosity < Verbosity::VERBOSE) {
+        printRewardCacheUsage(indent, Verbosity::SILENT);
+    }
+
+    Logger::logLine(
+        indent + "Total number of runs: " +
+        to_string(numberOfRunsInCurrentRound),
+        Verbosity::SILENT);
+}
+
+void MinimalLookaheadSearch::printStepStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " step statistics:", Verbosity::NORMAL);
+    indent += "  ";
+
+    printRewardCacheUsage(indent);
+
+    Logger::logLine(
+        indent + "Number of runs: " + to_string(numberOfRuns),
+        Verbosity::NORMAL);
+    Logger::logLine(
+        indent + "Cache hits: " + to_string(cacheHits), Verbosity::VERBOSE);
+}
+
+void MinimalLookaheadSearch::printRewardCacheUsage(
+        std::string indent, Verbosity verbosity) const {
+    long entriesMLSRewardCache =
+            MinimalLookaheadSearch::rewardCache.size();
+    long bucketsMLSRewardCache =
+            MinimalLookaheadSearch::rewardCache.bucket_count();
+    Logger::logLine(
+            indent + "Entries in MLS reward cache: " +
+            to_string(entriesMLSRewardCache), verbosity);
+    Logger::logLine(
+            indent + "Buckets in MLS reward cache: " +
+            to_string(bucketsMLSRewardCache), verbosity);
 }

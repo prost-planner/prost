@@ -23,10 +23,19 @@ public:
                          std::vector<int> const& actionsToExpand,
                          std::vector<double>& qValues) override;
 
+    bool usesBDDs() const override {
+        return false;
+    }
+
     // Parameter Setter
     virtual void setNumberOfIterations(int _numberOfIterations) {
         numberOfIterations = _numberOfIterations;
     }
+
+    // Print
+    void printConfig(std::string indent) const override;
+    void printRoundStatistics(std::string /*indent*/) const override {}
+    void printStepStatistics(std::string /*indent*/) const override {}
 
 private:
     void performRandomWalks(PDState const& root, int firstActionIndex,

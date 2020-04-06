@@ -11,6 +11,7 @@
 #include "utils/stopwatch.h"
 
 #include <unordered_map>
+#include <logger.h>
 
 class DepthFirstSearch;
 class MinimalLookaheadSearch;
@@ -25,9 +26,16 @@ public:
     // This is called when caching is disabled because memory becomes sparse.
     void disableCaching() override;
 
-    // This is called initially to learn parameter values from a random training
-    // set.
-    void learn() override;
+    // Notify the search engine that the session starts
+    void initSession() override;
+
+    // Notify the search engine that a new round starts or ends
+    void initRound() override;
+    void finishRound() override;
+
+    // Notify the search engine that a new step starts or ends
+    void initStep(State const& current) override;
+    void finishStep() override;
 
     // Start the search engine to estimate the Q-value of a single action
     void estimateQValue(State const& state, int actionIndex,
@@ -51,12 +59,14 @@ public:
         terminateWithReasonableAction = newValue;
     }
 
-    // Reset statistic variables
-    void resetStats() override;
+    bool usesBDDs() const override {
+        return false;
+    }
 
     // Print
-    void printStats(std::ostream& out, bool const& printRoundStats,
-                    std::string indent = "") const override;
+    void printConfig(std::string indent) const override;
+    void printRoundStatistics(std::string indent) const override;
+    void printStepStatistics(std::string indent) const override;
 
     // Caching
     using HashMap = std::unordered_map<State, std::vector<double>,
@@ -72,6 +82,9 @@ protected:
     inline bool moreIterations(int const& stepsToGo);
 
     void createMinimalLookaheadSearch();
+
+    void printRewardCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
 
     // The depth first search engine
     DepthFirstSearch* dfs;
@@ -93,14 +106,22 @@ protected:
     // Is true if caching was disabled at some point
     bool ramLimitReached;
 
+    // Is true if the current step is in the task's initial state.
+    bool isInitialState;
+
     // Parameter
     double strictTerminationTimeout;
     bool terminateWithReasonableAction;
 
-    // Statistics
-    int accumulatedSearchDepth;
-    int cacheHits;
-    int numberOfRuns;
+    // Per step statistics
+    int accumulatedSearchDepthInCurrentStep;
+    int numberOfRunsInCurrentStep;
+    int cacheHitsInCurrentStep;
+
+    // Per round statistics
+    double avgSearchDepthInInitialState;
+    long accumulatedSearchDepthInCurrentRound;
+    int numberOfRunsInCurrentRound;
 };
 
 #endif

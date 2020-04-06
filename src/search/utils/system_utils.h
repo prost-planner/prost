@@ -5,11 +5,7 @@
 
 class SystemUtils {
 public:
-    static void abort(std::string msg);
-    static void warn(std::string msg);
-
-    static void takeTime();
-    static double stopTime();
+    static void abort(std::string const& message);
 
     static bool readFile(std::string& file, std::string& res,
                          std::string ignoreSign = "");
@@ -26,8 +22,6 @@ public:
     static double getCPUUsageOfThis();
 
 protected:
-    static clock_t start;
-    static bool clockRunning;
     static bool CPUMeasurementRunning;
     static bool CPUMeasurementOfProcessRunning;
 

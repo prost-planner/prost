@@ -4,6 +4,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -49,6 +50,23 @@ ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
     return result;
 }
 
+void ActionSelection::initStep(State const& current) {
+    stepsToGoInCurrentState = current.stepsToGo();
+    currentRootNode = thts->getCurrentRootNode();
+
+    // Reset per step statistics
+    numExplorationInRoot = 0;
+    numExploitationInRoot = 0;
+}
+
+void ActionSelection::finishStep() {
+    if (stepsToGoInCurrentState == SearchEngine::horizon) {
+        percentageExplorationInInitialState =
+            static_cast<double>(numExplorationInRoot) /
+            static_cast<double>(numExplorationInRoot + numExploitationInRoot);
+    }
+}
+
 /******************************************************************
                           ActionSelection
 ******************************************************************/
@@ -56,39 +74,47 @@ ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
 int ActionSelection::selectAction(SearchNode* node) {
     bestActionIndices.clear();
 
+    // Select an unvisited child if there is one
+    // TODO: Determine why this is <= 1 instead of < 1
     if (node->numberOfVisits <= 1) {
         selectGreedyAction(node);
     }
 
-    if (selectLeastVisitedActionInRoot &&
-        (node == thts->getCurrentRootNode()) && bestActionIndices.empty()) {
+    // If action selection is uniform in the root node and this is the
+    // root node, select the least visited action
+    if (selectLeastVisitedActionInRoot && (node == currentRootNode) &&
+        bestActionIndices.empty()) {
         selectLeastVisitedAction(node);
     }
 
+    // Select an action has been selected significantly less often than another
     if (bestActionIndices.empty()) {
         selectActionBasedOnVisitDifference(node);
     }
 
+    // Select an action with the action selection method of this
+    // action selection
     if (bestActionIndices.empty()) {
         _selectAction(node);
     }
 
+    // Pick one of the candidates uniformly at random
     assert(!bestActionIndices.empty());
     int selectedIndex = MathUtils::rnd->randomElement(bestActionIndices);
 
-    if ((thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) &&
-        (node == thts->getCurrentRootNode())) {
+    // Update statistics
+    if (node == currentRootNode) {
         double bestValue =
             node->children[selectedIndex]->getExpectedRewardEstimate();
 
         for (SearchNode* child : node->children) {
             if (child && MathUtils::doubleIsGreater(
                              child->getExpectedRewardEstimate(), bestValue)) {
-                ++exploreInRoot;
+                ++numExplorationInRoot;
                 return selectedIndex;
             }
         }
-        ++exploitInRoot;
+        ++numExploitationInRoot;
     }
 
     return selectedIndex;
@@ -287,15 +313,68 @@ bool UCB1ActionSelection::setValueFromString(std::string& param,
                               Print
 ******************************************************************/
 
-void ActionSelection::printStats(std::ostream& out, std::string indent) {
-    if (thts->getCurrentRootNode()->stepsToGo == SearchEngine::horizon) {
-        out << indent << "Action Selection:" << std::endl;
-        out << indent << "Exploitation in Root: " << exploitInRoot << std::endl;
-        out << indent << "Exploration in Root: " << exploreInRoot << std::endl;
-        out << indent << "Percentage Exploration in Root: "
-            << ((double)((double)exploreInRoot) /
-                ((double)exploreInRoot + (double)exploitInRoot))
-            << std::endl;
+void ActionSelection::printConfig(std::string indent) const {
+    Logger::logLine(indent + "Action selection: " + name, Verbosity::VERBOSE);
+
+    indent += "  ";
+    if (selectLeastVisitedActionInRoot) {
+        Logger::logLine(indent + "Uniform selection in root state: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "Uniform selection in root state: disabled",
+                        Verbosity::VERBOSE);
     }
+    Logger::logLine(indent + "Maximal visit difference factor: " +
+                    std::to_string(maxVisitDiff), Verbosity::VERBOSE);
+}
+
+void UCB1ActionSelection::printConfig(std::string indent) const {
+    ActionSelection::printConfig(indent);
+
+    indent += "  ";
+    switch (explorationRate) {
+        case LOG:
+            Logger::logLine(indent + "Exploration rate: LOG",
+                            Verbosity::VERBOSE);
+            break;
+        case SQRT:
+            Logger::logLine(indent + "Exploration rate: SQRT",
+                            Verbosity::VERBOSE);
+            break;
+        case LIN:
+            Logger::logLine(indent + "Exploration rate: LIN",
+                            Verbosity::VERBOSE);
+            break;
+        case LNQUAD:
+            Logger::logLine(indent + "Exploration rate: LNQUAD",
+                            Verbosity::VERBOSE);
+            break;
+    }
+
+    Logger::logLine(
+        indent + "Magic constant: " + std::to_string(magicConstantScaleFactor),
+        Verbosity::VERBOSE);
+}
+
+void ActionSelection::printStepStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " step statistics:", Verbosity::VERBOSE);
+    indent += "  ";
+    double perc =
+        static_cast<double>(numExplorationInRoot) /
+        static_cast<double>(numExplorationInRoot + numExploitationInRoot);
+    Logger::logLine(
+        indent + "Percentage exploration: " + std::to_string(perc),
+        Verbosity::VERBOSE);
+    Logger::logLine("", Verbosity::VERBOSE);
+}
+
+void ActionSelection::printRoundStatistics(std::string indent) const {
+    Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
+    indent += "  ";
+    Logger::logLine(
+        indent + "Percentage exploration in initial state: " +
+        std::to_string(percentageExplorationInInitialState),
+        Verbosity::SILENT);
+    Logger::logLine("", Verbosity::VERBOSE);
 }
 

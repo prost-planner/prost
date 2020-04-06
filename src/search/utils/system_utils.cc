@@ -1,4 +1,6 @@
 #include "system_utils.h"
+
+#include "logger.h"
 #include "string_utils.h"
 
 #include <cassert>
@@ -14,39 +16,16 @@
 #include "sys/sysinfo.h"
 #include "sys/times.h"
 #include "sys/types.h"
-#include "sys/vtimes.h"
 
-clock_t SystemUtils::start = 0;
 clock_t SystemUtils::lastCPU = 0;
 clock_t SystemUtils::lastSysCPU = 0;
 clock_t SystemUtils::lastUserCPU = 0;
 int SystemUtils::numProcessors = 0;
-bool SystemUtils::clockRunning = false;
 bool SystemUtils::CPUMeasurementOfProcessRunning = false;
 
-void SystemUtils::abort(std::string msg) {
-    std::cerr << msg << std::endl;
+void SystemUtils::abort(std::string const& message) {
+    Logger::logError(message);
     exit(0);
-}
-
-void SystemUtils::warn(std::string msg) {
-    std::cerr << msg << std::endl;
-}
-
-void SystemUtils::takeTime() {
-    if (!clockRunning) {
-        clockRunning = true;
-        start = clock();
-    }
-}
-
-double SystemUtils::stopTime() {
-    if (!clockRunning) {
-        return -1.0;
-    }
-
-    clockRunning = false;
-    return double(clock() - start) / (double)CLOCKS_PER_SEC;
 }
 
 bool SystemUtils::readFile(std::string& file, std::string& res,
@@ -130,7 +109,7 @@ long SystemUtils::getTotalRAM() {
     return res;
 }
 
-////returns the RAM used (by all processes)
+// returns the RAM used (by all processes)
 long SystemUtils::getUsedRAM() {
     struct sysinfo memInfo;
     sysinfo(&memInfo);

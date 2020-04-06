@@ -1,6 +1,7 @@
 #include "probability_distribution.h"
 
 #include <algorithm>
+#include <sstream>
 
 #include "utils/math_utils.h"
 
@@ -31,12 +32,14 @@ bool DiscretePD::isWellDefined() const {
     return MathUtils::doubleIsEqual(probSum, 1.0);
 }
 
-void DiscretePD::print(ostream& out) const {
-    out << "[ ";
+string DiscretePD::toString() const {
+    stringstream ss;
+    ss << "[ ";
     for (unsigned int i = 0; i < values.size(); ++i) {
-        out << values[i] << ":" << probabilities[i] << " ";
+        ss << values[i] << ":" << probabilities[i] << " ";
     }
-    out << "]" << endl;
+    ss << "]" << endl;
+    return ss.str();
 }
 
 pair<double, double> DiscretePD::sample(vector<int> const& blacklist) const {

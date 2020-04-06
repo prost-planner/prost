@@ -2,6 +2,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
@@ -96,4 +97,8 @@ vector<int> UnsolvedMCOutcomeSelection::computeBlacklist(
         }
     }
     return blacklist;
+}
+
+void OutcomeSelection::printConfig(std::string indent) const {
+    Logger::logLine(indent + "Outcome selection: " + name, Verbosity::VERBOSE);
 }
