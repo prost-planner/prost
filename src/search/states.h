@@ -335,8 +335,8 @@ public:
         }
     };
 
-    void printCompact(std::ostream& out) const;
-    void print(std::ostream& out) const;
+    virtual std::string toCompactString() const;
+    virtual std::string toString() const;
 
     // The number of deterministic and probabilistic state fluents
     static int numberOfDeterministicStateFluents;
@@ -393,8 +393,8 @@ struct ActionState {
         return state[index];
     }
 
-    void printCompact(std::ostream& out) const;
-    void print(std::ostream& out) const;
+    std::string toString() const;
+    std::string toCompactString() const;
 
     int index;
     std::vector<int> state;
@@ -483,8 +483,7 @@ public:
         }
     };
 
-    void printPDState(std::ostream& out) const;
-    void printPDStateCompact(std::ostream& out) const;
+    std::string toCompactString() const;
 
 protected:
     std::vector<DiscretePD> probabilisticStateFluentsAsPD;
@@ -606,7 +605,7 @@ public:
         return KleeneState(*this) |= other;
     }
 
-    void print(std::ostream& out) const;
+    std::string toString() const;
 
     // The number of state fluents
     static int stateSize;

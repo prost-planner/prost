@@ -4,6 +4,7 @@
 #define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
 #include "../doctest/doctest.h"
 
+#include "utils/logger.h"
 #include "utils/stopwatch.h"
 
 #include <cstdlib>
@@ -597,6 +598,8 @@ int main(int argc, char** argv) {
     IPCClient* client = new IPCClient(hostName, port, parserOptions);
     client->run(problemFileName, plannerDesc);
 
-    cout << "PROST complete running time: " << totalTime << endl;
+    Logger::logLine(
+        "PROST complete running time: " + to_string(totalTime()),
+        Verbosity::SILENT);
     return 0;
 }

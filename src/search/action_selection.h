@@ -1,6 +1,8 @@
 #ifndef ACTION_SELECTION_H
 #define ACTION_SELECTION_H
 
+#include "states.h"
+
 #include <string>
 #include <vector>
 
@@ -27,16 +29,17 @@ public:
         maxVisitDiff = _maxVisitDiff;
     }
 
-    // Learns parameter values from a random training set
-    virtual void learn() {}
-
     // This is called when caching is disabled because memory becomes sparse
     virtual void disableCaching() {}
 
+    virtual void initSession() {}
     virtual void initRound() {
-        exploreInRoot = 0;
-        exploitInRoot = 0;
+        // Reset per round statistics
+        percentageExplorationInInitialState = 0.0;
     }
+    virtual void finishRound() {}
+    virtual void initStep(State const& current);
+    virtual void finishStep();
     virtual void initTrial() {}
 
     // Action selection
@@ -49,17 +52,26 @@ public:
     void selectActionBasedOnVisitDifference(SearchNode* node);
 
     // Prints statistics
-    virtual void printStats(std::ostream& /*out*/, std::string /*indent*/);
+    virtual void printConfig(std::string indent) const;
+    virtual void printStepStatistics(std::string indent) const;
+    virtual void printRoundStatistics(std::string indent) const;
 
 protected:
-    ActionSelection(THTS* _thts)
+    ActionSelection(THTS* _thts, std::string _name)
         : thts(_thts),
+          name(_name),
           selectLeastVisitedActionInRoot(false),
           maxVisitDiff(50),
-          exploreInRoot(0),
-          exploitInRoot(0) {}
+          currentRootNode(nullptr),
+          stepsToGoInCurrentState(-1),
+          numExplorationInRoot(0),
+          numExploitationInRoot(0),
+          percentageExplorationInInitialState(0.0) {}
 
     THTS* thts;
+
+    // Name, used for output only
+    std::string name;
 
     // Vector for decision node children of equal quality
     std::vector<int> bestActionIndices;
@@ -71,13 +83,22 @@ protected:
     // one with the lowest number of visits
     int maxVisitDiff;
 
-    int exploreInRoot;
-    int exploitInRoot;
+    SearchNode const* currentRootNode;
+
+    int stepsToGoInCurrentState;
+
+    // Per step statistics
+    int numExplorationInRoot;
+    int numExploitationInRoot;
+
+    // Per round statistics
+    double percentageExplorationInInitialState;
 };
 
 class BFSActionSelection : public ActionSelection {
 public:
-    BFSActionSelection(THTS* _thts) : ActionSelection(_thts) {}
+    BFSActionSelection(THTS* _thts)
+        : ActionSelection(_thts, "BFS action selection") {}
 
     // Action selection
     void _selectAction(SearchNode* node) override {
@@ -91,7 +112,7 @@ public:
     enum ExplorationRate { LOG, SQRT, LIN, LNQUAD };
 
     UCB1ActionSelection(THTS* _thts)
-        : ActionSelection(_thts),
+        : ActionSelection(_thts, "UCB1 action selection"),
           explorationRate(LOG),
           magicConstantScaleFactor(1.0) {}
 
@@ -109,6 +130,9 @@ public:
 
     // Action selection
     void _selectAction(SearchNode* node) override;
+
+    // Printer
+    void printConfig(std::string indent) const override;
 
 protected:
     // Parameter

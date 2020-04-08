@@ -139,7 +139,7 @@ public:
     }
 
     bool isWellDefined() const;
-    void print(std::ostream& out) const;
+    std::string toString() const;
 
     // Sample a value which is not blacklisted. Probability of blackisted values
     // is ignored

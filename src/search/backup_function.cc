@@ -2,6 +2,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -63,9 +64,8 @@ void BackupFunction::backupDecisionNodeLeaf(SearchNode* node,
     node->futureReward = futReward;
     node->solved = useSolveLabeling;
 
-    // std::cout << "updated dec node leaf:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated dec node leaf:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 void BackupFunction::backupDecisionNode(SearchNode* node) {
@@ -104,17 +104,11 @@ void BackupFunction::backupDecisionNode(SearchNode* node) {
         lockBackup = useBackupLock;
     }
 
-    // std::cout << "updated dec node with " << node->stepsToGo
-    //           << " steps-to-go and immediate reward " <<
-    //           node->immediateReward << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
-}
-
-void BackupFunction::printStats(std::ostream& out, std::string indent) {
-    if (useBackupLock) {
-        out << indent << "Skipped backups: " << skippedBackups << std::endl;
-    }
+    // Logger::logLine("updated dec node with " +
+    //                 std::to_string(node->stepsToGo) +
+    //                 " steps-to-go and immediate reward " +
+    //                 std::to_string(node->immediateReward), Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 /******************************************************************
@@ -142,9 +136,8 @@ void MCBackupFunction::backupChanceNode(SearchNode* node,
         initialLearningRate * (futReward - node->futureReward) /
             (1.0 + (learningRateDecay * (double)node->numberOfVisits));
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 /******************************************************************
@@ -170,9 +163,8 @@ void MaxMCBackupFunction::backupChanceNode(SearchNode* node,
 
     node->futureReward /= numberOfChildVisits;
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
 }
 
 /******************************************************************
@@ -209,7 +201,50 @@ void PBBackupFunction::backupChanceNode(SearchNode* node,
     node->futureReward /= probSum;
     node->solved = MathUtils::doubleIsEqual(solvedSum, 1.0);
 
-    // std::cout << "updated chance node:" << std::endl;
-    // node->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("updated chance node:", Verbosity::DEBUG);
+    // Logger::logLine(node->toString(), Verbosity::DEBUG);
+}
+
+void BackupFunction::printConfig(std::string indent) const {
+    Logger::logLine(indent + "Backup function: " + name, Verbosity::VERBOSE);
+
+    indent += "  ";
+    if (useSolveLabeling) {
+        Logger::logLine(indent + "Solve labeling: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "Solve labeling: disabled",
+                        Verbosity::VERBOSE);
+    }
+    if (useBackupLock) {
+        Logger::logLine(indent + "Backup lock: enabled",
+                        Verbosity::VERBOSE);
+    } else {
+        Logger::logLine(indent + "Backup lock: disabled",
+                        Verbosity::VERBOSE);
+    }
+}
+
+void MCBackupFunction::printConfig(std::string indent) const {
+    BackupFunction::printConfig(indent);
+
+    indent += "  ";
+    Logger::logLine(indent + "initial learning rate: " +
+                    std::to_string(initialLearningRate),
+                    Verbosity::VERBOSE);
+    Logger::logLine(indent + "learning rate decay: " +
+                    std::to_string(learningRateDecay),
+                    Verbosity::VERBOSE);
+}
+
+void BackupFunction::printStepStatistics(std::string indent) const {
+    if (useBackupLock) {
+        Logger::logLine(
+            indent + name + " step statistics:", Verbosity::VERBOSE);
+        indent += "  ";
+        Logger::logLine(
+            indent + "Skipped backups: " + std::to_string(skippedBackups),
+            Verbosity::VERBOSE);
+        Logger::logLine("", Verbosity::VERBOSE);
+    }
 }

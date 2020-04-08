@@ -16,6 +16,7 @@
 #include <sstream>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <logger.h>
 
 using namespace std;
 
@@ -162,7 +163,6 @@ void IPCClient::initSession(string const& instanceName, string& plannerDesc) {
     delete serverResponse;
     // in c++ 14 we would use make_unique<ProstPlanner>
     planner = std::unique_ptr<ProstPlanner>(new ProstPlanner(plannerDesc));
-    planner->init();
     planner->initSession(numberOfRounds, remainingTime);
 }
 
@@ -413,7 +413,8 @@ void IPCClient::executeParser(string const& taskDesc) {
 #else
     std::string parserExec = "./rddl-parser-debug ";
 #endif
-    std::cout << "RUNNING RDDL PARSER AT " << parserExec << endl;
+    Logger::logLine(
+        "Running RDDL parser at " + parserExec, Verbosity::VERBOSE);
     // Generate temporary input file for parser
     std::ofstream taskFile;
     stringstream taskFileNameStream;
@@ -430,7 +431,6 @@ void IPCClient::executeParser(string const& taskDesc) {
     stringstream callString;
     callString << parserExec << taskFileName << " ./"
                << parserOut << " " << parserOptions;
-    std::cout << callString.str() << std::endl;
     int result = std::system(callString.str().c_str());
     if (result != 0) {
         SystemUtils::abort("Error: " + parserExec + " had an error");

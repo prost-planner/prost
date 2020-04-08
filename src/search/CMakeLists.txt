@@ -43,6 +43,7 @@ set(SEARCH_SOURCES
   thts
   uniform_evaluation_search
   utils/base64
+  utils/logger
   utils/math_utils
   utils/random
   utils/stopwatch

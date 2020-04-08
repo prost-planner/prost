@@ -1,4 +1,4 @@
-# Checking if BuDDy is instaled with libbdd-dev 
+# Checking if BuDDy is installed with libbdd-dev 
 # Once done, this will define
 #
 #  BDD_FOUND - system has bdd installed

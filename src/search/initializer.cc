@@ -2,6 +2,7 @@
 
 #include "thts.h"
 
+#include "utils/logger.h"
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
@@ -59,6 +60,7 @@ bool Initializer::setValueFromString(std::string& param, std::string& value) {
 }
 
 Initializer::~Initializer() {
+    assert(heuristic);
     delete heuristic;
 }
 
@@ -67,11 +69,33 @@ Initializer::~Initializer() {
 ******************************************************************/
 
 void Initializer::disableCaching() {
+    assert(heuristic);
     heuristic->disableCaching();
 }
 
-void Initializer::learn() {
-    heuristic->learn();
+void Initializer::initSession() {
+    assert(heuristic);
+    heuristic->initSession();
+}
+
+void Initializer::initRound() {
+    assert(heuristic);
+    heuristic->initRound();
+}
+
+void Initializer::finishRound() {
+    assert(heuristic);
+    heuristic->finishRound();
+}
+
+void Initializer::initStep(State const& current) {
+    assert(heuristic);
+    heuristic->initStep(current);
+}
+
+void Initializer::finishStep() {
+    assert(heuristic);
+    heuristic->finishStep();
 }
 
 /******************************************************************
@@ -83,6 +107,7 @@ void Initializer::setHeuristic(SearchEngine* _heuristic) {
         delete heuristic;
     }
     heuristic = _heuristic;
+    heuristic->prependName("THTS heuristic ");
 }
 
 void Initializer::setMaxSearchDepth(int maxSearchDepth) {
@@ -94,14 +119,26 @@ void Initializer::setMaxSearchDepth(int maxSearchDepth) {
                             Print
 ******************************************************************/
 
-void Initializer::printStats(std::ostream& out, bool const& printRoundStats,
-                             std::string indent) const {
-    out << indent << "Initializer: " << name << std::endl;
-    out << indent << "Heuristic weight: " << heuristicWeight << std::endl;
-    out << indent << "Number of initial visits: " << numberOfInitialVisits
-        << std::endl;
-    out << indent << "Heuristic: " << std::endl;
-    heuristic->printStats(out, printRoundStats, indent + "  ");
+void Initializer::printConfig(std::string indent) const {
+    Logger::logLine(indent + "Initializer: " + name, Verbosity::VERBOSE);
+
+    indent += "  ";
+    Logger::logLine(indent + "Heuristic weight: " +
+                    std::to_string(heuristicWeight), Verbosity::VERBOSE);
+    Logger::logLine(indent + "Number of initial visits: " +
+                    std::to_string(numberOfInitialVisits), Verbosity::VERBOSE);
+    assert(heuristic);
+    heuristic->printConfig(indent);
+}
+
+void Initializer::printStepStatistics(std::string indent) const {
+    assert(heuristic);
+    heuristic->printStepStatistics(indent);
+}
+
+void Initializer::printRoundStatistics(std::string indent) const {
+    assert(heuristic);
+    heuristic->printRoundStatistics(indent);
 }
 
 /******************************************************************
@@ -109,8 +146,8 @@ void Initializer::printStats(std::ostream& out, bool const& printRoundStats,
 ******************************************************************/
 
 void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
-    // std::cout << "initializing state: " << std::endl;
-    // current.print(std::cout);
+    // Logger::logLine("initializing state:", Verbosity::DEBUG);
+    // Logger::logLine(current.toString(), Verbosity::DEBUG);
 
     assert(node->children.empty());
     node->children.resize(SearchEngine::numberOfActions, nullptr);
@@ -132,12 +169,13 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
             node->futureReward = std::max(node->futureReward,
                                           node->children[index]->futureReward);
 
-            // std::cout << "Initialized child ";
-            // SearchEngine::actionStates[index].printCompact(std::cout);
-            // node->children[index]->print(std::cout);
+            // Logger::logLine("Initialized child " +
+            //                 SearchEngine::actionStates[index].toCompactString(),
+            //                 Verbosity::DEBUG);
+            // Logger::logLine(node->children[index]->toString(), Verbosity::DEBUG);
         }
     }
-    // std::cout << std::endl;
+    //Logger::logLine("", Verbosity::DEBUG);
 
     node->initialized = true;
 }
@@ -148,8 +186,8 @@ void ExpandNodeInitializer::initialize(SearchNode* node, State const& current) {
 
 void SingleChildInitializer::initialize(SearchNode* node,
                                         State const& current) {
-    // std::cout << "initializing state: " << std::endl;
-    // current.print(std::cout);
+    // Logger::logLine("initializing state: ", Verbosity::DEBUG);
+    // Logger::logLine(current.toString(), Verbosity::DEBUG);
 
     std::vector<int> candidates;
 
@@ -188,8 +226,8 @@ void SingleChildInitializer::initialize(SearchNode* node,
 
     node->initialized = (candidates.size() == 1);
 
-    // std::cout << "Initialized child ";
-    // SearchEngine::actionStates[actionIndex].printCompact(std::cout);
-    // node->children[actionIndex]->print(std::cout);
-    // std::cout << std::endl;
+    // Logger::logLine("Initialized child " +
+    //                 SearchEngine::actionStates[actionIndex].toCompactString(),
+    //                 Verbosity::DEBUG);
+    // Logger::logLine(node->children[actionIndex]->toString(), Verbosity::DEBUG);
 }

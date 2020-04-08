@@ -14,10 +14,7 @@ public:
 
     ProstPlanner(std::string& plannerDesc);
 
-    // Initialized the planner
-    void init();
-
-    // These are called at the beginning and end of a session
+    // Start or end the session
     void initSession(int _numberOfRounds, long totalTime);
     void finishSession(double& totalReward);
 
@@ -44,6 +41,8 @@ public:
     void setRAMLimit(int _ramLimit) {
         // Since we cannot guarantee that no further memory is allocated after
         // caching is disabled, we keep a buffer of 25% of the available memory
+        // TODO: We should be able to guarantee this instead and use all
+        //  available memory instead
         ramLimit = 0.75 * _ramLimit;
     }
 
@@ -66,6 +65,8 @@ private:
     // Assigns a timeout for the next decision
     void manageTimeouts(long const& remainingTime);
 
+    void printConfig() const;
+
     SearchEngine* searchEngine;
 
     State currentState;
@@ -73,6 +74,7 @@ private:
     int currentRound;
     int currentStep;
     int stepsToGo;
+    int executedActionIndex;
     int numberOfRounds;
 
     bool cachingEnabled;
@@ -84,9 +86,6 @@ private:
     int bitSize;
     int seed;
     TimeoutManagementMethod tmMethod;
-
-    std::vector<std::vector<double>> immediateRewards;
-    std::vector<std::vector<int>> chosenActionIndices;
 };
 
 #endif

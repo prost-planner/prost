@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <set>
+#include <logger.h>
 
 using namespace std;
 
@@ -47,8 +48,8 @@ void DepthFirstSearch::applyAction(State const& state, int const& actionIndex,
     State nxt(state.stepsToGo() - 1);
     calcStateTransition(state, actionIndex, nxt, reward);
 
-    // PlanningTask::printState(cout, nxt);
-    // cout << reward << endl;
+    // Logger::logLine(nxt.toString(), Verbosity::DEBUG);
+    // Logger::logLine("reward: " + to_string(reward), Verbosity::DEBUG);
 
     // Check if the next state is already cached
     if (DeterministicSearchEngine::stateValueCache.find(nxt) !=

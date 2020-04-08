@@ -13,6 +13,8 @@
 
 #include "evaluatables.h"
 
+#include "utils/logger.h"
+
 #include <fdd.h>
 
 class SearchEngine {
@@ -62,8 +64,12 @@ public:
         cacheRewardLocks = _cacheRewardLocks;
     }
 
-    bool usesBDDs() const {
+    virtual bool usesBDDs() const {
         return useRewardLockDetection && cacheRewardLocks;
+    }
+
+    void prependName(std::string _prefix) {
+        name = _prefix + name;
     }
 
 protected:
@@ -79,8 +85,16 @@ protected:
                          Main search functions
     *****************************************************************/
 public:
-    // This is called initially to learn parameter values from a training set
-    virtual void learn() {}
+    // Notify the search engine that the session starts
+    virtual void initSession() {}
+
+    // Notify the search engine that a new round starts or ends
+    virtual void initRound() {}
+    virtual void finishRound() {}
+
+    // Notify the search engine that a new step starts or ends
+    virtual void initStep(State const& /*current*/) {}
+    virtual void finishStep() {}
 
     // Start the search engine to calculate best actions
     virtual void estimateBestActions(State const& _rootState,
@@ -272,7 +286,7 @@ public:
         ActionHashMap;
 
 protected:
-    // Used for debug output only
+    // Name, used for output only
     std::string name;
 
     // Parameter
@@ -287,12 +301,10 @@ protected:
     *****************************************************************/
 
 public:
-    // Reset statistic variables
-    virtual void resetStats() {}
-
     // Print
-    virtual void printStats(std::ostream& out, bool const& printRoundStats,
-                            std::string indent = "") const;
+    virtual void printConfig(std::string indent) const;
+    virtual void printRoundStatistics(std::string indent) const = 0;
+    virtual void printStepStatistics(std::string indent) const = 0;
 
     static void printDeadEndBDD() {
         bdd_printdot(cachedDeadEnds);
@@ -303,15 +315,12 @@ public:
     }
 
     // Print task
-    static void printTask(std::ostream& out);
-    static void printEvaluatableInDetail(std::ostream& out, Evaluatable* eval);
-    static void printDeterministicCPFInDetail(std::ostream& out,
-                                              int const& index);
-    static void printProbabilisticCPFInDetail(std::ostream& out,
-                                              int const& index);
-    static void printRewardCPFInDetail(std::ostream& out);
-    static void printActionPreconditionInDetail(std::ostream& out,
-                                                int const& index);
+    static void printTask();
+    static void printEvaluatableInDetail(Evaluatable* eval);
+    static void printDeterministicCPFInDetail(int index);
+    static void printProbabilisticCPFInDetail(int index);
+    static void printRewardCPFInDetail();
+    static void printActionPreconditionInDetail(int index);
 };
 
 /*****************************************************************
@@ -441,6 +450,11 @@ protected:
     // maximal reward).
     bool isARewardLock(State const& current) const;
 
+    void printStateValueCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
+    void printApplicableActionCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
+
 private:
     // Methods for reward lock detection
     bool checkDeadEnd(KleeneState const& state) const;
@@ -565,6 +579,11 @@ protected:
         }
         return res;
     }
+
+    void printStateValueCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
+    void printApplicableActionCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
 };
 
 #endif
