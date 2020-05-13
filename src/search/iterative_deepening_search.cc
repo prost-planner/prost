@@ -127,6 +127,8 @@ void IDS::initSession() {
         Logger::logLine(name + ": Learned max search depth is too low: " +
                         to_string(maxSearchDepth) + ". Replacing IDS with " +
                         "minimal lookahead search.", Verbosity::SILENT);
+        Logger::logLine(
+            name + ": Setting max search depth to: -1", Verbosity::SILENT);
         createMinimalLookaheadSearch();
     } else {
         setMaxSearchDepth(maxSearchDepth);
