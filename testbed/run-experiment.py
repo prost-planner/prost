@@ -6,7 +6,7 @@ import platform
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 from prostlab.experiment import ProstExperiment
 
-from benchmark_suites import *
+from ipc_benchmarks import *
 
 # TODO: Think about these:
 from ipc_scores import IPCScores
@@ -19,12 +19,14 @@ def is_running_on_cluster():
     node = platform.node()
     return node.endswith(".scicore.unibas.ch") or node.endswith(".cluster.bc2.ch")
 
+PARTITION = "infai_2"
+EMAIL = "tho.keller@unibas.ch"
 REPO = "/home/kellert/workspace/planner/prost/prost-dev/"
 REV = "HEAD"
 
 TIME_PER_STEP = 1.0
 if is_running_on_cluster():
-    ENV = BaselSlurmEnvironment(partition="infai_2", email="tho.keller@unibas.ch")
+    ENV = BaselSlurmEnvironment(partition=PARTITION, email=EMAIL)
     SUITES = IPC_ALL
     NUM_RUNS = 30
     
@@ -59,18 +61,20 @@ ATTRIBUTES = [
     "parser_time",
     "trial_initial_state",
     "search_nodes_initial_state",
-    Attribute("entries_prob_state_value_cache", min_wins=False),
-    Attribute("buckets_prob_state_value_cache", min_wins=False),
-    Attribute("entries_prob_applicable_actions_cache", min_wins=False),
-    Attribute("buckets_prob_applicable_actions_cache", min_wins=False),
-    Attribute("entries_det_state_value_cache", min_wins=False),
-    Attribute("buckets_det_state_value_cache", min_wins=False),
-    Attribute("entries_det_applicable_actions_cache", min_wins=False),
-    Attribute("buckets_det_applicable_actions_cache", min_wins=False),
-    Attribute("entries_ids_reward_cache", min_wins=False),
-    Attribute("buckets_ids_reward_cache", min_wins=False),
-    Attribute("ids_avg_search_depth_initial_state", min_wins=False),
-    Attribute("ids_avg_search_depth_total", min_wins=False),
+    "entries_prob_state_value_cache",
+    "buckets_prob_state_value_cache",
+    "entries_prob_applicable_actions_cache",
+    "buckets_prob_applicable_actions_cache",
+    "entries_det_state_value_cache",
+    "buckets_det_state_value_cache",
+    "entries_det_applicable_actions_cache",
+    "buckets_det_applicable_actions_cache",
+    "entries_ids_reward_cache",
+    "buckets_ids_reward_cache",
+    "ids_learned_search_depth",
+    "ids_avg_search_depth_initial_state",
+    "ids_avg_search_depth_total",
+    "rem_steps_first_solved_state",
     Attribute("run_dir"),
 ]
 
