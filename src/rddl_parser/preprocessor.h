@@ -30,12 +30,16 @@ private:
     void simplifyTask();
     void simplifyFormulas(
         std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+    bool computeInapplicableActionFluents(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
     bool computeRelevantActionFluents(
         std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
     bool computeActions(
         std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
     bool approximateDomains(
         std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+
+    bool actionIsApplicable(ActionState const& action) const;
 
     void removeInapplicableActionFluents(bool const& updateActionStates);
     void initializeActionStates();

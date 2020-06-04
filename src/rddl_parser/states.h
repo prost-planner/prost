@@ -157,6 +157,11 @@ public:
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}
 
+    ActionState(ActionState const& other, int flipVarIndex)
+        : state(other.state), index(other.index) {
+        state[flipVarIndex] = 1 - state[flipVarIndex];
+    }
+
     // This is used to sort action states by the number of true fluents and the
     // position of the true fluents to ensure deterministic behaviour
     struct ActionStateSort {
@@ -203,6 +208,9 @@ public:
 
         return false;
     }
+
+    bool sharesActiveActionFluent(
+        std::set<ActionFluent*> const& actionFluents) const;
 
     void print(std::ostream& out) const;
 

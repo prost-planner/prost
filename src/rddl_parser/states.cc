@@ -19,6 +19,16 @@ void State::print(ostream& out) const {
     out << endl;
 }
 
+bool ActionState::sharesActiveActionFluent(
+    set<ActionFluent*> const& actionFluents) const {
+    for (ActionFluent const* af : actionFluents) {
+        if (state[af->index]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 string ActionState::getName() const {
     if (scheduledActionFluents.empty()) {
         return "noop";
