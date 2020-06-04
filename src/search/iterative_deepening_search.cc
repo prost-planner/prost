@@ -133,8 +133,7 @@ void IDS::initSession() {
     if (maxSearchDepth <= 1) {
         Logger::logLine(name + ": Learned max search depth is too low: " +
                             to_string(maxSearchDepth) +
-                            ". Replacing IDS with " +
-                            "minimal lookahead search.",
+                            ". Replacing IDS with minimal lookahead search.",
                         Verbosity::SILENT);
         createMinimalLookaheadSearch();
     } else {
@@ -321,12 +320,11 @@ bool IDS::moreIterations(int const& stepsToGo) {
     if (ramLimitReached &&
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         if (maxSearchDepth == 1) {
-            Logger::logLine(
-                name + ": Timeout violated (" + to_string(time) + "s). " +
-                    "on minimal search depth. Cannot decrease max search "
-                    "depth " +
-                    "anymore. Replacing IDS with minimal lookahead search.",
-                Verbosity::SILENT);
+            Logger::logLine(name + ": Timeout violated (" + to_string(time) +
+                                "s). on minimal search depth. Cannot decrease "
+                                "max search depth anymore. Replacing IDS with "
+                                "minimal lookahead search.",
+                            Verbosity::SILENT);
             createMinimalLookaheadSearch();
         } else {
             Logger::logLine(name + ": Timeout violated (" + to_string(time) +
@@ -368,10 +366,10 @@ bool IDS::moreIterations(int const& stepsToGo,
         MathUtils::doubleIsGreater(time, strictTerminationTimeout)) {
         if (maxSearchDepth == 1) {
             Logger::logLine(
-                name + ": Timeout violated (" + to_string(time) + "s). " +
-                    "on minimal search depth. Cannot decrease max search "
-                    "depth " +
-                    "anymore. Replacing IDS with minimal lookahead search.",
+                name + ": Timeout violated (" + to_string(time) +
+                    "s). on minimal search depth. Cannot decrease max search "
+                    "depth anymore. Replacing IDS with minimal lookahead "
+                    "search.",
                 Verbosity::SILENT);
             createMinimalLookaheadSearch();
         } else {
