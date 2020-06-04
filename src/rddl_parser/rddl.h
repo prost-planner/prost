@@ -98,7 +98,6 @@ public:
     std::vector<LogicalExpression*> SACs;
     std::vector<ActionPrecondition*> actionPreconds;
     std::vector<ActionPrecondition*> staticSACs;
-    std::set<ActionFluent*> primitiveStaticSACs;
 
     // Instantiated CPFs
     std::vector<ConditionalProbabilityFunction*> CPFs;

@@ -247,15 +247,6 @@ public:
                          double& maxRes) const override;
 
     void print(std::ostream& out) const override;
-
-    // This is used to sort ActionFluents by their name to ensure deterministic
-    // behaviour
-    struct ActionFluentSort {
-        bool operator()(ActionFluent* const& lhs,
-                        ActionFluent* const& rhs) const {
-            return lhs->fullName < rhs->fullName;
-        }
-    };
 };
 
 class NonFluent : public ParametrizedVariable {

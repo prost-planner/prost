@@ -7,10 +7,12 @@
 #include <string>
 #include <vector>
 
-class RDDLTask;
-class Evaluatable;
 class ActionPrecondition;
 class ActionState;
+class Evaluatable;
+class LogicalExpression;
+class ParametrizedVariable;
+class RDDLTask;
 class State;
 class StateFluent;
 
@@ -25,8 +27,16 @@ private:
     RDDLTask* task;
     bool useIPC2018Rules;
 
-    void prepareEvaluatables();
-    void prepareActions();
+    void simplifyTask();
+    void simplifyFormulas(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+    bool computeRelevantActionFluents(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+    bool computeActions(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+    bool approximateDomains(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
+
     void removeInapplicableActionFluents(bool const& updateActionStates);
     void initializeActionStates();
 
