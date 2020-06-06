@@ -23,19 +23,21 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 ## == Source Files ==
 
 set(RDDL_PARSER_SOURCES
+  determinizer
   evaluatables
+  hash_key_generator
   instantiator
   logical_expressions
-  preprocessor
+  precomputer
   probability_distribution
   rddl
+  simplifier
   states
   task_analyzer
   utils/math_utils
   utils/string_utils
   utils/system_utils
-  utils/timer
- )
+  utils/timer)
 
 set(RDDL_PARSER_TESTS
   ../doctest/doctest

@@ -6,9 +6,12 @@
 #include "logical_expressions.h"
 #include <cstdarg>
 
+#include "determinizer.h"
 #include "evaluatables.h"
+#include "hash_key_generator.h"
 #include "instantiator.h"
-#include "preprocessor.h"
+#include "precomputer.h"
+#include "simplifier.h"
 #include "task_analyzer.h"
 
 #include "utils/math_utils.h"
@@ -710,9 +713,27 @@ void RDDLTask::execute(std::string outFile, double seed, int numStates,
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "preprocessing..." << std::endl;
-    Preprocessor preprocessor(this, useIPC2018Rules);
-    preprocessor.preprocess();
+    std::cout << "simplifying..." << std::endl;
+    Simplifier simplifier(this, useIPC2018Rules);
+    simplifier.simplify();
+    std::cout << "...finished (" << t << ")." << std::endl;
+
+    t.reset();
+    std::cout << "determinizing..." << std::endl;
+    Determinizer determinizer(this);
+    determinizer.determinize();
+    std::cout << "...finished (" << t << ")." << std::endl;
+
+    t.reset();
+    std::cout << "generating hash keys..." << std::endl;
+    HashKeyGenerator hashKeyGen(this);
+    hashKeyGen.generateHashKeys();
+    std::cout << "...finished (" << t << ")." << std::endl;
+
+    t.reset();
+    std::cout << "precomputing evaluatable..." << std::endl;
+    Precomputer precomputer(this);
+    precomputer.precompute();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();

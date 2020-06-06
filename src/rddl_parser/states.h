@@ -22,6 +22,15 @@ struct State {
     State(State const& other) = default;
     State(int stateSize) : state(stateSize, 0.0) {}
 
+    // Create a copy of other except that the value of variable var is
+    // set to val
+    State(State const& other, int var, int val)
+        : state(other.state) {
+        assert(var < state.size());
+        state[var] = val;
+    }
+
+
     double& operator[](int const& index) {
         assert(index < state.size());
         return state[index];
@@ -157,6 +166,8 @@ public:
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}
 
+    // Create a copy of other except that the value of variable
+    // flipVarIndex is flipped
     ActionState(ActionState const& other, int flipVarIndex)
         : state(other.state), index(other.index) {
         state[flipVarIndex] = 1 - state[flipVarIndex];

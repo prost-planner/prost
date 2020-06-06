@@ -6,15 +6,40 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 
 using namespace std;
 
-void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout) {
+void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
+    Timer t;
+
+    // Determine some non-trivial properties
+    if (output) {
+        cout << "    Determining task properties..." << endl;
+    }
+    determineTaskProperties();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
+    // Approximate or calculate the min and max reward
+    if (output) {
+        cout << "    Calculating min and max reward..." << endl;
+    }
+    calculateMinAndMaxReward();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
+    if (output) {
+        cout << "    Performing random walks..." << endl;
+    }
     State currentState(task->CPFs);
     int remainingSteps = task->horizon;
-    Timer t;
 
     for (int simCounter = 0; simCounter < numSimulations;) {
         State nextState(task->CPFs.size());
@@ -40,10 +65,175 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
             break;
         }
     }
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
 
     task->numberOfUniqueEncounteredStates = encounteredStates.size();
 
+    if (output) {
+        cout << "    Creating training set..." << endl;
+    }
     createTrainingSet(numStates);
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+}
+
+void TaskAnalyzer::determineTaskProperties() {
+    // Determine if there is a single action that could be goal maintaining,
+    // i.e., that could always yield the maximal reward.
+    // TODO: We could use an action that contains as many positive and no
+    //  negative occuring fluents as possible, but we should first figure out
+    //  if reward lock detection still pays off.
+    RewardFunction* reward = task->rewardCPF;
+    if (reward->positiveActionDependencies.empty() &&
+        task->actionStates[0].scheduledActionFluents.empty()) {
+        task->rewardFormulaAllowsRewardLockDetection = true;
+    } else {
+        task->rewardFormulaAllowsRewardLockDetection = false;
+    }
+
+    // Determine the set of actions that must be applied in the last step (the
+    // final reward only depends on the current state and the action that is
+    // applied but not the successor state, so we can determine a set of actions
+    // that could be optimal as last action beforehand).
+    if (reward->positiveActionDependencies.empty() &&
+        task->actionStates[0].scheduledActionFluents.empty() &&
+        task->actionStates[0].relevantSACs.empty()) {
+        // The first action is noop, noop is always applicable and action
+        // fluents occur in the reward only as costs -> noop is always optimal
+        // as final action
+        // TODO: I cannot guarantee that the check if actions occur only as
+        //  costs is correct. This should be verified at some point.
+        task->finalRewardCalculationMethod = "NOOP";
+    } else if (reward->isActionIndependent()) {
+        // The reward formula does not contain any action fluents -> all actions
+        // yield the same reward, so any action that is applicable is optimal
+        task->finalRewardCalculationMethod = "FIRST_APPLICABLE";
+    } else {
+        task->finalRewardCalculationMethod = "BEST_OF_CANDIDATE_SET";
+        // Determine the actions that suffice to be applied in the final step.
+        for (ActionState const& action : task->actionStates) {
+            if (!actionStateIsDominated(action)) {
+                addDominantState(action);
+            }
+        }
+    }
+}
+
+void TaskAnalyzer::addDominantState(ActionState const& action) const {
+    vector<int> candidates;
+    for (int actionIndex : task->candidatesForOptimalFinalAction) {
+        ActionState const& candidate = task->actionStates[actionIndex];
+        if (!actionStateDominates(action, candidate)) {
+            candidates.push_back(actionIndex);
+        }
+    }
+    candidates.push_back(action.index);
+    swap(candidates, task->candidatesForOptimalFinalAction);
+}
+
+bool TaskAnalyzer::actionStateIsDominated(ActionState const& action) const {
+    for (int actionIndex : task->candidatesForOptimalFinalAction) {
+        ActionState const& candidate = task->actionStates[actionIndex];
+        if (actionStateDominates(candidate, action)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TaskAnalyzer::actionStateDominates(ActionState const& lhs,
+                                        ActionState const& rhs) const {
+    // An action state with preconditions cannot dominate another action state
+    if (!lhs.relevantSACs.empty()) {
+        return false;
+    }
+
+    set<ActionFluent*>& positiveInReward =
+        task->rewardCPF->positiveActionDependencies;
+    set<ActionFluent*>& negativeInReward =
+        task->rewardCPF->negativeActionDependencies;
+
+    // Determine all fluents of both action states that influence the reward
+    // positively or negatively
+    set<ActionFluent*> lhsPos;
+    set<ActionFluent*> lhsNeg;
+    for (ActionFluent* af : lhs.scheduledActionFluents) {
+        if (positiveInReward.find(af) != positiveInReward.end()) {
+            lhsPos.insert(af);
+        }
+        if (negativeInReward.find(af) != negativeInReward.end()) {
+            lhsNeg.insert(af);
+        }
+    }
+
+    set<ActionFluent*> rhsPos;
+    set<ActionFluent*> rhsNeg;
+    for (ActionFluent* af : rhs.scheduledActionFluents) {
+        if (positiveInReward.find(af) != positiveInReward.end()) {
+            rhsPos.insert(af);
+        }
+        if (negativeInReward.find(af) != negativeInReward.end()) {
+            rhsNeg.insert(af);
+        }
+    }
+
+    // Action state lhs dominates rhs if lhs contains all action fluents that
+    // influence the reward positively of rhs, and if rhs contains all action
+    // fluents that influence the reward negatively of lhs
+    for (ActionFluent* af : rhsPos) {
+        if (lhsPos.find(af) == lhsPos.end()) {
+            return false;
+        }
+    }
+    for (ActionFluent* af : lhsNeg) {
+        if (rhsNeg.find(af) == rhsNeg.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void TaskAnalyzer::calculateMinAndMaxReward() const {
+    // Compute the domain of the rewardCPF for deadend / goal detection (we only
+    // need upper and lower bounds, but we use the same function here). If the
+    // cachingType is vector, we can use the non-approximated values from the
+    // precomputation further below.
+    RewardFunction* reward = task->rewardCPF;
+    double minVal = numeric_limits<double>::max();
+    double maxVal = -numeric_limits<double>::max();
+    if (reward->cachingType == "VECTOR") {
+        // The reward has been precomputed, so we just need to find the
+        // precomputed minimum and maximum
+        for (double rew : reward->precomputedResults) {
+            minVal = min(minVal, rew);
+            maxVal = max(maxVal, rew);
+        }
+    } else {
+        // The reward  is not cached in vectors, so it has not been precomputed.
+        // We therefore approximate the minimum and maximum by using interval
+        // arithmetic.
+        int numCPFs = task->CPFs.size();
+
+        vector<set<double>> domains(numCPFs);
+        for (size_t index = 0; index < numCPFs; ++index) {
+            domains[index] = task->CPFs[index]->domain;
+        }
+
+        for (ActionState const& action : task->actionStates) {
+            double minRew = numeric_limits<double>::max();
+            double maxRew = -numeric_limits<double>::max();
+            reward->formula->calculateDomainAsInterval(
+                domains, action, minRew, maxRew);
+            minVal = min(minVal, minRew);
+            maxVal = max(maxVal, maxRew);
+        }
+    }
+    reward->domain.insert(minVal);
+    reward->domain.insert(maxVal);
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,

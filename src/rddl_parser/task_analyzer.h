@@ -12,12 +12,21 @@ class TaskAnalyzer {
 public:
     TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
-    void analyzeTask(int numStates, int numSimulations, double timeout);
+    void analyzeTask(
+        int numStates, int numSimulations, double timeout, bool output = true);
 
 protected:
     RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
+
+    void determineTaskProperties();
+    bool actionStateIsDominated(ActionState const& action) const;
+    bool actionStateDominates(ActionState const& lhs,
+                              ActionState const& rhs) const;
+    void addDominantState(ActionState const& action) const;
+
+    void calculateMinAndMaxReward() const;
 
     void analyzeStateAndApplyAction(State const& current, State& next,
                                     double& reward) const;
