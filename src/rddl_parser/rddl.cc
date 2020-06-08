@@ -1,18 +1,9 @@
 #include "rddl.h"
 
-#include <fstream>
 #include <iostream>
 
-#include "logical_expressions.h"
-#include <cstdarg>
-
-#include "determinizer.h"
 #include "evaluatables.h"
-#include "hash_key_generator.h"
-#include "instantiator.h"
-#include "precomputer.h"
-#include "simplifier.h"
-#include "task_analyzer.h"
+#include "logical_expressions.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
@@ -698,58 +689,4 @@ void RDDLTask::print(std::ostream& out) {
         }
         out << std::endl;
     }
-}
-
-void RDDLTask::execute(std::string outFile, double seed, int numStates,
-                       int numSimulations, double timeout,
-                       bool useIPC2018Rules) {
-    Timer t;
-    srand(seed);
-
-    t.reset();
-    std::cout << "instantiating..." << std::endl;
-    Instantiator instantiator(this);
-    instantiator.instantiate();
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::cout << "simplifying..." << std::endl;
-    Simplifier simplifier(this, useIPC2018Rules);
-    simplifier.simplify();
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::cout << "determinizing..." << std::endl;
-    Determinizer determinizer(this);
-    determinizer.determinize();
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::cout << "generating hash keys..." << std::endl;
-    HashKeyGenerator hashKeyGen(this);
-    hashKeyGen.generateHashKeys();
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::cout << "precomputing evaluatable..." << std::endl;
-    Precomputer precomputer(this);
-    precomputer.precompute();
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::cout << "analyzing task..." << std::endl;
-    TaskAnalyzer analyzer(this);
-    analyzer.analyzeTask(numStates, numSimulations, timeout);
-    std::cout << "...finished (" << t << ")." << std::endl;
-
-    t.reset();
-    std::ofstream resultFile;
-
-    std::cout << "writing output for instance " << name << " to " << outFile
-              << " ..." << std::endl;
-    resultFile.open(outFile.c_str());
-    print(resultFile);
-    resultFile.close();
-    // print(std::cout);
-    std::cout << "...finished (" << t << ")." << std::endl;
 }

@@ -16,7 +16,7 @@ public:
     Simplifier(RDDLTask *task, bool useIPC2018Rules)
         : task(task), useIPC2018Rules(useIPC2018Rules) {}
 
-    void simplify(bool output = true);
+    void simplify(bool generateFDRActionFluents, bool output = true);
 
 private:
     RDDLTask *task;
@@ -30,6 +30,9 @@ private:
 
     bool computeRelevantActionFluents(
         std::map<ParametrizedVariable *, LogicalExpression *> &replacements);
+
+    bool determineFiniteDomainActionFluents(
+        std::map<ParametrizedVariable*, LogicalExpression*>& replacements);
 
     bool computeActions(
         std::map<ParametrizedVariable *, LogicalExpression *> &replacements);

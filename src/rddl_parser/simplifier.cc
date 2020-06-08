@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void Simplifier::simplify(bool output) {
+void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     Timer t;
     map<ParametrizedVariable*, LogicalExpression*> replacements;
     bool continueSimplification = true;
@@ -57,13 +57,13 @@ void Simplifier::simplify(bool output) {
         }
 
         // Generate finite domain action fluents
-        // if (useFDRActionFluents) {
-        //     continueSimplification =
-        //         determineFiniteDomainActionFluents(replacements);
-        //     if (continueSimplification) {
-        //         continue;
-        //     }
-        // }
+        if (generateFDRActionFluents) {
+            continueSimplification =
+                determineFiniteDomainActionFluents(replacements);
+            if (continueSimplification) {
+                continue;
+            }
+        }
 
         // Compute actions that are potentially applicable in a reachable state
         if (output) {
@@ -306,6 +306,11 @@ bool Simplifier::actionIsApplicable(ActionState const& action) const {
         }
     }
     return true;
+}
+
+bool Simplifier::determineFiniteDomainActionFluents(
+    map<ParametrizedVariable*, LogicalExpression*>& /*replacements*/) {
+    return false;
 }
 
 bool Simplifier::computeActions(

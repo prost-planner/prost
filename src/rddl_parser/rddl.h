@@ -27,16 +27,11 @@ public:
     RDDLTask();
     ~RDDLTask() {}
 
-    std::string validateRequirement(std::string req);
-
     void setInstance(std::string name, std::string domainName,
                      std::string nonFluentsName, int maxNonDefActions,
                      int horizon, double discount);
     void addCPF(ParametrizedVariable variable,
                 LogicalExpression* logicalExpression);
-
-    void execute(std::string outFile, double seed, int numStates,
-                 int numSimulations, double timeout, bool useIPC2018Rules);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
