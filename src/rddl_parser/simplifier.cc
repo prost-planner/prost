@@ -332,6 +332,13 @@ inline void Simplifier::sortActionFluents() {
 bool Simplifier::determineFiniteDomainActionFluents(
     map<ParametrizedVariable*, LogicalExpression*>& replacements) {
 
+    if (task->numberOfConcurrentActions > 1 && task->actionPreconds.empty()) {
+        // If there are no action preconditions and max-nondef-actions does not
+        // limit the number of concurrent actions to 1, it is impossible that
+        // there are mutex action fluents.
+        return false;
+    }
+
     if (task->numberOfConcurrentActions == 1 && task->actionFluents.size() > 1) {
         // All action fluents are mutually exclusive, so we can combine them to
         // a single FDR action fluent
