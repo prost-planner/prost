@@ -230,6 +230,7 @@ void Parser::parseActionFluent(stringstream& desc) const {
         desc >> val;
         desc >> value;
         assert(val == j);
+        replace(value.begin(), value.end(), '~', ' ');
         values.push_back(value);
     }
     SearchEngine::actionFluents.push_back(

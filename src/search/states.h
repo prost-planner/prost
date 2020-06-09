@@ -393,6 +393,8 @@ struct ActionState {
         return state[index];
     }
 
+    std::vector<std::string> getScheduledActionFluents() const;
+
     std::string toString() const;
     std::string toCompactString() const;
 
