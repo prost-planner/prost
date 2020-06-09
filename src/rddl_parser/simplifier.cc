@@ -58,8 +58,15 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
 
         // Generate finite domain action fluents
         if (generateFDRActionFluents) {
+            if (output) {
+                cout << "    Compute FDR action fluents (" << iteration << ")..." << endl;
+            }
             continueSimplification =
                 determineFiniteDomainActionFluents(replacements);
+            if (output) {
+                cout << "    ...finished (" << t() << ")" << endl;
+            }
+            t.reset();
             if (continueSimplification) {
                 continue;
             }
@@ -308,13 +315,8 @@ bool Simplifier::actionIsApplicable(ActionState const& action) const {
     return true;
 }
 
-bool Simplifier::determineFiniteDomainActionFluents(
-    map<ParametrizedVariable*, LogicalExpression*>& /*replacements*/) {
-    return false;
-}
-
-bool Simplifier::computeActions(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+// Sort action fluents for deterministic behaviour and assign indices
+inline void Simplifier::sortActionFluents() {
     int numActionFluents = task->actionFluents.size();
 
     // Sort action fluents for deterministic behaviour and assign indices
@@ -325,6 +327,236 @@ bool Simplifier::computeActions(
     for (int index = 0; index < numActionFluents; ++index) {
         task->actionFluents[index]->index = index;
     }
+}
+
+bool Simplifier::determineFiniteDomainActionFluents(
+    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+
+    if (task->numberOfConcurrentActions == 1 && task->actionFluents.size() > 1) {
+        // All action fluents are mutually exclusive, so we can combine them to
+        // a single FDR action fluent
+
+        Type* valueType =
+            new Type("finite-domain-action-fluent-0-type", nullptr);
+        ActionFluent* finiteDomainAF =
+            new ActionFluent("finite-domain-action-fluent-0", valueType);
+        finiteDomainAF->index = 0;
+
+        //TODO: Check if noop is really applicable
+        int index = 0;
+        valueType->objects.push_back(
+            new Object("none-of-those", valueType, index));
+
+        for (ActionFluent* af : task->actionFluents) {
+            ++index;
+            // Remove spaces from action name
+            string name = af->fullName;
+            replace(name.begin(), name.end(), ' ', '~');
+
+            // Generate object that represents the new value
+            valueType->objects.push_back(
+                new Object(name, valueType, index));
+
+            // Replace all occurences of (old) binary action fluent with (new)
+            // FDR action fluent
+            vector<LogicalExpression*> eq = {finiteDomainAF, new NumericConstant(index)};
+            replacements[af] = new EqualsExpression(eq);
+        }
+        task->actionFluents = {finiteDomainAF};
+        return true;
+    }
+
+    return false;
+    // cout << "determining finite domain action fluents with "
+    //      << task->actionFluents.size() << " action fluents" << endl;
+    //
+    // z3::context c;
+    // z3::solver s(c);
+    // vector<z3::expr> sf_exprs;
+    // vector<z3::expr> af_exprs;
+    // buildCSP(c, s, sf_exprs, af_exprs);
+    //
+    // vector<set<int>> mutexes(task->actionFluents.size());
+    //
+    // for (size_t i = 0; i < task->actionFluents.size(); ++i) {
+    //     if (!task->actionFluents[i]->isBinary()) {
+    //         // We do not alter action fluents that are already finite domain
+    //         continue;
+    //     }
+    //     for (size_t j = i + 1; j < task->actionFluents.size(); ++j) {
+    //         if (!task->actionFluents[j]->isBinary()) {
+    //             // We do not alter action fluents that are already finite domain
+    //             continue;
+    //         }
+    //         s.push();
+    //         s.add((af_exprs[i] == 1) && (af_exprs[j] == 1));
+    //         if (s.check() != z3::sat) {
+    //             cout << "fluent " << task->actionFluents[i]->fullName
+    //                  << " and fluent " << task->actionFluents[j]->fullName
+    //                  << " are mutually exclusive!" << endl;
+    //             mutexes[i].insert(j);
+    //             mutexes[j].insert(i);
+    //         }
+    //         s.pop();
+    //     }
+    // }
+    //
+    // vector<set<int>> mutexGroups;
+    // // TODO: The following implementation works but is very adhoc. A version
+    // // that generates all maximal mutex groups would be cleaner.
+    // bool hasMore = true;
+    // while (hasMore) {
+    //     hasMore = false;
+    //     set<int> mutexGroup;
+    //     for (size_t i = 0; i < task->actionFluents.size(); ++i) {
+    //         if (extendsMutexGroup(i, mutexGroup, mutexes)) {
+    //             for (int af : mutexGroup) {
+    //                 mutexes[af].erase(i);
+    //                 mutexes[i].erase(af);
+    //             }
+    //             mutexGroup.insert(i);
+    //         }
+    //     }
+    //     if (!mutexGroup.empty()) {
+    //         mutexGroups.push_back(mutexGroup);
+    //     }
+    //     for (size_t i = 0; i < mutexes.size(); ++i) {
+    //         if (!mutexes[i].empty()) {
+    //             hasMore = true;
+    //             break;
+    //         }
+    //     }
+    // }
+    //
+    // if (mutexGroups.empty()) {
+    //     cout << "num action fluents: " << task->actionFluents.size() << endl;
+    //     return false;
+    // }
+    //
+    // cout << "Determined the following mutex groups:" << endl;
+    // for (set<int> const& mutexGroup : mutexGroups) {
+    //     for (int id : mutexGroup) {
+    //         cout << task->actionFluents[id]->fullName << " ";
+    //     }
+    //     cout << endl;
+    // }
+    //
+    // // A minimum hitting set over the cliques is (presumably) the best possible
+    // // way to derive finite-domain vars. Due to the NP-completeness of the
+    // // underlying poblem, we approximate a minimum hitting set by iteratively
+    // // selecting the largest mutex group and removing all elements from the
+    // // selected mutex group from all other mutex groups until all action fluents
+    // // are hit
+    //
+    // vector<bool> fluentIsHit(task->actionFluents.size(), false);
+    // vector<set<int>> selectedMutexGroups;
+    // while (!mutexGroups.empty()) {
+    //     // sort mutex groups by their size
+    //     std::sort(mutexGroups.begin(), mutexGroups.end(),
+    //               [](set<int> const& lhs, set<int> const& rhs) {
+    //                   return lhs.size() < rhs.size();
+    //               });
+    //
+    //     // pick the largest mutex group and erase all of its elements from all
+    //     // other mutex groups
+    //     set<int> selectedMutexGroup = mutexGroups.back();
+    //     mutexGroups.pop_back();
+    //     for (int id : selectedMutexGroup) {
+    //         assert(!fluentIsHit[id]);
+    //         fluentIsHit[id] = true;
+    //         for (set<int>& mutexGroup : mutexGroups) {
+    //             mutexGroup.erase(id);
+    //         }
+    //     }
+    //     selectedMutexGroups.push_back(selectedMutexGroup);
+    //
+    //     // remove all mutex groups with zero or one elements
+    //     vector<set<int>> tmp;
+    //     for (set<int> mutexGroup : mutexGroups) {
+    //         if (mutexGroup.size() > 1) {
+    //             tmp.push_back(mutexGroup);
+    //         }
+    //     }
+    //     swap(mutexGroups, tmp);
+    // }
+    //
+    // vector<ActionFluent*> finiteDomainActionFluents;
+    // for (set<int> const& selectedMutexGroup : selectedMutexGroups) {
+    //     stringstream ss;
+    //     ss << "finite-domain-action-fluent-"
+    //        << finiteDomainActionFluents.size();
+    //     string afName = ss.str();
+    //     ss << "-type" << endl;
+    //     string afTypeName = ss.str();
+    //     ss.str("");
+    //     Type* valueType = new Type(afTypeName, nullptr);
+    //
+    //     int domainSize = selectedMutexGroup.size();
+    //     int index = 0;
+    //
+    //     s.push();
+    //     // Check if at least one of these action fluents must be selected
+    //     for (int id : selectedMutexGroup) {
+    //         s.add(af_exprs[id] == 0);
+    //     }
+    //     // It's possible to select neither of these action fluents, so we add
+    //     // a "none-of-those" value as first domain value
+    //     if (s.check() == z3::sat) {
+    //         valueType->objects.push_back(
+    //             new Object("none-of-those", valueType, index++));
+    //         ++domainSize;
+    //     }
+    //     s.pop();
+    //
+    //     for (int id : selectedMutexGroup) {
+    //         // Remove spaces from action name
+    //         string name = task->actionFluents[id]->fullName;
+    //         std::replace(name.begin(), name.end(), ' ', '~');
+    //         std::cout << name << std::endl;
+    //         valueType->objects.push_back(new Object(name, valueType, index++));
+    //     }
+    //
+    //     ActionFluent* fdaf = new ActionFluent(afName, valueType, domainSize);
+    //     finiteDomainActionFluents.push_back(fdaf);
+    //
+    //     // Replace binary action fluent with new action fluent / value
+    //     // combination. Adapt index in case none-of-those is possible
+    //     index = (domainSize == selectedMutexGroup.size()) ? 0 : 1;
+    //     for (int id : selectedMutexGroup) {
+    //         vector<LogicalExpression*> eq = {fdaf, new NumericConstant(index)};
+    //         replacements[task->actionFluents[id]] = new EqualsExpression(eq);
+    //         ++index;
+    //     }
+    // }
+    //
+    // // keep all action fluents that are not part of a mutex group
+    // for (size_t i = 0; i < task->actionFluents.size(); ++i) {
+    //     if (!fluentIsHit[i]) {
+    //         finiteDomainActionFluents.push_back(task->actionFluents[i]);
+    //     }
+    // }
+    //
+    // std::sort(finiteDomainActionFluents.begin(),
+    //           finiteDomainActionFluents.end(),
+    //           [](ActionFluent* const& lhs, ActionFluent* const& rhs) {
+    //               return lhs->fullName > rhs->fullName;
+    //           });
+    //
+    // for (int index = 0; index < finiteDomainActionFluents.size(); ++index) {
+    //     finiteDomainActionFluents[index]->index = index;
+    // }
+    //
+    // // replace old action fluents with new ones
+    // task->actionFluents = finiteDomainActionFluents;
+    // cout << "num action fluents: " << task->actionFluents.size() << endl;
+    return true;
+}
+
+bool Simplifier::computeActions(
+    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+    sortActionFluents();
+
+    int numActionFluents = task->actionFluents.size();
 
     State current(task->CPFs);
     vector<ActionState> legalActionStates;
@@ -414,19 +646,27 @@ void Simplifier::calcAllActionStatesForIPC2018(
     vector<ActionState>& base, set<ActionState>& result) const {
     int numActionFluents = task->actionFluents.size();
     if (base.empty()) {
-        // Generate all action states with exactly one active action fluent
-        for (int index = 0; index < numActionFluents; ++index) {
-            ActionState state(numActionFluents);
-            state[index] = 1;
-            result.insert(state);
+        // Generate all action states with exactly one action fluent with value
+        // different from 0
+        for (ActionFluent* af : task->actionFluents) {
+            int numValues = af->valueType->objects.size();
+            int afIndex = af->index;
+            for (int val = 1; val < numValues; ++val) {
+                ActionState state(numActionFluents);
+                state[afIndex] = val;
+                result.insert(state);
+            }
         }
         return;
     }
 
     for (const ActionState& baseAction : base) {
-        for (unsigned int index = 0; index < numActionFluents; ++index) {
-            if (!baseAction[index]) {
-                result.emplace(baseAction, index);
+        for (ActionFluent* af : task->actionFluents) {
+            if (!baseAction[af->index]) {
+                int numValues = af->valueType->objects.size();
+                for (int val = 1; val < numValues; ++val) {
+                    result.emplace(baseAction, af->index, val);
+                }
             }
         }
     }
@@ -438,7 +678,6 @@ void Simplifier::calcAllActionStates(vector<ActionState>& result,
     int numActionFluents = task->actionFluents.size();
     if (result.empty()) {
         result.emplace_back(numActionFluents);
-        //result.push_back(ActionState(numActionFluents));
     } else {
         int lastIndex = result.size();
 
@@ -454,7 +693,11 @@ void Simplifier::calcAllActionStates(vector<ActionState>& result,
                     }
 
                     if (isExtension) {
-                        result.emplace_back(result[i], j);
+                        int numValues =
+                            task->actionFluents[j]->valueType->objects.size();
+                        for (int val = 1; val < numValues; ++val) {
+                            result.emplace_back(result[i], j, val);
+                        }
                     }
                 }
             }

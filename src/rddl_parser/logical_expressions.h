@@ -114,6 +114,8 @@ public:
 class Object : public Parameter {
 public:
     Object(std::string _name, Type* _type);
+    Object(std::string _name, Type* _type, double _value)
+        : Parameter(_name, _type), types({_type}), value(_value) {}
     ~Object() {}
 
     std::vector<Type*> types;
@@ -219,6 +221,9 @@ public:
     ActionFluent(ParametrizedVariable const& source,
                  std::vector<Parameter*> _params)
         : ParametrizedVariable(source, _params, 0.0), index(-1) {}
+    ActionFluent(std::string name, Type* _valueType)
+        : ParametrizedVariable(name, std::vector<Parameter*>(), VariableType::ACTION_FLUENT, _valueType, 0.0),
+          index(-1) {}
 
     int index;
 

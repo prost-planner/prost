@@ -35,6 +35,17 @@ void Connective::classifyActionFluents(ActionFluentSet& positive,
 
 void EqualsExpression::classifyActionFluents(ActionFluentSet& positive,
                                              ActionFluentSet& negative) {
+    // Special handling for the case that this is an expression that checks if
+    // some FDR action fluent has some value
+    if (exprs.size() == 2) {
+        ActionFluent* af = dynamic_cast<ActionFluent*>(exprs[0]);
+        NumericConstant* nc = dynamic_cast<NumericConstant*>(exprs[1]);
+        if (af && nc) {
+            positive.insert(af);
+            return;
+        }
+    }
+
     ActionFluentSet fluents;
     Connective::classifyActionFluents(fluents, fluents);
 

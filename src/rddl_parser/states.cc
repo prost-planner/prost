@@ -1,6 +1,7 @@
 #include "states.h"
 
 #include "evaluatables.h"
+#include "rddl.h"
 
 #include <sstream>
 
@@ -17,6 +18,19 @@ void State::print(ostream& out) const {
         out << state[index] << " ";
     }
     out << endl;
+}
+
+bool ActionState::isNOOP(RDDLTask* task) const {
+    for (ActionFluent* af : task->actionFluents) {
+        if (state[af->index] != 0) {
+            return false;
+        }
+        vector<Object*> values = af->valueType->objects;
+        if ((values.size() > 2) && values[0]->name != "none-of-those") {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool ActionState::sharesActiveActionFluent(

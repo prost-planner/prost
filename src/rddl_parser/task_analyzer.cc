@@ -88,19 +88,27 @@ void TaskAnalyzer::determineTaskProperties() {
     //  negative occuring fluents as possible, but we should first figure out
     //  if reward lock detection still pays off.
     RewardFunction* reward = task->rewardCPF;
-    if (reward->positiveActionDependencies.empty() &&
-        task->actionStates[0].scheduledActionFluents.empty()) {
-        task->rewardFormulaAllowsRewardLockDetection = true;
-    } else {
-        task->rewardFormulaAllowsRewardLockDetection = false;
-    }
+
+    task->rewardFormulaAllowsRewardLockDetection =
+        reward->positiveActionDependencies.empty() &&
+        task->actionStates[0].isNOOP(task);
+
+
+    // TODO: This is the only place where the positive action dependencies are
+    //  used, and they do no longer work the way they did before the
+    //  introduction of FDR action fluents. What we need to figure out here is
+    //  the question if the reward of action a is always larger than or equal
+    //  to the reward of action a', and we should be able to answer this with
+    //  the use of z3 by chceking if there is a solution (i.e., a state) where
+    //  R(s,a) - R(s,a') < 0. The only other place where the positive action
+    //  dependencies are used is the code directly above this comment.
 
     // Determine the set of actions that must be applied in the last step (the
     // final reward only depends on the current state and the action that is
     // applied but not the successor state, so we can determine a set of actions
     // that could be optimal as last action beforehand).
     if (reward->positiveActionDependencies.empty() &&
-        task->actionStates[0].scheduledActionFluents.empty() &&
+        task->actionStates[0].isNOOP(task) &&
         task->actionStates[0].relevantSACs.empty()) {
         // The first action is noop, noop is always applicable and action
         // fluents occur in the reward only as costs -> noop is always optimal

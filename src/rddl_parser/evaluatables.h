@@ -78,15 +78,13 @@ struct Evaluatable {
     // Evaluatable), and the state fluent part (that is stored in RDDLTask
     // and computed within states).
     void initializeHashKeys(RDDLTask* task);
-    long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
-    bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
-                                ActionState const& action, long& nextKey);
-    long getActionHashKey(std::vector<ActionState> const& actionStates,
-                          std::vector<ActionFluent*>& scheduledActions);
+    long initializeActionHashKeys(RDDLTask* task);
+    long getActionHashKey(
+        std::vector<ActionState> const& actionStates, int actionIndex);
 
-    void initializeStateFluentHashKeys(RDDLTask* task, long const& baseKey);
-    void initializeKleeneStateFluentHashKeys(RDDLTask* task,
-                                             long const& baseKey);
+    void initializeStateFluentHashKeys(RDDLTask* task, long nextHashKeyBase);
+    void initializeKleeneStateFluentHashKeys(
+        RDDLTask* task, long nextHashKeyBase);
 };
 
 struct ActionPrecondition : public Evaluatable {

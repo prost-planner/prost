@@ -342,15 +342,23 @@ void RDDLTask::print(std::ostream& out) {
     out << uniqueNonTerminalStatesWithUniqueAction << std::endl;
 
     out << std::endl << std::endl << "#####ACTION FLUENTS#####" << std::endl;
-    for (unsigned int i = 0; i < actionFluents.size(); ++i) {
+    for (ActionFluent* af : actionFluents) {
         out << "## index" << std::endl;
-        out << actionFluents[i]->index << std::endl;
+        out << af->index << std::endl;
         out << "## name" << std::endl;
-        out << actionFluents[i]->fullName << std::endl;
+        out << af->fullName << std::endl;
         out << "## number of values" << std::endl;
-        out << "2" << std::endl;
+        std::vector<Object*>& values = af->valueType->objects;
+        int numValues = values.size();
+        out << numValues << std::endl;
         out << "## values" << std::endl;
-        out << "0 false" << std::endl << "1 true" << std::endl;
+        if (numValues == 2) {
+            out << "0 false" << std::endl << "1 true" << std::endl;
+        } else {
+            for (Object* value : values) {
+                out << value->value << " " << value->name << std::endl;
+            }
+        }
         out << std::endl;
     }
 

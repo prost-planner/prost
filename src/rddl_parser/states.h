@@ -12,6 +12,7 @@
 class ActionFluent;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
+class RDDLTask;
 
 /*****************************************************************
                                State
@@ -166,11 +167,11 @@ public:
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}
 
-    // Create a copy of other except that the value of variable
-    // flipVarIndex is flipped
-    ActionState(ActionState const& other, int flipVarIndex)
+    // Create a copy of other except that the value of variable var is
+    // set to val
+    ActionState(ActionState const& other, int var, int val)
         : state(other.state), index(other.index) {
-        state[flipVarIndex] = 1 - state[flipVarIndex];
+        state[var] = val;
     }
 
     // This is used to sort action states by the number of true fluents and the
@@ -222,6 +223,8 @@ public:
 
     bool sharesActiveActionFluent(
         std::set<ActionFluent*> const& actionFluents) const;
+
+    bool isNOOP(RDDLTask* task) const;
 
     void print(std::ostream& out) const;
 

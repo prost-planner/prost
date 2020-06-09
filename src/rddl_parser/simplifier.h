@@ -55,6 +55,8 @@ private:
 
     bool sacContainsAdditionalPositiveActionFluent(
         ActionPrecondition *const &sac, ActionState const &actionState) const;
+
+    void sortActionFluents();
 };
 
 #endif
