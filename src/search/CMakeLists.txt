@@ -11,6 +11,7 @@ endif()
 ## == Project ==
 project(prost)
 prost_set_compiler_flags()
+prost_set_linker_flags()
 
 ## == BDD ==
 find_package(BDD REQUIRED)

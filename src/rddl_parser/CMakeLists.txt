@@ -11,6 +11,7 @@ endif()
 ## == Project ==
 project(rddl-parser)
 prost_set_compiler_flags()
+prost_set_linker_flags()
 
 ## == Flex / Bison ==
 set(FlexInput "lexer.l")

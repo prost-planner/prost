@@ -11,16 +11,24 @@ class LogicalExpression;
 class ParametrizedVariable;
 class RDDLTask;
 
+namespace z3 {
+class context;
+class expr;
+class solver;
+}
+
 class Simplifier {
 public:
     Simplifier(RDDLTask *task, bool useIPC2018Rules)
-        : task(task), useIPC2018Rules(useIPC2018Rules) {}
+        : task(task), useIPC2018Rules(useIPC2018Rules),
+          numGeneratedFDRActionFluents(0) {}
 
     void simplify(bool generateFDRActionFluents, bool output = true);
 
 private:
     RDDLTask *task;
     bool useIPC2018Rules;
+    int numGeneratedFDRActionFluents;
 
     void simplifyFormulas(
         std::map<ParametrizedVariable *, LogicalExpression *> &replacements);
@@ -57,6 +65,12 @@ private:
         ActionPrecondition *const &sac, ActionState const &actionState) const;
 
     void sortActionFluents();
+
+    void buildCSP(
+        z3::context& c, z3::solver& s, std::vector<z3::expr>& sf_exprs,
+        std::vector<z3::expr>& af_exprs) const;
+    std::vector<std::set<int>> computeActionFluentMutexes(
+        z3::solver& s, std::vector<z3::expr>& af_exprs) const;
 };
 
 #endif

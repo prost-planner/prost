@@ -19,11 +19,17 @@ class RDDLTask;
 class State;
 class StateFluent;
 
+namespace z3 {
+class context;
+class expr;
+}
+
 using ActionFluentSet = std::set<ActionFluent*>;
 using Domains = std::vector<std::set<double>>;
 using Instantiations = std::map<std::string, Object*>;
 using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 using StateFluentSet = std::set<StateFluent*>;
+using Z3Expressions = std::vector<z3::expr>;
 
 class LogicalExpression {
 public:
@@ -63,6 +69,10 @@ public:
                          double& minRes, double& maxRes) const;
     virtual void determineBounds(ActionState const& action, double& minRes,
                                  double& maxRes) const;
+
+    virtual z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -213,6 +223,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -250,6 +264,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -301,6 +319,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -427,6 +449,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -462,6 +488,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -502,6 +532,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -540,6 +574,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -580,6 +618,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -618,6 +660,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -658,6 +704,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -693,6 +743,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -731,6 +785,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -771,6 +829,10 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
+
     void print(std::ostream& out) const override;
 };
 
@@ -808,6 +870,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -852,6 +918,10 @@ public:
 
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
+
+    z3::expr toZ3Formula(
+        z3::context& c, Z3Expressions const& sf_exprs,
+        Z3Expressions const& af_exprs) const override;
 
     void print(std::ostream& out) const override;
 };

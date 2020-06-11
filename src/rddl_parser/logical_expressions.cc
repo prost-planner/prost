@@ -2,8 +2,9 @@
 
 #include "instantiator.h"
 #include "probability_distribution.h"
-
 #include "rddl.h"
+
+#include "z3++.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"
@@ -91,3 +92,4 @@ bool Type::isSubtypeOf(Type* const& other) const {
 #include "logical_expressions_includes/print.cc"
 #include "logical_expressions_includes/replace_quantifier.cc"
 #include "logical_expressions_includes/simplify.cc"
+#include "logical_expressions_includes/to_z3_formula.cc"
