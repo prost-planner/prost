@@ -35,7 +35,7 @@ public:
     virtual void initSession() {}
     virtual void initRound() {
         // Reset per round statistics
-        percentageExplorationInInitialState = 0.0;
+        percentageExplorationInFirstRelevantState = -1.0;
     }
     virtual void finishRound() {}
     virtual void initStep(State const& current);
@@ -66,7 +66,7 @@ protected:
           stepsToGoInCurrentState(-1),
           numExplorationInRoot(0),
           numExploitationInRoot(0),
-          percentageExplorationInInitialState(0.0) {}
+          percentageExplorationInFirstRelevantState(-1.0) {}
 
     THTS* thts;
 
@@ -92,7 +92,7 @@ protected:
     int numExploitationInRoot;
 
     // Per round statistics
-    double percentageExplorationInInitialState;
+    double percentageExplorationInFirstRelevantState;
 };
 
 class BFSActionSelection : public ActionSelection {
