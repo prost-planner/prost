@@ -29,7 +29,7 @@ IDS::IDS() :
     accumulatedSearchDepthInCurrentStep(0),
     numberOfRunsInCurrentStep(0),
     cacheHitsInCurrentStep(0),
-    avgSearchDepthInInitialState(0.0),
+    avgSearchDepthInFirstRelevantState(-1.0),
     accumulatedSearchDepthInCurrentRound(0),
     numberOfRunsInCurrentRound(0) {
     setTimeout(0.005);
@@ -140,7 +140,7 @@ void IDS::initSession() {
 
 void IDS::initRound() {
     // Reset per round statistics
-    avgSearchDepthInInitialState = 0.0;
+    avgSearchDepthInFirstRelevantState = -1.0;
     accumulatedSearchDepthInCurrentRound = 0;
     numberOfRunsInCurrentRound = 0;
 
@@ -176,8 +176,9 @@ void IDS::finishStep() {
         accumulatedSearchDepthInCurrentStep;
     numberOfRunsInCurrentRound += numberOfRunsInCurrentStep;
 
-    if (isInitialState && (numberOfRunsInCurrentStep > 0)) {
-        avgSearchDepthInInitialState =
+    if (MathUtils::doubleIsSmaller(avgSearchDepthInFirstRelevantState, 0.0) &&
+        (numberOfRunsInCurrentStep > 0)) {
+        avgSearchDepthInFirstRelevantState =
             static_cast<double>(accumulatedSearchDepthInCurrentStep) /
             static_cast<double>(numberOfRunsInCurrentStep);
     }
@@ -463,9 +464,10 @@ void IDS::printRoundStatistics(std::string indent) const {
         printRewardCacheUsage(indent, Verbosity::SILENT);
     }
 
+    double avgSearchDepth = max(avgSearchDepthInFirstRelevantState, 0.0);
     Logger::logLine(
         indent + "Average search depth in initial state: " +
-        to_string(avgSearchDepthInInitialState),
+        to_string(avgSearchDepth),
         Verbosity::SILENT);
 
     // Accumulated values of this round

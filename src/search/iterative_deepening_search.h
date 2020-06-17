@@ -119,7 +119,7 @@ protected:
     int cacheHitsInCurrentStep;
 
     // Per round statistics
-    double avgSearchDepthInInitialState;
+    double avgSearchDepthInFirstRelevantState;
     long accumulatedSearchDepthInCurrentRound;
     int numberOfRunsInCurrentRound;
 };
