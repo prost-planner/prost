@@ -466,7 +466,7 @@ void IDS::printRoundStatistics(std::string indent) const {
 
     double avgSearchDepth = max(avgSearchDepthInFirstRelevantState, 0.0);
     Logger::logLine(
-        indent + "Average search depth in initial state: " +
+        indent + "Average search depth in first relevant state: " +
         to_string(avgSearchDepth),
         Verbosity::SILENT);
 
