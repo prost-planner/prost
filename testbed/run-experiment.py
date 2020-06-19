@@ -5,16 +5,10 @@ import platform
 
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 from lab.reports import Attribute
-
 from prostlab.experiment import ProstExperiment
-
-from ipc_benchmarks import *
-
-# TODO: Think about these:
-from ipc_scores import IPCScores
-
 from prostlab.reports.absolute import AbsoluteReport
 
+from ipc_benchmarks import *
 
 def is_running_on_cluster():
     node = platform.node()
@@ -56,14 +50,6 @@ ATTRIBUTES = [
     "run_dir",
 ] + exp.get_all_attributes()
 
-ipc_scores = IPCScores()
-
-exp.add_report(
-    AbsoluteReport(
-        attributes=ATTRIBUTES, filter=[ipc_scores.store_rewards, ipc_scores.add_score]
-    ),
-    outfile="report.html",
-)
-
+exp.add_report(AbsoluteReport(attributes=ATTRIBUTES), outfile="report.html")
 
 exp.run_steps()
