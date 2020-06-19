@@ -4,15 +4,16 @@
 import platform
 
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
+from lab.reports import Attribute
+
 from prostlab.experiment import ProstExperiment
 
 from ipc_benchmarks import *
 
 # TODO: Think about these:
 from ipc_scores import IPCScores
-from lab.reports import Attribute
 
-from prostlab.reports.absolute import AbsoluteProstReport
+from prostlab.reports.absolute import AbsoluteReport
 
 
 def is_running_on_cluster():
@@ -33,7 +34,7 @@ if is_running_on_cluster():
 else:
     ENV = LocalEnvironment(processes=4)
     SUITES = [ELEVATORS_2011[0], NAVIGATION_2011[0]]
-    NUM_RUNS = 1
+    NUM_RUNS = 2
 
 exp = ProstExperiment(suites=SUITES, environment=ENV, num_runs=NUM_RUNS, time_per_step=TIME_PER_STEP)
 
@@ -48,40 +49,17 @@ exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
 
-#exp.add_parse_again_step()
+exp.add_parse_again_step()
 
-# TODO: Think about where to get these from
 # Attributes to be displayed in the report.
 ATTRIBUTES = [
-    "ipc_score",
-    "round_reward",
-    "total_reward",
-    "average_reward",
-    "total_time",
-    "parser_time",
-    "trial_initial_state",
-    "search_nodes_initial_state",
-    "entries_prob_state_value_cache",
-    "buckets_prob_state_value_cache",
-    "entries_prob_applicable_actions_cache",
-    "buckets_prob_applicable_actions_cache",
-    "entries_det_state_value_cache",
-    "buckets_det_state_value_cache",
-    "entries_det_applicable_actions_cache",
-    "buckets_det_applicable_actions_cache",
-    "entries_ids_reward_cache",
-    "buckets_ids_reward_cache",
-    "ids_learned_search_depth",
-    "ids_avg_search_depth_initial_state",
-    "ids_avg_search_depth_total",
-    "rem_steps_first_solved_state",
-    Attribute("run_dir"),
-]
+    "run_dir",
+] + exp.get_all_attributes()
 
 ipc_scores = IPCScores()
 
 exp.add_report(
-    AbsoluteProstReport(
+    AbsoluteReport(
         attributes=ATTRIBUTES, filter=[ipc_scores.store_rewards, ipc_scores.add_score]
     ),
     outfile="report.html",

@@ -22,13 +22,14 @@ class IPCScores(object):
         return (run["domain"], run["problem"])
 
     def _compute_score(self, reward, min_reward, max_reward, all_rewards):
+        assert min_reward is not None
         if reward is None or reward <= min_reward:
             # If the planner reward is worse than the minimum,
             # or it has failed to compute the average reward,
             # it should get a score of 0.
             return 0.0
         assert all_rewards
-        if max_reward == None:
+        if max_reward is None:
             max_reward = max(all_rewards)
         return (reward - min_reward) / (max_reward - min_reward)
 
@@ -43,10 +44,8 @@ class IPCScores(object):
     def add_score(self, run):
         run["ipc_score"] = self._compute_score(
             run.get("average_reward"),
-            run.get(
-                "min_score"
-            ),  # We should change the names in the properties files to use 'reward'
-            run.get("max_score"),
+            run.get( "min_reward"),
+            run.get("max_reward"),
             self.tasks_to_rewards[self._get_task(run)],
         )
         return run
