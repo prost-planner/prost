@@ -247,7 +247,7 @@ void printUsage() {
             "decision nodes that is expanded before the trial length is "
             "considered sufficient."
          << endl;
-    cout << "    Default: Horizon of task" << endl << endl;
+    cout << "    Default: 1" << endl << endl;
 
     cout << "  -mv <0|1>" << endl;
     cout << "    This is the parameter that describes the recommendation "
