@@ -92,11 +92,10 @@ void IDS::initSession() {
 
         // Perform IDS for all states in trainingSet and record the time it
         // takes
-        for (size_t i = 0; i < trainingSet.size(); ++i) {
-            State copy(trainingSet[i]);
+        for (State const& state : trainingSet) {
             vector<double> res(numberOfActions);
-            vector<int> actionsToExpand = getApplicableActions(copy);
-            estimateQValues(copy, actionsToExpand, res);
+            vector<int> actionsToExpand = getApplicableActions(state);
+            estimateQValues(state, actionsToExpand, res);
         }
         isLearning = false;
         cachingEnabled = cachingEnabledBeforeLearning;
@@ -232,8 +231,8 @@ void IDS::estimateQValue(State const& state, int actionIndex, double& qValue) {
         qValue /= static_cast<double>(currentState.stepsToGo());
 
         // TODO: Currently, we cache every result, but we should only do so if
-        // the result was achieved with a reasonable action, with a timeout or
-        // on a state with sufficient depth
+        //  the result was achieved with a reasonable action, with a timeout or
+        //  on a state with sufficient depth
         if (cachingEnabled) {
             if (it == rewardCache.end()) {
                 rewardCache[currentState] =
@@ -287,9 +286,9 @@ void IDS::estimateQValues(State const& state,
 
         double multiplier = static_cast<double>(state.stepsToGo()) /
                             static_cast<double>(currentState.stepsToGo());
-        // TODO: Currently, we cache every result, but we should only do so if
-        // the result was achieved with a reasonable action, with a timeout or
-        // on a state with sufficient depth
+        // TODO: Currently, we cache every result, but we should only do so if the
+        //  result was achieved with a reasonable action, with a timeout or on a
+        //  state with sufficient depth
         if (cachingEnabled) {
             rewardCache[currentState] = qValues;
             for (size_t index = 0; index < qValues.size(); ++index) {

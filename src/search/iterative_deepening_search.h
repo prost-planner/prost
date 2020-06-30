@@ -10,7 +10,6 @@
 
 #include "utils/stopwatch.h"
 
-#include <logger.h>
 #include <unordered_map>
 
 class DepthFirstSearch;
