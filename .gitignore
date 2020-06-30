@@ -5,12 +5,6 @@
 *.log
 *.err
 *.swp
-
 builds/
-
-testbed/rddlsim
-testbed/results
 testbed/benchmarks/test
-testbed/data
-
-scripts/tex
+testbed/experiments/issue-*/data/
