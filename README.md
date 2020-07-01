@@ -13,7 +13,7 @@ Make sure you meet the following requirements before installing Prost:
  * Linux operating system
  * git is installed to clone the repository
  * flex and bison are installed to parse the input
- * cmake and a c++ compiler (we recommend g++) are installed to compile the planner
+ * cmake and a c++ compiler (we recommend gcc) are installed to compile the planner
  * the BDD library [BuDDy](http://sourceforge.net/projects/buddy) is installed
 
 On Linux, you can install all dependencies with the command
@@ -21,7 +21,7 @@ On Linux, you can install all dependencies with the command
 `sudo apt install git g++ cmake bison flex libbdd-dev`
 
 If BuDDy is not found automatically, you can additionally set an
-environment variable `$BDD_ROOT` which points to you BuDDY installation,
+environment variable `$BDD_ROOT` which points to your BuDDY installation,
 or you can adapt the file `src/cmake_modules/FindBDD.cmake`.
 
 PROST executes the policy it computes by interacting with the rddlsim
@@ -164,9 +164,4 @@ Downward](http://fast-downward.org) deserve to be mentioned. Many
 decisions have been based on discussion with the Fast Downward
 developers, and there are even some code fragments that have been
 borrowed from the Fast Downward code.
-
-## License
-
-Prost is licensed under the GNU Public License (GPL) 3.
-
 
