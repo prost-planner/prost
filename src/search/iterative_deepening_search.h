@@ -11,7 +11,6 @@
 #include "utils/stopwatch.h"
 
 #include <unordered_map>
-#include <logger.h>
 
 class DepthFirstSearch;
 class MinimalLookaheadSearch;
@@ -59,6 +58,10 @@ public:
         terminateWithReasonableAction = newValue;
     }
 
+    void setIsLearning(bool newValue) {
+        isLearning = newValue;
+    }
+
     bool usesBDDs() const override {
         return false;
     }
@@ -83,8 +86,8 @@ protected:
 
     void createMinimalLookaheadSearch();
 
-    void printRewardCacheUsage(
-        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
+    void printRewardCacheUsage(std::string indent,
+                               Verbosity verbosity = Verbosity::VERBOSE) const;
 
     // The depth first search engine
     DepthFirstSearch* dfs;
@@ -119,7 +122,7 @@ protected:
     int cacheHitsInCurrentStep;
 
     // Per round statistics
-    double avgSearchDepthInFirstRelevantState;
+    double avgSearchDepthInInitialState;
     long accumulatedSearchDepthInCurrentRound;
     int numberOfRunsInCurrentRound;
 };
