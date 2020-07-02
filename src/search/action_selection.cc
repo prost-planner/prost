@@ -9,11 +9,13 @@
 #include "utils/string_utils.h"
 #include "utils/system_utils.h"
 
+using namespace std;
+
 /******************************************************************
                      Action Selection Creation
 ******************************************************************/
 
-ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
+ActionSelection* ActionSelection::fromString(string& desc, THTS* thts) {
     StringUtils::trim(desc);
     assert(desc[0] == '[' && desc[desc.size() - 1] == ']');
     StringUtils::removeFirstAndLastCharacter(desc);
@@ -37,13 +39,13 @@ ActionSelection* ActionSelection::fromString(std::string& desc, THTS* thts) {
     StringUtils::trim(desc);
 
     while (!desc.empty()) {
-        std::string param;
-        std::string value;
+        string param;
+        string value;
         StringUtils::nextParamValuePair(desc, param, value);
 
         if (!result->setValueFromString(param, value)) {
-            SystemUtils::abort("Unused parameter value pair: " + param + " / " +
-                               value);
+            SystemUtils::abort(
+                "Unused parameter value pair: " + param + " / " + value);
         }
     }
 
@@ -60,10 +62,12 @@ void ActionSelection::initStep(State const& current) {
 }
 
 void ActionSelection::finishStep() {
-    if (stepsToGoInCurrentState == SearchEngine::horizon) {
-        percentageExplorationInInitialState =
+    int denominator = numExplorationInRoot + numExploitationInRoot;
+    if ((percentageExplorationInFirstRelevantState < 0.0) &&
+        (denominator > 0)) {
+        percentageExplorationInFirstRelevantState =
             static_cast<double>(numExplorationInRoot) /
-            static_cast<double>(numExplorationInRoot + numExploitationInRoot);
+            static_cast<double>(denominator);
     }
 }
 
@@ -121,87 +125,79 @@ int ActionSelection::selectAction(SearchNode* node) {
 }
 
 inline void ActionSelection::selectGreedyAction(SearchNode* node) {
-    double bestValue = -std::numeric_limits<double>::max();
+    double bestValue = -numeric_limits<double>::max();
+    int numChildren = node->children.size();
 
-    for (unsigned int childIndex = 0; childIndex < node->children.size();
-         ++childIndex) {
-        if (node->children[childIndex] &&
-            node->children[childIndex]->initialized) {
-            if (MathUtils::doubleIsGreater(
-                    node->children[childIndex]->getExpectedRewardEstimate(),
-                    bestValue)) {
+    for (int index = 0; index < numChildren; ++index) {
+        SearchNode* child = node->children[index];
+        if (child && child->initialized) {
+            double reward = child->getExpectedRewardEstimate();
+            if (MathUtils::doubleIsGreater(reward, bestValue)) {
                 bestActionIndices.clear();
-                bestActionIndices.push_back(childIndex);
-                bestValue =
-                    node->children[childIndex]->getExpectedRewardEstimate();
-            } else if (MathUtils::doubleIsEqual(
-                           node->children[childIndex]
-                               ->getExpectedRewardEstimate(),
-                           bestValue)) {
-                bestActionIndices.push_back(childIndex);
+                bestActionIndices.push_back(index);
+                bestValue = reward;
+            } else if (MathUtils::doubleIsEqual(reward, bestValue)) {
+                bestActionIndices.push_back(index);
             }
         }
     }
 }
 
 void ActionSelection::selectLeastVisitedAction(SearchNode* node) {
-    int leastVisits = std::numeric_limits<int>::max();
+    int leastVisits = numeric_limits<int>::max();
+    int numChildren = node->children.size();
 
-    for (unsigned int childIndex = 0; childIndex < node->children.size();
-         ++childIndex) {
-        if (node->children[childIndex] &&
-            node->children[childIndex]->initialized &&
-            !node->children[childIndex]->solved) {
-            if (node->children[childIndex]->numberOfVisits < leastVisits) {
-                leastVisits = node->children[childIndex]->numberOfVisits;
+    for (int index = 0; index < numChildren; ++index) {
+        SearchNode* child = node->children[index];
+        if (child && child->initialized && !child->solved) {
+            int numVisits = child->numberOfVisits;
+            if (numVisits < leastVisits) {
                 bestActionIndices.clear();
-                bestActionIndices.push_back(childIndex);
-            } else if (node->children[childIndex]->numberOfVisits ==
-                       leastVisits) {
-                bestActionIndices.push_back(childIndex);
+                bestActionIndices.push_back(index);
+                leastVisits = numVisits;
+            } else if (numVisits == leastVisits) {
+                bestActionIndices.push_back(index);
             }
         }
     }
 }
 
 inline void ActionSelection::selectRandomAction(SearchNode* node) {
-    for (unsigned int childIndex = 0; childIndex < node->children.size();
-         ++childIndex) {
-        if (node->children[childIndex] &&
-            node->children[childIndex]->initialized &&
-            !node->children[childIndex]->solved) {
-            bestActionIndices.push_back(childIndex);
+    int numChildren = node->children.size();
+
+    for (int index = 0; index < numChildren; ++index) {
+        SearchNode* child = node->children[index];
+        if (child && child->initialized && !child->solved) {
+            bestActionIndices.push_back(index);
         }
     }
 }
 
 inline void ActionSelection::selectActionBasedOnVisitDifference(
     SearchNode* node) {
-    int smallestNumVisits = std::numeric_limits<int>::max();
-    int highestNumVisits = 0;
+    int leastVisits = numeric_limits<int>::max();
+    int mostVisits = 0;
+    int numChildren = node->children.size();
 
-    for (unsigned int childIndex = 0; childIndex < node->children.size();
-         ++childIndex) {
-        if (node->children[childIndex] &&
-            node->children[childIndex]->initialized &&
-            !node->children[childIndex]->solved) {
-            if (node->children[childIndex]->numberOfVisits <
-                smallestNumVisits) {
+    for (int index = 0; index < numChildren; ++index) {
+        SearchNode* child = node->children[index];
+        if (child && child->initialized && !child->solved) {
+            int numVisits = child->numberOfVisits;
+            if (numVisits < leastVisits) {
                 bestActionIndices.clear();
-                bestActionIndices.push_back(childIndex);
-                smallestNumVisits = node->children[childIndex]->numberOfVisits;
-            } else if (node->children[childIndex]->numberOfVisits ==
-                       smallestNumVisits) {
-                bestActionIndices.push_back(childIndex);
+                bestActionIndices.push_back(index);
+                leastVisits = numVisits;
+            } else if (numVisits == leastVisits) {
+                bestActionIndices.push_back(index);
             }
 
-            if (node->children[childIndex]->numberOfVisits > highestNumVisits) {
-                highestNumVisits = node->children[childIndex]->numberOfVisits;
+            if (numVisits > mostVisits) {
+                mostVisits = numVisits;
             }
         }
     }
 
-    if ((maxVisitDiff * smallestNumVisits) >= highestNumVisits) {
+    if ((maxVisitDiff * leastVisits) >= mostVisits) {
         bestActionIndices.clear();
     }
 }
@@ -211,59 +207,52 @@ inline void ActionSelection::selectActionBasedOnVisitDifference(
 ******************************************************************/
 
 void UCB1ActionSelection::_selectAction(SearchNode* node) {
-    double magicConstant;
+    double magicConstant = 100.0;
+    double reward = node->getExpectedFutureRewardEstimate();
+    double numVisits = static_cast<double>(node->numberOfVisits);
+    int numChildren = node->children.size();
 
-    if (MathUtils::doubleIsMinusInfinity(
-            node->getExpectedFutureRewardEstimate()) ||
-        MathUtils::doubleIsEqual(node->getExpectedFutureRewardEstimate(),
-                                 0.0)) {
-        magicConstant = 100.0;
-    } else {
-        magicConstant = magicConstantScaleFactor *
-                        std::abs(node->getExpectedFutureRewardEstimate());
+    if (!MathUtils::doubleIsMinusInfinity(reward) &&
+        !MathUtils::doubleIsEqual(reward, 0.0)) {
+        magicConstant = magicConstantScaleFactor * abs(reward);
     }
     assert(node->numberOfVisits > 0);
 
-    double bestUCTValue = -std::numeric_limits<double>::max();
+    double bestUCTValue = -numeric_limits<double>::max();
     double parentVisitPart = 1.0; // 2.0
 
     switch (explorationRate) {
     case SQRT:
-        parentVisitPart *= std::sqrt((double)node->numberOfVisits);
+        parentVisitPart *= sqrt(numVisits);
         break;
     case LIN:
-        parentVisitPart *= node->numberOfVisits;
+        parentVisitPart *= numVisits;
         break;
     case LNQUAD: {
-        double logPart = std::log((double)node->numberOfVisits);
+        double logPart = log(numVisits);
         parentVisitPart *= logPart * logPart;
         break;
     }
     case LOG:
-        parentVisitPart *= std::log((double)node->numberOfVisits);
+        parentVisitPart *= log(numVisits);
     }
 
-    for (unsigned int childIndex = 0; childIndex < node->children.size();
-         ++childIndex) {
-        if (node->children[childIndex] &&
-            node->children[childIndex]->initialized &&
-            !node->children[childIndex]->solved) {
+    for (int index = 0; index < numChildren; ++index) {
+        SearchNode* child = node->children[index];
+        if (child && child->initialized && !child->solved) {
+            double childNumVisits = static_cast<double>(child->numberOfVisits);
             double visitPart =
-                magicConstant *
-                std::sqrt(parentVisitPart /
-                          (double)node->children[childIndex]->numberOfVisits);
-            double UCTValue =
-                node->children[childIndex]->getExpectedRewardEstimate() +
-                visitPart;
+                magicConstant * sqrt(parentVisitPart / childNumVisits);
+            double UCTValue = child->getExpectedRewardEstimate() + visitPart;
 
             assert(!MathUtils::doubleIsMinusInfinity(UCTValue));
 
             if (MathUtils::doubleIsGreater(UCTValue, bestUCTValue)) {
                 bestActionIndices.clear();
-                bestActionIndices.push_back(childIndex);
+                bestActionIndices.push_back(index);
                 bestUCTValue = UCTValue;
             } else if (MathUtils::doubleIsEqual(UCTValue, bestUCTValue)) {
-                bestActionIndices.push_back(childIndex);
+                bestActionIndices.push_back(index);
             }
         }
     }
@@ -273,8 +262,8 @@ void UCB1ActionSelection::_selectAction(SearchNode* node) {
                             Parameter
 ******************************************************************/
 
-bool ActionSelection::setValueFromString(std::string& param,
-                                         std::string& value) {
+bool ActionSelection::setValueFromString(string& param,
+                                         string& value) {
     if (param == "-lvar") {
         setSelectLeastVisitedActionInRoot(atoi(value.c_str()));
         return true;
@@ -286,8 +275,8 @@ bool ActionSelection::setValueFromString(std::string& param,
     return false;
 }
 
-bool UCB1ActionSelection::setValueFromString(std::string& param,
-                                             std::string& value) {
+bool UCB1ActionSelection::setValueFromString(string& param,
+                                             string& value) {
     if (param == "-mcs") {
         setMagicConstantScaleFactor(atof(value.c_str()));
         return true;
@@ -313,7 +302,7 @@ bool UCB1ActionSelection::setValueFromString(std::string& param,
                               Print
 ******************************************************************/
 
-void ActionSelection::printConfig(std::string indent) const {
+void ActionSelection::printConfig(string indent) const {
     Logger::logLine(indent + "Action selection: " + name, Verbosity::VERBOSE);
 
     indent += "  ";
@@ -325,10 +314,10 @@ void ActionSelection::printConfig(std::string indent) const {
                         Verbosity::VERBOSE);
     }
     Logger::logLine(indent + "Maximal visit difference factor: " +
-                    std::to_string(maxVisitDiff), Verbosity::VERBOSE);
+                    to_string(maxVisitDiff), Verbosity::VERBOSE);
 }
 
-void UCB1ActionSelection::printConfig(std::string indent) const {
+void UCB1ActionSelection::printConfig(string indent) const {
     ActionSelection::printConfig(indent);
 
     indent += "  ";
@@ -352,28 +341,33 @@ void UCB1ActionSelection::printConfig(std::string indent) const {
     }
 
     Logger::logLine(
-        indent + "Magic constant: " + std::to_string(magicConstantScaleFactor),
+        indent + "Magic constant: " + to_string(magicConstantScaleFactor),
         Verbosity::VERBOSE);
 }
 
-void ActionSelection::printStepStatistics(std::string indent) const {
+void ActionSelection::printStepStatistics(string indent) const {
     Logger::logLine(indent + name + " step statistics:", Verbosity::VERBOSE);
     indent += "  ";
-    double perc =
-        static_cast<double>(numExplorationInRoot) /
-        static_cast<double>(numExplorationInRoot + numExploitationInRoot);
+
+    double perc = 0.0;
+    int denominator = numExplorationInRoot + numExploitationInRoot;
+    if (denominator > 0) {
+        perc =
+            static_cast<double>(numExplorationInRoot) /
+            static_cast<double>(denominator);
+    }
     Logger::logLine(
-        indent + "Percentage exploration: " + std::to_string(perc),
+        indent + "Percentage exploration: " + to_string(perc),
         Verbosity::VERBOSE);
     Logger::logLine("", Verbosity::VERBOSE);
 }
 
-void ActionSelection::printRoundStatistics(std::string indent) const {
+void ActionSelection::printRoundStatistics(string indent) const {
     Logger::logLine(indent + name + " round statistics:", Verbosity::NORMAL);
     indent += "  ";
+    double perc = max(percentageExplorationInFirstRelevantState, 0.0);
     Logger::logLine(
-        indent + "Percentage exploration in initial state: " +
-        std::to_string(percentageExplorationInInitialState),
+        indent + "Percentage exploration in first relevant state: " + to_string(perc),
         Verbosity::SILENT);
     Logger::logLine("", Verbosity::VERBOSE);
 }

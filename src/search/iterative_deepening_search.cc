@@ -23,13 +23,12 @@ IDS::IDS()
       stopwatch(),
       maxSearchDepthForThisStep(0),
       ramLimitReached(false),
-      isInitialState(false),
       strictTerminationTimeout(0.1),
       terminateWithReasonableAction(true),
       accumulatedSearchDepthInCurrentStep(0),
       numberOfRunsInCurrentStep(0),
       cacheHitsInCurrentStep(0),
-      avgSearchDepthInInitialState(0.0),
+      avgSearchDepthInFirstRelevantState(-1.0),
       accumulatedSearchDepthInCurrentRound(0),
       numberOfRunsInCurrentRound(0) {
     setTimeout(0.005);
@@ -146,7 +145,7 @@ void IDS::initSession() {
 
 void IDS::initRound() {
     // Reset per round statistics
-    avgSearchDepthInInitialState = 0.0;
+    avgSearchDepthInFirstRelevantState = -1.0;
     accumulatedSearchDepthInCurrentRound = 0;
     numberOfRunsInCurrentRound = 0;
 
@@ -164,8 +163,6 @@ void IDS::finishRound() {
 }
 
 void IDS::initStep(State const& current) {
-    isInitialState = (current.stepsToGo() == SearchEngine::horizon);
-
     // Reset per step statistics
     accumulatedSearchDepthInCurrentStep = 0;
     numberOfRunsInCurrentStep = 0;
@@ -178,11 +175,13 @@ void IDS::initStep(State const& current) {
 }
 
 void IDS::finishStep() {
-    accumulatedSearchDepthInCurrentRound += accumulatedSearchDepthInCurrentStep;
+    accumulatedSearchDepthInCurrentRound +=
+        accumulatedSearchDepthInCurrentStep;
     numberOfRunsInCurrentRound += numberOfRunsInCurrentStep;
 
-    if (isInitialState && (numberOfRunsInCurrentStep > 0)) {
-        avgSearchDepthInInitialState =
+    if (MathUtils::doubleIsSmaller(avgSearchDepthInFirstRelevantState, 0.0) &&
+        (numberOfRunsInCurrentStep > 0)) {
+        avgSearchDepthInFirstRelevantState =
             static_cast<double>(accumulatedSearchDepthInCurrentStep) /
             static_cast<double>(numberOfRunsInCurrentStep);
     }
@@ -286,9 +285,9 @@ void IDS::estimateQValues(State const& state,
 
         double multiplier = static_cast<double>(state.stepsToGo()) /
                             static_cast<double>(currentState.stepsToGo());
-        // TODO: Currently, we cache every result, but we should only do so if the
-        //  result was achieved with a reasonable action, with a timeout or on a
-        //  state with sufficient depth
+        // TODO: Currently, we cache every result, but we should only do so if
+        //  the result was achieved with a reasonable action, with a timeout or
+        //  on a state with sufficient depth
         if (cachingEnabled) {
             rewardCache[currentState] = qValues;
             for (size_t index = 0; index < qValues.size(); ++index) {
@@ -467,9 +466,11 @@ void IDS::printRoundStatistics(std::string indent) const {
         printRewardCacheUsage(indent, Verbosity::SILENT);
     }
 
-    Logger::logLine(indent + "Average search depth in initial state: " +
-                        to_string(avgSearchDepthInInitialState),
-                    Verbosity::SILENT);
+    double avgSearchDepth = max(avgSearchDepthInFirstRelevantState, 0.0);
+    Logger::logLine(
+        indent + "Average search depth in first relevant state: " +
+        to_string(avgSearchDepth),
+        Verbosity::SILENT);
 
     // Accumulated values of this round
     Logger::logLine(indent + "Total number of runs: " +

@@ -86,8 +86,8 @@ protected:
 
     void createMinimalLookaheadSearch();
 
-    void printRewardCacheUsage(std::string indent,
-                               Verbosity verbosity = Verbosity::VERBOSE) const;
+    void printRewardCacheUsage(
+        std::string indent, Verbosity verbosity = Verbosity::VERBOSE) const;
 
     // The depth first search engine
     DepthFirstSearch* dfs;
@@ -109,9 +109,6 @@ protected:
     // Is true if caching was disabled at some point
     bool ramLimitReached;
 
-    // Is true if the current step is in the task's initial state.
-    bool isInitialState;
-
     // Parameter
     double strictTerminationTimeout;
     bool terminateWithReasonableAction;
@@ -122,7 +119,7 @@ protected:
     int cacheHitsInCurrentStep;
 
     // Per round statistics
-    double avgSearchDepthInInitialState;
+    double avgSearchDepthInFirstRelevantState;
     long accumulatedSearchDepthInCurrentRound;
     int numberOfRunsInCurrentRound;
 };

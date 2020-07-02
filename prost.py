@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
-
 
 def main():
     search_params = []
@@ -18,16 +18,18 @@ def main():
         else:
             search_params.append(arg)
 
+    path = pathlib.Path(__file__).parent.absolute()
+
     if run_debug:
         parser_name = "rddl-parser-debug"
         search_name = "search-debug"
-        parser_file = "builds/debug/rddl_parser/rddl-parser"
-        search_file = "builds/debug/search/search"
+        parser_file = os.path.join(path, "builds/debug/rddl_parser/rddl-parser")
+        search_file = os.path.join(path, "builds/debug/search/search")
     else:
         parser_name = "rddl-parser-release"
         search_name = "search-release"
-        parser_file = "builds/release/rddl_parser/rddl-parser"
-        search_file = "builds/release/search/search"
+        parser_file = os.path.join(path, "builds/release/rddl_parser/rddl-parser")
+        search_file = os.path.join(path, "builds/release/search/search")
 
     shutil.copy2(parser_file, "./" + parser_name)
     shutil.copy2(search_file, "./" + search_name)

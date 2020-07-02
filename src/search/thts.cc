@@ -48,8 +48,8 @@ THTS::THTS(std::string _name)
       uniquePolicyDueToPreconds(false),
       stepsToGoInFirstSolvedState(-1),
       expectedRewardInFirstSolvedState(-std::numeric_limits<double>::max()),
-      numTrialsInInitialState(0),
-      numSearchNodesInInitialState(0),
+      numTrialsInFirstRelevantState(-1),
+      numSearchNodesInFirstRelevantState(-1),
       numRewardLockStates(0),
       numSingleApplicableActionStates(0) {
     setMaxNumberOfNodes(24000000);
@@ -177,8 +177,8 @@ void THTS::initRound() {
     // Reset per round statistics
     stepsToGoInFirstSolvedState = -1;
     expectedRewardInFirstSolvedState = -std::numeric_limits<double>::max();
-    numTrialsInInitialState = 0;
-    numSearchNodesInInitialState = 0;
+    numTrialsInFirstRelevantState = -1;
+    numSearchNodesInFirstRelevantState = -1;
     numRewardLockStates = 0;
     numSingleApplicableActionStates = 0;
 
@@ -329,9 +329,11 @@ void THTS::estimateBestActions(State const& _rootState,
             currentRootNode->getExpectedRewardEstimate();
     }
 
-    if (stepsToGo == SearchEngine::horizon) {
-        numTrialsInInitialState = currentTrial;
-        numSearchNodesInInitialState = lastUsedNodePoolIndex;
+    if (numTrialsInFirstRelevantState < 0 && currentTrial > 0) {
+        numTrialsInFirstRelevantState = currentTrial;
+    }
+    if (numSearchNodesInFirstRelevantState < 0 && lastUsedNodePoolIndex > 0) {
+        numSearchNodesInFirstRelevantState = lastUsedNodePoolIndex;
     }
 
     // Memorize search time
@@ -789,12 +791,12 @@ void THTS::printRoundStatistics(std::string indent) const {
             Verbosity::SILENT);
     }
     Logger::logLine(
-        indent + "Number of trials in initial state: " +
-        std::to_string(numTrialsInInitialState),
+        indent + "Number of trials in first relevant state: " +
+        std::to_string(numTrialsInFirstRelevantState),
         Verbosity::SILENT);
     Logger::logLine(
-        indent + "Number of search nodes in initial state: " +
-        std::to_string(numSearchNodesInInitialState),
+        indent + "Number of search nodes in first relevant state: " +
+        std::to_string(numSearchNodesInFirstRelevantState),
         Verbosity::SILENT);
 
     Logger::logLine(
