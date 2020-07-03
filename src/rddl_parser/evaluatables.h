@@ -93,10 +93,6 @@ struct ActionPrecondition : public Evaluatable {
 
     void initialize() override;
 
-    bool containsArithmeticFunction() const {
-        return hasArithmeticFunction;
-    }
-
     bool containsStateFluent() const {
         return !dependentStateFluents.empty();
     }

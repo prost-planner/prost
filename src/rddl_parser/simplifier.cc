@@ -100,14 +100,19 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             cout << "    ...finished (" << t() << ")" << endl;
         }
         t.reset();
-    }
+        if (continueSimplification) {
+            continue;
+        }
 
-    if (output) {
-        cout << "    Initialize action states..." << endl;
-    }
-    initializeActionStates();
-    if (output) {
-        cout << "    ...finished (" << t() << ")" << endl;
+        if (output) {
+            cout << "    Initialize action states (" << iteration << ")..."
+                 << endl;
+        }
+        continueSimplification = initializeActionStates();
+        if (output) {
+            cout << "    ...finished (" << t() << ")" << endl;
+        }
+        t.reset();
     }
 }
 
@@ -817,7 +822,7 @@ bool Simplifier::approximateDomains(
     return foundConstantCPF;
 }
 
-void Simplifier::initializeActionStates() {
+bool Simplifier::initializeActionStates() {
     // Sort action states again for deterministic behaviour
     sort(task->actionStates.begin(), task->actionStates.end(),
          ActionState::ActionStateSort());
@@ -861,12 +866,23 @@ void Simplifier::initializeActionStates() {
     }
 
     // Remove irrelevant preconds
-    vector<ActionPrecondition*> finalPreconds;
+    // TODO: This is not the only place where the code is unnecessarily clunky
+    //  because of the way action preconditions are maintained (once as
+    //  LogicalExpression in task->SACs, once as action precondition in either
+    //  task->actionPreconds or task->staticSACs). There should be just one
+    //  place
+    vector<LogicalExpression*> SACs;
     for (ActionPrecondition* precond : task->actionPreconds) {
         if (precondIsRelevant[precond->index]) {
-            precond->index = finalPreconds.size();
-            finalPreconds.push_back(precond);
+            SACs.push_back(precond->formula);
         }
     }
-    swap(finalPreconds, task->actionPreconds);
+    if (SACs.size() < numPreconds) {
+        for (ActionPrecondition* precond : task->staticSACs) {
+            SACs.push_back(precond->formula);
+        }
+        swap(task->SACs, SACs);
+        return true;
+    }
+    return false;
 }

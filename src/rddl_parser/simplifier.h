@@ -50,7 +50,7 @@ private:
 
     bool actionIsApplicable(ActionState const &action) const;
 
-    void initializeActionStates();
+    bool initializeActionStates();
 
     void calcAllActionStates(std::vector<ActionState> &result,
                              int minElement, int scheduledActions) const;
