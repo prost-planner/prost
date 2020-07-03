@@ -356,7 +356,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
     z3::solver s(c);
     vector<z3::expr> sf_exprs;
     vector<z3::expr> af_exprs;
-    buildCSP(c, s, sf_exprs, af_exprs);
+    task->buildCSP(c, s, sf_exprs, af_exprs, true);
 
     if (numConcurrentActions == 1) {
         // If max-nondef-actions is 1, all action fluents are pairwise mutex
@@ -474,60 +474,6 @@ bool Simplifier::determineFiniteDomainActionFluents(
     swap(task->actionFluents, actionFluents);
     sortActionFluents();
     return true;
-}
-
-void Simplifier::buildCSP(z3::context& c, z3::solver& s,
-                          vector<z3::expr>& sf_exprs,
-                          vector<z3::expr>& af_exprs) const {
-    stringstream ss;
-    for (ConditionalProbabilityFunction* cpf : task->CPFs) {
-        ss.str("");
-        StateFluent* sf = cpf->head;
-        ss << "sf_" << sf->index << "_" << sf->fullName;
-        int domainSize = sf->valueType->objects.size();
-        sf_exprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(sf_exprs.back() >= 0);
-        s.add(sf_exprs.back() < domainSize);
-    }
-
-    for (ActionFluent* af : task->actionFluents) {
-        ss.str("");
-        ss << "af_" << af->index << "_" << af->fullName;
-        int domainSize = af->valueType->objects.size();
-        af_exprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(af_exprs.back() >= 0);
-        s.add(af_exprs.back() < domainSize);
-        ss.str("");
-    }
-
-    for (LogicalExpression* sac : task->SACs) {
-        // Only boolean valued formulas can be added, but toZ3Formula returns a
-        // number. The number is converted to a boolean by comparing to 0
-        s.add(sac->toZ3Formula(c, sf_exprs, af_exprs) != 0);
-    }
-
-    // The value provided by max-nondef-actions is also a constraint that must
-    // be taken into account. It is first modeled as a LogicalExpression and
-    // then converted to a z3::expr in the same way preconditions are.
-    int numActionFluents = task->actionFluents.size();
-    int numConcurrentActions = task->numberOfConcurrentActions;
-    if (task->numberOfConcurrentActions < numActionFluents) {
-        vector<LogicalExpression*> afs;
-        for (ActionFluent* af : task->actionFluents) {
-            afs.push_back(af);
-        }
-        vector<LogicalExpression*> maxConcurrent =
-            {new Addition(afs), new NumericConstant(numConcurrentActions)};
-        LowerEqualsExpression* constraint =
-            new LowerEqualsExpression(maxConcurrent);
-        s.add(constraint->toZ3Formula(c, sf_exprs, af_exprs) != 0);
-    }
-
-    // We could even assert that there is an applicable action in the initial
-    // state (i.e., we could set all state fluents to their values in the
-    // initial state), but the assertion below also holds (it basically says
-    // there must be a state with at least one applicable action).
-    assert((s.check() == z3::sat));
 }
 
 vector<set<int>> Simplifier::computeActionFluentMutexes(
@@ -876,8 +822,21 @@ void Simplifier::initializeActionStates() {
     sort(task->actionStates.begin(), task->actionStates.end(),
          ActionState::ActionStateSort());
 
-    // Set inidices and calculate properties of action states
-    for (size_t index = 0; index < task->actionStates.size(); ++index) {
+    z3::context c;
+    z3::solver s(c);
+    vector<z3::expr> sf_exprs;
+    vector<z3::expr> af_exprs;
+    task->buildCSP(c, s, sf_exprs, af_exprs, false);
+
+    // Check for each action state and precondition if that precondition could
+    // forbid the application of the action state. We do this by checking if
+    // there is a state where the precondition could be evaluated to false given
+    // the the action is applied.
+    int numActions = task->actionStates.size();
+    int numPreconds = task->actionPreconds.size();
+    vector<bool> precondIsRelevant(numPreconds, false);
+    for (size_t index = 0; index < numActions; ++index) {
+        s.push();
         ActionState& actionState = task->actionStates[index];
         actionState.index = index;
 
@@ -886,45 +845,28 @@ void Simplifier::initializeActionStates() {
                 actionState.scheduledActionFluents.push_back(
                     task->actionFluents[i]);
             }
+            s.add(af_exprs[i] == actionState.state[i]);
         }
 
-        // TODO: I am very uncertain if the following is correct.
-        // Determine which dynamic SACs are relevant for this action
         for (ActionPrecondition* precond : task->actionPreconds) {
-            if (precond->containsArithmeticFunction()) {
-                // If the precondition contains an arithmetic function we treat
-                // it as if it influenced this action.
-                // TODO: Implement a function that actually checks this
+            s.push();
+            s.add(precond->formula->toZ3Formula(c, sf_exprs, af_exprs) == 0);
+            if (s.check() == z3::sat) {
                 actionState.relevantSACs.push_back(precond);
-            } else if (sacContainsNegativeActionFluent(precond, actionState)) {
-                // If the precondition contains one of this ActionStates' action
-                // fluents negatively it might forbid this action.
-                actionState.relevantSACs.push_back(precond);
-            } else if (sacContainsAdditionalPositiveActionFluent(
-                precond, actionState)) {
-                // If the precondition contains action fluents positively that
-                // are not in this ActionStates' action fluents it might enforce
-                // that action fluent (and thereby forbid this action)
-                actionState.relevantSACs.push_back(precond);
+                precondIsRelevant[precond->index] = true;
             }
+            s.pop();
+        }
+        s.pop();
+    }
+
+    // Remove irrelevant preconds
+    vector<ActionPrecondition*> finalPreconds;
+    for (ActionPrecondition* precond : task->actionPreconds) {
+        if (precondIsRelevant[precond->index]) {
+            precond->index = finalPreconds.size();
+            finalPreconds.push_back(precond);
         }
     }
-}
-
-bool Simplifier::sacContainsNegativeActionFluent(
-    ActionPrecondition* const& sac, ActionState const& actionState) const {
-    set<ActionFluent*> const& actionFluents = sac->negativeActionDependencies;
-
-    return actionState.sharesActiveActionFluent(actionFluents);
-}
-
-bool Simplifier::sacContainsAdditionalPositiveActionFluent(
-    ActionPrecondition* const& sac, ActionState const& actionState) const {
-    set<ActionFluent*> const& actionFluents = sac->positiveActionDependencies;
-    for (ActionFluent* af : actionFluents) {
-        if (!actionState[af->index]) {
-            return true;
-        }
-    }
-    return false;
+    swap(finalPreconds, task->actionPreconds);
 }

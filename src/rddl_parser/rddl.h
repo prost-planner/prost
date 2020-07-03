@@ -18,9 +18,11 @@ class Type;
 
 using ConditionEffectPair = std::pair<LogicalExpression*, LogicalExpression*>;
 
-/*****************************************************************
-                           RDDL Block
-*****************************************************************/
+namespace z3 {
+class context;
+class expr;
+class solver;
+}
 
 class RDDLTask {
 public:
@@ -55,6 +57,10 @@ public:
         ParametrizedVariable* schema);
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
+
+    void buildCSP(
+        z3::context& c, z3::solver& s, std::vector<z3::expr>& sf_exprs,
+        std::vector<z3::expr>& af_exprs, bool addSACs) const;
 
     // The following are PlanningTask variables
 

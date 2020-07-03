@@ -1,7 +1,5 @@
 #include "rddl.h"
 
-#include <iostream>
-
 #include "evaluatables.h"
 #include "logical_expressions.h"
 
@@ -10,11 +8,17 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
+#include "z3++.h"
+
+#include <iostream>
+
+using namespace std;
+
 /*****************************************************************
                            RDDL Block
 *****************************************************************/
 RDDLTask::RDDLTask()
-    : numberOfConcurrentActions(std::numeric_limits<int>::max()),
+    : numberOfConcurrentActions(numeric_limits<int>::max()),
       horizon(1),
       discountFactor(1.0),
       rewardCPF(nullptr),
@@ -41,7 +45,7 @@ RDDLTask::RDDLTask()
 void RDDLTask::addCPF(ParametrizedVariable variable,
                       LogicalExpression* logicalExpression) {
     // Variable
-    std::string name = variable.variableName;
+    string name = variable.variableName;
     if (name[name.length() - 1] == '\'') {
         name = name.substr(0, name.length() - 1);
     }
@@ -69,8 +73,8 @@ void RDDLTask::addCPF(ParametrizedVariable variable,
     CPFDefinitions[head] = logicalExpression;
 }
 
-void RDDLTask::setInstance(std::string name, std::string domainName,
-                           std::string nonFluentsName, int maxNonDefActions,
+void RDDLTask::setInstance(string name, string domainName,
+                           string nonFluentsName, int maxNonDefActions,
                            int horizon, double discount) {
     this->name = name;
 
@@ -96,7 +100,7 @@ void RDDLTask::setInstance(std::string name, std::string domainName,
     this->discountFactor = discount;
 }
 
-void RDDLTask::addType(std::string const& name, std::string const& superType) {
+void RDDLTask::addType(string const& name, string const& superType) {
     if (types.find(name) != types.end()) {
         SystemUtils::abort("Error: Type " + name + " is ambiguous.");
     }
@@ -110,15 +114,15 @@ void RDDLTask::addType(std::string const& name, std::string const& superType) {
     }
 }
 
-Type* RDDLTask::getType(std::string typeName) {
+Type* RDDLTask::getType(string typeName) {
     if (types.find(typeName) != types.end()) {
         return types[typeName];
     }
     return nullptr;
 }
 
-void RDDLTask::addObject(std::string const& typeName,
-                         std::string const& objectName) {
+void RDDLTask::addObject(string const& typeName,
+                         string const& objectName) {
     if (types.find(typeName) == types.end()) {
         SystemUtils::abort("Error: Type " + typeName + " not defined.");
     }
@@ -131,7 +135,7 @@ void RDDLTask::addObject(std::string const& typeName,
     objects[objectName] = new Object(objectName, types[typeName]);
 }
 
-Object* RDDLTask::getObject(std::string objName) {
+Object* RDDLTask::getObject(string objName) {
     if (objects.find(objName) != objects.end()) {
         return objects[objName];
     }
@@ -148,12 +152,12 @@ void RDDLTask::addVariableSchematic(ParametrizedVariable* varDef) {
 }
 
 void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
-                                       std::vector<Parameter*> const& params) {
+                                       vector<Parameter*> const& params) {
     addParametrizedVariable(parent, params, parent->initialValue);
 }
 
 void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
-                                       std::vector<Parameter*> const& params,
+                                       vector<Parameter*> const& params,
                                        double initialValue) {
     if (variableDefinitions.find(parent->variableName) ==
         variableDefinitions.end()) {
@@ -174,7 +178,7 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
         stateFluentMap[sf->fullName] = sf;
 
         if (stateFluentsBySchema.find(parent) == stateFluentsBySchema.end()) {
-            stateFluentsBySchema[parent] = std::vector<StateFluent*>();
+            stateFluentsBySchema[parent] = vector<StateFluent*>();
         }
         stateFluentsBySchema[parent].push_back(sf);
         break;
@@ -207,7 +211,7 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
     }
 }
 
-ParametrizedVariable* RDDLTask::getParametrizedVariable(std::string varName) {
+ParametrizedVariable* RDDLTask::getParametrizedVariable(string varName) {
     if (variableDefinitions.find(varName) != variableDefinitions.end()) {
         return variableDefinitions[varName];
     } else {
@@ -216,7 +220,7 @@ ParametrizedVariable* RDDLTask::getParametrizedVariable(std::string varName) {
     return nullptr;
 }
 
-StateFluent* RDDLTask::getStateFluent(std::string const& name) {
+StateFluent* RDDLTask::getStateFluent(string const& name) {
     if (stateFluentMap.find(name) == stateFluentMap.end()) {
         SystemUtils::abort("Error: state-fluent " + name +
                            " used but not defined.");
@@ -225,7 +229,7 @@ StateFluent* RDDLTask::getStateFluent(std::string const& name) {
     return stateFluentMap[name];
 }
 
-ActionFluent* RDDLTask::getActionFluent(std::string const& name) {
+ActionFluent* RDDLTask::getActionFluent(string const& name) {
     if (actionFluentMap.find(name) == actionFluentMap.end()) {
         SystemUtils::abort("Error: action-fluent " + name +
                            " used but not defined.");
@@ -234,7 +238,7 @@ ActionFluent* RDDLTask::getActionFluent(std::string const& name) {
     return actionFluentMap[name];
 }
 
-NonFluent* RDDLTask::getNonFluent(std::string const& name) {
+NonFluent* RDDLTask::getNonFluent(string const& name) {
     if (nonFluentMap.find(name) == nonFluentMap.end()) {
         SystemUtils::abort("Error: non-fluent " + name +
                            " used but not defined.");
@@ -244,7 +248,7 @@ NonFluent* RDDLTask::getNonFluent(std::string const& name) {
 }
 
 // TODO: Return const reference?
-std::vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(
+vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(
     ParametrizedVariable* schema) {
     assert(stateFluentsBySchema.find(schema) != stateFluentsBySchema.end());
     return stateFluentsBySchema[schema];
@@ -257,10 +261,67 @@ void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     rewardCPF = new RewardFunction(rewardFormula);
 }
 
-void RDDLTask::print(std::ostream& out) {
+void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
+                        vector<z3::expr>& sf_exprs,
+                        vector<z3::expr>& af_exprs,
+                        bool addSACs) const {
+    stringstream ss;
+    for (ConditionalProbabilityFunction* cpf : CPFs) {
+        ss.str("");
+        StateFluent* sf = cpf->head;
+        ss << "sf_" << sf->index << "_" << sf->fullName;
+        int domainSize = sf->valueType->objects.size();
+        sf_exprs.push_back(c.int_const(ss.str().c_str()));
+        s.add(sf_exprs.back() >= 0);
+        s.add(sf_exprs.back() < domainSize);
+    }
+
+    for (ActionFluent* af : actionFluents) {
+        ss.str("");
+        ss << "af_" << af->index << "_" << af->fullName;
+        int domainSize = af->valueType->objects.size();
+        af_exprs.push_back(c.int_const(ss.str().c_str()));
+        s.add(af_exprs.back() >= 0);
+        s.add(af_exprs.back() < domainSize);
+        ss.str("");
+    }
+
+    if (addSACs) {
+        for (LogicalExpression* sac : SACs) {
+            // Only boolean valued formulas can be added, but toZ3Formula returns a
+            // number. The number is converted to a boolean by comparing to 0
+            s.add(sac->toZ3Formula(c, sf_exprs, af_exprs) != 0);
+        }
+    }
+
+    // The value provided by max-nondef-actions is also a constraint that must
+    // be taken into account. It is first modeled as a LogicalExpression and
+    // then converted to a z3::expr in the same way preconditions are.
+    int numActionFluents = actionFluents.size();
+    int numConcurrentActions = numberOfConcurrentActions;
+    if (numberOfConcurrentActions < numActionFluents) {
+        vector<LogicalExpression*> afs;
+        for (ActionFluent* af : actionFluents) {
+            afs.push_back(af);
+        }
+        vector<LogicalExpression*> maxConcurrent =
+            {new Addition(afs), new NumericConstant(numConcurrentActions)};
+        LowerEqualsExpression* constraint =
+            new LowerEqualsExpression(maxConcurrent);
+        s.add(constraint->toZ3Formula(c, sf_exprs, af_exprs) != 0);
+    }
+
+    // We could even assert that there is an applicable action in the initial
+    // state (i.e., we could set all state fluents to their values in the
+    // initial state), but the assertion below also holds (it basically says
+    // there must be a state with at least one applicable action).
+    assert(s.check() == z3::sat);
+}
+
+void RDDLTask::print(ostream& out) {
     // Set precision of doubles
-    out.unsetf(std::ios::floatfield);
-    out.precision(std::numeric_limits<double>::digits10);
+    out.unsetf(ios::floatfield);
+    out.precision(numeric_limits<double>::digits10);
 
     int firstProbabilisticVarIndex = (int)CPFs.size();
     bool deterministic = true;
@@ -272,188 +333,188 @@ void RDDLTask::print(std::ostream& out) {
         }
     }
 
-    out << "#####TASK#####" << std::endl;
-    out << "## name" << std::endl;
-    out << name << std::endl;
-    out << "## horizon" << std::endl;
-    out << horizon << std::endl;
-    out << "## discount factor" << std::endl;
-    out << discountFactor << std::endl;
-    out << "## number of action fluents" << std::endl;
-    out << actionFluents.size() << std::endl;
-    out << "## number of det state fluents" << std::endl;
-    out << firstProbabilisticVarIndex << std::endl;
-    out << "## number of prob state fluents" << std::endl;
-    out << (CPFs.size() - firstProbabilisticVarIndex) << std::endl;
-    out << "## number of preconds" << std::endl;
-    out << actionPreconds.size() << std::endl;
-    out << "## number of actions" << std::endl;
-    out << actionStates.size() << std::endl;
-    out << "## number of hashing functions" << std::endl;
-    out << (actionPreconds.size() + CPFs.size() + 1) << std::endl;
-    out << "## initial state" << std::endl;
+    out << "#####TASK#####" << endl;
+    out << "## name" << endl;
+    out << name << endl;
+    out << "## horizon" << endl;
+    out << horizon << endl;
+    out << "## discount factor" << endl;
+    out << discountFactor << endl;
+    out << "## number of action fluents" << endl;
+    out << actionFluents.size() << endl;
+    out << "## number of det state fluents" << endl;
+    out << firstProbabilisticVarIndex << endl;
+    out << "## number of prob state fluents" << endl;
+    out << (CPFs.size() - firstProbabilisticVarIndex) << endl;
+    out << "## number of preconds" << endl;
+    out << actionPreconds.size() << endl;
+    out << "## number of actions" << endl;
+    out << actionStates.size() << endl;
+    out << "## number of hashing functions" << endl;
+    out << (actionPreconds.size() + CPFs.size() + 1) << endl;
+    out << "## initial state" << endl;
     for (unsigned int i = 0; i < CPFs.size(); ++i) {
         out << CPFs[i]->getInitialValue() << " ";
     }
-    out << std::endl;
-    out << "## 1 if task is deterministic" << std::endl;
-    out << deterministic << std::endl;
-    out << "## 1 if state hashing possible" << std::endl;
-    out << !stateHashKeys.empty() << std::endl;
-    out << "## 1 if kleene state hashing possible" << std::endl;
-    out << !kleeneStateHashKeyBases.empty() << std::endl;
-    out << "## method to calculate the final reward" << std::endl;
-    out << finalRewardCalculationMethod << std::endl;
+    out << endl;
+    out << "## 1 if task is deterministic" << endl;
+    out << deterministic << endl;
+    out << "## 1 if state hashing possible" << endl;
+    out << !stateHashKeys.empty() << endl;
+    out << "## 1 if kleene state hashing possible" << endl;
+    out << !kleeneStateHashKeyBases.empty() << endl;
+    out << "## method to calculate the final reward" << endl;
+    out << finalRewardCalculationMethod << endl;
     if (finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
         out << "## set of candidates to calculate final reward (first line is "
                "the number)"
-            << std::endl;
-        out << candidatesForOptimalFinalAction.size() << std::endl;
+            << endl;
+        out << candidatesForOptimalFinalAction.size() << endl;
         for (unsigned int i = 0; i < candidatesForOptimalFinalAction.size();
              ++i) {
             out << candidatesForOptimalFinalAction[i] << " ";
         }
-        out << std::endl;
+        out << endl;
     }
     out << "## 1 if reward formula allows reward lock detection and a reward "
            "lock was found during task analysis"
-        << std::endl;
-    out << rewardLockDetected << std::endl;
-    out << "## 1 if an unreasonable action was detected" << std::endl;
-    out << unreasonableActionDetected << std::endl;
+        << endl;
+    out << rewardLockDetected << endl;
+    out << "## 1 if an unreasonable action was detected" << endl;
+    out << unreasonableActionDetected << endl;
     out << "## 1 if an unreasonable action was detected in the determinization"
-        << std::endl;
-    out << unreasonableActionInDeterminizationDetected << std::endl;
+        << endl;
+    out << unreasonableActionInDeterminizationDetected << endl;
 
     out << "## number of states that were encountered during task analysis"
-        << std::endl;
-    out << numberOfEncounteredStates << std::endl;
+        << endl;
+    out << numberOfEncounteredStates << endl;
     out << "## number of unique states that were encountered during task "
            "analysis"
-        << std::endl;
-    out << numberOfUniqueEncounteredStates << std::endl;
+        << endl;
+    out << numberOfUniqueEncounteredStates << endl;
     out << "## number of states with only one applicable reasonable action "
            "that were encountered during task analysis"
-        << std::endl;
-    out << nonTerminalStatesWithUniqueAction << std::endl;
+        << endl;
+    out << nonTerminalStatesWithUniqueAction << endl;
     out << "## number of unique states with only one applicable reasonable "
            "action that were encountered during task analysis"
-        << std::endl;
-    out << uniqueNonTerminalStatesWithUniqueAction << std::endl;
+        << endl;
+    out << uniqueNonTerminalStatesWithUniqueAction << endl;
 
-    out << std::endl << std::endl << "#####ACTION FLUENTS#####" << std::endl;
+    out << endl << endl << "#####ACTION FLUENTS#####" << endl;
     for (ActionFluent* af : actionFluents) {
-        out << "## index" << std::endl;
-        out << af->index << std::endl;
-        out << "## name" << std::endl;
-        out << af->fullName << std::endl;
-        out << "## number of values" << std::endl;
-        std::vector<Object*>& values = af->valueType->objects;
+        out << "## index" << endl;
+        out << af->index << endl;
+        out << "## name" << endl;
+        out << af->fullName << endl;
+        out << "## number of values" << endl;
+        vector<Object*>& values = af->valueType->objects;
         int numValues = values.size();
-        out << numValues << std::endl;
-        out << "## values" << std::endl;
+        out << numValues << endl;
+        out << "## values" << endl;
         if (numValues == 2) {
-            out << "0 false" << std::endl << "1 true" << std::endl;
+            out << "0 false" << endl << "1 true" << endl;
         } else {
             for (Object* value : values) {
-                out << value->value << " " << value->name << std::endl;
+                out << value->value << " " << value->name << endl;
             }
         }
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl
-        << std::endl
-        << "#####DET STATE FLUENTS AND CPFS#####" << std::endl;
+    out << endl
+        << endl
+        << "#####DET STATE FLUENTS AND CPFS#####" << endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         assert(!CPFs[index]->isProbabilistic());
-        out << "## index" << std::endl;
-        out << index << std::endl;
-        out << "## name" << std::endl;
-        out << CPFs[index]->head->fullName << std::endl;
-        out << "## number of values" << std::endl;
-        out << CPFs[index]->domain.size() << std::endl;
-        out << "## values" << std::endl;
-        for (std::set<double>::iterator it = CPFs[index]->domain.begin();
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## name" << endl;
+        out << CPFs[index]->head->fullName << endl;
+        out << "## number of values" << endl;
+        out << CPFs[index]->domain.size() << endl;
+        out << "## values" << endl;
+        for (set<double>::iterator it = CPFs[index]->domain.begin();
              it != CPFs[index]->domain.end(); ++it) {
             out << *it << " "
                 << CPFs[index]->head->valueType->objects[*it]->name
-                << std::endl;
+                << endl;
         }
 
-        out << "## formula" << std::endl;
+        out << "## formula" << endl;
         CPFs[index]->formula->print(out);
-        out << std::endl;
+        out << endl;
 
-        out << "## hash index" << std::endl;
-        out << CPFs[index]->hashIndex << std::endl;
-        out << "## caching type " << std::endl;
-        out << CPFs[index]->cachingType << std::endl;
+        out << "## hash index" << endl;
+        out << CPFs[index]->hashIndex << endl;
+        out << "## caching type " << endl;
+        out << CPFs[index]->cachingType << endl;
         if (CPFs[index]->cachingType == "VECTOR") {
-            out << "## precomputed results" << std::endl;
-            out << CPFs[index]->precomputedResults.size() << std::endl;
+            out << "## precomputed results" << endl;
+            out << CPFs[index]->precomputedResults.size() << endl;
             for (unsigned int res = 0;
                  res < CPFs[index]->precomputedResults.size(); ++res) {
                 out << res << " " << CPFs[index]->precomputedResults[res]
-                    << std::endl;
+                    << endl;
             }
         }
-        out << "## kleene caching type" << std::endl;
-        out << CPFs[index]->kleeneCachingType << std::endl;
+        out << "## kleene caching type" << endl;
+        out << CPFs[index]->kleeneCachingType << endl;
         if (CPFs[index]->kleeneCachingType == "VECTOR") {
-            out << "## kleene caching vec size" << std::endl;
-            out << CPFs[index]->kleeneCachingVectorSize << std::endl;
+            out << "## kleene caching vec size" << endl;
+            out << CPFs[index]->kleeneCachingVectorSize << endl;
         }
 
-        out << "## action hash keys" << std::endl;
+        out << "## action hash keys" << endl;
         for (unsigned int actionIndex = 0;
              actionIndex < CPFs[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " "
-                << CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
+                << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
         }
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl
-        << std::endl
-        << "#####PROB STATE FLUENTS AND CPFS#####" << std::endl;
+    out << endl
+        << endl
+        << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
     for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
          ++index) {
         assert(CPFs[index]->head->index == index);
         assert(CPFs[index]->isProbabilistic());
-        out << "## index" << std::endl;
-        out << (index - firstProbabilisticVarIndex) << std::endl;
-        out << "## name" << std::endl;
-        out << CPFs[index]->head->fullName << std::endl;
-        out << "## number of values" << std::endl;
-        out << CPFs[index]->domain.size() << std::endl;
-        out << "## values" << std::endl;
-        for (std::set<double>::iterator it = CPFs[index]->domain.begin();
+        out << "## index" << endl;
+        out << (index - firstProbabilisticVarIndex) << endl;
+        out << "## name" << endl;
+        out << CPFs[index]->head->fullName << endl;
+        out << "## number of values" << endl;
+        out << CPFs[index]->domain.size() << endl;
+        out << "## values" << endl;
+        for (set<double>::iterator it = CPFs[index]->domain.begin();
              it != CPFs[index]->domain.end(); ++it) {
             out << *it << " "
                 << CPFs[index]->head->valueType->objects[*it]->name
-                << std::endl;
+                << endl;
         }
 
-        out << "## formula" << std::endl;
+        out << "## formula" << endl;
         CPFs[index]->formula->print(out);
-        out << std::endl;
+        out << endl;
 
-        out << "## determinized formula" << std::endl;
+        out << "## determinized formula" << endl;
         CPFs[index]->determinization->print(out);
-        out << std::endl;
+        out << endl;
 
-        out << "## hash index" << std::endl;
-        out << CPFs[index]->hashIndex << std::endl;
-        out << "## caching type " << std::endl;
-        out << CPFs[index]->cachingType << std::endl;
+        out << "## hash index" << endl;
+        out << CPFs[index]->hashIndex << endl;
+        out << "## caching type " << endl;
+        out << CPFs[index]->cachingType << endl;
         if (CPFs[index]->cachingType == "VECTOR") {
             out << "## precomputed results (key - determinization - size of "
                    "distribution - value-probability pairs)"
-                << std::endl;
-            out << CPFs[index]->precomputedResults.size() << std::endl;
+                << endl;
+            out << CPFs[index]->precomputedResults.size() << endl;
             for (unsigned int res = 0;
                  res < CPFs[index]->precomputedResults.size(); ++res) {
                 out << res << " " << CPFs[index]->precomputedResults[res] << " "
@@ -471,140 +532,140 @@ void RDDLTask::print(std::ostream& out) {
                                ->precomputedPDResults[res]
                                .probabilities[valProbPair];
                 }
-                out << std::endl;
+                out << endl;
             }
         }
-        out << "## kleene caching type" << std::endl;
-        out << CPFs[index]->kleeneCachingType << std::endl;
+        out << "## kleene caching type" << endl;
+        out << CPFs[index]->kleeneCachingType << endl;
         if (CPFs[index]->kleeneCachingType == "VECTOR") {
-            out << "## kleene caching vec size" << std::endl;
-            out << CPFs[index]->kleeneCachingVectorSize << std::endl;
+            out << "## kleene caching vec size" << endl;
+            out << CPFs[index]->kleeneCachingVectorSize << endl;
         }
 
-        out << "## action hash keys" << std::endl;
+        out << "## action hash keys" << endl;
         for (unsigned int actionIndex = 0;
              actionIndex < CPFs[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " "
-                << CPFs[index]->actionHashKeyMap[actionIndex] << std::endl;
+                << CPFs[index]->actionHashKeyMap[actionIndex] << endl;
         }
 
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl << std::endl << "#####REWARD#####" << std::endl;
-    out << "## formula" << std::endl;
+    out << endl << endl << "#####REWARD#####" << endl;
+    out << "## formula" << endl;
     rewardCPF->formula->print(out);
-    out << std::endl;
-    out << "## min" << std::endl;
-    out << *rewardCPF->domain.begin() << std::endl;
-    out << "## max" << std::endl;
-    out << *rewardCPF->domain.rbegin() << std::endl;
-    out << "## independent from actions" << std::endl;
+    out << endl;
+    out << "## min" << endl;
+    out << *rewardCPF->domain.begin() << endl;
+    out << "## max" << endl;
+    out << *rewardCPF->domain.rbegin() << endl;
+    out << "## independent from actions" << endl;
     out << (rewardCPF->positiveActionDependencies.empty() &&
             rewardCPF->negativeActionDependencies.empty())
-        << std::endl;
-    out << "## hash index" << std::endl;
-    out << rewardCPF->hashIndex << std::endl;
-    out << "## caching type" << std::endl;
-    out << rewardCPF->cachingType << std::endl;
+        << endl;
+    out << "## hash index" << endl;
+    out << rewardCPF->hashIndex << endl;
+    out << "## caching type" << endl;
+    out << rewardCPF->cachingType << endl;
     if (rewardCPF->cachingType == "VECTOR") {
-        out << "## precomputed results" << std::endl;
-        out << rewardCPF->precomputedResults.size() << std::endl;
+        out << "## precomputed results" << endl;
+        out << rewardCPF->precomputedResults.size() << endl;
         for (unsigned int res = 0; res < rewardCPF->precomputedResults.size();
              ++res) {
             out << res << " " << rewardCPF->precomputedResults[res]
-                << std::endl;
+                << endl;
         }
     }
-    out << "## kleene caching type" << std::endl;
-    out << rewardCPF->kleeneCachingType << std::endl;
+    out << "## kleene caching type" << endl;
+    out << rewardCPF->kleeneCachingType << endl;
     if (rewardCPF->kleeneCachingType == "VECTOR") {
-        out << "## kleene caching vec size" << std::endl;
-        out << rewardCPF->kleeneCachingVectorSize << std::endl;
+        out << "## kleene caching vec size" << endl;
+        out << rewardCPF->kleeneCachingVectorSize << endl;
     }
 
-    out << "## action hash keys" << std::endl;
+    out << "## action hash keys" << endl;
     for (unsigned int actionIndex = 0;
          actionIndex < rewardCPF->actionHashKeyMap.size(); ++actionIndex) {
         out << actionIndex << " " << rewardCPF->actionHashKeyMap[actionIndex]
-            << std::endl;
+            << endl;
     }
 
-    out << std::endl << std::endl << "#####PRECONDITIONS#####" << std::endl;
+    out << endl << endl << "#####PRECONDITIONS#####" << endl;
 
     for (unsigned int index = 0; index < actionPreconds.size(); ++index) {
         assert(actionPreconds[index]->index == index);
-        out << "## index" << std::endl;
-        out << index << std::endl;
-        out << "## formula" << std::endl;
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## formula" << endl;
         actionPreconds[index]->formula->print(out);
-        out << std::endl;
-        out << "## hash index" << std::endl;
-        out << actionPreconds[index]->hashIndex << std::endl;
-        out << "## caching type" << std::endl;
-        out << actionPreconds[index]->cachingType << std::endl;
+        out << endl;
+        out << "## hash index" << endl;
+        out << actionPreconds[index]->hashIndex << endl;
+        out << "## caching type" << endl;
+        out << actionPreconds[index]->cachingType << endl;
         if (actionPreconds[index]->cachingType == "VECTOR") {
-            out << "## precomputed results" << std::endl;
+            out << "## precomputed results" << endl;
             out << actionPreconds[index]->precomputedResults.size()
-                << std::endl;
+                << endl;
             for (unsigned int res = 0;
                  res < actionPreconds[index]->precomputedResults.size();
                  ++res) {
                 out << res << " "
                     << actionPreconds[index]->precomputedResults[res]
-                    << std::endl;
+                    << endl;
             }
         }
-        out << "## kleene caching type" << std::endl;
-        out << actionPreconds[index]->kleeneCachingType << std::endl;
+        out << "## kleene caching type" << endl;
+        out << actionPreconds[index]->kleeneCachingType << endl;
         if (actionPreconds[index]->kleeneCachingType == "VECTOR") {
-            out << "## kleene caching vec size" << std::endl;
-            out << actionPreconds[index]->kleeneCachingVectorSize << std::endl;
+            out << "## kleene caching vec size" << endl;
+            out << actionPreconds[index]->kleeneCachingVectorSize << endl;
         }
 
-        out << "## action hash keys" << std::endl;
+        out << "## action hash keys" << endl;
         for (unsigned int actionIndex = 0;
              actionIndex < actionPreconds[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " "
                 << actionPreconds[index]->actionHashKeyMap[actionIndex]
-                << std::endl;
+                << endl;
         }
 
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl << std::endl << "#####ACTION STATES#####" << std::endl;
+    out << endl << endl << "#####ACTION STATES#####" << endl;
     for (unsigned int index = 0; index < actionStates.size(); ++index) {
         assert(index == actionStates[index].index);
-        out << "## index" << std::endl;
-        out << index << std::endl;
-        out << "## state" << std::endl;
+        out << "## index" << endl;
+        out << index << endl;
+        out << "## state" << endl;
         for (unsigned int varIndex = 0;
              varIndex < actionStates[index].state.size(); ++varIndex) {
             out << actionStates[index][varIndex] << " ";
         }
-        out << std::endl;
-        out << "## relevant preconditions" << std::endl;
-        out << actionStates[index].relevantSACs.size() << std::endl;
+        out << endl;
+        out << "## relevant preconditions" << endl;
+        out << actionStates[index].relevantSACs.size() << endl;
         for (unsigned int sacIndex = 0;
              sacIndex < actionStates[index].relevantSACs.size(); ++sacIndex) {
             out << actionStates[index].relevantSACs[sacIndex]->index << " ";
         }
-        out << std::endl;
-        out << std::endl;
+        out << endl;
+        out << endl;
     }
 
-    out << std::endl
-        << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << std::endl;
+    out << endl
+        << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
-        out << "## index" << std::endl;
-        out << index << std::endl;
+        out << "## index" << endl;
+        out << index << endl;
         if (!stateHashKeys.empty()) {
             out << "## state hash key (for each value in the domain)"
-                << std::endl;
+                << endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -613,45 +674,45 @@ void RDDLTask::print(std::ostream& out) {
                 }
             }
         }
-        out << std::endl;
+        out << endl;
 
         if (!kleeneStateHashKeyBases.empty()) {
-            out << "## kleene state hash key base" << std::endl;
-            out << kleeneStateHashKeyBases[index] << std::endl;
+            out << "## kleene state hash key base" << endl;
+            out << kleeneStateHashKeyBases[index] << endl;
         }
 
         out << "## state fluent hash keys (first line is the number of keys)"
-            << std::endl;
-        out << indexToStateFluentHashKeyMap[index].size() << std::endl;
+            << endl;
+        out << indexToStateFluentHashKeyMap[index].size() << endl;
         for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
              ++i) {
             out << indexToStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToStateFluentHashKeyMap[index][i].second << std::endl;
+            out << indexToStateFluentHashKeyMap[index][i].second << endl;
         }
 
         out << "## kleene state fluent hash keys (first line is the number of "
                "keys)"
-            << std::endl;
-        out << indexToKleeneStateFluentHashKeyMap[index].size() << std::endl;
+            << endl;
+        out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
             out << indexToKleeneStateFluentHashKeyMap[index][i].second
-                << std::endl;
+                << endl;
         }
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl
-        << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << std::endl;
+    out << endl
+        << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << endl;
     for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
          ++index) {
         assert(CPFs[index]->head->index == index);
-        out << "## index" << std::endl;
-        out << (index - firstProbabilisticVarIndex) << std::endl;
+        out << "## index" << endl;
+        out << (index - firstProbabilisticVarIndex) << endl;
         if (!stateHashKeys.empty()) {
             out << "## state hash key (for each value in the domain)"
-                << std::endl;
+                << endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -660,41 +721,41 @@ void RDDLTask::print(std::ostream& out) {
                 }
             }
         }
-        out << std::endl;
+        out << endl;
 
         if (!kleeneStateHashKeyBases.empty()) {
-            out << "## kleene state hash key base" << std::endl;
-            out << kleeneStateHashKeyBases[index] << std::endl;
+            out << "## kleene state hash key base" << endl;
+            out << kleeneStateHashKeyBases[index] << endl;
         }
 
         out << "## state fluent hash keys (first line is the number of keys)"
-            << std::endl;
-        out << indexToStateFluentHashKeyMap[index].size() << std::endl;
+            << endl;
+        out << indexToStateFluentHashKeyMap[index].size() << endl;
         for (unsigned int i = 0; i < indexToStateFluentHashKeyMap[index].size();
              ++i) {
             out << indexToStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToStateFluentHashKeyMap[index][i].second << std::endl;
+            out << indexToStateFluentHashKeyMap[index][i].second << endl;
         }
 
         out << "## kleene state fluent hash keys (first line is the number of "
                "keys)"
-            << std::endl;
-        out << indexToKleeneStateFluentHashKeyMap[index].size() << std::endl;
+            << endl;
+        out << indexToKleeneStateFluentHashKeyMap[index].size() << endl;
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
             out << indexToKleeneStateFluentHashKeyMap[index][i].second
-                << std::endl;
+                << endl;
         }
-        out << std::endl;
+        out << endl;
     }
 
-    out << std::endl << std::endl << "#####TRAINING SET#####" << std::endl;
-    out << trainingSet.size() << std::endl;
+    out << endl << endl << "#####TRAINING SET#####" << endl;
+    out << trainingSet.size() << endl;
     for (State st : trainingSet) {
         for (unsigned int i = 0; i < st.state.size(); ++i) {
             out << st.state[i] << " ";
         }
-        out << std::endl;
+        out << endl;
     }
 }

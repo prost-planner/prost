@@ -57,18 +57,8 @@ private:
 
     void calcAllActionStatesForIPC2018(std::vector<ActionState> &base,
                                        std::set<ActionState> &result) const;
-
-    bool sacContainsNegativeActionFluent(ActionPrecondition *const &sac,
-                                         ActionState const &actionState) const;
-
-    bool sacContainsAdditionalPositiveActionFluent(
-        ActionPrecondition *const &sac, ActionState const &actionState) const;
-
     void sortActionFluents();
 
-    void buildCSP(
-        z3::context& c, z3::solver& s, std::vector<z3::expr>& sf_exprs,
-        std::vector<z3::expr>& af_exprs) const;
     std::vector<std::set<int>> computeActionFluentMutexes(
         z3::solver& s, std::vector<z3::expr>& af_exprs) const;
 };
