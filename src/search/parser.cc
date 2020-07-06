@@ -59,26 +59,6 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     desc >> State::stateHashingPossible;
     desc >> KleeneState::stateHashingPossible;
 
-    string finalReward;
-    desc >> finalReward;
-    if (finalReward == "NOOP") {
-        SearchEngine::finalRewardCalculationMethod = SearchEngine::NOOP;
-    } else if (finalReward == "FIRST_APPLICABLE") {
-        SearchEngine::finalRewardCalculationMethod =
-            SearchEngine::FIRST_APPLICABLE;
-    } else {
-        assert(finalReward == "BEST_OF_CANDIDATE_SET");
-        SearchEngine::finalRewardCalculationMethod =
-            SearchEngine::BEST_OF_CANDIDATE_SET;
-
-        int sizeOfCandidateSet;
-        desc >> sizeOfCandidateSet;
-        SearchEngine::candidatesForOptimalFinalAction.resize(
-            sizeOfCandidateSet);
-        for (size_t i = 0; i < sizeOfCandidateSet; ++i) {
-            desc >> SearchEngine::candidatesForOptimalFinalAction[i];
-        }
-    }
     desc >> SearchEngine::rewardLockDetected;
     if (SearchEngine::rewardLockDetected) {
         SearchEngine::goalTestActionIndex = 0;

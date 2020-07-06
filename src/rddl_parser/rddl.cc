@@ -363,19 +363,6 @@ void RDDLTask::print(ostream& out) {
     out << !stateHashKeys.empty() << endl;
     out << "## 1 if kleene state hashing possible" << endl;
     out << !kleeneStateHashKeyBases.empty() << endl;
-    out << "## method to calculate the final reward" << endl;
-    out << finalRewardCalculationMethod << endl;
-    if (finalRewardCalculationMethod == "BEST_OF_CANDIDATE_SET") {
-        out << "## set of candidates to calculate final reward (first line is "
-               "the number)"
-            << endl;
-        out << candidatesForOptimalFinalAction.size() << endl;
-        for (unsigned int i = 0; i < candidatesForOptimalFinalAction.size();
-             ++i) {
-            out << candidatesForOptimalFinalAction[i] << " ";
-        }
-        out << endl;
-    }
     out << "## 1 if reward formula allows reward lock detection and a reward "
            "lock was found during task analysis"
         << endl;
@@ -562,9 +549,7 @@ void RDDLTask::print(ostream& out) {
     out << "## max" << endl;
     out << *rewardCPF->domain.rbegin() << endl;
     out << "## independent from actions" << endl;
-    out << (rewardCPF->positiveActionDependencies.empty() &&
-            rewardCPF->negativeActionDependencies.empty())
-        << endl;
+    out << rewardCPF->dependentActionFluents.empty() << endl;
     out << "## hash index" << endl;
     out << rewardCPF->hashIndex << endl;
     out << "## caching type" << endl;

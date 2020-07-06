@@ -22,26 +22,6 @@ void Evaluatable::initialize() {
                                 dependentStateFluents, dependentActionFluents);
 }
 
-void ActionPrecondition::initialize() {
-    Evaluatable::initialize();
-
-    positiveActionDependencies.clear();
-    negativeActionDependencies.clear();
-
-    formula->classifyActionFluents(positiveActionDependencies,
-                                   negativeActionDependencies);
-}
-
-void RewardFunction::initialize() {
-    Evaluatable::initialize();
-
-    positiveActionDependencies.clear();
-    negativeActionDependencies.clear();
-
-    formula->classifyActionFluents(positiveActionDependencies,
-                                   negativeActionDependencies);
-}
-
 void Evaluatable::simplify(Simplifications& replace) {
     formula = formula->simplify(replace);
 

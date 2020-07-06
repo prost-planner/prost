@@ -91,23 +91,16 @@ struct ActionPrecondition : public Evaluatable {
     ActionPrecondition(std::string _name, LogicalExpression* _formula)
         : Evaluatable(_name, _formula) {}
 
-    void initialize() override;
-
     bool containsStateFluent() const {
         return !dependentStateFluents.empty();
     }
 
     int index;
-
-    std::set<ActionFluent*> positiveActionDependencies;
-    std::set<ActionFluent*> negativeActionDependencies;
 };
 
 struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula)
         : Evaluatable("Reward", _formula) {}
-
-    void initialize() override;
 
     double const& getMinVal() const {
         assert(!domain.empty());
@@ -118,9 +111,6 @@ struct RewardFunction : public Evaluatable {
         assert(!domain.empty());
         return *domain.rbegin();
     }
-
-    std::set<ActionFluent*> positiveActionDependencies;
-    std::set<ActionFluent*> negativeActionDependencies;
 
     std::set<double> domain;
 };

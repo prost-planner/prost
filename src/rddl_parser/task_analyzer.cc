@@ -12,19 +12,17 @@
 
 using namespace std;
 
+TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {
+    // Determine if there is a single action that could be goal maintaining,
+    // i.e., that could always yield the maximal reward.
+    RewardFunction* reward = task->rewardCPF;
+
+    rewardFormulaAllowsRewardLockDetection =
+        reward->isActionIndependent() && task->actionStates[0].isNOOP(task);
+}
+
 void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
     Timer t;
-
-    // Determine some non-trivial properties
-    if (output) {
-        cout << "    Determining task properties..." << endl;
-    }
-    determineTaskProperties();
-    if (output) {
-        cout << "    ...finished (" << t() << ")" << endl;
-    }
-    t.reset();
-
     // Approximate or calculate the min and max reward
     if (output) {
         cout << "    Calculating min and max reward..." << endl;
@@ -79,130 +77,6 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
     if (output) {
         cout << "    ...finished (" << t() << ")" << endl;
     }
-}
-
-void TaskAnalyzer::determineTaskProperties() {
-    // Determine if there is a single action that could be goal maintaining,
-    // i.e., that could always yield the maximal reward.
-    // TODO: We could use an action that contains as many positive and no
-    //  negative occuring fluents as possible, but we should first figure out
-    //  if reward lock detection still pays off.
-    RewardFunction* reward = task->rewardCPF;
-
-    task->rewardFormulaAllowsRewardLockDetection =
-        reward->positiveActionDependencies.empty() &&
-        task->actionStates[0].isNOOP(task);
-
-
-    // TODO: This is the only place where the positive action dependencies are
-    //  used, and they do no longer work the way they did before the
-    //  introduction of FDR action fluents. What we need to figure out here is
-    //  the question if the reward of action a is always larger than or equal
-    //  to the reward of action a', and we should be able to answer this with
-    //  the use of z3 by chceking if there is a solution (i.e., a state) where
-    //  R(s,a) - R(s,a') < 0. The only other place where the positive action
-    //  dependencies are used is the code directly above this comment.
-
-    // Determine the set of actions that must be applied in the last step (the
-    // final reward only depends on the current state and the action that is
-    // applied but not the successor state, so we can determine a set of actions
-    // that could be optimal as last action beforehand).
-    if (reward->positiveActionDependencies.empty() &&
-        task->actionStates[0].isNOOP(task) &&
-        task->actionStates[0].relevantSACs.empty()) {
-        // The first action is noop, noop is always applicable and action
-        // fluents occur in the reward only as costs -> noop is always optimal
-        // as final action
-        // TODO: I cannot guarantee that the check if actions occur only as
-        //  costs is correct. This should be verified at some point.
-        task->finalRewardCalculationMethod = "NOOP";
-    } else if (reward->isActionIndependent()) {
-        // The reward formula does not contain any action fluents -> all actions
-        // yield the same reward, so any action that is applicable is optimal
-        task->finalRewardCalculationMethod = "FIRST_APPLICABLE";
-    } else {
-        task->finalRewardCalculationMethod = "BEST_OF_CANDIDATE_SET";
-        // Determine the actions that suffice to be applied in the final step.
-        for (ActionState const& action : task->actionStates) {
-            if (!actionStateIsDominated(action)) {
-                addDominantState(action);
-            }
-        }
-    }
-}
-
-void TaskAnalyzer::addDominantState(ActionState const& action) const {
-    vector<int> candidates;
-    for (int actionIndex : task->candidatesForOptimalFinalAction) {
-        ActionState const& candidate = task->actionStates[actionIndex];
-        if (!actionStateDominates(action, candidate)) {
-            candidates.push_back(actionIndex);
-        }
-    }
-    candidates.push_back(action.index);
-    swap(candidates, task->candidatesForOptimalFinalAction);
-}
-
-bool TaskAnalyzer::actionStateIsDominated(ActionState const& action) const {
-    for (int actionIndex : task->candidatesForOptimalFinalAction) {
-        ActionState const& candidate = task->actionStates[actionIndex];
-        if (actionStateDominates(candidate, action)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool TaskAnalyzer::actionStateDominates(ActionState const& lhs,
-                                        ActionState const& rhs) const {
-    // An action state with preconditions cannot dominate another action state
-    if (!lhs.relevantSACs.empty()) {
-        return false;
-    }
-
-    set<ActionFluent*>& positiveInReward =
-        task->rewardCPF->positiveActionDependencies;
-    set<ActionFluent*>& negativeInReward =
-        task->rewardCPF->negativeActionDependencies;
-
-    // Determine all fluents of both action states that influence the reward
-    // positively or negatively
-    set<ActionFluent*> lhsPos;
-    set<ActionFluent*> lhsNeg;
-    for (ActionFluent* af : lhs.scheduledActionFluents) {
-        if (positiveInReward.find(af) != positiveInReward.end()) {
-            lhsPos.insert(af);
-        }
-        if (negativeInReward.find(af) != negativeInReward.end()) {
-            lhsNeg.insert(af);
-        }
-    }
-
-    set<ActionFluent*> rhsPos;
-    set<ActionFluent*> rhsNeg;
-    for (ActionFluent* af : rhs.scheduledActionFluents) {
-        if (positiveInReward.find(af) != positiveInReward.end()) {
-            rhsPos.insert(af);
-        }
-        if (negativeInReward.find(af) != negativeInReward.end()) {
-            rhsNeg.insert(af);
-        }
-    }
-
-    // Action state lhs dominates rhs if lhs contains all action fluents that
-    // influence the reward positively of rhs, and if rhs contains all action
-    // fluents that influence the reward negatively of lhs
-    for (ActionFluent* af : rhsPos) {
-        if (lhsPos.find(af) == lhsPos.end()) {
-            return false;
-        }
-    }
-    for (ActionFluent* af : lhsNeg) {
-        if (rhsNeg.find(af) == rhsNeg.end()) {
-            return false;
-        }
-    }
-    return true;
 }
 
 void TaskAnalyzer::calculateMinAndMaxReward() const {
@@ -297,7 +171,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
     // Check if this is a reward lock
-    if (task->rewardFormulaAllowsRewardLockDetection &&
+    if (rewardFormulaAllowsRewardLockDetection &&
         !task->rewardLockDetected &&
         (encounteredStates.find(current) == encounteredStates.end()) &&
         isARewardLock(current, reward)) {

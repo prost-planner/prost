@@ -329,7 +329,6 @@ void ProstPlanner::resetStaticMembers() {
     SearchEngine::actionStates.clear();
     SearchEngine::trainingSet.clear();
     SearchEngine::actionPreconditions.clear();
-    SearchEngine::candidatesForOptimalFinalAction.clear();
     State::stateFluentHashKeysOfDeterministicStateFluents.clear();
     State::stateFluentHashKeysOfProbabilisticStateFluents.clear();
     State::stateHashKeysOfDeterministicStateFluents.clear();

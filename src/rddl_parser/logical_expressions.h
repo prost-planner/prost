@@ -48,8 +48,6 @@ public:
                                     bool& containsArithmeticFunction,
                                     StateFluentSet& dependentStateFluents,
                                     ActionFluentSet& dependentActionFluents);
-    virtual void classifyActionFluents(ActionFluentSet& positive,
-                                       ActionFluentSet& negative);
     virtual void calculateDomain(Domains const& domains,
                                  ActionState const& action,
                                  std::set<double>& res);
@@ -205,8 +203,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -247,8 +243,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -301,8 +295,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
 
@@ -411,8 +403,6 @@ public:
 
     Connective(std::vector<LogicalExpression*>& _exprs) : exprs(_exprs) {}
 
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void print(std::ostream& out) const override;
 };
 
@@ -514,8 +504,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -557,8 +545,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -600,8 +586,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -643,8 +627,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -686,8 +668,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -768,8 +748,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -811,8 +789,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -853,8 +829,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -901,8 +875,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -945,8 +917,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -1098,8 +1068,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,
@@ -1141,8 +1109,6 @@ public:
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
                             ActionFluentSet& dependentActionFluents) override;
-    void classifyActionFluents(ActionFluentSet& positive,
-                               ActionFluentSet& negative) override;
     void calculateDomain(Domains const& domains, ActionState const& action,
                          std::set<double>& res) override;
     void calculateDomainAsInterval(Domains const& domains,

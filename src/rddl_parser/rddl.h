@@ -65,7 +65,6 @@ public:
     // The following are PlanningTask variables
 
     // This instance's name
-    // TODO: move this to the private members??
     std::string name;
 
     // (Trivial) properties
@@ -108,10 +107,7 @@ public:
     std::vector<ActionState> actionStates;
 
     // (Non-trivial) properties
-    bool rewardFormulaAllowsRewardLockDetection;
     bool rewardLockDetected;
-    std::string finalRewardCalculationMethod;
-    std::vector<int> candidatesForOptimalFinalAction;
     bool unreasonableActionDetected;
     bool unreasonableActionInDeterminizationDetected;
 
