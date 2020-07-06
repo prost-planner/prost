@@ -313,19 +313,6 @@ bool Simplifier::computeRelevantActionFluents(
     return foundUnusedActionFluent;
 }
 
-bool Simplifier::actionIsApplicable(ActionState const& action) const {
-    // The state is irrelevant as only staticSACs are checked
-    State dummy(task->CPFs.size());
-    for (ActionPrecondition* sac : task->staticSACs) {
-        double res = 0.0;
-        sac->formula->evaluate(res, dummy, action);
-        if (MathUtils::doubleIsEqual(res, 0.0)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 // Sort action fluents for deterministic behaviour and assign indices
 inline void Simplifier::sortActionFluents() {
     int numActionFluents = task->actionFluents.size();
@@ -530,160 +517,69 @@ vector<set<int>> Simplifier::computeActionFluentMutexes(
 bool Simplifier::computeActions(
     map<ParametrizedVariable*, LogicalExpression*>& replacements) {
     sortActionFluents();
-
     int numActionFluents = task->actionFluents.size();
-
-    State current(task->CPFs);
     vector<ActionState> legalActionStates;
-    if (useIPC2018Rules) {
-        // For IPC 2018, the rules say that an action cannot be legal unless
-        // there is at least one legal action where the same action fluents are
-        // "active" except for one action fluent. Actions with exactly one
-        // "active" action fluent are an exception, these can be legal even if
-        // noop isn't.
-        ActionState noop(numActionFluents);
-        if (actionIsApplicable(noop)) {
-            legalActionStates.push_back(noop);
-        }
-        vector<ActionState> base;
-        task->numberOfConcurrentActions = 1;
-        while (true) {
-            set<ActionState> candidates;
-            calcAllActionStatesForIPC2018(base, candidates);
-            vector<ActionState> addedActionStates;
-            bool foundApplicableAction = false;
-            for (ActionState const& actionState : candidates) {
-                if (actionIsApplicable(actionState)) {
-                    foundApplicableAction = true;
-                    legalActionStates.push_back(actionState);
-                    addedActionStates.push_back(actionState);
-                }
-            }
-            if (!foundApplicableAction ||
-                (task->numberOfConcurrentActions == numActionFluents)) {
-                break;
-            }
-            ++task->numberOfConcurrentActions;
-            base = addedActionStates;
-        }
-    } else {
-        task->numberOfConcurrentActions =
-            min(task->numberOfConcurrentActions, numActionFluents);
+    
+    z3::context c;
+    z3::solver s(c);
+    vector<z3::expr> sf_exprs;
+    vector<z3::expr> af_exprs;
+    task->buildCSP(c, s, sf_exprs, af_exprs, true);
 
-        // Calculate all action states with up to
-        // numberOfConcurrentActions concurrent actions
-        vector<ActionState> actionStateCandidates;
-        calcAllActionStates(actionStateCandidates, 0, 0);
+    // We compute models (i.e., assignments to the state and action variables)
+    // for the planning task, use the assigned action variables as legal action
+    // state (being part of the model means there is at least one state where
+    // the assignment is legal) and invalidate the action assignment for the
+    // next iteration. The procedure terminates when there are no more models.
+    while (s.check() == z3::sat) {
+        z3::model model = s.get_model();
 
-        // Remove all illegal action combinations by checking the SACs
-        // that are state independent
-        for (ActionState const& actionState : actionStateCandidates) {
-            if (actionIsApplicable(actionState)) {
-                legalActionStates.push_back(actionState);
-            }
+        vector<int> action(numActionFluents);
+        for (size_t index = 0; index < numActionFluents; ++index) {
+            // The internal representation of numbers in Z3 does not use ints,
+            // so the conversion is non-trivial. A way that is typically
+            // recommended is to convert to a string and from there to an int.
+            action[index] =
+                atoi(model.eval(af_exprs[index]).to_string().c_str());
         }
+        legalActionStates.emplace_back(move(action));
+
+        // Invalidate the latest solution
+        z3::expr block = c.bool_val(false);
+        for (const z3::expr& af_expr : af_exprs) {
+            block = block || (af_expr != model.eval(af_expr));
+        }
+        s.add(block);
     }
     swap(task->actionStates, legalActionStates);
 
-    // Now that all legal actions have been created, we check if there are
-    // action fluents that are false (TODO: that are equal to their default
-    // value) in every legal action. We can safely remove those action fluents
-    // entirely from each action.
-    ActionState fluentIsUsed((int)task->actionFluents.size());
+    // Check if there are action fluents that are false in every legal action.
+    // We can safely remove those action fluents from the problem.
+    vector<bool> fluentIsUsed(numActionFluents, false);
     for (ActionState const& actionState : task->actionStates) {
-        for (size_t i = 0; i < actionState.state.size(); ++i) {
-            fluentIsUsed[i] |= actionState.state[i];
+        vector<int> const& state = actionState.state;
+        for (unsigned int index = 0; index < state.size(); ++index) {
+            fluentIsUsed[index] =
+                fluentIsUsed[index] || static_cast<bool>(state[index]);
         }
     }
 
-    vector<ActionFluent*> actionFluents;
-    int nextIndex = 0;
     bool foundUnusedActionFluent = false;
+    vector<ActionFluent*> newActionFluents;
     for (ActionFluent* af : task->actionFluents) {
         if (fluentIsUsed[af->index]) {
-            af->index = nextIndex;
-            ++nextIndex;
-
-            actionFluents.push_back(af);
+            int newIndex = newActionFluents.size();
+            newActionFluents.push_back(af);
+            af->index = newIndex;
         } else {
-            // cout << "action fluent " << af->fullName
-            //      << " is 0 in every applicable action" << endl;
             assert(replacements.find(af) == replacements.end());
             replacements[af] = new NumericConstant(0.0);
             foundUnusedActionFluent = true;
         }
     }
-    swap(task->actionFluents, actionFluents);
+    task->actionFluents = newActionFluents;
+
     return foundUnusedActionFluent;
-}
-
-void Simplifier::calcAllActionStatesForIPC2018(
-    vector<ActionState>& base, set<ActionState>& result) const {
-    int numActionFluents = task->actionFluents.size();
-    if (base.empty()) {
-        // Generate all action states with exactly one action fluent with value
-        // different from 0
-        for (ActionFluent* af : task->actionFluents) {
-            int numValues = af->valueType->objects.size();
-            int afIndex = af->index;
-            for (int val = 1; val < numValues; ++val) {
-                ActionState state(numActionFluents);
-                state[afIndex] = val;
-                result.insert(state);
-            }
-        }
-        return;
-    }
-
-    for (const ActionState& baseAction : base) {
-        for (ActionFluent* af : task->actionFluents) {
-            if (!baseAction[af->index]) {
-                int numValues = af->valueType->objects.size();
-                for (int val = 1; val < numValues; ++val) {
-                    result.emplace(baseAction, af->index, val);
-                }
-            }
-        }
-    }
-}
-
-void Simplifier::calcAllActionStates(vector<ActionState>& result,
-                                       int minElement,
-                                       int scheduledActions) const {
-    int numActionFluents = task->actionFluents.size();
-    if (result.empty()) {
-        result.emplace_back(numActionFluents);
-    } else {
-        int lastIndex = result.size();
-
-        for (int i = minElement; i < lastIndex; ++i) {
-            for (size_t j = 0; j < numActionFluents; ++j) {
-                if (!result[i][j]) {
-                    bool isExtension = true;
-                    for (unsigned int k = 0; k < j; ++k) {
-                        if (result[i][k]) {
-                            isExtension = false;
-                            break;
-                        }
-                    }
-
-                    if (isExtension) {
-                        int numValues =
-                            task->actionFluents[j]->valueType->objects.size();
-                        for (int val = 1; val < numValues; ++val) {
-                            result.emplace_back(result[i], j, val);
-                        }
-                    }
-                }
-            }
-        }
-        minElement = lastIndex;
-    }
-
-    ++scheduledActions;
-    if (scheduledActions <= task->numberOfConcurrentActions) {
-        calcAllActionStates(result, minElement, scheduledActions);
-    }
 }
 
 bool Simplifier::approximateDomains(
@@ -836,7 +732,7 @@ bool Simplifier::initializeActionStates() {
     // Check for each action state and precondition if that precondition could
     // forbid the application of the action state. We do this by checking if
     // there is a state where the precondition could be evaluated to false given
-    // the the action is applied.
+    // the action is applied.
     int numActions = task->actionStates.size();
     int numPreconds = task->actionPreconds.size();
     vector<bool> precondIsRelevant(numPreconds, false);

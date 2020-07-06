@@ -163,6 +163,7 @@ private:
 class ActionState {
 public:
     ActionState(int size) : state(size, 0), index(-1) {}
+    ActionState(std::vector<int> _state) : state(_state), index(-1) {}
 
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}

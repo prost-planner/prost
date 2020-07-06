@@ -97,6 +97,19 @@ void Instantiator::instantiateSACs() {
         map<string, Object*> replacements;
         task->SACs[i] = task->SACs[i]->instantiate(task, replacements);
     }
+
+    // If max-nondef-actions is given, create an SAC the expresses this as an
+    // equivalent constraint
+    if (task->numberOfConcurrentActions < std::numeric_limits<int>::max()) {
+        vector<LogicalExpression*> afs;
+        for (ActionFluent* af : task->actionFluents) {
+            afs.push_back(af);
+        }
+        Addition* add = new Addition(afs);
+        NumericConstant* nc = new NumericConstant(task->numberOfConcurrentActions);
+        vector<LogicalExpression*> lee = {add, nc};
+        task->SACs.push_back(new LowerEqualsExpression(lee));
+    }
 }
 
 void Instantiator::instantiateParams(vector<Parameter*> params,

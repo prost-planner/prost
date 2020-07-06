@@ -810,7 +810,6 @@ int main (int argc, char** argv) {
     int numStates = 250;
     int numSimulations = 25;
     double timeout = 10.0;
-    bool useIPC2018Rules = false;
     bool generateFDRActionFluents = true;
 
     // Read optionals
@@ -829,9 +828,6 @@ int main (int argc, char** argv) {
         } else if (nextOption == "-trainingTimeout") {
             timeout = atof(std::string(argv[++index]).c_str());
             std::cout << "Setting training timeout to " << timeout << std::endl;
-        } else if (nextOption == "-ipc2018") {
-            useIPC2018Rules = atoi(std::string(argv[++index]).c_str());
-            std::cout << "Using IPC 2018 rules: " << useIPC2018Rules << std::endl;
         } else if (nextOption == "-fdrActions") {
             generateFDRActionFluents = atoi(std::string(argv[++index]).c_str());
             std::cout << "Generate FDR action fluents: " << generateFDRActionFluents << std::endl;
@@ -859,7 +855,7 @@ int main (int argc, char** argv) {
 
     t.reset();
     std::cout << "simplifying..." << std::endl;
-    Simplifier simplifier(rddlTask, useIPC2018Rules);
+    Simplifier simplifier(rddlTask);
     simplifier.simplify(generateFDRActionFluents);
     std::cout << "...finished (" << t << ")." << std::endl;
 
