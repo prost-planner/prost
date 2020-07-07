@@ -292,30 +292,23 @@ void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
             // number. The number is converted to a boolean by comparing to 0
             s.add(sac->toZ3Formula(c, sf_exprs, af_exprs) != 0);
         }
-    }
 
-    // The value provided by max-nondef-actions is also a constraint that must
-    // be taken into account. It is first modeled as a LogicalExpression and
-    // then converted to a z3::expr in the same way preconditions are.
-    int numActionFluents = actionFluents.size();
-    int numConcurrentActions = numberOfConcurrentActions;
-    if (numberOfConcurrentActions < numActionFluents) {
-        vector<LogicalExpression*> afs;
-        for (ActionFluent* af : actionFluents) {
-            afs.push_back(af);
+        // The value provided by max-nondef-actions is also a constraint that
+        // must be taken into account.
+        int numActionFluents = actionFluents.size();
+        int numConcurrentActions = numberOfConcurrentActions;
+        if (numberOfConcurrentActions < numActionFluents) {
+            vector<LogicalExpression*> afs;
+            for (ActionFluent* af : actionFluents) {
+                afs.push_back(af);
+            }
+            vector<LogicalExpression*> maxConcurrent =
+                {new Addition(afs), new NumericConstant(numConcurrentActions)};
+            LowerEqualsExpression* constraint =
+                new LowerEqualsExpression(maxConcurrent);
+            s.add(constraint->toZ3Formula(c, sf_exprs, af_exprs) != 0);
         }
-        vector<LogicalExpression*> maxConcurrent =
-            {new Addition(afs), new NumericConstant(numConcurrentActions)};
-        LowerEqualsExpression* constraint =
-            new LowerEqualsExpression(maxConcurrent);
-        s.add(constraint->toZ3Formula(c, sf_exprs, af_exprs) != 0);
     }
-
-    // We could even assert that there is an applicable action in the initial
-    // state (i.e., we could set all state fluents to their values in the
-    // initial state), but the assertion below also holds (it basically says
-    // there must be a state with at least one applicable action).
-    assert(s.check() == z3::sat);
 }
 
 void RDDLTask::print(ostream& out) {

@@ -89,6 +89,22 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
     }
 }
 
+bool isSumOverAllActionFluents(Addition* add, int numActionFluents) {
+    if (!add || (add->exprs.size() != numActionFluents)) {
+        return false;
+    }
+    vector<bool> afIsUsed(numActionFluents, false);
+    for (LogicalExpression* expr : add->exprs) {
+        ActionFluent* af = dynamic_cast<ActionFluent*>(expr);
+        if (expr && !afIsUsed[af->index]) {
+            afIsUsed[af->index] = true;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Instantiator::instantiateSACs() {
     for (unsigned int i = 0; i < task->SACs.size(); ++i) {
         map<string, Object*> quantifierReplacements;
@@ -96,19 +112,41 @@ void Instantiator::instantiateSACs() {
             task->SACs[i]->replaceQuantifier(quantifierReplacements, this);
         map<string, Object*> replacements;
         task->SACs[i] = task->SACs[i]->instantiate(task, replacements);
-    }
 
-    // If max-nondef-actions is given, create an SAC the expresses this as an
-    // equivalent constraint
-    if (task->numberOfConcurrentActions < std::numeric_limits<int>::max()) {
-        vector<LogicalExpression*> afs;
-        for (ActionFluent* af : task->actionFluents) {
-            afs.push_back(af);
+        // Check if this SAC encodes a constraint on the number of concurrently
+        // applicable actions
+        LowerEqualsExpression* lee =
+            dynamic_cast<LowerEqualsExpression*>(task->SACs[i]);
+        GreaterEqualsExpression* gee =
+            dynamic_cast<GreaterEqualsExpression*>(task->SACs[i]);
+        LowerExpression* le = dynamic_cast<LowerExpression*>(task->SACs[i]);
+        GreaterExpression* ge = dynamic_cast<GreaterExpression*>(task->SACs[i]);
+        Addition* add = nullptr;
+        int value = -1;
+
+        if (lee && lee->exprs.size() == 2) {
+            add = dynamic_cast<Addition*>(lee->exprs[0]);
+            NumericConstant* nc = dynamic_cast<NumericConstant*>(lee->exprs[1]);
+            value = static_cast<int>(nc->value);
+        } else if(gee && gee->exprs.size() == 2) {
+            add = dynamic_cast<Addition *>(gee->exprs[1]);
+            NumericConstant* nc = dynamic_cast<NumericConstant*>(gee->exprs[0]);
+            value = static_cast<int>(nc->value);
+        } else if(le && le->exprs.size() == 2) {
+            add = dynamic_cast<Addition*>(le->exprs[0]);
+            NumericConstant* nc = dynamic_cast<NumericConstant*>(le->exprs[1]);
+            value = static_cast<int>(nc->value) + 1;
+        } else if(ge && ge->exprs.size() == 2) {
+            add = dynamic_cast<Addition*>(ge->exprs[1]);
+            NumericConstant* nc = dynamic_cast<NumericConstant*>(ge->exprs[0]);
+            value = static_cast<int>(nc->value) - 1;
         }
-        Addition* add = new Addition(afs);
-        NumericConstant* nc = new NumericConstant(task->numberOfConcurrentActions);
-        vector<LogicalExpression*> lee = {add, nc};
-        task->SACs.push_back(new LowerEqualsExpression(lee));
+
+        int numActionFluents = task->actionFluents.size();
+        if ((value >= 1) && isSumOverAllActionFluents(add, numActionFluents)) {
+            task->numberOfConcurrentActions = value;
+            task->SACs.pop_back();
+        }
     }
 }
 
