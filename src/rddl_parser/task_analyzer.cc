@@ -15,10 +15,9 @@ using namespace std;
 TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {
     // Determine if there is a single action that could be goal maintaining,
     // i.e., that could always yield the maximal reward.
-    RewardFunction* reward = task->rewardCPF;
-
     rewardFormulaAllowsRewardLockDetection =
-        reward->isActionIndependent() && task->actionStates[0].isNOOP(task);
+        task->rewardCPF->isActionIndependent() &&
+        task->actionStates[0].isNOOP(task);
 }
 
 void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {

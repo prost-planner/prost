@@ -421,19 +421,29 @@ bool Simplifier::determineFiniteDomainActionFluents(
             ActionFluent* finiteDomainAF =
                 new ActionFluent(name, valueType);
 
-            // Check if at least one of these action fluents must be selected or if
-            // there is also a "none-of-those" value
+
+
+            // TODO: The implementation we had here isn't working, presumably
+            //  because there are some parts of the code that treat the value
+            //  '0' as a special value that corresponds to noop. We therefore
+            //  had to comment the check if the 'none-of-those' value is
+            //  required and now always create it. It would of course be better
+            //  if the value is only created when it is actually needed. A good
+            //  domain to test this is earth-observation-2018.
+
+            // Check if at least one of these action fluents must be selected or
+            // if there is also a "none-of-those" value
             int valIndex = 0;
-            s.push();
-            for (int id : mutexGroup) {
-                s.add(af_exprs[id] == 0);
-            }
-            if (s.check() == z3::sat) {
-                valueType->objects.push_back(
-                    new Object("none-of-those", valueType, valIndex));
-                ++valIndex;
-            }
-            s.pop();
+            // s.push();
+            // for (int id : mutexGroup) {
+            //     s.add(af_exprs[id] == 0);
+            // }
+            // if (s.check() == z3::sat) {
+            valueType->objects.push_back(
+                new Object("none-of-those", valueType, valIndex));
+            ++valIndex;
+            // }
+            // s.pop();
 
             for (int id : mutexGroup) {
                 ActionFluent* af = task->actionFluents[id];
