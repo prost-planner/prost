@@ -59,8 +59,8 @@ public:
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
     void buildCSP(
-        z3::context& c, z3::solver& s, std::vector<z3::expr>& sf_exprs,
-        std::vector<z3::expr>& af_exprs, bool addSACs) const;
+        z3::context& c, z3::solver& s, std::vector<z3::expr>& sfExprs,
+        std::vector<z3::expr>& afExprs, bool addSACs) const;
 
     // The following are PlanningTask variables
 

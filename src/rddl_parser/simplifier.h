@@ -40,7 +40,7 @@ private:
         std::map<ParametrizedVariable *, LogicalExpression *> &replacements);
     bool approximateDomains(
         std::map<ParametrizedVariable *, LogicalExpression *> &replacements);
-    bool initializeActionStates();
+    void initializeActionStates();
     void sortActionFluents();
 
     std::vector<std::set<int>> computeActionFluentMutexes(

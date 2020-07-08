@@ -262,8 +262,8 @@ void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
 }
 
 void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
-                        vector<z3::expr>& sf_exprs,
-                        vector<z3::expr>& af_exprs,
+                        vector<z3::expr>& sfExprs,
+                        vector<z3::expr>& afExprs,
                         bool addSACs) const {
     stringstream ss;
     for (ConditionalProbabilityFunction* cpf : CPFs) {
@@ -271,18 +271,18 @@ void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
         StateFluent* sf = cpf->head;
         ss << "sf_" << sf->index << "_" << sf->fullName;
         int domainSize = sf->valueType->objects.size();
-        sf_exprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(sf_exprs.back() >= 0);
-        s.add(sf_exprs.back() < domainSize);
+        sfExprs.push_back(c.int_const(ss.str().c_str()));
+        s.add(sfExprs.back() >= 0);
+        s.add(sfExprs.back() < domainSize);
     }
 
     for (ActionFluent* af : actionFluents) {
         ss.str("");
         ss << "af_" << af->index << "_" << af->fullName;
         int domainSize = af->valueType->objects.size();
-        af_exprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(af_exprs.back() >= 0);
-        s.add(af_exprs.back() < domainSize);
+        afExprs.push_back(c.int_const(ss.str().c_str()));
+        s.add(afExprs.back() >= 0);
+        s.add(afExprs.back() < domainSize);
         ss.str("");
     }
 
@@ -290,7 +290,7 @@ void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
         for (LogicalExpression* sac : SACs) {
             // Only boolean valued formulas can be added, but toZ3Formula returns a
             // number. The number is converted to a boolean by comparing to 0
-            s.add(sac->toZ3Formula(c, sf_exprs, af_exprs) != 0);
+            s.add(sac->toZ3Formula(c, sfExprs, afExprs) != 0);
         }
 
         // The value provided by max-nondef-actions is also a constraint that
@@ -306,7 +306,7 @@ void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
                 {new Addition(afs), new NumericConstant(numConcurrentActions)};
             LowerEqualsExpression* constraint =
                 new LowerEqualsExpression(maxConcurrent);
-            s.add(constraint->toZ3Formula(c, sf_exprs, af_exprs) != 0);
+            s.add(constraint->toZ3Formula(c, sfExprs, afExprs) != 0);
         }
     }
 }

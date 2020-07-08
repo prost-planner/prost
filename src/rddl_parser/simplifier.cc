@@ -100,19 +100,14 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             cout << "    ...finished (" << t() << ")" << endl;
         }
         t.reset();
-        if (continueSimplification) {
-            continue;
-        }
+    }
 
-        if (output) {
-            cout << "    Initialize action states (" << iteration << ")..."
-                 << endl;
-        }
-        continueSimplification = initializeActionStates();
-        if (output) {
-            cout << "    ...finished (" << t() << ")" << endl;
-        }
-        t.reset();
+    if (output) {
+        cout << "    Initialize action states..." << endl;
+    }
+    initializeActionStates();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
     }
 }
 
@@ -346,9 +341,9 @@ bool Simplifier::determineFiniteDomainActionFluents(
     vector<set<int>> mutexGroups;
     z3::context c;
     z3::solver s(c);
-    vector<z3::expr> sf_exprs;
-    vector<z3::expr> af_exprs;
-    task->buildCSP(c, s, sf_exprs, af_exprs, true);
+    vector<z3::expr> sfExprs;
+    vector<z3::expr> afExprs;
+    task->buildCSP(c, s, sfExprs, afExprs, true);
 
     if (numConcurrentActions == 1) {
         // If max-nondef-actions is 1, all action fluents are pairwise mutex
@@ -364,7 +359,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
         //  replaced if we feel the need to implement a different mutex generator.
 
         vector<set<int>> mutexes =
-            computeActionFluentMutexes(s, af_exprs);
+            computeActionFluentMutexes(s, afExprs);
 
         // Given a set of mutexes, it is non-trivial to decide which variables to
         // combine to a single FDR variable, and it is not clear which combination
@@ -532,9 +527,9 @@ bool Simplifier::computeActions(
     
     z3::context c;
     z3::solver s(c);
-    vector<z3::expr> sf_exprs;
-    vector<z3::expr> af_exprs;
-    task->buildCSP(c, s, sf_exprs, af_exprs, true);
+    vector<z3::expr> sfExprs;
+    vector<z3::expr> afExprs;
+    task->buildCSP(c, s, sfExprs, afExprs, true);
 
     // We compute models (i.e., assignments to the state and action variables)
     // for the planning task, use the assigned action variables as legal action
@@ -544,21 +539,20 @@ bool Simplifier::computeActions(
     while (s.check() == z3::sat) {
         z3::model model = s.get_model();
 
+        // Add solution to actions and invalidate it for next iteration
         vector<int> action(numActionFluents);
+        z3::expr block = c.bool_val(false);
         for (size_t index = 0; index < numActionFluents; ++index) {
+            z3::expr const& afExpr = afExprs[index];
             // The internal representation of numbers in Z3 does not use ints,
             // so the conversion is non-trivial. A way that is typically
             // recommended is to convert to a string and from there to an int.
-            action[index] =
-                atoi(model.eval(af_exprs[index]).to_string().c_str());
+            int value = atoi(model.eval(afExpr).to_string().c_str());
+
+            action[index] = value;
+            block = block || (afExpr != value);
         }
         legalActionStates.emplace_back(move(action));
-
-        // Invalidate the latest solution
-        z3::expr block = c.bool_val(false);
-        for (const z3::expr& af_expr : af_exprs) {
-            block = block || (af_expr != model.eval(af_expr));
-        }
         s.add(block);
     }
     swap(task->actionStates, legalActionStates);
@@ -728,16 +722,16 @@ bool Simplifier::approximateDomains(
     return foundConstantCPF;
 }
 
-bool Simplifier::initializeActionStates() {
+void Simplifier::initializeActionStates() {
     // Sort action states again for deterministic behaviour
     sort(task->actionStates.begin(), task->actionStates.end(),
          ActionState::ActionStateSort());
 
     z3::context c;
     z3::solver s(c);
-    vector<z3::expr> sf_exprs;
-    vector<z3::expr> af_exprs;
-    task->buildCSP(c, s, sf_exprs, af_exprs, false);
+    vector<z3::expr> sfExprs;
+    vector<z3::expr> afExprs;
+    task->buildCSP(c, s, sfExprs, afExprs, false);
 
     // Check for each action state and precondition if that precondition could
     // forbid the application of the action state. We do this by checking if
@@ -756,12 +750,12 @@ bool Simplifier::initializeActionStates() {
                 actionState.scheduledActionFluents.push_back(
                     task->actionFluents[i]);
             }
-            s.add(af_exprs[i] == actionState.state[i]);
+            s.add(afExprs[i] == actionState.state[i]);
         }
 
         for (ActionPrecondition* precond : task->actionPreconds) {
             s.push();
-            s.add(precond->formula->toZ3Formula(c, sf_exprs, af_exprs) == 0);
+            s.add(precond->formula->toZ3Formula(c, sfExprs, afExprs) == 0);
             if (s.check() == z3::sat) {
                 actionState.relevantSACs.push_back(precond);
                 precondIsRelevant[precond->index] = true;
@@ -772,23 +766,12 @@ bool Simplifier::initializeActionStates() {
     }
 
     // Remove irrelevant preconds
-    // TODO: This is not the only place where the code is unnecessarily clunky
-    //  because of the way action preconditions are maintained (once as
-    //  LogicalExpression in task->SACs, once as action precondition in either
-    //  task->actionPreconds or task->staticSACs). There should be just one
-    //  place
-    vector<LogicalExpression*> SACs;
+    vector<ActionPrecondition*> finalPreconds;
     for (ActionPrecondition* precond : task->actionPreconds) {
         if (precondIsRelevant[precond->index]) {
-            SACs.push_back(precond->formula);
+            precond->index = finalPreconds.size();
+            finalPreconds.push_back(precond);
         }
     }
-    if (SACs.size() < numPreconds) {
-        for (ActionPrecondition* precond : task->staticSACs) {
-            SACs.push_back(precond->formula);
-        }
-        swap(task->SACs, SACs);
-        return true;
-    }
-    return false;
+    swap(finalPreconds, task->actionPreconds);
 }
