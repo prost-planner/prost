@@ -8,8 +8,6 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
-#include "z3++.h"
-
 #include <iostream>
 
 using namespace std;
@@ -261,56 +259,6 @@ void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     rewardCPF = new RewardFunction(rewardFormula);
 }
 
-void RDDLTask::buildCSP(z3::context& c, z3::solver& s,
-                        vector<z3::expr>& sfExprs,
-                        vector<z3::expr>& afExprs,
-                        bool addSACs) const {
-    stringstream ss;
-    for (ConditionalProbabilityFunction* cpf : CPFs) {
-        ss.str("");
-        StateFluent* sf = cpf->head;
-        ss << "sf_" << sf->index << "_" << sf->fullName;
-        int domainSize = sf->valueType->objects.size();
-        sfExprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(sfExprs.back() >= 0);
-        s.add(sfExprs.back() < domainSize);
-    }
-
-    for (ActionFluent* af : actionFluents) {
-        ss.str("");
-        ss << "af_" << af->index << "_" << af->fullName;
-        int domainSize = af->valueType->objects.size();
-        afExprs.push_back(c.int_const(ss.str().c_str()));
-        s.add(afExprs.back() >= 0);
-        s.add(afExprs.back() < domainSize);
-        ss.str("");
-    }
-
-    if (addSACs) {
-        for (LogicalExpression* sac : SACs) {
-            // Only boolean valued formulas can be added, but toZ3Formula returns a
-            // number. The number is converted to a boolean by comparing to 0
-            s.add(sac->toZ3Formula(c, sfExprs, afExprs) != 0);
-        }
-
-        // The value provided by max-nondef-actions is also a constraint that
-        // must be taken into account.
-        int numActionFluents = actionFluents.size();
-        int numConcurrentActions = numberOfConcurrentActions;
-        if (numberOfConcurrentActions < numActionFluents) {
-            vector<LogicalExpression*> afs;
-            for (ActionFluent* af : actionFluents) {
-                afs.push_back(af);
-            }
-            vector<LogicalExpression*> maxConcurrent =
-                {new Addition(afs), new NumericConstant(numConcurrentActions)};
-            LowerEqualsExpression* constraint =
-                new LowerEqualsExpression(maxConcurrent);
-            s.add(constraint->toZ3Formula(c, sfExprs, afExprs) != 0);
-        }
-    }
-}
-
 void RDDLTask::print(ostream& out) {
     // Set precision of doubles
     out.unsetf(ios::floatfield);
@@ -356,6 +304,24 @@ void RDDLTask::print(ostream& out) {
     out << !stateHashKeys.empty() << endl;
     out << "## 1 if kleene state hashing possible" << endl;
     out << !kleeneStateHashKeyBases.empty() << endl;
+    out << "## method to calculate the final reward" << endl;
+    if (candidatesForOptimalFinalAction.empty()) {
+        out << "FIRST_APPLICABLE" << endl;
+    } else if (candidatesForOptimalFinalAction.size() == 1) {
+        out << "CONSTANT" << endl;
+        out << "## (constant) action to calculate final reward" << endl;
+        out << candidatesForOptimalFinalAction[0] << endl;
+    } else {
+        out << "CANDIDATE_SET" << endl;
+        out << "## set of candidates to calculate final reward (first line is "
+               "the number)"
+            << endl;
+        out << candidatesForOptimalFinalAction.size() << endl;
+        for (int candidate : candidatesForOptimalFinalAction) {
+            out << candidate << " ";
+        }
+        out << endl;
+    }
     out << "## 1 if reward formula allows reward lock detection and a reward "
            "lock was found during task analysis"
         << endl;

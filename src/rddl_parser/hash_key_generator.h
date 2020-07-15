@@ -1,7 +1,7 @@
 #ifndef HASH_KEY_GENERATOR_H
 #define HASH_KEY_GENERATOR_H
 
-class RDDLTask;
+struct RDDLTask;
 
 class HashKeyGenerator {
 public:

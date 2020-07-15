@@ -12,7 +12,7 @@
 class ActionFluent;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
-class RDDLTask;
+struct RDDLTask;
 
 /*****************************************************************
                                State
@@ -229,10 +229,7 @@ public:
 
     void print(std::ostream& out) const;
 
-    std::string getName() const;
-
     std::vector<int> state;
-    std::vector<ActionFluent*> scheduledActionFluents;
     std::vector<ActionPrecondition*> relevantSACs;
     int index;
 };

@@ -6,7 +6,7 @@
 class Parameter;
 class ParametrizedVariable;
 class LogicalExpression;
-class RDDLTask;
+struct RDDLTask;
 
 class Instantiator {
 public:

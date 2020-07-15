@@ -11,21 +11,13 @@ class NonFluent;
 class Object;
 class Parameter;
 class ParametrizedVariable;
-class RDDLTask;
 class RewardFunction;
 class StateFluent;
 class Type;
 
 using ConditionEffectPair = std::pair<LogicalExpression*, LogicalExpression*>;
 
-namespace z3 {
-class context;
-class expr;
-class solver;
-}
-
-class RDDLTask {
-public:
+struct RDDLTask {
     RDDLTask();
     ~RDDLTask() {}
 
@@ -57,10 +49,6 @@ public:
         ParametrizedVariable* schema);
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
-
-    void buildCSP(
-        z3::context& c, z3::solver& s, std::vector<z3::expr>& sfExprs,
-        std::vector<z3::expr>& afExprs, bool addSACs) const;
 
     // The following are PlanningTask variables
 
@@ -108,6 +96,7 @@ public:
 
     // (Non-trivial) properties
     bool rewardLockDetected;
+    std::vector<int> candidatesForOptimalFinalAction;
     bool unreasonableActionDetected;
     bool unreasonableActionInDeterminizationDetected;
 

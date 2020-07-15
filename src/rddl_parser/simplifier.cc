@@ -1,12 +1,11 @@
 #include "simplifier.h"
 
+#include "csp.h"
 #include "evaluatables.h"
 #include "rddl.h"
 
 #include "utils/system_utils.h"
 #include "utils/timer.h"
-
-#include "z3++.h"
 
 #include <algorithm>
 #include <iostream>
@@ -339,12 +338,6 @@ bool Simplifier::determineFiniteDomainActionFluents(
     }
 
     vector<set<int>> mutexGroups;
-    z3::context c;
-    z3::solver s(c);
-    vector<z3::expr> sfExprs;
-    vector<z3::expr> afExprs;
-    task->buildCSP(c, s, sfExprs, afExprs, true);
-
     if (numConcurrentActions == 1) {
         // If max-nondef-actions is 1, all action fluents are pairwise mutex
         // and they can be combined to a single FDR action fluent
@@ -354,12 +347,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
         }
         mutexGroups.push_back(mutexGroup);
     } else {
-        // TODO: Everything below here (or maybe even including the generation of
-        //  the CSP above) should be outsourced to another class that can be
-        //  replaced if we feel the need to implement a different mutex generator.
-
-        vector<set<int>> mutexes =
-            computeActionFluentMutexes(s, afExprs);
+        vector<set<int>> mutexes = computeActionFluentMutexes();
 
         // Given a set of mutexes, it is non-trivial to decide which variables to
         // combine to a single FDR variable, and it is not clear which combination
@@ -376,7 +364,6 @@ bool Simplifier::determineFiniteDomainActionFluents(
             }
             set<int> mutexGroup;
             mutexGroup.insert(index1);
-            // mutexes1.clear();
 
             for (int index2 : mutexes1) {
                 // Indices smaller than index1 have been checked before
@@ -473,11 +460,14 @@ bool Simplifier::determineFiniteDomainActionFluents(
     return true;
 }
 
-vector<set<int>> Simplifier::computeActionFluentMutexes(
-    z3::solver& s, vector<z3::expr>& af_exprs) const {
+vector<set<int>> Simplifier::computeActionFluentMutexes() const {
     // TODO: Order the action fluent pairs in a way that the most promising ones
     //  are considered earlier, and such that we can stop this if it takes too
     //  much time (the code below is quadratic in the number of action fluents)
+
+    CSP csp(task);
+    csp.addPreconditions();
+    Z3Expressions& action = csp.getAction();
 
     int numActionFluents = task->actionFluents.size();
     vector<set<int>> result(numActionFluents);
@@ -505,15 +495,15 @@ vector<set<int>> Simplifier::computeActionFluentMutexes(
             // Add the constraint that both action fluents are true and check
             // if the CSP has a solution. If it hasn't, the action fluents are
             // mutex.
-            s.push();
-            s.add((af_exprs[i] == 1) && (af_exprs[j] == 1));
-            if (s.check() != z3::sat) {
-                cout << "        " << af1->fullName << " and " << af2->fullName
-                     << " are mutex" << endl;
+            csp.push();
+            csp.addConstraint((action[i] == 1) && (action[j] == 1));
+            if (!csp.hasSolution()) {
+                // cout << "        " << af1->fullName << " and "
+                //      << af2->fullName << " are mutex" << endl;
                 result[i].insert(j);
                 result[j].insert(i);
             }
-            s.pop();
+            csp.pop();
         }
     }
     return result;
@@ -524,36 +514,20 @@ bool Simplifier::computeActions(
     sortActionFluents();
     int numActionFluents = task->actionFluents.size();
     vector<ActionState> legalActionStates;
-    
-    z3::context c;
-    z3::solver s(c);
-    vector<z3::expr> sfExprs;
-    vector<z3::expr> afExprs;
-    task->buildCSP(c, s, sfExprs, afExprs, true);
+
+    CSP csp(task);
+    csp.addPreconditions();
 
     // We compute models (i.e., assignments to the state and action variables)
     // for the planning task, use the assigned action variables as legal action
     // state (being part of the model means there is at least one state where
     // the assignment is legal) and invalidate the action assignment for the
     // next iteration. The procedure terminates when there are no more models.
-    while (s.check() == z3::sat) {
-        z3::model model = s.get_model();
-
+    while (csp.hasSolution()) {
         // Add solution to actions and invalidate it for next iteration
-        vector<int> action(numActionFluents);
-        z3::expr block = c.bool_val(false);
-        for (size_t index = 0; index < numActionFluents; ++index) {
-            z3::expr const& afExpr = afExprs[index];
-            // The internal representation of numbers in Z3 does not use ints,
-            // so the conversion is non-trivial. A way that is typically
-            // recommended is to convert to a string and from there to an int.
-            int value = atoi(model.eval(afExpr).to_string().c_str());
-
-            action[index] = value;
-            block = block || (afExpr != value);
-        }
+        vector<int> action = csp.getActionModel();
         legalActionStates.emplace_back(move(action));
-        s.add(block);
+        csp.invalidateActionModel();
     }
     swap(task->actionStates, legalActionStates);
 
@@ -727,11 +701,7 @@ void Simplifier::initializeActionStates() {
     sort(task->actionStates.begin(), task->actionStates.end(),
          ActionState::ActionStateSort());
 
-    z3::context c;
-    z3::solver s(c);
-    vector<z3::expr> sfExprs;
-    vector<z3::expr> afExprs;
-    task->buildCSP(c, s, sfExprs, afExprs, false);
+    CSP csp(task);
 
     // Check for each action state and precondition if that precondition could
     // forbid the application of the action state. We do this by checking if
@@ -741,28 +711,22 @@ void Simplifier::initializeActionStates() {
     int numPreconds = task->actionPreconds.size();
     vector<bool> precondIsRelevant(numPreconds, false);
     for (size_t index = 0; index < numActions; ++index) {
-        s.push();
-        ActionState& actionState = task->actionStates[index];
-        actionState.index = index;
+        ActionState& action = task->actionStates[index];
+        action.index = index;
 
-        for (size_t i = 0; i < actionState.state.size(); ++i) {
-            if (actionState.state[i]) {
-                actionState.scheduledActionFluents.push_back(
-                    task->actionFluents[i]);
-            }
-            s.add(afExprs[i] == actionState.state[i]);
-        }
+        csp.push();
+        csp.assignActionVariables(action.state);
 
         for (ActionPrecondition* precond : task->actionPreconds) {
-            s.push();
-            s.add(precond->formula->toZ3Formula(c, sfExprs, afExprs) == 0);
-            if (s.check() == z3::sat) {
-                actionState.relevantSACs.push_back(precond);
+            csp.push();
+            csp.addConstraint(precond->formula->toZ3Formula(csp, 0) == 0);
+            if (csp.hasSolution()) {
+                action.relevantSACs.push_back(precond);
                 precondIsRelevant[precond->index] = true;
             }
-            s.pop();
+            csp.pop();
         }
-        s.pop();
+        csp.pop();
     }
 
     // Remove irrelevant preconds

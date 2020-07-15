@@ -59,6 +59,23 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     desc >> State::stateHashingPossible;
     desc >> KleeneState::stateHashingPossible;
 
+    string finalReward;
+    desc >> finalReward;
+    if (finalReward == "CONSTANT") {
+        SearchEngine::candidatesForOptimalFinalAction.resize(1);
+        desc >> SearchEngine::candidatesForOptimalFinalAction[0];
+    } else if (finalReward == "CANDIDATE_SET") {
+        int sizeOfCandidateSet;
+        desc >> sizeOfCandidateSet;
+        SearchEngine::candidatesForOptimalFinalAction.resize(
+            sizeOfCandidateSet);
+        for (size_t i = 0; i < sizeOfCandidateSet; ++i) {
+            desc >> SearchEngine::candidatesForOptimalFinalAction[i];
+        }
+    } else {
+        assert(finalReward == "FIRST_APPLICABLE");
+    }
+
     desc >> SearchEngine::rewardLockDetected;
     if (SearchEngine::rewardLockDetected) {
         SearchEngine::goalTestActionIndex = 0;

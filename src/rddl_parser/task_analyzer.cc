@@ -1,5 +1,6 @@
 #include "task_analyzer.h"
 
+#include "csp.h"
 #include "evaluatables.h"
 #include "rddl.h"
 
@@ -12,16 +13,20 @@
 
 using namespace std;
 
-TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {
-    // Determine if there is a single action that could be goal maintaining,
-    // i.e., that could always yield the maximal reward.
-    rewardFormulaAllowsRewardLockDetection =
-        task->rewardCPF->isActionIndependent() &&
-        task->actionStates[0].isNOOP(task);
-}
+TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
 void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
     Timer t;
+    // Determine task properties
+    if (output) {
+        cout << "    Determining task properties..." << endl;
+    }
+    determineTaskProperties();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
     // Approximate or calculate the min and max reward
     if (output) {
         cout << "    Calculating min and max reward..." << endl;
@@ -75,6 +80,98 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
     createTrainingSet(numStates);
     if (output) {
         cout << "    ...finished (" << t() << ")" << endl;
+    }
+}
+
+bool actionDominates(
+    ActionState const& action1, ActionState const& action2, CSP& csp) {
+    // Check if there is a state where action1 yields a lower reward than
+    // action2. If not, action1 dominates action2.
+    csp.push();
+    csp.assignActionVariables(action1.state, 0);
+    csp.assignActionVariables(action2.state, 1);
+
+    bool result = !csp.hasSolution();
+    csp.pop();
+    return result;
+}
+
+void TaskAnalyzer::determineTaskProperties() {
+    RewardFunction* reward = task->rewardCPF;
+    rewardFormulaAllowsRewardLockDetection =
+        reward->isActionIndependent() && task->actionStates[0].isNOOP(task);
+
+    if (reward->isActionIndependent()) {
+        // The reward is not affected by the applied action, so we check if
+        // there is an action that is always applicable (i.e., does not have any
+        // precondition). If not, the first applicable action gives the final
+        // reward.
+        int actionIndex = -1;
+        for (ActionState const& action : task->actionStates) {
+            if (action.relevantSACs.empty()) {
+                actionIndex = action.index;
+                break;
+            }
+        }
+
+        if (actionIndex != -1) {
+            task->candidatesForOptimalFinalAction.push_back(actionIndex);
+        }
+    } else {
+        // The reward is affected by the applied action, so we have to compare
+        // all actions that are not dominated by another action in the
+        // computation of the final reward
+        CSP csp(task);
+        csp.addActionVariables();
+
+        // We look for a solution (i.e., a state) where the reward under the
+        // second action is larger than the reward under the first. The first
+        // action dominates the second if there is no such solution.
+        LogicalExpression* reward = task->rewardCPF->formula;
+        csp.addConstraint(
+            reward->toZ3Formula(csp, 0) - reward->toZ3Formula(csp, 1) < 0);
+
+        set<int> candidates;
+        for (ActionState const& action : task->actionStates) {
+            // Check if this action is dominated by an action that is already a
+            // candidate.
+            bool isDominatedByCandidate = false;
+            for (int candidateIndex : candidates) {
+                ActionState const& candidate =
+                    task->actionStates[candidateIndex];
+                if (!candidate.relevantSACs.empty()) {
+                    // An action with preconditions cannot dominate another action
+                    continue;
+                }
+                if (actionDominates(candidate, action, csp)) {
+                    isDominatedByCandidate = true;
+                    break;
+                }
+            }
+            if (isDominatedByCandidate) {
+                continue;
+            }
+
+            // Check if this action dominates actions in candidates
+            if (!action.relevantSACs.empty()) {
+                candidates.insert(action.index);
+                // An action with preconditions cannot dominate another action
+                continue;
+            }
+
+            set<int> remainingCandidates;
+            remainingCandidates.insert(action.index);
+            for (int candidateIndex : candidates) {
+                ActionState const& candidate =
+                    task->actionStates[candidateIndex];
+                if (!actionDominates(action, candidate, csp)) {
+                    remainingCandidates.insert(candidateIndex);
+                }
+            }
+            swap(candidates, remainingCandidates);
+        }
+        task->candidatesForOptimalFinalAction.assign(
+            candidates.begin(), candidates.end());
     }
 }
 

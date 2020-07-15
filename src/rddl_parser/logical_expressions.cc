@@ -1,10 +1,9 @@
 #include "logical_expressions.h"
 
+#include "csp.h"
 #include "instantiator.h"
 #include "probability_distribution.h"
 #include "rddl.h"
-
-#include "z3++.h"
 
 #include "utils/math_utils.h"
 #include "utils/string_utils.h"

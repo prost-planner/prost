@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 
-class RDDLTask;
+struct RDDLTask;
 
 class TaskAnalyzer {
 public:
@@ -20,6 +20,8 @@ protected:
 
     std::set<State, State::StateSort> encounteredStates;
     bool rewardFormulaAllowsRewardLockDetection;
+
+    void determineTaskProperties();
 
     void calculateMinAndMaxReward() const;
 

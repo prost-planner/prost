@@ -43,17 +43,6 @@ bool ActionState::sharesActiveActionFluent(
     return false;
 }
 
-string ActionState::getName() const {
-    if (scheduledActionFluents.empty()) {
-        return "noop";
-    }
-    stringstream name;
-    for (unsigned int i = 0; i < scheduledActionFluents.size(); ++i) {
-        name << scheduledActionFluents[i]->fullName << " ";
-    }
-    return name.str();
-}
-
 void ActionState::print(ostream& out) const {
     for (unsigned int index = 0; index < state.size(); ++index) {
         out << state[index] << " ";

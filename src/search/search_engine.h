@@ -227,6 +227,13 @@ public:
     // The number of actions (this is equal to actionStates.size())
     static int numberOfActions;
 
+    // Since the reward is independent from the successor state, we can
+    // calculate the final reward as the maximum of applying all actions in the
+    // current state. Since the set of actions that could maximize the final
+    // reward can be a subset of all actions, we distinguish between several
+    // different methods to speed up this calculation.
+    static std::vector<int> candidatesForOptimalFinalAction;
+
     // Is true if applicable actions should be cached
     static bool cacheApplicableActions;
 

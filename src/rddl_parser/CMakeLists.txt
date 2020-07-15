@@ -35,6 +35,7 @@ include_directories(${Z3_INCLUDE_DIRS})
 
 ## == Source Files ==
 set(RDDL_PARSER_SOURCES
+    csp
     determinizer
     evaluatables
     hash_key_generator

@@ -2,7 +2,7 @@
 #define PRECOMPUTER_H
 
 class Evaluatable;
-class RDDLTask;
+struct RDDLTask;
 class State;
 class StateFluent;
 

@@ -1,7 +1,7 @@
 #ifndef DETERMINIZER_H
 #define DETERMINIZER_H
 
-class RDDLTask;
+struct RDDLTask;
 
 class Determinizer {
 public:

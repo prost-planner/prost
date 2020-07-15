@@ -61,6 +61,7 @@ State SearchEngine::initialState;
 int SearchEngine::horizon = numeric_limits<int>::max();
 double SearchEngine::discountFactor = 1.0;
 int SearchEngine::numberOfActions = -1;
+vector<int> SearchEngine::candidatesForOptimalFinalAction;
 
 bool SearchEngine::cacheApplicableActions = true;
 bool SearchEngine::rewardLockDetected = true;
@@ -498,40 +499,67 @@ inline bool ProbabilisticSearchEngine::BDDIncludes(
 ******************************************************************/
 
 void SearchEngine::calcOptimalFinalReward(State const& current, double& reward) const {
-    bool useFirstApplicable = rewardCPF->isActionIndependent();
-    reward = -numeric_limits<double>::max();
+    int numCandidates = candidatesForOptimalFinalAction.size();
+    if (numCandidates == 1) {
+        // Since there is only one candidate action, it must always be
+        // applicable and optimal
+        return calcReward(current, candidatesForOptimalFinalAction[0], reward);
+    }
+
     vector<int> applicableActions = getApplicableActions(current);
-    for (size_t index = 0; index < numberOfActions; ++index) {
+    if (numCandidates == 0) {
+        // The first applicable action is guaranteed to be optimal
+        for (size_t index = 0; index < numberOfActions; ++index) {
+            if (applicableActions[index] == index) {
+                return calcReward(current, index, reward);
+            }
+        }
+        assert(false);
+    }
+
+    // Check all applicable candidates and return the best
+    reward = -numeric_limits<double>::max();
+    double tmpReward = 0.0;
+    for (int index : candidatesForOptimalFinalAction) {
         if (applicableActions[index] == index) {
-            double tmpReward = 0.0;
             calcReward(current, index, tmpReward);
             reward = std::max(reward, tmpReward);
-            if (useFirstApplicable) {
-                break;
-            }
         }
     }
 }
 
 int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
-    bool useFirstApplicable = rewardCPF->isActionIndependent();
-    double reward = -numeric_limits<double>::max();
-    int result = -1;
+    int numCandidates = candidatesForOptimalFinalAction.size();
+    if (numCandidates == 1) {
+        // Since there is only one candidate action, it must always be
+        // applicable and optimal
+        return candidatesForOptimalFinalAction[0];
+    }
+
     vector<int> applicableActions = getApplicableActions(current);
-    for (size_t index = 0; index < numberOfActions; ++index) {
+    if (numCandidates == 0) {
+        // The first applicable action is guaranteed to be optimal
+        for (size_t index = 0; index < numberOfActions; ++index) {
+            if (applicableActions[index] == index) {
+                return index;
+            }
+        }
+        assert(false);
+    }
+
+    // Check all applicable candidates and return the best
+    double reward = -numeric_limits<double>::max();
+    double tmpReward = 0.0;
+    int result = -1;
+    for (int index : candidatesForOptimalFinalAction) {
         if (applicableActions[index] == index) {
-            double tmpReward = 0.0;
             calcReward(current, index, tmpReward);
             if (MathUtils::doubleIsGreater(tmpReward, reward)) {
                 reward = tmpReward;
                 result = index;
             }
-            if (useFirstApplicable) {
-                break;
-            }
         }
     }
-
     return result;
 }
 

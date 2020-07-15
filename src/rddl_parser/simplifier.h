@@ -9,13 +9,7 @@ class ActionState;
 class ActionPrecondition;
 class LogicalExpression;
 class ParametrizedVariable;
-class RDDLTask;
-
-namespace z3 {
-class context;
-class expr;
-class solver;
-}
+struct RDDLTask;
 
 class Simplifier {
 public:
@@ -43,8 +37,7 @@ private:
     void initializeActionStates();
     void sortActionFluents();
 
-    std::vector<std::set<int>> computeActionFluentMutexes(
-        z3::solver& s, std::vector<z3::expr>& af_exprs) const;
+    std::vector<std::set<int>> computeActionFluentMutexes() const;
 };
 
 #endif
