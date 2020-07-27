@@ -14,13 +14,12 @@ using namespace std;
 
 void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     Timer t;
-    map<ParametrizedVariable*, LogicalExpression*> replacements;
+    Simplifications replacements;
     bool continueSimplification = true;
     int iteration = 0;
     while (continueSimplification) {
         ++iteration;
 
-        //  Remove state fluents whose CPF simplifies to their initial value
         if (output) {
             cout << "    Simplify formulas (" << iteration << ")..." << endl;
         }
@@ -30,14 +29,11 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
         }
         t.reset();
 
-        // Determine if there are action fluents that are statically
-        // inapplicable
         if (output) {
             cout << "    Compute inapplicable action fluents (" << iteration
                  << ")..." << endl;
         }
-        continueSimplification =
-            computeInapplicableActionFluents(replacements);
+        continueSimplification = computeInapplicableActionFluents(replacements);
         if (output) {
             cout << "    ...finished (" << t() << ")" << endl;
         }
@@ -46,7 +42,6 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             continue;
         }
 
-        // Determine which action fluents are used
         if (output) {
             cout << "    Compute relevant action fluents (" << iteration
                  << ")..." << endl;
@@ -60,7 +55,6 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             continue;
         }
 
-        // Generate finite domain action fluents
         if (generateFDRActionFluents) {
             if (output) {
                 cout << "    Determine FDR action fluents (" << iteration
@@ -77,7 +71,6 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             }
         }
 
-        // Compute actions that are potentially applicable in a reachable state
         if (output) {
             cout << "    Compute actions (" << iteration << ")..." << endl;
         }
@@ -90,7 +83,6 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             continue;
         }
 
-        // Approximate domains
         if (output) {
             cout << "    Approximate domains (" << iteration << ")..." << endl;
         }
@@ -110,23 +102,30 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     }
 }
 
-void Simplifier::simplifyFormulas(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+void Simplifier::simplifyFormulas(Simplifications& replacements) {
+    simplifyCPFs(replacements);
+    task->rewardCPF->simplify(replacements);
+    simplifyPreconditions(replacements);
+}
+
+void Simplifier::simplifyCPFs(Simplifications& replacements) {
     bool continueSimplification = true;
     while (continueSimplification) {
         continueSimplification = false;
-
-        //  Remove state fluents whose CPF simplifies to their initial value
-        for (ConditionalProbabilityFunction*& cpf : task->CPFs) {
+        for (auto it = task->CPFs.begin(); it != task->CPFs.end(); ++it) {
+            ConditionalProbabilityFunction* cpf = *it;
+            // Simplify by replacing state fluents whose CPF simplifies to their
+            // initial value with their initial value
             cpf->simplify(replacements);
+
+            // Check if this CPF now also simplifies to its initial value
             NumericConstant* nc = dynamic_cast<NumericConstant*>(cpf->formula);
-            if (nc &&
-                MathUtils::doubleIsEqual(cpf->head->initialValue, nc->value)) {
-                continueSimplification = true;
+            double initialValue = cpf->head->initialValue;
+            if (nc && MathUtils::doubleIsEqual(initialValue, nc->value)) {
                 assert(replacements.find(cpf->head) == replacements.end());
                 replacements[cpf->head] = nc;
-                swap(cpf, task->CPFs[task->CPFs.size() - 1]);
-                task->CPFs.pop_back();
+                task->CPFs.erase(it);
+                continueSimplification = true;
                 break;
             }
         }
@@ -135,15 +134,13 @@ void Simplifier::simplifyFormulas(
     // Sort CPFs for deterministic behaviour
     sort(task->CPFs.begin(), task->CPFs.end(),
          ConditionalProbabilityFunction::TransitionFunctionSort());
-
     // Update indices of state fluents (via their corresponding CPF)
-    for (unsigned int index = 0; index < task->CPFs.size(); ++index) {
+    for (size_t index = 0; index < task->CPFs.size(); ++index) {
         task->CPFs[index]->setIndex(index);
     }
+}
 
-    // Simplify reward
-    task->rewardCPF->simplify(replacements);
-
+void Simplifier::simplifyPreconditions(Simplifications& replacements) {
     vector<LogicalExpression*> newPreconds;
     for (LogicalExpression* oldPrecond : task->SACs) {
         // Simplify this precondition
@@ -165,8 +162,7 @@ void Simplifier::simplifyFormulas(
             if (nc) {
                 if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
                     SystemUtils::abort(
-                        "Found a precond that evaluates to the constant "
-                        "\"false\"!");
+                        "Found a precond that evaluates to \"false\"!");
                 } else {
                     // When converting from a number to a bool, we treat each number
                     // except for 0.0 as "true", so this evaluates to "true" and we
@@ -178,19 +174,25 @@ void Simplifier::simplifyFormulas(
             }
         }
     }
-    swap(task->SACs, newPreconds);
+    task->SACs = move(newPreconds);
 }
 
 bool Simplifier::computeInapplicableActionFluents(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
-    // Divide preconds into dynamic SACs (i.e., proper action preconditions),
-    // static SACs, primitive static SACs and state invariants and check if
-    // there are action fluents that are statically inapplicable (i.e.,
-    // forbidden by a primitive static SAC)
+    Simplifications& replacements) {
+    // TODO: since preconditions exist on two levels (as LogicalFormulas in
+    //  task->SACs and as Preconditions in task->actionPreconds and
+    //  task->staticSACs), we have to clear the latter and rebuild them here.
+    //  The fact that preconditions exist twice is bad design and should be
+    //  fixed at some point.
     task->actionPreconds.clear();
     task->staticSACs.clear();
 
-    vector<bool> fluentIsInapplicable(task->actionFluents.size(), false);
+    vector<bool> fluentIsApplicable = classifyActionPreconditions();
+    return filterActionFluents(fluentIsApplicable, replacements);
+}
+
+vector<bool> Simplifier::classifyActionPreconditions() {
+    vector<bool> result(task->actionFluents.size(), true);
     vector<LogicalExpression*> SACs;
     for (size_t index = 0; index < task->SACs.size(); ++index) {
         LogicalExpression* sac = task->SACs[index];
@@ -200,63 +202,68 @@ bool Simplifier::computeInapplicableActionFluents(
         // Collect the properties of the SAC that are necessary for distinction
         // of action preconditions, (primitive) static SACs and state invariants
         precond->initialize();
-        if (precond->containsStateFluent()) {
-            // An SAC that contain both state and action fluents is an action
-            // precondition, and an SAC that contains only state fluents is a
-            // state invariant that is ignored in PROST.
-            if (!precond->isActionIndependent()) {
-                precond->index = task->actionPreconds.size();
-                task->actionPreconds.push_back(precond);
-                SACs.push_back(sac);
-            }
-        } else {
-            Negation* neg = dynamic_cast<Negation*>(precond->formula);
-            if (neg) {
-                ActionFluent* af = dynamic_cast<ActionFluent*>(neg->expr);
-                if (af) {
-                    // This is a "primitive" static action constraint of the
-                    // form "not doSomething(params)", i.e., an sac that forbids
-                    // the usage of an action fluent in general. No matter if
-                    // this action fluent is used in any formula, it can be
-                    // converted to the constant "false".
-                    fluentIsInapplicable[af->index] = true;
-                } else {
-                    task->staticSACs.push_back(precond);
-                    SACs.push_back(sac);
-                }
+        if (!precond->containsStateFluent()) {
+            int afIndex = precond->triviallyForbidsActionFluent();
+            if (afIndex >= 0) {
+                // This is a static action constraint of the form "not a" for
+                // some action fluent "a" that trivially forbids the application
+                // of "a" in every state, i.e. it must be false in every
+                // applicable action.
+                result[afIndex] = false;
             } else {
                 // An SAC that only contains action fluents is used to
                 // statically forbid action combinations.
                 task->staticSACs.push_back(precond);
                 SACs.push_back(sac);
             }
+        } else if (!precond->isActionIndependent()) {
+            precond->index = task->actionPreconds.size();
+            task->actionPreconds.push_back(precond);
+            SACs.push_back(sac);
         }
     }
-    swap(task->SACs, SACs);
-
-    vector<ActionFluent*> actionFluents;
-    int nextIndex = 0;
-    bool foundInapplicableActionFluent = false;
-    for (ActionFluent* af : task->actionFluents) {
-        if (fluentIsInapplicable[af->index]) {
-            // cout << "action fluent " << af->fullName << " is inapplicable" << endl;
-            assert(replacements.find(af) == replacements.end());
-            replacements[af] = new NumericConstant(0.0);
-            foundInapplicableActionFluent = true;
-        } else {
-            af->index = nextIndex;
-            ++nextIndex;
-
-            actionFluents.push_back(af);
-        }
-    }
-    swap(task->actionFluents, actionFluents);
-    return foundInapplicableActionFluent;
+    task->SACs = move(SACs);
+    return move(result);
 }
 
-bool Simplifier::computeRelevantActionFluents(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
-    // Check if there are action fluents that aren't used in any CPF or SAC
+bool Simplifier::filterActionFluents(
+    vector<bool> const& filter, Simplifications& replacements) {
+    vector<ActionFluent*>& actionFluents = task->actionFluents;
+    auto keep = [&](ActionFluent* af) {return filter[af->index];};
+    // Separate action fluents that are kept from discarded ones
+    auto partIt = partition(actionFluents.begin(), actionFluents.end(), keep);
+    bool result = (partIt != actionFluents.end());
+    // Add discarded action fluents to replacements
+    for (auto it = partIt; it != actionFluents.end(); ++it) {
+        assert(replacements.find(*it) == replacements.end());
+        replacements[*it] = new NumericConstant(0.0);
+    }
+    // Erase discarded action fluents
+    task->actionFluents.erase(partIt, task->actionFluents.end());
+    // Sort action fluents that are kept and assign indices
+    sortActionFluents();
+    return result;
+}
+
+void Simplifier::sortActionFluents() {
+    size_t numActionFluents = task->actionFluents.size();
+
+    // Sort action fluents for deterministic behaviour and assign indices
+    sort(task->actionFluents.begin(), task->actionFluents.end(),
+         [](ActionFluent* const& lhs, ActionFluent* const& rhs) {
+             return lhs->fullName < rhs->fullName;
+         });
+    for (size_t index = 0; index < numActionFluents; ++index) {
+        task->actionFluents[index]->index = index;
+    }
+}
+
+bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
+    vector<bool> fluentIsUsed = determineUsedActionFluents();
+    return filterActionFluents(fluentIsUsed, replacements);
+}
+
+vector<bool> Simplifier::determineUsedActionFluents() {
     // TODO: If an action fluent is only used in SACs, it has no direct
     //  influence on states and rewards, but could be necessary to apply other
     //  action fluents. It might be possible to compile the action fluent into
@@ -264,67 +271,31 @@ bool Simplifier::computeRelevantActionFluents(
     //  but a2 is, and there is a CPF a2 => a1, we can compile a1 and a2 into a
     //  new action fluent a' where a'=1 means a1=1 and a2=1, and a'=0 means
     //  a1=0 and a2=0 (or a1=1 and a2=0, this is irrelevant in this example).
-    vector<bool> fluentIsUsed(task->actionFluents.size(), false);
+    vector<bool> result(task->actionFluents.size(), false);
     for (ActionPrecondition* precond : task->actionPreconds) {
         for (ActionFluent* af : precond->dependentActionFluents) {
-            fluentIsUsed[af->index] = true;
+            result[af->index] = true;
         }
     }
-
     for (ActionPrecondition* sac : task->staticSACs) {
         for (ActionFluent* af : sac->dependentActionFluents) {
-            fluentIsUsed[af->index] = true;
+            result[af->index] = true;
         }
     }
-
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
         for (ActionFluent* af : cpf->dependentActionFluents) {
-            fluentIsUsed[af->index] = true;
+            result[af->index] = true;
         }
     }
-
     for (ActionFluent* af : task->rewardCPF->dependentActionFluents) {
-        fluentIsUsed[af->index] = true;
+        result[af->index] = true;
     }
-
-    vector<ActionFluent*> actionFluents;
-    int nextIndex = 0;
-    bool foundUnusedActionFluent = false;
-    for (ActionFluent* af : task->actionFluents) {
-        if (fluentIsUsed[af->index]) {
-            af->index = nextIndex;
-            ++nextIndex;
-
-            actionFluents.push_back(af);
-        } else {
-            // cout << "action fluent " << af->fullName << " is unused" << endl;
-            assert(replacements.find(af) == replacements.end());
-            replacements[af] = new NumericConstant(0.0);
-            foundUnusedActionFluent = true;
-        }
-    }
-    swap(task->actionFluents, actionFluents);
-    return foundUnusedActionFluent;
-}
-
-// Sort action fluents for deterministic behaviour and assign indices
-inline void Simplifier::sortActionFluents() {
-    int numActionFluents = task->actionFluents.size();
-
-    // Sort action fluents for deterministic behaviour and assign indices
-    sort(task->actionFluents.begin(), task->actionFluents.end(),
-         [](ActionFluent* const& lhs, ActionFluent* const& rhs) {
-             return lhs->fullName < rhs->fullName;
-         });
-    for (int index = 0; index < numActionFluents; ++index) {
-        task->actionFluents[index]->index = index;
-    }
+    return move(result);
 }
 
 bool Simplifier::determineFiniteDomainActionFluents(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
-    int numActionFluents = task->actionFluents.size();
-    int numConcurrentActions = task->numberOfConcurrentActions;
+    Simplifications& replacements) {
+    size_t numActionFluents = task->actionFluents.size();
     // If there is only one action fluent (left), there is nothing else to do
     if (numActionFluents == 1) {
         return false;
@@ -332,22 +303,15 @@ bool Simplifier::determineFiniteDomainActionFluents(
 
     // If max-nondef-actions doesn't constrain action applicability and there
     // are no other preconditions, no pair of action fluents can be mutex
-    if ((numConcurrentActions > 1) && task->actionPreconds.empty() &&
+    bool concurrent = (task->numberOfConcurrentActions > 1);
+    if (concurrent && task->actionPreconds.empty() &&
         task->staticSACs.empty()) {
          return false;
     }
 
-    vector<set<int>> mutexGroups;
-    if (numConcurrentActions == 1) {
-        // If max-nondef-actions is 1, all action fluents are pairwise mutex
-        // and they can be combined to a single FDR action fluent
-        set<int> mutexGroup;
-        for (size_t index = 0; index < numActionFluents; ++index) {
-            mutexGroup.insert(index);
-        }
-        mutexGroups.push_back(mutexGroup);
-    } else {
-        vector<set<int>> mutexes = computeActionFluentMutexes();
+    vector<MutexGroup> mutexGroups;
+    if (concurrent) {
+        vector<MutexGroup> mutexes = computeActionFluentMutexes();
 
         // Given a set of mutexes, it is non-trivial to decide which variables to
         // combine to a single FDR variable, and it is not clear which combination
@@ -357,12 +321,12 @@ bool Simplifier::determineFiniteDomainActionFluents(
         // to form a mutex group and continues in the same way with the first
         // variable that had not been added this way.
         for (size_t index1 = 0; index1 < numActionFluents; ++index1) {
-            set<int>& mutexes1 = mutexes[index1];
+            MutexGroup& mutexes1 = mutexes[index1];
             if (mutexes1.empty()) {
                 // This variable has already been added to a mutex group
                 continue;
             }
-            set<int> mutexGroup;
+            MutexGroup mutexGroup;
             mutexGroup.insert(index1);
 
             for (int index2 : mutexes1) {
@@ -372,7 +336,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
                 }
 
                 // Check if index2 is mutex with all action fluents in mutexGroup
-                set<int>& mutexes2 = mutexes[index2];
+                MutexGroup& mutexes2 = mutexes[index2];
                 if (all_of(mutexGroup.begin(), mutexGroup.end(), [&](int index) {
                     return (index == index2) || (mutexes2.find(index) != mutexes2.end());
                 })) {
@@ -383,6 +347,14 @@ bool Simplifier::determineFiniteDomainActionFluents(
             mutexes1.clear();
             mutexGroups.push_back(mutexGroup);
         }
+    } else {
+        // If max-nondef-actions is 1, all action fluents are pairwise mutex
+        // and they can be combined to a single FDR action fluent
+        MutexGroup mutexGroup;
+        for (size_t index = 0; index < numActionFluents; ++index) {
+            mutexGroup.insert(index);
+        }
+        mutexGroups.push_back(mutexGroup);
     }
 
     if (mutexGroups.size() == numActionFluents) {
@@ -391,7 +363,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
 
     vector<ActionFluent*> actionFluents;
     cout << "        Determined the following mutex groups:" << endl;
-    for (set<int> const& mutexGroup : mutexGroups) {
+    for (MutexGroup const& mutexGroup : mutexGroups) {
         if (mutexGroup.size() > 1) {
             string name = "FDR-action-fluent-" +
                           to_string(numGeneratedFDRActionFluents);
@@ -402,8 +374,6 @@ bool Simplifier::determineFiniteDomainActionFluents(
                 new Type(name + "-type", nullptr);
             ActionFluent* finiteDomainAF =
                 new ActionFluent(name, valueType);
-
-
 
             // TODO: The implementation we had here isn't working, presumably
             //  because there are some parts of the code that treat the value
@@ -455,7 +425,7 @@ bool Simplifier::determineFiniteDomainActionFluents(
             actionFluents.push_back(af);
         }
     }
-    swap(task->actionFluents, actionFluents);
+    task->actionFluents = move(actionFluents);
     sortActionFluents();
     return true;
 }
@@ -469,7 +439,7 @@ vector<set<int>> Simplifier::computeActionFluentMutexes() const {
     csp.addPreconditions();
     Z3Expressions& action = csp.getAction();
 
-    int numActionFluents = task->actionFluents.size();
+    size_t numActionFluents = task->actionFluents.size();
     vector<set<int>> result(numActionFluents);
 
     for (size_t i = 0; i < numActionFluents; ++i) {
@@ -498,8 +468,6 @@ vector<set<int>> Simplifier::computeActionFluentMutexes() const {
             csp.push();
             csp.addConstraint((action[i] == 1) && (action[j] == 1));
             if (!csp.hasSolution()) {
-                // cout << "        " << af1->fullName << " and "
-                //      << af2->fullName << " are mutex" << endl;
                 result[i].insert(j);
                 result[j].insert(i);
             }
@@ -509,8 +477,7 @@ vector<set<int>> Simplifier::computeActionFluentMutexes() const {
     return result;
 }
 
-bool Simplifier::computeActions(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+bool Simplifier::computeActions(Simplifications& replacements) {
     sortActionFluents();
     int numActionFluents = task->actionFluents.size();
     vector<ActionState> legalActionStates;
@@ -529,7 +496,7 @@ bool Simplifier::computeActions(
         legalActionStates.emplace_back(move(action));
         csp.invalidateActionModel();
     }
-    swap(task->actionStates, legalActionStates);
+    task->actionStates = move(legalActionStates);
 
     // Check if there are action fluents that are false in every legal action.
     // We can safely remove those action fluents from the problem.
@@ -555,13 +522,12 @@ bool Simplifier::computeActions(
             foundUnusedActionFluent = true;
         }
     }
-    task->actionFluents = newActionFluents;
+    task->actionFluents = move(newActionFluents);
 
     return foundUnusedActionFluent;
 }
 
-bool Simplifier::approximateDomains(
-    map<ParametrizedVariable*, LogicalExpression*>& replacements) {
+bool Simplifier::approximateDomains(Simplifications& replacements) {
     int numCPFs = task->CPFs.size();
     // Insert initial values to set of reachable values
     vector<set<double>> domains(numCPFs);
@@ -620,7 +586,7 @@ bool Simplifier::approximateDomains(
 
         // All possible value of this step have been computed. Check if there
         // are additional values, if so insert them and continue, otherwise the
-        // fixpoint iteration has reached its end
+        // fixed point iteration has reached its end
         bool someDomainChanged = false;
         for (size_t varIndex = 0; varIndex < domains.size(); ++varIndex) {
             set<double>& domain = domains[varIndex];
@@ -737,5 +703,5 @@ void Simplifier::initializeActionStates() {
             finalPreconds.push_back(precond);
         }
     }
-    swap(finalPreconds, task->actionPreconds);
+    task->actionPreconds = move(finalPreconds);
 }

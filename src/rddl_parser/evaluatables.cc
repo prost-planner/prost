@@ -8,10 +8,6 @@
 
 using namespace std;
 
-/*****************************************************************
-                           Evaluatable
-*****************************************************************/
-
 void Evaluatable::initialize() {
     isProb = false;
     hasArithmeticFunction = false;
@@ -165,4 +161,15 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(
         kleeneCachingType = "VECTOR";
         kleeneCachingVectorSize = nextHashKeyBase;
     }
+}
+
+int ActionPrecondition::triviallyForbidsActionFluent() const {
+    Negation* neg = dynamic_cast<Negation*>(formula);
+    if (neg) {
+        ActionFluent* af = dynamic_cast<ActionFluent*>(neg->expr);
+        if (af) {
+            return af->index;
+        }
+    }
+    return -1;
 }
