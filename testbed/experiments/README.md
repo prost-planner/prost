@@ -15,3 +15,7 @@ A good place to start is the experiment script that can be found at
 Prost, uses all default parsers and creates two absolute reports, one
 with all attributes parsed by one of the default parsers, and one with a
 pre-specified subset of all attributes.
+
+If you want to compare the output of the parser over all instances, you
+can find a script that runs the parser on all IPC instances at
+`issue-102/run-rddl-parser.py`.
