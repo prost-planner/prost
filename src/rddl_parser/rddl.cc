@@ -98,7 +98,7 @@ void RDDLTask::setInstance(string name, string domainName,
     this->discountFactor = discount;
 }
 
-void RDDLTask::addType(string const& name, string const& superType) {
+Type* RDDLTask::addType(string const& name, string const& superType) {
     if (types.find(name) != types.end()) {
         SystemUtils::abort("Error: Type " + name + " is ambiguous.");
     }
@@ -110,6 +110,7 @@ void RDDLTask::addType(string const& name, string const& superType) {
     } else {
         types[name] = new Type(name, types[superType]);
     }
+    return types[name];
 }
 
 Type* RDDLTask::getType(string typeName) {
@@ -359,11 +360,14 @@ void RDDLTask::print(ostream& out) {
         int numValues = values.size();
         out << numValues << endl;
         out << "## values" << endl;
-        if (numValues == 2) {
-            out << "0 false" << endl << "1 true" << endl;
-        } else {
-            for (Object* value : values) {
-                out << value->value << " " << value->name << endl;
+        for (Object* value : values) {
+            out << value->value << " ";
+            if (value->name.find("none-of-those") == 0) {
+                // strip the index of the none-of-those objects, they are no
+                // longer required in the search component
+                out << "none-of-those" << endl;
+            } else {
+                out << value->name << endl;
             }
         }
         out << endl;

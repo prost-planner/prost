@@ -30,7 +30,7 @@ struct RDDLTask {
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
 
-    void addType(std::string const& name, std::string const& superType = "");
+    Type* addType(std::string const& name, std::string const& superType = "");
     void addObject(std::string const& typeName, std::string const& objectName);
 
     void addVariableSchematic(ParametrizedVariable* varDef);

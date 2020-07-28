@@ -38,9 +38,11 @@ set(RDDL_PARSER_SOURCES
     csp
     determinizer
     evaluatables
+    fdr_generation
     hash_key_generator
     instantiator
     logical_expressions
+    mutex_detection
     precomputer
     probability_distribution
     rddl
@@ -54,16 +56,15 @@ set(RDDL_PARSER_SOURCES
 )
 
 ## == Doctest ==
-# disable doctest in release build
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DDOCTEST_CONFIG_DISABLE")
-
+# add unit test files in debug build
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    # unit tests are only relevant in debug build
-    set(RDDL_PARSER_TESTS
+    set(RDDL_PARSER_TEST_SOURCES
         ../doctest/doctest
+        tests/fdr_generation_test
+        tests/mutex_detection_test
         tests/probability_distribution_test
     )
-    set(${SEARCH_SOURCES} "${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TESTS}")
+    set(RDDL_PARSER_SOURCES ${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TEST_SOURCES})
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 ## == Add Executable ==

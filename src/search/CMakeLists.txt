@@ -53,17 +53,14 @@ set(SEARCH_SOURCES
 )
 
 ## == Doctest ==
-# disable doctest in release build
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DDOCTEST_CONFIG_DISABLE")
-
+# add unit test files in debug build
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    # unit tests are only relevant in debug build
-    set(SEARCH_TESTS
+    set(SEARCH_TEST_SOURCES
         ../doctest/doctest
         tests/evaluate_test
         tests/probability_distribution_test
     )
-    set(${SEARCH_SOURCES} "${SEARCH_SOURCES} ${SEARCH_TESTS}")
+    set(SEARCH_SOURCES ${SEARCH_SOURCES} ${SEARCH_TEST_SOURCES})
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 ## == Add Executable ==

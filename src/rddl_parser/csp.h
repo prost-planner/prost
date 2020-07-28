@@ -28,7 +28,7 @@ public:
     Z3Expressions& getState() {
         return state;
     }
-    Z3Expressions & getAction(int actionIndex = 0) {
+    Z3Expressions & getActionVars(int actionIndex = 0) {
         assert(actionIndex < actions.size());
         return actions[actionIndex];
     }

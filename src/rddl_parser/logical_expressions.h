@@ -226,12 +226,20 @@ class ActionFluent : public ParametrizedVariable {
 public:
     ActionFluent(ParametrizedVariable const& source,
                  std::vector<Parameter*> _params)
-        : ParametrizedVariable(source, _params, 0.0), index(-1) {}
-    ActionFluent(std::string name, Type* _valueType)
-        : ParametrizedVariable(name, std::vector<Parameter*>(), VariableType::ACTION_FLUENT, _valueType, 0.0),
-          index(-1) {}
+        : ParametrizedVariable(source, _params, 0.0),
+          index(-1),
+          isFDR(source.valueType->name != "bool") {}
+    ActionFluent(std::string name, Type* _valueType, int _index = -1)
+        : ParametrizedVariable(name, {}, VariableType::ACTION_FLUENT, _valueType, 0.0),
+          index(_index),
+          isFDR(_valueType->name != "bool") {}
 
     int index;
+    bool isFDR;
+
+    size_t domainSize() const {
+        return valueType->objects.size();
+    }
 
     LogicalExpression* simplify(Simplifications& replace) override;
 

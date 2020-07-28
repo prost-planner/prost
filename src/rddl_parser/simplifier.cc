@@ -2,6 +2,8 @@
 
 #include "csp.h"
 #include "evaluatables.h"
+#include "fdr_generation.h"
+#include "mutex_detection.h"
 #include "rddl.h"
 
 #include "utils/system_utils.h"
@@ -11,6 +13,11 @@
 #include <iostream>
 
 using namespace std;
+
+Simplifier::Simplifier(RDDLTask* _task)
+    : task(_task), numGeneratedFDRActionFluents(0) {
+    fdrGen = make_shared<GreedyFDRGenerator>(task);
+}
 
 void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     Timer t;
@@ -223,7 +230,7 @@ vector<bool> Simplifier::classifyActionPreconditions() {
         }
     }
     task->SACs = move(SACs);
-    return move(result);
+    return result;
 }
 
 bool Simplifier::filterActionFluents(
@@ -246,14 +253,12 @@ bool Simplifier::filterActionFluents(
 }
 
 void Simplifier::sortActionFluents() {
-    size_t numActionFluents = task->actionFluents.size();
-
     // Sort action fluents for deterministic behaviour and assign indices
     sort(task->actionFluents.begin(), task->actionFluents.end(),
          [](ActionFluent* const& lhs, ActionFluent* const& rhs) {
              return lhs->fullName < rhs->fullName;
          });
-    for (size_t index = 0; index < numActionFluents; ++index) {
+    for (size_t index = 0; index < task->actionFluents.size(); ++index) {
         task->actionFluents[index]->index = index;
     }
 }
@@ -290,191 +295,19 @@ vector<bool> Simplifier::determineUsedActionFluents() {
     for (ActionFluent* af : task->rewardCPF->dependentActionFluents) {
         result[af->index] = true;
     }
-    return move(result);
+    return result;
 }
 
 bool Simplifier::determineFiniteDomainActionFluents(
     Simplifications& replacements) {
-    size_t numActionFluents = task->actionFluents.size();
-    // If there is only one action fluent (left), there is nothing else to do
-    if (numActionFluents == 1) {
+    TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
+    if (!mutexInfo.hasMutex()) {
         return false;
     }
 
-    // If max-nondef-actions doesn't constrain action applicability and there
-    // are no other preconditions, no pair of action fluents can be mutex
-    bool concurrent = (task->numberOfConcurrentActions > 1);
-    if (concurrent && task->actionPreconds.empty() &&
-        task->staticSACs.empty()) {
-         return false;
-    }
-
-    vector<MutexGroup> mutexGroups;
-    if (concurrent) {
-        vector<MutexGroup> mutexes = computeActionFluentMutexes();
-
-        // Given a set of mutexes, it is non-trivial to decide which variables to
-        // combine to a single FDR variable, and it is not clear which combination
-        // it the "best". We therefore use a cheap, greedy approach here that
-        // starts with the first variable (we could use a random one instead, but
-        // that introduces unnecessary non-determinism), greedily adds variables
-        // to form a mutex group and continues in the same way with the first
-        // variable that had not been added this way.
-        for (size_t index1 = 0; index1 < numActionFluents; ++index1) {
-            MutexGroup& mutexes1 = mutexes[index1];
-            if (mutexes1.empty()) {
-                // This variable has already been added to a mutex group
-                continue;
-            }
-            MutexGroup mutexGroup;
-            mutexGroup.insert(index1);
-
-            for (int index2 : mutexes1) {
-                // Indices smaller than index1 have been checked before
-                if (index2 <= index1) {
-                    continue;
-                }
-
-                // Check if index2 is mutex with all action fluents in mutexGroup
-                MutexGroup& mutexes2 = mutexes[index2];
-                if (all_of(mutexGroup.begin(), mutexGroup.end(), [&](int index) {
-                    return (index == index2) || (mutexes2.find(index) != mutexes2.end());
-                })) {
-                    mutexGroup.insert(index2);
-                    mutexes2.clear();
-                }
-            }
-            mutexes1.clear();
-            mutexGroups.push_back(mutexGroup);
-        }
-    } else {
-        // If max-nondef-actions is 1, all action fluents are pairwise mutex
-        // and they can be combined to a single FDR action fluent
-        MutexGroup mutexGroup;
-        for (size_t index = 0; index < numActionFluents; ++index) {
-            mutexGroup.insert(index);
-        }
-        mutexGroups.push_back(mutexGroup);
-    }
-
-    if (mutexGroups.size() == numActionFluents) {
-        return false;
-    }
-
-    vector<ActionFluent*> actionFluents;
-    cout << "        Determined the following mutex groups:" << endl;
-    for (MutexGroup const& mutexGroup : mutexGroups) {
-        if (mutexGroup.size() > 1) {
-            string name = "FDR-action-fluent-" +
-                          to_string(numGeneratedFDRActionFluents);
-            ++numGeneratedFDRActionFluents;
-            cout << "        " << name << ": ";
-
-            Type* valueType =
-                new Type(name + "-type", nullptr);
-            ActionFluent* finiteDomainAF =
-                new ActionFluent(name, valueType);
-
-            // TODO: The implementation we had here isn't working, presumably
-            //  because there are some parts of the code that treat the value
-            //  '0' as a special value that corresponds to noop. We therefore
-            //  had to comment the check if the 'none-of-those' value is
-            //  required and now always create it. It would of course be better
-            //  if the value is only created when it is actually needed. A good
-            //  domain to test this is earth-observation-2018.
-
-            // Check if at least one of these action fluents must be selected or
-            // if there is also a "none-of-those" value
-            int valIndex = 0;
-            // s.push();
-            // for (int id : mutexGroup) {
-            //     s.add(af_exprs[id] == 0);
-            // }
-            // if (s.check() == z3::sat) {
-            valueType->objects.push_back(
-                new Object("none-of-those", valueType, valIndex));
-            ++valIndex;
-            // }
-            // s.pop();
-
-            for (int id : mutexGroup) {
-                ActionFluent* af = task->actionFluents[id];
-
-                // Remove spaces from action name
-                string name = af->fullName;
-                cout << name << " ";
-                replace(name.begin(), name.end(), ' ', '~');
-
-                // Generate object that represents the new value
-                valueType->objects.push_back(
-                    new Object(name, valueType, valIndex));
-
-                // Replace all occurences of (old) binary action fluent with (new)
-                // FDR action fluent
-                vector<LogicalExpression*> eq = {finiteDomainAF, new NumericConstant(valIndex)};
-                replacements[af] = new EqualsExpression(eq);
-
-                ++valIndex;
-            }
-            cout << endl;
-            actionFluents.push_back(finiteDomainAF);
-        } else {
-            int id = *mutexGroup.begin();
-            ActionFluent* af = task->actionFluents[id];
-            cout << af->fullName;
-            actionFluents.push_back(af);
-        }
-    }
-    task->actionFluents = move(actionFluents);
+    task->actionFluents = fdrGen->generateFDRVars(mutexInfo, replacements);
     sortActionFluents();
     return true;
-}
-
-vector<set<int>> Simplifier::computeActionFluentMutexes() const {
-    // TODO: Order the action fluent pairs in a way that the most promising ones
-    //  are considered earlier, and such that we can stop this if it takes too
-    //  much time (the code below is quadratic in the number of action fluents)
-
-    CSP csp(task);
-    csp.addPreconditions();
-    Z3Expressions& action = csp.getAction();
-
-    size_t numActionFluents = task->actionFluents.size();
-    vector<set<int>> result(numActionFluents);
-
-    for (size_t i = 0; i < numActionFluents; ++i) {
-        ActionFluent* af1 = task->actionFluents[i];
-        // We use an empty mutex set later on to determine that an action
-        // fluent has already been assigned to a mutex group, and add every
-        // action fluent to its own mutex group to distinguish the case where
-        // an action fluent is not mutex from any other action fluent.
-        result[i].insert(i);
-
-        // We do not consider action fluents that are already in FDR
-        if (af1->valueType->objects.size() > 2) {
-            continue;
-        }
-
-        for (size_t j = i + 1; j < numActionFluents; ++j) {
-            ActionFluent* af2 = task->actionFluents[j];
-            // We do not consider action fluents that are already in FDR
-            if (af2->valueType->objects.size() > 2) {
-                continue;
-            }
-
-            // Add the constraint that both action fluents are true and check
-            // if the CSP has a solution. If it hasn't, the action fluents are
-            // mutex.
-            csp.push();
-            csp.addConstraint((action[i] == 1) && (action[j] == 1));
-            if (!csp.hasSolution()) {
-                result[i].insert(j);
-                result[j].insert(i);
-            }
-            csp.pop();
-        }
-    }
-    return result;
 }
 
 bool Simplifier::computeActions(Simplifications& replacements) {

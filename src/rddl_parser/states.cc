@@ -26,7 +26,7 @@ bool ActionState::isNOOP(RDDLTask* task) const {
             return false;
         }
         vector<Object*>& values = af->valueType->objects;
-        if ((values.size() > 2) && values[0]->name != "none-of-those") {
+        if (af->isFDR && values[0]->name.find("none-of-those") != 0) {
             return false;
         }
     }

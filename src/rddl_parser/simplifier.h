@@ -2,16 +2,17 @@
 #define SIMPLIFIER_H
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
 class ActionState;
 class ActionPrecondition;
+class FDRGenerator;
 class LogicalExpression;
 class ParametrizedVariable;
 struct RDDLTask;
 
-using MutexGroup = std::set<int>;
 using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 
 /*
@@ -45,13 +46,15 @@ using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 
 class Simplifier {
 public:
-    Simplifier(RDDLTask *task)
-        : task(task), numGeneratedFDRActionFluents(0) {}
+    Simplifier()  = delete;
+    explicit Simplifier(RDDLTask* _task);
 
     void simplify(bool generateFDRActionFluents, bool output = true);
 
 private:
-    RDDLTask *task;
+    RDDLTask* task;
+    // TODO: This should be a unique_ptr, which requires c++14
+    std::shared_ptr<FDRGenerator> fdrGen;
     int numGeneratedFDRActionFluents;
 
     /*
@@ -117,13 +120,6 @@ private:
       (mutex) action fluents and combining them into one FDR action fluent
     */
     bool determineFiniteDomainActionFluents(Simplifications& replacements);
-
-    /*
-      Determine which action fluents are mutually exclusive (a pair of action
-      fluents is mutex if there is no state where it is legal that both action
-      fluents are set to "true" simultaneously)
-    */
-    std::vector<std::set<int>> computeActionFluentMutexes() const;
 
     /*
       Compute all actions for which there is at least one state where all

@@ -13,7 +13,7 @@ z3::expr StateFluent::toZ3Formula(CSP& csp, int /*actionIndex*/) const {
 }
 
 z3::expr ActionFluent::toZ3Formula(CSP& csp, int actionIndex) const {
-    return csp.getAction(actionIndex)[index];
+    return csp.getActionVars(actionIndex)[index];
 }
 
 z3::expr NumericConstant::toZ3Formula(CSP& csp, int /*actionIndex*/) const {
