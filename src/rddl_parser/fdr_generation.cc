@@ -1,5 +1,6 @@
 #include "fdr_generation.h"
 
+#include "csp.h"
 #include "logical_expressions.h"
 #include "mutex_detection.h"
 #include "rddl.h"
@@ -17,6 +18,9 @@ vector<ActionFluent*> FDRGenerator::generateFDRVars(
     TaskMutexInfo const& mutexes, Simplifications& replacements) {
     // Partition the variables with the given the mutex information
     VarPartitioning partitioning = partitionVars(mutexes);
+    
+    CSP csp(task);
+    csp.addPreconditions();
     vector<ActionFluent*> result;
     for (VarPartition const& partition : partitioning) {
         if (partition.size() == 1) {
@@ -26,52 +30,50 @@ vector<ActionFluent*> FDRGenerator::generateFDRVars(
             assert(id >= 0 && id < task->actionFluents.size());
             result.push_back(task->actionFluents[id]);
         } else {
-            string name = "FDR-action-var-" + to_string(numFDRActionVars);
-            string typeName =
-                "FDR-action-var-type-" + to_string(numFDRActionVars);
-            Type* fdrVarType = task->addType(typeName);
-            ActionFluent* fdrVar = new ActionFluent(name, fdrVarType);
-
-            // TODO: The implementation we had here isn't working, presumably
-            //  because there are some parts of the code that treat the value
-            //  '0' as a special value that corresponds to noop. We therefore
-            //  had to comment the check if the 'none-of-those' value is
-            //  required and now always create it. It would of course be better
-            //  if the value is only created when it is actually needed. A good
-            //  domain to test this is earth-observation-2018.
-
-            // Check if at least one of these action fluents must be selected or
-            // if there is also a "none-of-those" value
-            int value = 0;
-            // s.push();
-            // for (int id : mutexGroup) {
-            //     s.add(af_exprs[id] == 0);
-            // }
-            // if (s.check() == z3::sat) {
-            task->addObject(typeName, "none-of-those-"+ to_string(numFDRActionVars));
-            ++value;
-            // }
-            // s.pop();
-
-            for (int id : partition) {
-                assert(id >= 0 && id < task->actionFluents.size());
-                ActionFluent* var = task->actionFluents[id];
-
-                string name = var->fullName;
-                replace(name.begin(), name.end(), ' ', '~');
-                task->addObject(typeName, name);
-
-                // Replace all occurences of (old) binary action fluent with (new)
-                // FDR action fluent
-                vector<LogicalExpression*> eq = {fdrVar, new NumericConstant(value)};
-                replacements[var] = new EqualsExpression(eq);
-                ++value;
-            }
-            result.push_back(fdrVar);
-            ++numFDRActionVars;
+            result.push_back(generateFDRVar(partition, csp, replacements));
         }
     }
     return result;
+}
+
+ActionFluent* FDRGenerator::generateFDRVar(VarPartition const& partition,
+                                           CSP& csp,
+                                           Simplifications& replacements) {
+    string name = "FDR-action-var-" + to_string(numFDRActionVars);
+    string typeName = "FDR-action-var-type-" + to_string(numFDRActionVars);
+    Type* fdrVarType = task->addType(typeName);
+    ActionFluent* fdrVar = new ActionFluent(name, fdrVarType);
+
+    // Check if at least one of these action fluents must be set to true
+    int value = 0;
+    Z3Expressions& actionVars = csp.getActionVars();
+    csp.push();
+    for (int id : partition) {
+        csp.addConstraint(actionVars[id] == 0);
+    }
+    if (csp.hasSolution()) {
+        task->addObject(
+            typeName, "none-of-those-"+ to_string(numFDRActionVars));
+        ++value;
+    }
+    csp.pop();
+
+    for (int id : partition) {
+        assert(id >= 0 && id < task->actionFluents.size());
+        ActionFluent* var = task->actionFluents[id];
+
+        string name = var->fullName;
+        replace(name.begin(), name.end(), ' ', '~');
+        task->addObject(typeName, name);
+
+        // Replace all occurences of (old) binary action variable var with (new)
+        // FDR action variable fdrVar
+        vector<LogicalExpression*> eq = {fdrVar, new NumericConstant(value)};
+        replacements[var] = new EqualsExpression(eq);
+        ++value;
+    }
+    ++numFDRActionVars;
+    return fdrVar;
 }
 
 void addVarToPartition(
