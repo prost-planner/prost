@@ -5,6 +5,7 @@
 #include "utils/system_utils.h"
 
 #include <iostream>
+#include <numeric>
 
 using namespace std;
 
@@ -172,4 +173,10 @@ int ActionPrecondition::triviallyForbidsActionFluent() const {
         }
     }
     return -1;
+}
+
+void ConditionalProbabilityFunction::setDomain(int maxVal) {
+    domain.resize(maxVal + 1);
+    iota(domain.begin(), domain.end(), 0);
+    head->domainSize = maxVal + 1;
 }

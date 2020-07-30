@@ -53,13 +53,14 @@ set(SEARCH_SOURCES
 )
 
 ## == Doctest ==
+set(SEARCH_TEST_SOURCES
+    ../doctest/doctest
+    tests/evaluate_test
+    tests/probability_distribution_test
+)
+
 # add unit test files in debug build
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(SEARCH_TEST_SOURCES
-        ../doctest/doctest
-        tests/evaluate_test
-        tests/probability_distribution_test
-    )
     set(SEARCH_SOURCES ${SEARCH_SOURCES} ${SEARCH_TEST_SOURCES})
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 

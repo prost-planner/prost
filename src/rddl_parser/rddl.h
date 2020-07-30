@@ -50,6 +50,12 @@ struct RDDLTask {
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
+    // Sort CPFs / action fluents / action states to ensure deterministic
+    // behavior and assign corresponding indices
+    void sortCPFs();
+    void sortActionFluents();
+    void sortActionStates();
+
     // The following are PlanningTask variables
 
     // This instance's name

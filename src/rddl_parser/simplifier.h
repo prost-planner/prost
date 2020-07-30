@@ -8,6 +8,7 @@
 
 class ActionState;
 class ActionPrecondition;
+class ConditionalProbabilityFunction;
 class FDRGenerator;
 class LogicalExpression;
 class ParametrizedVariable;
@@ -90,20 +91,6 @@ private:
     std::vector<bool> classifyActionPreconditions();
 
     /*
-      Remove all action fluents af where filter[af->index] is false, assign new
-      indices to those that are kept, update replacements and return true if at
-      least one action fluent was filtered
-    */
-    bool filterActionFluents(
-        std::vector<bool> const& filter, Simplifications& replacements);
-
-    /*
-      Sort action fluents to ensure deterministic behavior and assign
-      corresponding indices
-    */
-    void sortActionFluents();
-
-    /*
       Determine which action fluents are relevant, i.e. if they occur at least
       once in a CPF, precondition or the reward function
     */
@@ -122,10 +109,15 @@ private:
     bool determineFiniteDomainActionFluents(Simplifications& replacements);
 
     /*
-      Compute all actions for which there is at least one state where all
-      action preconditions are satisfied
+      Compute all actions that are applicable in at least one state and
+      determine which action variables are used in these actions
     */
     bool computeActions(Simplifications& replacements);
+
+    /*
+      Compute all actions that are applicable in at least one state
+    */
+    std::vector<ActionState> computeApplicableActions() const;
 
     /*
       Perform a (simple) reachability analysis
@@ -133,10 +125,25 @@ private:
     bool approximateDomains(Simplifications& replacements);
 
     /*
+      Determines which state fluents are constant based on the domains, adds
+      those to the replacements and returns the non-constant ones.
+    */
+    bool removeConstantStateFluents(std::vector<std::set<double>> const& domains,
+                                    Simplifications& replacements);
+
+    /*
       Assign indices to action states and determine which preconditions are
       relevant for an action
     */
     void initializeActionStates();
+
+    /*
+      Remove all action fluents af where filter[af->index] is false, assign new
+      indices to those that are kept, update replacements and return true if at
+      least one action fluent was filtered
+    */
+    bool filterActionFluents(
+        std::vector<bool> const& filter, Simplifications& replacements);
 };
 
 #endif

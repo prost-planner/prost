@@ -175,27 +175,6 @@ public:
         state[var] = val;
     }
 
-    // This is used to sort action states by the number of true fluents and the
-    // position of the true fluents to ensure deterministic behaviour
-    struct ActionStateSort {
-        bool operator()(ActionState const& lhs, ActionState const& rhs) const {
-            int lhsNum = 0;
-            int rhsNum = 0;
-            for (unsigned int i = 0; i < lhs.state.size(); ++i) {
-                lhsNum += lhs.state[i];
-                rhsNum += rhs.state[i];
-            }
-
-            if (lhsNum < rhsNum) {
-                return true;
-            } else if (rhsNum < lhsNum) {
-                return false;
-            }
-
-            return lhs.state < rhs.state;
-        }
-    };
-
     int& operator[](int const& index) {
         return state[index];
     }
@@ -221,9 +200,6 @@ public:
 
         return false;
     }
-
-    bool sharesActiveActionFluent(
-        std::set<ActionFluent*> const& actionFluents) const;
 
     bool isNOOP(RDDLTask* task) const;
 

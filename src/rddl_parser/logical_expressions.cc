@@ -67,6 +67,25 @@ ParametrizedVariable::ParametrizedVariable(ParametrizedVariable const& source,
     initialValue = _initialValue;
 }
 
+ActionFluent::ActionFluent(ParametrizedVariable const& source,
+                           std::vector<Parameter*> _params, int _index)
+    : ParametrizedVariable(source, _params, 0.0),
+      index(_index),
+      isFDR(source.valueType->name != "bool") {
+    // To support action fluent with a different initial value than 0, we have
+    // to adapt the simplification
+    assert(MathUtils::doubleIsEqual(initialValue, 0.0));
+}
+
+ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
+    : ParametrizedVariable(name, {}, VariableType::ACTION_FLUENT, _valueType, 0.0),
+      index(_index),
+      isFDR(_valueType->name != "bool") {
+    // To support action fluent with a different initial value than 0, we have
+    // to adapt the simplification
+    assert(MathUtils::doubleIsEqual(initialValue, 0.0));
+}
+
 bool Type::isSubtypeOf(Type* const& other) const {
     Type const* comp = this;
     while (comp) {

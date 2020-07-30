@@ -120,18 +120,6 @@ struct RewardFunction : public Evaluatable {
 };
 
 struct ConditionalProbabilityFunction : public Evaluatable {
-    // This is used to sort transition functions by their name to ensure
-    // deterministic behaviour
-    struct TransitionFunctionSort {
-        bool operator()(ConditionalProbabilityFunction* const& lhs,
-                        ConditionalProbabilityFunction* const& rhs) const {
-            if (lhs->isProb == rhs->isProb) {
-                return lhs->name < rhs->name;
-            }
-            return rhs->isProb;
-        }
-    };
-
     ConditionalProbabilityFunction(StateFluent* _head,
                                    LogicalExpression* _formula)
         : Evaluatable(_head->fullName, _formula),
@@ -146,10 +134,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
         return !domain.empty();
     }
 
-    void setDomain(std::set<double> _domain) {
-        domain = _domain;
-        head->domainSize = domain.size();
-    }
+    void setDomain(int numVals);
 
     void setIndex(int _index) {
         head->index = _index;
@@ -162,7 +147,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     StateFluent* head;
 
     // The values this CPF can take
-    std::set<double> domain;
+    std::vector<int> domain;
 
     // Hashing of KleeneStates
     long kleeneDomainSize;

@@ -8,6 +8,7 @@
 #include "utils/system_utils.h"
 #include "utils/timer.h"
 
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
@@ -260,6 +261,51 @@ void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     rewardCPF = new RewardFunction(rewardFormula);
 }
 
+void RDDLTask::sortCPFs() {
+    sort(CPFs.begin(), CPFs.end(),
+         [](ConditionalProbabilityFunction* const& lhs,
+            ConditionalProbabilityFunction* const& rhs) {
+             if (lhs->isProb == rhs->isProb) {
+                 return lhs->name < rhs->name;
+             }
+             return rhs->isProb;
+         });
+    for (size_t i = 0; i < CPFs.size(); ++i) {
+        CPFs[i]->setIndex(i);
+    }
+}
+
+void RDDLTask::sortActionFluents() {
+    sort(actionFluents.begin(), actionFluents.end(),
+         [](ActionFluent* const& lhs, ActionFluent* const& rhs) {
+             return lhs->fullName < rhs->fullName;
+         });
+    for (size_t i = 0; i < actionFluents.size(); ++i) {
+        actionFluents[i]->index = i;
+    }
+}
+
+void RDDLTask::sortActionStates() {
+    auto sortFn = [] (ActionState const& lhs, ActionState const& rhs) {
+        int lhsNum = 0;
+        int rhsNum = 0;
+        for (unsigned int i = 0; i < lhs.state.size(); ++i) {
+            lhsNum += lhs.state[i];
+            rhsNum += rhs.state[i];
+        }
+        if (lhsNum < rhsNum) {
+            return true;
+        } else if (rhsNum < lhsNum) {
+            return false;
+        }
+        return lhs.state < rhs.state;
+    };
+    sort(actionStates.begin(), actionStates.end(), sortFn);
+    for (size_t i = 0; i < actionStates.size(); ++i) {
+        actionStates[i].index = i;
+    }
+}
+
 void RDDLTask::print(ostream& out) {
     // Set precision of doubles
     out.unsetf(ios::floatfield);
@@ -386,10 +432,9 @@ void RDDLTask::print(ostream& out) {
         out << "## number of values" << endl;
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
-        for (set<double>::iterator it = CPFs[index]->domain.begin();
-             it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " "
-                << CPFs[index]->head->valueType->objects[*it]->name
+        for (size_t i = 0; i < CPFs[index]->domain.size(); ++i) {
+            out << i << " "
+                << CPFs[index]->head->valueType->objects[i]->name
                 << endl;
         }
 
@@ -441,10 +486,9 @@ void RDDLTask::print(ostream& out) {
         out << "## number of values" << endl;
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
-        for (set<double>::iterator it = CPFs[index]->domain.begin();
-             it != CPFs[index]->domain.end(); ++it) {
-            out << *it << " "
-                << CPFs[index]->head->valueType->objects[*it]->name
+        for (size_t i = 0; i < CPFs[index]->domain.size(); ++i) {
+            out << i << " "
+                << CPFs[index]->head->valueType->objects[i]->name
                 << endl;
         }
 

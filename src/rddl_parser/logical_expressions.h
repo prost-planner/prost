@@ -147,7 +147,8 @@ public:
 
     ParametrizedVariable(std::string _variableName,
                          std::vector<Parameter*> _params,
-                         VariableType _variableType, Type* _valueType,
+                         VariableType _variableType,
+                         Type* _valueType,
                          double _initialValue)
         : LogicalExpression(),
           variableName(_variableName),
@@ -159,7 +160,8 @@ public:
     ParametrizedVariable(ParametrizedVariable const& source,
                          std::vector<Parameter*> _params);
     ParametrizedVariable(ParametrizedVariable const& source,
-                         std::vector<Parameter*> _params, double _initialValue);
+                         std::vector<Parameter*> _params,
+                         double _initialValue);
 
     std::string variableName;
     std::string fullName;
@@ -186,8 +188,11 @@ public:
 class StateFluent : public ParametrizedVariable {
 public:
     StateFluent(ParametrizedVariable const& source,
-                std::vector<Parameter*> _params, double _initialValue)
-        : ParametrizedVariable(source, _params, _initialValue), index(-1) {}
+                std::vector<Parameter*> _params,
+                double _initialValue, int _index = -1)
+        : ParametrizedVariable(source, _params, _initialValue), index(_index) {
+        domainSize = valueType->objects.size();
+    }
     StateFluent(ParametrizedVariable const& source,
                 std::vector<Parameter*> _params)
         : ParametrizedVariable(source, _params), index(-1) {}
@@ -225,14 +230,8 @@ public:
 class ActionFluent : public ParametrizedVariable {
 public:
     ActionFluent(ParametrizedVariable const& source,
-                 std::vector<Parameter*> _params)
-        : ParametrizedVariable(source, _params, 0.0),
-          index(-1),
-          isFDR(source.valueType->name != "bool") {}
-    ActionFluent(std::string name, Type* _valueType, int _index = -1)
-        : ParametrizedVariable(name, {}, VariableType::ACTION_FLUENT, _valueType, 0.0),
-          index(_index),
-          isFDR(_valueType->name != "bool") {}
+                 std::vector<Parameter*> _params, int _index = -1);
+    ActionFluent(std::string name, Type* _valueType, int _index = -1);
 
     int index;
     bool isFDR;

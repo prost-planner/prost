@@ -46,6 +46,7 @@ set(RDDL_PARSER_SOURCES
     precomputer
     probability_distribution
     rddl
+    reachability_analysis
     simplifier
     states
     task_analyzer
@@ -56,14 +57,16 @@ set(RDDL_PARSER_SOURCES
 )
 
 ## == Doctest ==
+set(RDDL_PARSER_TEST_SOURCES
+    ../doctest/doctest
+    tests/fdr_generation_test
+    tests/mutex_detection_test
+    tests/probability_distribution_test
+    tests/reachability_analysis_test
+)
+
 # add unit test files in debug build
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(RDDL_PARSER_TEST_SOURCES
-        ../doctest/doctest
-        tests/fdr_generation_test
-        tests/mutex_detection_test
-        tests/probability_distribution_test
-    )
     set(RDDL_PARSER_SOURCES ${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TEST_SOURCES})
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 

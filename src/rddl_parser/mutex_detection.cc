@@ -55,11 +55,6 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     }
 
     if (concurrent) {
-        // TODO: Order the action variable pairs in a way that the most
-        //  promising ones are considered earlier, and such that we can stop
-        //  this if it takes too much time (the code below is quadratic in the
-        //  number of action variables)
-
         CSP csp(task);
         csp.addPreconditions();
         Z3Expressions& actionVars = csp.getActionVars();

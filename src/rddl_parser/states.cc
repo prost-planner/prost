@@ -33,16 +33,6 @@ bool ActionState::isNOOP(RDDLTask* task) const {
     return true;
 }
 
-bool ActionState::sharesActiveActionFluent(
-    set<ActionFluent*> const& actionFluents) const {
-    for (ActionFluent const* af : actionFluents) {
-        if (state[af->index]) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void ActionState::print(ostream& out) const {
     for (unsigned int index = 0; index < state.size(); ++index) {
         out << state[index] << " ";

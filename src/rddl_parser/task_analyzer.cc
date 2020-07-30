@@ -198,7 +198,8 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
 
         vector<set<double>> domains(numCPFs);
         for (size_t index = 0; index < numCPFs; ++index) {
-            domains[index] = task->CPFs[index]->domain;
+            vector<int> const& domain = task->CPFs[index]->domain;
+            domains[index].insert(domain.begin(), domain.end());
         }
 
         for (ActionState const& action : task->actionStates) {
