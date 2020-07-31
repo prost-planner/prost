@@ -76,6 +76,8 @@ private:
       into separate conjunctive elements if possible
     */
     void simplifyPreconditions(Simplifications& replacements);
+    std::vector<ActionPrecondition*> simplifyPrecondition(
+        ActionPrecondition* precond, Simplifications& replacements);
 
     /*
       Check if a precondition forbids the application of an action fluent
@@ -84,22 +86,10 @@ private:
     bool computeInapplicableActionFluents(Simplifications& replacements);
 
     /*
-      Determine which action fluents are relevant, i.e. if they occur at least
-      once in a CPF, precondition or the reward function
+      Determine which action fluents are relevant, i.e. those that occur in some
+      precondition, CPF or the reward formula
     */
     bool computeRelevantActionFluents(Simplifications& replacements);
-
-    /*
-      Distinguish state-dependent action preconditions, static
-      (state-independent and action-dependent) constraints and invariant
-    */
-    void classifyActionPreconditions();
-
-    /*
-      Mark all action fluents that occur in some precondition, CPF or the
-      reward formula
-    */
-    std::vector<bool> determineUsedActionFluents();
 
     /*
       Generate finite domain action fluents by determining mutually exclusive
@@ -131,10 +121,10 @@ private:
                                     Simplifications& replacements);
 
     /*
-      Assign indices to action states and determine which preconditions are
-      relevant for an action
+      Determine which preconditions are relevant during search and associate
+      these preconditions with the actions they can possibly influence
     */
-    void initializeActionStates();
+    void determineRelevantPreconditions();
 
     /*
       Remove all action fluents af where filter[af->index] is false, assign new

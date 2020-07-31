@@ -467,7 +467,7 @@ StateConstraintList: StateConstraintSchematic                        { }
                 |     StateConstraintSchematic StateConstraintList   { }
 ;
 
-StateConstraintSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
+StateConstraintSchematic: Expression ';' { rddlTask->addPrecondition($1); }
 ;
 
 ////////////////////////
@@ -481,7 +481,7 @@ ActionPreconditionsList: ActionPreconditionsSchematic                       { }
                     | ActionPreconditionsSchematic ActionPreconditionsList  { }
 ;
 
-ActionPreconditionsSchematic: Expression ';' { rddlTask->SACs.push_back($1); }
+ActionPreconditionsSchematic: Expression ';' { rddlTask->addPrecondition($1); }
 ;
 
 ////////////////////////

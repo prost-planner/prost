@@ -41,8 +41,8 @@ void CSP::addActionVariables() {
 // Add all preconditions for the specified action variables
 void CSP::addPreconditions(int actionIndex) {
     assert(actionIndex < actions.size());
-    for (LogicalExpression* sac : task->SACs) {
-        solver.add(sac->toZ3Formula(*this, actionIndex) != 0);
+    for (ActionPrecondition* precond : task->preconds) {
+        solver.add(precond->formula->toZ3Formula(*this, actionIndex) != 0);
     }
 
     // The value provided by max-nondef-actions is also a constraint that

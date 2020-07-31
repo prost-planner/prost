@@ -88,8 +88,8 @@ struct Evaluatable {
 };
 
 struct ActionPrecondition : public Evaluatable {
-    ActionPrecondition(std::string _name, LogicalExpression* _formula)
-        : Evaluatable(_name, _formula) {}
+    ActionPrecondition(LogicalExpression* _formula)
+        : Evaluatable("precond", _formula) {}
 
     bool containsStateFluent() const {
         return !dependentStateFluents.empty();

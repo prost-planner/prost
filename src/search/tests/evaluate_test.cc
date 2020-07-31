@@ -1,4 +1,5 @@
 #include "test_utils.cc"
+
 #include "../logical_expressions.h"
 
 #include <sstream>

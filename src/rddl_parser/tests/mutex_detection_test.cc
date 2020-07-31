@@ -11,11 +11,11 @@ using namespace std;
 
 TEST_CASE("Mutex detection without concurrency") {
     // If there is no concurrency, all pairs of action fluents are mutex
-    RDDLTask* task = new RDDLTask();
+    auto task = new RDDLTask();
     task->numberOfConcurrentActions = 1;
-    ActionFluent* a0 = new ActionFluent("a0", task->getType("bool"), 0);
-    ActionFluent* a1 = new ActionFluent("a1", task->getType("bool"), 1);
-    ActionFluent* a2 = new ActionFluent("a2", task->getType("bool"), 2);
+    auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
+    auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
+    auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
     task->actionFluents = {a0, a1, a2};
 
     TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
@@ -31,11 +31,11 @@ TEST_CASE("Mutex detection without concurrency") {
 TEST_CASE("Mutex detection without preconditions") {
     // If concurrency is allowed (any number x larger than 1) and there are no
     // preconditions, any x-tuple of fluents is applicable concurrently
-    RDDLTask* task = new RDDLTask();
+    auto task = new RDDLTask();
     task->numberOfConcurrentActions = 2;
-    ActionFluent* a0 = new ActionFluent("a0", task->getType("bool"), 0);
-    ActionFluent* a1 = new ActionFluent("a1", task->getType("bool"), 1);
-    ActionFluent* a2 = new ActionFluent("a2", task->getType("bool"), 2);
+    auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
+    auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
+    auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
     task->actionFluents = {a0, a1, a2};
 
     TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
@@ -51,9 +51,9 @@ TEST_CASE("Mutex detection without preconditions") {
 TEST_CASE("Mutex detection with a single action fluent") {
     // If there is only one action fluent, that action fluent is not mutex with
     // another action fluent
-    RDDLTask* task = new RDDLTask();
+    auto task = new RDDLTask();
     task->numberOfConcurrentActions = 2;
-    ActionFluent* a0 = new ActionFluent("a0", task->getType("bool"), 0);
+    auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
     task->actionFluents = {a0};
 
     TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
@@ -66,15 +66,15 @@ TEST_CASE("Mutex detection with a single action fluent") {
 TEST_CASE("Mutex detection with FDR variables") {
     // If there is only one action fluent, that action fluent is not mutex with
     // another action fluent
-    RDDLTask* task = new RDDLTask();
+    auto task = new RDDLTask();
     task->numberOfConcurrentActions = 2;
     Type* varType = task->addType("dummy");
     task->addObject("dummy", "0");
     task->addObject("dummy", "1");
     task->addObject("dummy", "2");
     task->addObject("dummy", "3");
-    ActionFluent* a0 = new ActionFluent("a0", varType, 0);
-    ActionFluent* a1 = new ActionFluent("a1", varType, 1);
+    auto a0 = new ActionFluent("a0", varType, 0);
+    auto a1 = new ActionFluent("a1", varType, 1);
     task->actionFluents = {a0, a1};
     CHECK(a0->isFDR);
     CHECK(a1->isFDR);
@@ -91,23 +91,23 @@ TEST_CASE("Mutex detection with FDR variables") {
 TEST_CASE("Mutex detection with relevant preconditions") {
     // There are three fluents and two preconditions such that a0 and a1 as
     // well as a0 and a2 are mutex
-    RDDLTask* task = new RDDLTask();
+    auto task = new RDDLTask();
     task->numberOfConcurrentActions = 2;
-    ActionFluent* a0 = new ActionFluent("a0", task->getType("bool"), 0);
-    ActionFluent* a1 = new ActionFluent("a1", task->getType("bool"), 1);
-    ActionFluent* a2 = new ActionFluent("a2", task->getType("bool"), 2);
+    auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
+    auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
+    auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
     task->actionFluents = {a0, a1, a2};
 
     // Build precondition (a0 + a1) <= 1
     vector<LogicalExpression*> a0a1 = {a0, a1};
     vector<LogicalExpression*> leqa0a1 =
         {new Addition(a0a1), new NumericConstant(1)};
-    LogicalExpression* p1 = new LowerEqualsExpression(leqa0a1);
+    auto p1 = new ActionPrecondition(new LowerEqualsExpression(leqa0a1));
 
     // Build precondition \neg(a0 \land a2)
     vector<LogicalExpression*> a0a2 = {a0, a2};
-    LogicalExpression* p2 = new Negation(new Conjunction(a0a2));
-    task->SACs = {p1, p2};
+    auto p2 = new ActionPrecondition(new Negation(new Conjunction(a0a2)));
+    task->preconds = {p1, p2};
 
     TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
 

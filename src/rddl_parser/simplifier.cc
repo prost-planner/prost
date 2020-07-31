@@ -104,7 +104,7 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     if (output) {
         cout << "    Initialize action states..." << endl;
     }
-    initializeActionStates();
+    determineRelevantPreconditions();
     if (output) {
         cout << "    ...finished (" << t() << ")" << endl;
     }
@@ -142,23 +142,37 @@ void Simplifier::simplifyCPFs(Simplifications& replacements) {
 }
 
 void Simplifier::simplifyPreconditions(Simplifications& replacements) {
-    vector<LogicalExpression*> simplifiedSACs;
-    for (LogicalExpression* precondition : task->SACs) {
-        LogicalExpression* precond = precondition->simplify(replacements);
-        if (auto conj = dynamic_cast<Conjunction*>(precond)) {
-            // Split the conjunction into separate preconditions
-            simplifiedSACs.insert(
-                simplifiedSACs.end(), conj->exprs.begin(), conj->exprs.end());
-        } else if (auto nc = dynamic_cast<NumericConstant*>(precond)) {
-            // This precond is either never satisfied or always
-            if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
-                SystemUtils::abort("Found a precond that is never satisified!");
-            }
-        } else {
-            simplifiedSACs.push_back(precond);
-        }
+    vector<ActionPrecondition*> sPreconds;
+    for (ActionPrecondition* precond : task->preconds) {
+        vector<ActionPrecondition*> sPrecond =
+            simplifyPrecondition(precond, replacements);
+        sPreconds.insert(sPreconds.end(), sPrecond.begin(), sPrecond.end());
     }
-    task->SACs = move(simplifiedSACs);
+    task->preconds = move(sPreconds);
+}
+
+vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
+    ActionPrecondition* precond, Simplifications& replacements) {
+    vector<ActionPrecondition*> result;
+    LogicalExpression* simplified = precond->formula->simplify(replacements);
+    if (auto conj = dynamic_cast<Conjunction*>(simplified)) {
+        // Split the conjunction into separate preconditions
+        for (LogicalExpression* expr : conj->exprs) {
+            ActionPrecondition* sPrec = new ActionPrecondition(expr);
+            sPrec->initialize();
+            result.push_back(move(sPrec));
+        }
+    } else if (auto nc = dynamic_cast<NumericConstant*>(simplified)) {
+        // This precond is either never satisfied or always
+        if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            SystemUtils::abort("Found a precond that is never satisified!");
+        }
+    } else {
+        ActionPrecondition* sPrec = new ActionPrecondition(simplified);
+        sPrec->initialize();
+        result.push_back(move(sPrec));
+    }
+    return result;
 }
 
 bool Simplifier::computeInapplicableActionFluents(
@@ -184,69 +198,28 @@ bool Simplifier::computeInapplicableActionFluents(
 }
 
 bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
-    classifyActionPreconditions();
-    vector<bool> fluentIsUsed = determineUsedActionFluents();
-    return filterActionFluents(fluentIsUsed, replacements);
-}
-
-void Simplifier::classifyActionPreconditions() {
-    // TODO: since preconditions exist on two levels (as LogicalFormulas in
-    //  task->SACs and as Preconditions in task->actionPreconds and
-    //  task->staticSACs), we have to clear the latter and rebuild them here.
-    //  The fact that preconditions exist twice is bad design and should be
-    //  fixed at some point.
-    task->actionPreconds.clear();
-    task->staticSACs.clear();
-    vector<LogicalExpression*> SACs;
-    for (size_t index = 0; index < task->SACs.size(); ++index) {
-        LogicalExpression* sac = task->SACs[index];
-        auto precond = new ActionPrecondition("SAC " + to_string(index), sac);
-
-        // Collect the properties of the SAC that are necessary for distinction
-        // of action preconditions, (primitive) static SACs and state invariants
-        precond->initialize();
-        if (!precond->containsStateFluent()) {
-            // An SAC that only contains action fluents is used to statically
-            // forbid action combinations.
-            task->staticSACs.push_back(precond);
-            SACs.push_back(sac);
-        } else if (!precond->isActionIndependent()) {
-            precond->index = task->actionPreconds.size();
-            task->actionPreconds.push_back(precond);
-            SACs.push_back(sac);
-        }
-    }
-    task->SACs = move(SACs);
-}
-
-vector<bool> Simplifier::determineUsedActionFluents() {
-    // TODO: If an action fluent is only used in SACs, it has no direct
+    // TODO: If an action fluent is only used in preconditions, it has no direct
     //  influence on states and rewards, but could be necessary to apply other
     //  action fluents. It might be possible to compile the action fluent into
     //  other action fluents in this case. (e.g., if a1 isn't part of any CPF
-    //  but a2 is, and there is a CPF a2 => a1, we can compile a1 and a2 into a
+    //  but a2 is, and there is an SAC a2 => a1, we can compile a1 and a2 into a
     //  new action fluent a' where a'=1 means a1=1 and a2=1, and a'=0 means
     //  a1=0 and a2=0 (or a1=1 and a2=0, this is irrelevant in this example).
-    vector<bool> result(task->actionFluents.size(), false);
-    for (ActionPrecondition* precond : task->actionPreconds) {
+    vector<bool> fluentIsUsed(task->actionFluents.size(), false);
+    for (ActionPrecondition* precond : task->preconds) {
         for (ActionFluent* af : precond->dependentActionFluents) {
-            result[af->index] = true;
-        }
-    }
-    for (ActionPrecondition* sac : task->staticSACs) {
-        for (ActionFluent* af : sac->dependentActionFluents) {
-            result[af->index] = true;
+            fluentIsUsed[af->index] = true;
         }
     }
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
         for (ActionFluent* af : cpf->dependentActionFluents) {
-            result[af->index] = true;
+            fluentIsUsed[af->index] = true;
         }
     }
     for (ActionFluent* af : task->rewardCPF->dependentActionFluents) {
-        result[af->index] = true;
+        fluentIsUsed[af->index] = true;
     }
-    return result;
+    return filterActionFluents(fluentIsUsed, replacements);
 }
 
 bool Simplifier::determineFiniteDomainActionFluents(
@@ -342,23 +315,28 @@ bool Simplifier::removeConstantStateFluents(
     return sfRemoved;
 }
 
-void Simplifier::initializeActionStates() {
-    // Check for each action state and precondition if that precondition could
-    // forbid the application of the action state. We do this by checking if
-    // there is a state where the precondition could be evaluated to false given
-    // the action is applied.
+void Simplifier::determineRelevantPreconditions() {
+    // Remove static preconditions
+    auto keep = [](ActionPrecondition* precond) {return precond->containsStateFluent();};
+    auto partIt = stable_partition(task->preconds.begin(), task->preconds.end(), keep);
+    task->preconds.erase(partIt, task->preconds.end());
+    for (size_t i = 0; i < task->preconds.size(); ++i) {
+        task->preconds[i]->index = i;
+    }
+
+    // Determine relevant preconditions for each action
     CSP csp(task);
     int numActions = task->actionStates.size();
-    int numPreconds = task->actionPreconds.size();
+    int numPreconds = task->preconds.size();
     vector<bool> precondIsRelevant(numPreconds, false);
-    for (size_t index = 0; index < numActions; ++index) {
-        ActionState& action = task->actionStates[index];
-        action.index = index;
+    for (size_t i = 0; i < numActions; ++i) {
+        ActionState& action = task->actionStates[i];
+        action.index = i;
 
         csp.push();
         csp.assignActionVariables(action.state);
 
-        for (ActionPrecondition* precond : task->actionPreconds) {
+        for (ActionPrecondition* precond : task->preconds) {
             csp.push();
             csp.addConstraint(precond->formula->toZ3Formula(csp, 0) == 0);
             if (csp.hasSolution()) {
@@ -370,15 +348,15 @@ void Simplifier::initializeActionStates() {
         csp.pop();
     }
 
-    // Remove irrelevant preconds
+    // Remove preconditions that aren't relevant for at least one action
     vector<ActionPrecondition*> finalPreconds;
-    for (ActionPrecondition* precond : task->actionPreconds) {
+    for (ActionPrecondition* precond : task->preconds) {
         if (precondIsRelevant[precond->index]) {
             precond->index = finalPreconds.size();
             finalPreconds.push_back(precond);
         }
     }
-    task->actionPreconds = move(finalPreconds);
+    task->preconds = move(finalPreconds);
 }
 
 bool Simplifier::filterActionFluents(

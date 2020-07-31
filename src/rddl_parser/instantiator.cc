@@ -25,7 +25,7 @@ void Instantiator::instantiate(bool const& output) {
 
     if (output)
         cout << "    Instantiating preconditions..." << endl;
-    instantiateSACs();
+    instantiatePreconds();
     if (output)
         cout << "    ...finished (" << t() << ")" << endl;
     t.reset();
@@ -105,22 +105,19 @@ bool isSumOverAllActionFluents(Addition* add, int numActionFluents) {
     return true;
 }
 
-void Instantiator::instantiateSACs() {
-    for (unsigned int i = 0; i < task->SACs.size(); ++i) {
-        map<string, Object*> quantifierReplacements;
-        task->SACs[i] =
-            task->SACs[i]->replaceQuantifier(quantifierReplacements, this);
+void Instantiator::instantiatePreconds() {
+    for (auto it = task->preconds.begin(); it != task->preconds.end(); ++it) {
         map<string, Object*> replacements;
-        task->SACs[i] = task->SACs[i]->instantiate(task, replacements);
+        (*it)->formula = (*it)->formula->replaceQuantifier(replacements, this);
+        replacements.clear();
+        (*it)->formula = (*it)->formula->instantiate(task, replacements);
 
-        // Check if this SAC encodes a constraint on the number of concurrently
-        // applicable actions
-        LowerEqualsExpression* lee =
-            dynamic_cast<LowerEqualsExpression*>(task->SACs[i]);
-        GreaterEqualsExpression* gee =
-            dynamic_cast<GreaterEqualsExpression*>(task->SACs[i]);
-        LowerExpression* le = dynamic_cast<LowerExpression*>(task->SACs[i]);
-        GreaterExpression* ge = dynamic_cast<GreaterExpression*>(task->SACs[i]);
+        // Check if this formula encodes a constraint on the number of
+        // concurrently applicable actions
+        auto lee = dynamic_cast<LowerEqualsExpression*>((*it));
+        auto gee = dynamic_cast<GreaterEqualsExpression*>((*it));
+        auto le = dynamic_cast<LowerExpression*>((*it));
+        auto ge = dynamic_cast<GreaterExpression*>((*it));
         Addition* add = nullptr;
         int value = -1;
 
@@ -153,7 +150,7 @@ void Instantiator::instantiateSACs() {
         int numActionFluents = task->actionFluents.size();
         if ((value >= 1) && isSumOverAllActionFluents(add, numActionFluents)) {
             task->numberOfConcurrentActions = value;
-            task->SACs.pop_back();
+            it = task->preconds.erase(it) - 1;
         }
     }
 }

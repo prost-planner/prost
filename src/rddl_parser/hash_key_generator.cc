@@ -135,7 +135,7 @@ void HashKeyGenerator::prepareEvaluatableHashKeys() {
     task->rewardCPF->hashIndex = hashIndex;
     task->rewardCPF->initializeHashKeys(task);
 
-    for (ActionPrecondition* precond : task->actionPreconds) {
+    for (ActionPrecondition* precond : task->preconds) {
         ++hashIndex;
         precond->hashIndex = hashIndex;
         precond->initializeHashKeys(task);

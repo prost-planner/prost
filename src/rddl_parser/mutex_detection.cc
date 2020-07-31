@@ -50,7 +50,7 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     // preconditions, no pair of action fluents can be mutex
     size_t numActionVars = task->actionFluents.size();
     bool concurrent = (task->numberOfConcurrentActions > 1);
-    if ((numActionVars == 1) || (concurrent && task->SACs.empty())) {
+    if ((numActionVars == 1) || (concurrent && task->preconds.empty())) {
         return result;
     }
 

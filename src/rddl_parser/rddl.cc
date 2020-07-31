@@ -72,6 +72,10 @@ void RDDLTask::addCPF(ParametrizedVariable variable,
     CPFDefinitions[head] = logicalExpression;
 }
 
+void RDDLTask::addPrecondition(LogicalExpression* formula) {
+    preconds.push_back(new ActionPrecondition(formula));
+}
+
 void RDDLTask::setInstance(string name, string domainName,
                            string nonFluentsName, int maxNonDefActions,
                            int horizon, double discount) {
@@ -335,11 +339,11 @@ void RDDLTask::print(ostream& out) {
     out << "## number of prob state fluents" << endl;
     out << (CPFs.size() - firstProbabilisticVarIndex) << endl;
     out << "## number of preconds" << endl;
-    out << actionPreconds.size() << endl;
+    out << preconds.size() << endl;
     out << "## number of actions" << endl;
     out << actionStates.size() << endl;
     out << "## number of hashing functions" << endl;
-    out << (actionPreconds.size() + CPFs.size() + 1) << endl;
+    out << (preconds.size() + CPFs.size() + 1) << endl;
     out << "## initial state" << endl;
     for (unsigned int i = 0; i < CPFs.size(); ++i) {
         out << CPFs[i]->getInitialValue() << " ";
@@ -586,42 +590,39 @@ void RDDLTask::print(ostream& out) {
 
     out << endl << endl << "#####PRECONDITIONS#####" << endl;
 
-    for (unsigned int index = 0; index < actionPreconds.size(); ++index) {
-        assert(actionPreconds[index]->index == index);
+    for (unsigned int index = 0; index < preconds.size(); ++index) {
+        assert(preconds[index]->index == index);
         out << "## index" << endl;
         out << index << endl;
         out << "## formula" << endl;
-        actionPreconds[index]->formula->print(out);
+        preconds[index]->formula->print(out);
         out << endl;
         out << "## hash index" << endl;
-        out << actionPreconds[index]->hashIndex << endl;
+        out << preconds[index]->hashIndex << endl;
         out << "## caching type" << endl;
-        out << actionPreconds[index]->cachingType << endl;
-        if (actionPreconds[index]->cachingType == "VECTOR") {
+        out << preconds[index]->cachingType << endl;
+        if (preconds[index]->cachingType == "VECTOR") {
             out << "## precomputed results" << endl;
-            out << actionPreconds[index]->precomputedResults.size()
-                << endl;
+            out << preconds[index]->precomputedResults.size() << endl;
             for (unsigned int res = 0;
-                 res < actionPreconds[index]->precomputedResults.size();
-                 ++res) {
-                out << res << " "
-                    << actionPreconds[index]->precomputedResults[res]
+                 res < preconds[index]->precomputedResults.size(); ++res) {
+                out << res << " " << preconds[index]->precomputedResults[res]
                     << endl;
             }
         }
         out << "## kleene caching type" << endl;
-        out << actionPreconds[index]->kleeneCachingType << endl;
-        if (actionPreconds[index]->kleeneCachingType == "VECTOR") {
+        out << preconds[index]->kleeneCachingType << endl;
+        if (preconds[index]->kleeneCachingType == "VECTOR") {
             out << "## kleene caching vec size" << endl;
-            out << actionPreconds[index]->kleeneCachingVectorSize << endl;
+            out << preconds[index]->kleeneCachingVectorSize << endl;
         }
 
         out << "## action hash keys" << endl;
         for (unsigned int actionIndex = 0;
-             actionIndex < actionPreconds[index]->actionHashKeyMap.size();
+             actionIndex < preconds[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " "
-                << actionPreconds[index]->actionHashKeyMap[actionIndex]
+                << preconds[index]->actionHashKeyMap[actionIndex]
                 << endl;
         }
 

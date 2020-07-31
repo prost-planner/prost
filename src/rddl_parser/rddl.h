@@ -26,6 +26,7 @@ struct RDDLTask {
                      int horizon, double discount);
     void addCPF(ParametrizedVariable variable,
                 LogicalExpression* logicalExpression);
+    void addPrecondition(LogicalExpression* logicalExpression);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
@@ -88,10 +89,7 @@ struct RDDLTask {
     std::vector<NonFluent*> nonFluents;
     std::map<std::string, NonFluent*> nonFluentMap;
 
-    // State action constraints
-    std::vector<LogicalExpression*> SACs;
-    std::vector<ActionPrecondition*> actionPreconds;
-    std::vector<ActionPrecondition*> staticSACs;
+    std::vector<ActionPrecondition*> preconds;
 
     // Instantiated CPFs
     std::vector<ConditionalProbabilityFunction*> CPFs;

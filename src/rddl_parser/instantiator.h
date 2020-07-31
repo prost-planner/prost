@@ -25,7 +25,7 @@ private:
     void instantiateVariables();
     void instantiateCPFs();
     void instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula);
-    void instantiateSACs();
+    void instantiatePreconds();
 };
 
 #endif

@@ -20,7 +20,7 @@ void Precomputer::precompute() {
         precomputeEvaluatable(task->rewardCPF);
     }
 
-    for (ActionPrecondition* precond : task->actionPreconds) {
+    for (ActionPrecondition* precond : task->preconds) {
         if (precond->cachingType == "VECTOR") {
             precomputeEvaluatable(precond);
         }
