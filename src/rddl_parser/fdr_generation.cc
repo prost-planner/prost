@@ -18,7 +18,7 @@ vector<ActionFluent*> FDRGenerator::generateFDRVars(
     TaskMutexInfo const& mutexes, Simplifications& replacements) {
     // Partition the variables with the given the mutex information
     VarPartitioning partitioning = partitionVars(mutexes);
-    
+
     CSP csp(task);
     csp.addPreconditions();
     vector<ActionFluent*> result;

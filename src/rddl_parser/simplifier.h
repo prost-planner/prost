@@ -84,17 +84,16 @@ private:
     bool computeInapplicableActionFluents(Simplifications& replacements);
 
     /*
-      Classify action preconditions as 1. state-dependent, 2. state-independent
-      and action-dependent or 3. state-action constraint and return state
-      fluents that are not trivially inapplicable
-    */
-    std::vector<bool> classifyActionPreconditions();
-
-    /*
       Determine which action fluents are relevant, i.e. if they occur at least
       once in a CPF, precondition or the reward function
     */
     bool computeRelevantActionFluents(Simplifications& replacements);
+
+    /*
+      Distinguish state-dependent action preconditions, static
+      (state-independent and action-dependent) constraints and invariant
+    */
+    void classifyActionPreconditions();
 
     /*
       Mark all action fluents that occur in some precondition, CPF or the

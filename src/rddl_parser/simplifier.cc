@@ -163,6 +163,33 @@ void Simplifier::simplifyPreconditions(Simplifications& replacements) {
 
 bool Simplifier::computeInapplicableActionFluents(
     Simplifications& replacements) {
+    CSP csp(task);
+    csp.addPreconditions();
+    Z3Expressions& actionVars = csp.getActionVars();
+    vector<bool> fluentIsApplicable(task->actionFluents.size(), true);
+    for (ActionFluent* af : task->actionFluents) {
+        if (af->isFDR) {
+            // TODO: We should also minimize the domains of FDR action variables
+            continue;
+        }
+
+        csp.push();
+        csp.addConstraint(actionVars[af->index] == 1);
+        if (!csp.hasSolution()) {
+            fluentIsApplicable[af->index] = false;
+        }
+        csp.pop();
+    }
+    return filterActionFluents(fluentIsApplicable, replacements);
+}
+
+bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
+    classifyActionPreconditions();
+    vector<bool> fluentIsUsed = determineUsedActionFluents();
+    return filterActionFluents(fluentIsUsed, replacements);
+}
+
+void Simplifier::classifyActionPreconditions() {
     // TODO: since preconditions exist on two levels (as LogicalFormulas in
     //  task->SACs and as Preconditions in task->actionPreconds and
     //  task->staticSACs), we have to clear the latter and rebuild them here.
@@ -170,13 +197,6 @@ bool Simplifier::computeInapplicableActionFluents(
     //  fixed at some point.
     task->actionPreconds.clear();
     task->staticSACs.clear();
-
-    vector<bool> fluentIsApplicable = classifyActionPreconditions();
-    return filterActionFluents(fluentIsApplicable, replacements);
-}
-
-vector<bool> Simplifier::classifyActionPreconditions() {
-    vector<bool> result(task->actionFluents.size(), true);
     vector<LogicalExpression*> SACs;
     for (size_t index = 0; index < task->SACs.size(); ++index) {
         LogicalExpression* sac = task->SACs[index];
@@ -186,19 +206,10 @@ vector<bool> Simplifier::classifyActionPreconditions() {
         // of action preconditions, (primitive) static SACs and state invariants
         precond->initialize();
         if (!precond->containsStateFluent()) {
-            int afIndex = precond->triviallyForbidsActionFluent();
-            if (afIndex >= 0) {
-                // This is a static action constraint of the form "not a" for
-                // some action fluent "a" that trivially forbids the application
-                // of "a" in every state, i.e. it must be false in every
-                // applicable action.
-                result[afIndex] = false;
-            } else {
-                // An SAC that only contains action fluents is used to
-                // statically forbid action combinations.
-                task->staticSACs.push_back(precond);
-                SACs.push_back(sac);
-            }
+            // An SAC that only contains action fluents is used to statically
+            // forbid action combinations.
+            task->staticSACs.push_back(precond);
+            SACs.push_back(sac);
         } else if (!precond->isActionIndependent()) {
             precond->index = task->actionPreconds.size();
             task->actionPreconds.push_back(precond);
@@ -206,12 +217,6 @@ vector<bool> Simplifier::classifyActionPreconditions() {
         }
     }
     task->SACs = move(SACs);
-    return result;
-}
-
-bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
-    vector<bool> fluentIsUsed = determineUsedActionFluents();
-    return filterActionFluents(fluentIsUsed, replacements);
 }
 
 vector<bool> Simplifier::determineUsedActionFluents() {

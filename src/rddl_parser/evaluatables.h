@@ -95,10 +95,6 @@ struct ActionPrecondition : public Evaluatable {
         return !dependentStateFluents.empty();
     }
 
-    // Checks if this is a static action constraint of the form "not a" for some
-    // action fluent "a"
-    int triviallyForbidsActionFluent() const;
-
     int index;
 };
 

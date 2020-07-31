@@ -21,7 +21,6 @@ void Evaluatable::initialize() {
 
 void Evaluatable::simplify(Simplifications& replace) {
     formula = formula->simplify(replace);
-
     initialize();
 }
 
@@ -162,17 +161,6 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(
         kleeneCachingType = "VECTOR";
         kleeneCachingVectorSize = nextHashKeyBase;
     }
-}
-
-int ActionPrecondition::triviallyForbidsActionFluent() const {
-    Negation* neg = dynamic_cast<Negation*>(formula);
-    if (neg) {
-        ActionFluent* af = dynamic_cast<ActionFluent*>(neg->expr);
-        if (af) {
-            return af->index;
-        }
-    }
-    return -1;
 }
 
 void ConditionalProbabilityFunction::setDomain(int maxVal) {
