@@ -4,87 +4,77 @@
 #include <set>
 #include <vector>
 
+class ActionFluent;
 struct RDDLTask;
 
 /*
-  A VariableMutexInformation object allows to maintain all mutex information of
-  a single action variable
+  A VariableMutexInformation is associated with a (binary) action variable and
+  keeps track of all other (binary) action variables it is mutex with (two
+  binary action variables are considered mutex if all action states where both
+  are assigned 'true' are inapplicable in all states).
 */
-struct VarMutexInfo {
-    VarMutexInfo() = delete;
-    explicit VarMutexInfo(RDDLTask* _task, int _varIndex)
-        : task(_task), varIndex(_varIndex) {}
+class VarMutexInfo {
+public:
+    explicit VarMutexInfo(RDDLTask* _task, ActionFluent* _var)
+        : task(_task), var(_var) {}
 
     void addAllVars();
-    void addVarByIndex(int index);
-
-    bool hasMutex() const {
-        return !mutex.empty();
+    void addVar(ActionFluent* other);
+    bool isMutexWithSomeVar() const {
+        return !mutexVars.empty();
     }
     bool isMutexWithAllVars() const;
-    bool isMutexWith(int otherVarIndex) const {
-        return mutex.find(otherVarIndex) != mutex.end();
+    bool isMutexWith(ActionFluent* other) const {
+        return mutexVars.find(other) != mutexVars.end();
+    }
+    std::set<ActionFluent*>::const_iterator begin() const {
+        return mutexVars.begin();
+    }
+    std::set<ActionFluent*>::const_iterator end() const {
+        return mutexVars.end();
     }
 
-    size_t size() const {
-        return mutex.size();
-    }
-
-    std::set<int>::const_iterator begin() const {
-        return mutex.begin();
-    }
-
-    std::set<int>::const_iterator end() const {
-        return mutex.end();
-    }
 private:
     RDDLTask* const task;
-    int const varIndex;
-    std::set<int> mutex;
+    ActionFluent* const var;
+
+    struct ActionFluentSort {
+        bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
+    };
+    std::set<ActionFluent*, ActionFluentSort> mutexVars;
 };
 
 /*
   A TaskMutexInfo object maintains the mutex information of all action variables
   of a RDDL task
 */
-struct TaskMutexInfo {
+class TaskMutexInfo {
+public:
     explicit TaskMutexInfo(RDDLTask* task);
 
-    std::vector<VarMutexInfo> mutexByVar;
-
-    void varsAreMutex(int lhs, int rhs) {
-        mutexByVar[lhs].addVarByIndex(rhs);
-        mutexByVar[rhs].addVarByIndex(lhs);
-    }
-
-    bool hasMutex() const;
+    void addMutexInfo(ActionFluent* lhs, ActionFluent* rhs);
+    bool hasMutexVarPair() const;
     bool allVarsArePairwiseMutex() const;
-
-    size_t size() const {
-        return mutexByVar.size();
-    }
-
-    VarMutexInfo const& operator[](int index) const {
-        return mutexByVar[index];
-    }
-
-    VarMutexInfo& operator[](int index) {
-        return mutexByVar[index];
-    }
-
+    VarMutexInfo const& operator[](ActionFluent* var) const;
+    VarMutexInfo& operator[](ActionFluent* var);
     std::vector<VarMutexInfo>::const_iterator begin() const {
-        return mutexByVar.begin();
+        return mutexInfoOfVars.begin();
+    }
+    std::vector<VarMutexInfo>::const_iterator end() const {
+        return mutexInfoOfVars.end();
+    }
+    size_t size() const {
+        return mutexInfoOfVars.size();
     }
 
-    std::vector<VarMutexInfo>::const_iterator end() const {
-        return mutexByVar.end();
-    }
+private:
+    std::vector<VarMutexInfo> mutexInfoOfVars;
 };
 
 /*
   Compute mutex information for each pair of action variables and return the
   information in a TaskMutexInfo object.
 */
-extern TaskMutexInfo computeActionVarMutexes(RDDLTask* task);
+TaskMutexInfo computeActionVarMutexes(RDDLTask* task);
 
 #endif

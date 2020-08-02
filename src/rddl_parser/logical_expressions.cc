@@ -13,10 +13,6 @@
 
 using namespace std;
 
-/*****************************************************************
-                        Constructors
-*****************************************************************/
-
 Object::Object(std::string _name, Type* _type)
     : Parameter(_name, _type), types() {
     Type* tmpType = type;

@@ -225,7 +225,7 @@ bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
 bool Simplifier::determineFiniteDomainActionFluents(
     Simplifications& replacements) {
     TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
-    if (!mutexInfo.hasMutex()) {
+    if (!mutexInfo.hasMutexVarPair()) {
         return false;
     }
 
@@ -275,7 +275,7 @@ vector<ActionState> Simplifier::computeApplicableActions() const {
     // the planning task and use the assigned action variables as legal action
     // state (being part of the model means there is at least one state where
     // the assignment is legal) and invalidate the action assignment for the
-    // next iteration. Teerminates when there are no more models.
+    // next iteration. Terminates when there are no more models.
     vector<ActionState> result;
     CSP csp(task);
     csp.addPreconditions();

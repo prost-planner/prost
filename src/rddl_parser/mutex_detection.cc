@@ -8,39 +8,57 @@
 
 using namespace std;
 
+inline bool VarMutexInfo::ActionFluentSort::operator()(ActionFluent const* lhs, ActionFluent const* rhs) const {
+    return lhs->index < rhs->index;
+}
+
 void VarMutexInfo::addAllVars() {
-    for (int index = 0; index < task->actionFluents.size(); ++index) {
-        addVarByIndex(index);
+    for (ActionFluent* af : task->actionFluents) {
+        addVar(af);
     }
 }
 
-void VarMutexInfo::addVarByIndex(int index) {
-    assert(index >= 0);
-    assert(index < task->actionFluents.size());
-    if (index != varIndex) {
-        mutex.insert(index);
+void VarMutexInfo::addVar(ActionFluent* other) {
+    if (other != var) {
+        mutexVars.insert(other);
     }
 }
 
 bool VarMutexInfo::isMutexWithAllVars() const {
-    return size() == (task->actionFluents.size() - 1);
+    return mutexVars.size() == (task->actionFluents.size() - 1);
 }
 
 TaskMutexInfo::TaskMutexInfo(RDDLTask* task) {
-    for (int index = 0; index < task->actionFluents.size(); ++index) {
-        mutexByVar.push_back(VarMutexInfo(task, index));
+    for (ActionFluent* af : task->actionFluents) {
+        mutexInfoOfVars.push_back(VarMutexInfo(task, af));
     }
 }
 
-bool TaskMutexInfo::hasMutex() const {
-    auto checkFluent = [](VarMutexInfo const& m) {return m.hasMutex();};
-    return any_of(mutexByVar.begin(), mutexByVar.end(), checkFluent);
+void TaskMutexInfo::addMutexInfo(ActionFluent* lhs, ActionFluent* rhs) {
+    mutexInfoOfVars[lhs->index].addVar(rhs);
+    mutexInfoOfVars[rhs->index].addVar(lhs);
+}
+
+bool TaskMutexInfo::hasMutexVarPair() const {
+    auto isMutexWithSomeVar =
+        [](VarMutexInfo const& m) {return m.isMutexWithSomeVar();};
+    return any_of(
+        mutexInfoOfVars.begin(), mutexInfoOfVars.end(), isMutexWithSomeVar);
 }
 
 bool TaskMutexInfo::allVarsArePairwiseMutex() const {
-    auto checkFluent =
+    auto isMutexWithAllVars =
         [](VarMutexInfo const& m) {return m.isMutexWithAllVars();};
-    return all_of(mutexByVar.begin(), mutexByVar.end(), checkFluent);
+    return all_of(
+        mutexInfoOfVars.begin(), mutexInfoOfVars.end(), isMutexWithAllVars);
+}
+
+VarMutexInfo const& TaskMutexInfo::operator[](ActionFluent* var) const {
+    return mutexInfoOfVars[var->index];
+}
+
+VarMutexInfo& TaskMutexInfo::operator[](ActionFluent* var) {
+    return mutexInfoOfVars[var->index];
 }
 
 TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
@@ -48,7 +66,7 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     // If there is only one action fluent (left) or if max-nondef-actions
     // doesn't constrain action applicability and there are no other
     // preconditions, no pair of action fluents can be mutex
-    size_t numActionVars = task->actionFluents.size();
+    size_t const numActionVars = task->actionFluents.size();
     bool concurrent = (task->numberOfConcurrentActions > 1);
     if ((numActionVars == 1) || (concurrent && task->preconds.empty())) {
         return result;
@@ -60,23 +78,25 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
         Z3Expressions& actionVars = csp.getActionVars();
 
         for (ActionFluent* var : task->actionFluents) {
-            // Action variables that are already in FDR are not considered
+            // Action variables that are already in FDR are not considered since
+            // it can be expected that it will rarely be the case that FDR
+            // variables are mutex with another variable in a later iteration
+            // than when they were created in the first place. It might still
+            // be worth to look into this at some point.
             if (var->isFDR) {
                 continue;
             }
-            int varIndex = var->index;
-            for (ActionFluent* otherVar : task->actionFluents) {
-                int otherVarIndex = otherVar->index;
-                if ((otherVarIndex <= varIndex) || otherVar->isFDR) {
+            for (ActionFluent* other : task->actionFluents) {
+                if ((other->index <= var->index) || other->isFDR) {
                     continue;
                 }
                 // Check if the CSP has a solution where both action variables
                 // are true. If it hasn't, the action variables are mutex.
                 csp.push();
-                csp.addConstraint(actionVars[varIndex] == 1);
-                csp.addConstraint(actionVars[otherVarIndex] == 1);
+                csp.addConstraint(actionVars[var->index] == 1);
+                csp.addConstraint(actionVars[other->index] == 1);
                 if (!csp.hasSolution()) {
-                    result.varsAreMutex(varIndex, otherVarIndex);
+                    result.addMutexInfo(var, other);
                 }
                 csp.pop();
             }
@@ -84,8 +104,8 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     } else {
         // When there is no concurreny, all action variables are pairwise mutex
         // and they can be combined to a single FDR action variable
-        for (size_t index = 0; index < numActionVars; ++index) {
-            result[index].addAllVars();
+        for (ActionFluent* var : task->actionFluents) {
+            result[var].addAllVars();
         }
     }
     return result;

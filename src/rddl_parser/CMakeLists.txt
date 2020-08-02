@@ -60,6 +60,7 @@ set(RDDL_PARSER_SOURCES
 set(RDDL_PARSER_TEST_SOURCES
     ../doctest/doctest
     tests/fdr_generation_test
+    tests/logical_expressions_test
     tests/mutex_detection_test
     tests/probability_distribution_test
     tests/reachability_analysis_test

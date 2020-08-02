@@ -1,6 +1,8 @@
 #ifndef FDR_GENERATION_H
 #define FDR_GENERATION_H
 
+#include <map>
+#include <set>
 #include <vector>
 
 class ActionFluent;
@@ -10,33 +12,30 @@ struct TaskMutexInfo;
 class ParametrizedVariable;
 struct RDDLTask;
 
-#include <map>
-#include <set>
-
 using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 
 /*
   A VarPartition object is used to represent a subset of the action variables
 */
 struct VarPartition {
-    VarPartition() {}
+    VarPartition() = default;
 
-    void addVarByIndex(int index);
-
-    std::set<int>::const_iterator begin() const {
-        return indices.begin();
+    void addVar(ActionFluent* var);
+    std::set<ActionFluent*>::const_iterator begin() const {
+        return vars.begin();
     }
-
-    std::set<int>::const_iterator end() const {
-        return indices.end();
+    std::set<ActionFluent*>::const_iterator end() const {
+        return vars.end();
     }
-
     size_t size() const {
-        return indices.size();
+        return vars.size();
     }
 
 private:
-    std::set<int> indices;
+    struct ActionFluentSort {
+        bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
+    };
+    std::set<ActionFluent*, ActionFluentSort> vars;
 };
 
 /*
@@ -44,16 +43,14 @@ private:
   variables
 */
 struct VarPartitioning {
-    VarPartitioning() {}
+    VarPartitioning() = default;
 
     void addPartition(VarPartition&& partition) {
         partitioning.push_back(std::move(partition));
     }
-
     std::vector<VarPartition>::const_iterator begin() const {
         return partitioning.begin();
     }
-
     std::vector<VarPartition>::const_iterator end() const {
         return partitioning.end();
     }
@@ -63,8 +60,7 @@ private:
 };
 
 /*
-  FDRGenerator is the pure virtual base class for algorithms that generate
-  finite-domain variables. Implement the method
+  An FDRGenerator generates finite-domain variables. Implement the method
 
   VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo)
 
@@ -74,7 +70,7 @@ private:
 class FDRGenerator {
 public:
     explicit FDRGenerator(RDDLTask* _task)
-        : task(_task), numFDRActionVars(0) {}
+        : task(_task) {}
 
     std::vector<ActionFluent*> generateFDRVars(
         TaskMutexInfo const& mutexes, Simplifications& replacements);
@@ -83,7 +79,7 @@ public:
 
 protected:
     RDDLTask* task;
-    int numFDRActionVars;
+    int numFDRActionVars = 0;
 
     virtual VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo) = 0;
 };
@@ -96,9 +92,7 @@ protected:
 */
 class GreedyFDRGenerator : public FDRGenerator {
 public:
-    GreedyFDRGenerator() = delete;
-    explicit GreedyFDRGenerator(RDDLTask* _task)
-        : FDRGenerator(_task) {}
+    explicit GreedyFDRGenerator(RDDLTask* _task) : FDRGenerator(_task) {}
 
 protected:
     VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo) override;
