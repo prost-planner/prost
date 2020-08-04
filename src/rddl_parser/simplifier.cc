@@ -15,13 +15,10 @@
 
 using namespace std;
 
-Simplifier::Simplifier(RDDLTask* _task)
-    : task(_task), numGeneratedFDRActionFluents(0) {
-    fdrGen = make_shared<GreedyFDRGenerator>(task);
-}
-
+namespace prost {
+namespace parser {
 void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
-    Timer t;
+    utils::Timer t;
     Simplifications replacements;
     bool continueSimplification = true;
     int iteration = 0;
@@ -129,7 +126,8 @@ void Simplifier::simplifyCPFs(Simplifications& replacements) {
             // Check if this CPF now also simplifies to its initial value
             auto nc = dynamic_cast<NumericConstant*>(cpf->formula);
             double initialValue = cpf->head->initialValue;
-            if (nc && MathUtils::doubleIsEqual(initialValue, nc->value)) {
+            if (nc &&
+                utils::MathUtils::doubleIsEqual(initialValue, nc->value)) {
                 assert(replacements.find(cpf->head) == replacements.end());
                 replacements[cpf->head] = nc;
                 task->CPFs.erase(it);
@@ -164,8 +162,9 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
         }
     } else if (auto nc = dynamic_cast<NumericConstant*>(simplified)) {
         // This precond is either never satisfied or always
-        if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
-            SystemUtils::abort("Found a precond that is never satisified!");
+        if (utils::MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            utils::SystemUtils::abort(
+                "Found a precond that is never satisified!");
         }
     } else {
         ActionPrecondition* sPrec = new ActionPrecondition(simplified);
@@ -177,9 +176,9 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
 
 bool Simplifier::computeInapplicableActionFluents(
     Simplifications& replacements) {
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     csp.addPreconditions();
-    Z3Expressions& actionVars = csp.getActionVars();
+    Z3Expressions const& actionVars = csp.getActionVarSet();
     vector<bool> fluentIsApplicable(task->actionFluents.size(), true);
     for (ActionFluent* af : task->actionFluents) {
         if (af->isFDR) {
@@ -224,12 +223,14 @@ bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
 
 bool Simplifier::determineFiniteDomainActionFluents(
     Simplifications& replacements) {
-    TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
+    fdr::TaskMutexInfo mutexInfo = fdr::computeActionVarMutexes(task);
     if (!mutexInfo.hasMutexVarPair()) {
         return false;
     }
 
-    task->actionFluents = fdrGen->generateFDRVars(mutexInfo, replacements);
+    fdr::FDRGenerator fdrGen(task);
+    task->actionFluents = fdrGen.generateFDRVars(mutexInfo, replacements,
+                                                 fdr::GreedyPartitioning());
     task->sortActionFluents();
     return true;
 }
@@ -277,7 +278,7 @@ vector<ActionState> Simplifier::computeApplicableActions() const {
     // the assignment is legal) and invalidate the action assignment for the
     // next iteration. Terminates when there are no more models.
     vector<ActionState> result;
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     csp.addPreconditions();
     while (csp.hasSolution()) {
         result.emplace_back(csp.getActionModel());
@@ -292,8 +293,8 @@ bool Simplifier::approximateDomains(Simplifications& replacements) {
     return removeConstantStateFluents(domains, replacements);
 }
 
-bool Simplifier::removeConstantStateFluents(
-    vector<set<double>> const& domains, Simplifications& replacements) {
+bool Simplifier::removeConstantStateFluents(vector<set<double>> const& domains,
+                                            Simplifications& replacements) {
     vector<ConditionalProbabilityFunction*> cpfs;
     bool sfRemoved = false;
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
@@ -317,15 +318,18 @@ bool Simplifier::removeConstantStateFluents(
 
 void Simplifier::determineRelevantPreconditions() {
     // Remove static preconditions
-    auto keep = [](ActionPrecondition* precond) {return precond->containsStateFluent();};
-    auto partIt = stable_partition(task->preconds.begin(), task->preconds.end(), keep);
+    auto keep = [](ActionPrecondition* precond) {
+        return precond->containsStateFluent();
+    };
+    auto partIt =
+        stable_partition(task->preconds.begin(), task->preconds.end(), keep);
     task->preconds.erase(partIt, task->preconds.end());
     for (size_t i = 0; i < task->preconds.size(); ++i) {
         task->preconds[i]->index = i;
     }
 
     // Determine relevant preconditions for each action
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     int numActions = task->actionStates.size();
     int numPreconds = task->preconds.size();
     vector<bool> precondIsRelevant(numPreconds, false);
@@ -334,7 +338,7 @@ void Simplifier::determineRelevantPreconditions() {
         action.index = i;
 
         csp.push();
-        csp.assignActionVariables(action.state);
+        csp.assignActionVarSet(action.state);
 
         for (ActionPrecondition* precond : task->preconds) {
             csp.push();
@@ -359,10 +363,10 @@ void Simplifier::determineRelevantPreconditions() {
     task->preconds = move(finalPreconds);
 }
 
-bool Simplifier::filterActionFluents(
-    vector<bool> const& filter, Simplifications& replacements) {
+bool Simplifier::filterActionFluents(vector<bool> const& filter,
+                                     Simplifications& replacements) {
     vector<ActionFluent*>& actionFluents = task->actionFluents;
-    auto keep = [&](ActionFluent* af) {return filter[af->index];};
+    auto keep = [&](ActionFluent* af) { return filter[af->index]; };
     // Separate action fluents that are kept from discarded ones
     auto partIt = partition(actionFluents.begin(), actionFluents.end(), keep);
     bool result = (partIt != actionFluents.end());
@@ -377,3 +381,5 @@ bool Simplifier::filterActionFluents(
     task->sortActionFluents();
     return result;
 }
+} // namespace parser
+} // namespace prost

@@ -8,6 +8,9 @@
 #include <limits>
 #include <vector>
 
+namespace prost {
+namespace parser {
+namespace utils {
 class MathUtils {
 public:
     static bool doubleIsEqual(double const& d1, double const& d2) {
@@ -65,5 +68,8 @@ public:
 private:
     MathUtils() {}
 };
+} // namespace utils
+} // namespace parser
+} // namespace prost
 
 #endif

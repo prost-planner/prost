@@ -9,6 +9,10 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
+namespace fdr {
+namespace tests {
 TEST_CASE("Mutex detection with binary variables") {
     auto task = new RDDLTask();
     task->numberOfConcurrentActions = 1;
@@ -69,20 +73,16 @@ TEST_CASE("Mutex detection with binary variables") {
         // and a1 as well as a0 and a2 are mutex whereas a1 and a2 are not
         task->numberOfConcurrentActions = 2;
         task->actionFluents = {a0, a1, a2};
-
         // Build precondition (a0 + a1) <= 1
         vector<LogicalExpression*> a0a1 = {a0, a1};
-        vector<LogicalExpression*> leqa0a1 =
-            {new Addition(a0a1), new NumericConstant(1)};
+        vector<LogicalExpression*> leqa0a1 = {new Addition(a0a1),
+                                              new NumericConstant(1)};
         auto p1 = new ActionPrecondition(new LowerEqualsExpression(leqa0a1));
-
         // Build precondition \neg(a0 \land a2)
         vector<LogicalExpression*> a0a2 = {a0, a2};
         auto p2 = new ActionPrecondition(new Negation(new Conjunction(a0a2)));
         task->preconds = {p1, p2};
-
         TaskMutexInfo mutexInfo = computeActionVarMutexes(task);
-
         CHECK(mutexInfo.size() == 3);
         CHECK(mutexInfo.hasMutexVarPair());
         CHECK(!mutexInfo.allVarsArePairwiseMutex());
@@ -118,6 +118,7 @@ TEST_CASE("Mutex detection with FDR variables") {
     CHECK(!mutexInfo[a0].isMutexWithSomeVar());
     CHECK(!mutexInfo[a1].isMutexWithSomeVar());
 }
-
-
-
+} // namespace tests
+} // namespace fdr
+} // namespace parser
+} // namespace prost

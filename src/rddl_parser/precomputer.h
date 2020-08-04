@@ -1,12 +1,15 @@
 #ifndef PRECOMPUTER_H
 #define PRECOMPUTER_H
 
+#include <vector>
+
+namespace prost {
+namespace parser {
 class Evaluatable;
 struct RDDLTask;
 class State;
 class StateFluent;
 
-#include <vector>
 
 class Precomputer {
 public:
@@ -24,5 +27,7 @@ private:
     long calculateStateFluentHashKey(Evaluatable* eval,
                                      State const& state) const;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

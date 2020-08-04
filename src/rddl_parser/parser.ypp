@@ -31,7 +31,7 @@ extern YY_BUFFER_STATE yy_scan_string(const char * str);
 extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 extern void yyerror (std::string message);
 
-RDDLTask* rddlTask;
+prost::parser::RDDLTask* rddlTask;
 
 %}
 
@@ -41,19 +41,19 @@ RDDLTask* rddlTask;
     std::string* str;
     std::vector<std::string>* strs;
 
-    RDDLTask* rddlTask;
-    Parameter* parameter;
-    std::vector<Parameter*>* parameters;
-    ParameterList* parameterList;
-    ParametrizedVariable* parametrizedVariable;
-    std::vector<ParametrizedVariable*>* parametrizedVariables;
-    LogicalExpression* logicalExpression;
-    Type* type;
-    std::vector<Type*>* types;
-    std::vector<LogicalExpression*>* logicalExpressions;
-    ConditionEffectPair* conditionEffect;
-    std::vector<ConditionEffectPair*>* conditionEffects;
-    DiscreteDistribution* lConstCaseList;
+    prost::parser::RDDLTask* rddlTask;
+    prost::parser::Parameter* parameter;
+    std::vector<prost::parser::Parameter*>* parameters;
+    prost::parser::ParameterList* parameterList;
+    prost::parser::ParametrizedVariable* parametrizedVariable;
+    std::vector<prost::parser::ParametrizedVariable*>* parametrizedVariables;
+    prost::parser::LogicalExpression* logicalExpression;
+    prost::parser::Type* type;
+    std::vector<prost::parser::Type*>* types;
+    std::vector<prost::parser::LogicalExpression*>* logicalExpressions;
+    prost::parser::ConditionEffectPair* conditionEffect;
+    std::vector<prost::parser::ConditionEffectPair*>* conditionEffects;
+    prost::parser::DiscreteDistribution* lConstCaseList;
 }
 
 // Tokens
@@ -175,9 +175,9 @@ SchematicType: id_token ':' object_token ';'                                    
                                                                                   for (const std::string& s : *$4) {
                                                                                       rddlTask->addObject(*$1, s);
                                                                                   }}
-          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
-          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
-          | id_token ':' '<' StructMemberList '>' ';'                           { SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
+          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { prost::parser::utils::SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
+          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { prost::parser::utils::SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
+          | id_token ':' '<' StructMemberList '>' ';'                           { prost::parser::utils::SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
 ;
 
 EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
@@ -190,15 +190,15 @@ TypeSpecification: id_token      { $$ = rddlTask->getType(*$1); }
                 | bool_token     { $$ = rddlTask->getType(*$1); }
 ;
 
-StructMemberList: LConst ':' TypeSpecification                      { SystemUtils::abort("StructMemberList not implemented yet."); }
-                | LConst ':' TypeSpecification ',' StructMemberList { SystemUtils::abort("StructMemberList not implemented yet."); }
+StructMemberList: LConst ':' TypeSpecification                      { prost::parser::utils::SystemUtils::abort("StructMemberList not implemented yet."); }
+                | LConst ':' TypeSpecification ',' StructMemberList { prost::parser::utils::SystemUtils::abort("StructMemberList not implemented yet."); }
 ;
 
-LConst: doubleNum_token { $$ = new NumericConstant($1);  }
-    | intNum_token      { $$ = new NumericConstant($1);  }
-    | id_token          { $$ = new Parameter(*$1);       }
-    | true_token        { $$ = new NumericConstant(1.0); }
-    | false_token       { $$ = new NumericConstant(0.0); }
+LConst: doubleNum_token { $$ = new prost::parser::NumericConstant($1);  }
+    | intNum_token      { $$ = new prost::parser::NumericConstant($1);  }
+    | id_token          { $$ = new prost::parser::Parameter(*$1);       }
+    | true_token        { $$ = new prost::parser::NumericConstant(1.0); }
+    | false_token       { $$ = new prost::parser::NumericConstant(0.0); }
     | enum_token        { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
 ;
 
@@ -208,46 +208,46 @@ LConst: doubleNum_token { $$ = new NumericConstant($1);  }
 VarSection: variables_token '{' VarList '}' ';' { $$ = $3; }
 ;
 
-VarList: VariableSchematic             { $$ = new std::vector<ParametrizedVariable*>(); $$->push_back($1); }
+VarList: VariableSchematic             { $$ = new std::vector<prost::parser::ParametrizedVariable*>(); $$->push_back($1); }
         | VariableSchematic VarList    { $$ = $2; $$->insert($$->begin(), $1); }
 ;
 
-VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
-            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
-            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new ParametrizedVariable(*$1, *$2, ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); }
-            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                          { SystemUtils::abort("observ-fluent parametrized variables definition not implemented. "); }
+VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("observ-fluent parametrized variables definition not implemented. "); }
 ;
 
-ParametarList: ':'                                { $$ = new std::vector<Parameter*>(); }
+ParametarList: ':'                                { $$ = new std::vector<prost::parser::Parameter*>(); }
         | '(' ParametarListTypeSpecs ')' ':'      { $$ = $2; }
 ;
 
-ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<Parameter*>(); $$->push_back(new Parameter($1->name, $1)); }
-                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), new Parameter($1->name, $1)); }
+ParametarListTypeSpecs: TypeSpecification                                { $$ = new std::vector<prost::parser::Parameter*>(); $$->push_back(new prost::parser::Parameter($1->name, $1)); }
+                    |    TypeSpecification ',' ParametarListTypeSpecs    { $$ = $3; $$->insert($$->begin(), new prost::parser::Parameter($1->name, $1)); }
 ;
 
 RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 : 0; }
              | DoubleType                            { $$ = $1; }
              | IntType                               { $$ = $1; }
-             | id_token                              { Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
-             | '$' id_token                          { SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
+             | id_token                              { prost::parser::Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
+             | '$' id_token                          { prost::parser::utils::SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
              | enum_token                            { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]->value; }
-             | '<' StructRangeConsant '>'            { SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
-             | '(' '<' StructRangeConsant '>' ')'    { SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
-             | '[' '<' StructRangeConsant '>' ']'    { SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
+             | '<' StructRangeConsant '>'            { prost::parser::utils::SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
+             | '(' '<' StructRangeConsant '>' ')'    { prost::parser::utils::SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
+             | '[' '<' StructRangeConsant '>' ']'    { prost::parser::utils::SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
 ;
 
 
-StructRangeConsant: '?' ':' RangeConstant  { SystemUtils::abort("StructRangeConsant not implemented yet."); }
-                | StructRangeConsantList   { SystemUtils::abort("StructRangeConsant not implemented yet."); }
+StructRangeConsant: '?' ':' RangeConstant  { prost::parser::utils::SystemUtils::abort("StructRangeConsant not implemented yet."); }
+                | StructRangeConsantList   { prost::parser::utils::SystemUtils::abort("StructRangeConsant not implemented yet."); }
 ;
 
-StructRangeConsantList: LConst ':' RangeConstant                           { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
-                    | LConst ':' RangeConstant ',' StructRangeConsantList  { SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+StructRangeConsantList: LConst ':' RangeConstant                           { prost::parser::utils::SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+                    | LConst ':' RangeConstant ',' StructRangeConsantList  { prost::parser::utils::SystemUtils::abort("StructRangeConsantList not implemented yet."); }
 ;
 
 BoolType: true_token  { $$ = $1; }
@@ -292,9 +292,9 @@ VariableExpression: id_token                        {
                                                       if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
                                                         $$ = rddlTask->variableDefinitions[varName];
                                                       } else {
-                                                        SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                        prost::parser::utils::SystemUtils::abort("Unknown parametrized variable " + varName + ".");
                                                       }
-                                                      $$ = new ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), std::vector<Parameter*>());
+                                                      $$ = new prost::parser::ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), std::vector<prost::parser::Parameter*>());
                                                     }
             | id_token '(' TermList ')'             {
                                                       std::string varName;
@@ -305,34 +305,34 @@ VariableExpression: id_token                        {
                                                       if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
                                                         $$ = rddlTask->variableDefinitions[varName];
                                                       } else {
-                                                        SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                        prost::parser::utils::SystemUtils::abort("Unknown parametrized variable " + varName + ".");
                                                       }
-                                                      $$ = new ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), *$3);
+                                                      $$ = new prost::parser::ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), *$3);
                                                     }
-            | id_token MemberList                   { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
-            | id_token '(' TermList ')' MemberList  { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
-            | id_token '.' default_token            { SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token MemberList                   { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '(' TermList ')' MemberList  { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '.' default_token            { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
 ;
 
-TermList: Term                 { $$ = new std::vector<Parameter*>(); $$->push_back($1); }
+TermList: Term                 { $$ = new std::vector<prost::parser::Parameter*>(); $$->push_back($1); }
         | Term ',' TermList    { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
-Term: variable_token         { $$ = new Parameter(*$1); }
-    | VariableExpression     { SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); }
+Term: variable_token         { $$ = new prost::parser::Parameter(*$1); }
+    | VariableExpression     { prost::parser::utils::SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); }
     | enum_token             { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
-    | '$' id_token           { SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
+    | '$' id_token           { prost::parser::utils::SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
 ;
 
-MemberList: '.' Pterm          { SystemUtils::abort("MemberList not implemented yet."); }
-        | '.' Pterm MemberList { SystemUtils::abort("MemberList not implemented yet."); }
+MemberList: '.' Pterm          { prost::parser::utils::SystemUtils::abort("MemberList not implemented yet."); }
+        | '.' Pterm MemberList { prost::parser::utils::SystemUtils::abort("MemberList not implemented yet."); }
 ;
 
-Pterm: variable_token            { SystemUtils::abort("Pterm not implemented yet."); }
-    | '(' VariableExpression ')' { SystemUtils::abort("Pterm not implemented yet."); }
-    | '[' VariableExpression ']' { SystemUtils::abort("Pterm not implemented yet."); }
-    | enum_token                 { SystemUtils::abort("Pterm not implemented yet."); }
-    | '$' id_token               { SystemUtils::abort("Pterm not implemented yet."); }
+Pterm: variable_token            { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
+    | '(' VariableExpression ')' { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
+    | '[' VariableExpression ']' { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
+    | enum_token                 { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
+    | '$' id_token               { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
 ;
 
 ////////////////////////
@@ -340,112 +340,112 @@ Pterm: variable_token            { SystemUtils::abort("Pterm not implemented yet
 ////////////////////////
 Expression:
     // Flow control expressions, variables, enums, loops
-      variable_token                                                                            { $$ = new Parameter(*$1); }
+      variable_token                                                                            { $$ = new prost::parser::Parameter(*$1); }
     | VariableExpression                                                                        { $$ = $1; }
     | enum_token                                                                                { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
-    | '$' id_token                                                                              { SystemUtils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
-    | '<' StructExpressionList                                                                  { SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
+    | '$' id_token                                                                              { prost::parser::utils::SystemUtils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
+    | '<' StructExpressionList                                                                  { prost::parser::utils::SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
         // TODO: for now there are only sum, exists, product and forall. All of those are implemted and this part is left for purposes of further development of RDDL (definition of special functions)
-    | id_token '[' ExpressionList ']'                                                           { SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
-    | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new UniversalQuantification($4, $6); }
-    | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new ExistentialQuantification($4, $6);}
-    | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                      { $$ = new Sumation($4, $6); }
-    | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new Product($4, $6); }
-    | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new IfThenElseExpression($3, $6, $8); }
+    | id_token '[' ExpressionList ']'                                                           { prost::parser::utils::SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
+    | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new prost::parser::UniversalQuantification($4, $6); }
+    | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new prost::parser::ExistentialQuantification($4, $6);}
+    | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                      { $$ = new prost::parser::Sumation($4, $6); }
+    | product_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                  { $$ = new prost::parser::Product($4, $6); }
+    | if_token '(' Expression ')' then_token Expression else_token Expression    %prec if_token { $$ = new prost::parser::IfThenElseExpression($3, $6, $8); }
     | switch_token '(' Term ')' '{' CaseList '}'                                                { // TODO: Text switch case control
-                                                                                                   LogicalExpression* switchVar = rddlTask->getParametrizedVariable($3->name);
+                                                                                                   prost::parser::LogicalExpression* switchVar = rddlTask->getParametrizedVariable($3->name);
 
-                                                                                                    std::vector<LogicalExpression*> conditions;
-                                                                                                    std::vector<LogicalExpression*> effects;
-                                                                                                    for (ConditionEffectPair* cs : *$6) {
+                                                                                                    std::vector<prost::parser::LogicalExpression*> conditions;
+                                                                                                    std::vector<prost::parser::LogicalExpression*> effects;
+                                                                                                    for (prost::parser::ConditionEffectPair* cs : *$6) {
                                                                                                         if (!cs->first) {
                                                                                                             // If we reached the end of switch case and instead of 'case', we have 'default' -> default action
-                                                                                                            conditions.push_back(new NumericConstant(1.0));
+                                                                                                            conditions.push_back(new prost::parser::NumericConstant(1.0));
                                                                                                         }
                                                                                                         else {
-                                                                                                            std::vector<LogicalExpression*> switchVarEquality;
+                                                                                                            std::vector<prost::parser::LogicalExpression*> switchVarEquality;
                                                                                                             switchVarEquality.push_back(switchVar);
                                                                                                             switchVarEquality.push_back(cs->first);
-                                                                                                            conditions.push_back(new EqualsExpression(switchVarEquality));
+                                                                                                            conditions.push_back(new prost::parser::EqualsExpression(switchVarEquality));
                                                                                                         }
                                                                                                         effects.push_back(cs->second);
                                                                                                     }
-                                                                                                    $$ = new MultiConditionChecker(conditions, effects);
+                                                                                                    $$ = new prost::parser::MultiConditionChecker(conditions, effects);
                                                                                                 }
     // Arithmetic & logical expressions
-    | Expression '+' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Addition(exprs); }
-    | '-' Expression    %prec NEGATIVE                 { std::vector<LogicalExpression*> exprs; exprs.push_back(new NumericConstant(0.0)); exprs.push_back($2); $$ = new Subtraction(exprs); }
+    | Expression '+' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Addition(exprs); }
+    | '-' Expression    %prec NEGATIVE                 { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back(new prost::parser::NumericConstant(0.0)); exprs.push_back($2); $$ = new prost::parser::Subtraction(exprs); }
     | '+' Expression  %prec NEGATIVE                   { $$ = $2; }
-    | Expression '-' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Subtraction(exprs); }
-    | Expression '*' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Multiplication(exprs); }
-    | Expression '/' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Division(exprs); }
-    | Expression '>' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterExpression(exprs); }
-    | Expression '<' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerExpression(exprs); }
-    | Expression lessOrEqual_token Expression          { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new LowerEqualsExpression(exprs); }
-    | Expression greaterOrEqual_token Expression       { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new GreaterEqualsExpression(exprs); }
-    | Expression equal_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new EqualsExpression(exprs); }
-    | Expression nonEqual_token Expression             { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Negation(new EqualsExpression(exprs)); }
+    | Expression '-' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Subtraction(exprs); }
+    | Expression '*' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Multiplication(exprs); }
+    | Expression '/' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Division(exprs); }
+    | Expression '>' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::GreaterExpression(exprs); }
+    | Expression '<' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::LowerExpression(exprs); }
+    | Expression lessOrEqual_token Expression          { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::LowerEqualsExpression(exprs); }
+    | Expression greaterOrEqual_token Expression       { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::GreaterEqualsExpression(exprs); }
+    | Expression equal_token Expression                { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::EqualsExpression(exprs); }
+    | Expression nonEqual_token Expression             { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Negation(new prost::parser::EqualsExpression(exprs)); }
     | '(' Expression ')'                               { $$ = $2; }
     | '[' Expression ']'                               { $$ = $2; }
-    | Expression '^' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
-    | Expression '&' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Conjunction(exprs); }
-    | Expression '|' Expression                        { std::vector<LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new Disjunction(exprs); }
-    | '~' Expression    %prec NEGATIVE                 { $$ = new Negation($2); }
-    | Expression equivalent_token Expression           { std::vector<LogicalExpression*> posExprs, negExprs, exprs; posExprs.push_back($1); negExprs.push_back($3); exprs.push_back(new Conjunction(posExprs)); exprs.push_back(new Conjunction(posExprs)); $$ = new Disjunction(exprs); }
-    | Expression imply_token Expression                { std::vector<LogicalExpression*> exprs; exprs.push_back(new Negation($1)); exprs.push_back($3); $$ = new Disjunction(exprs); }
-    | doubleNum_token                                  { $$ = new NumericConstant($1); }
-    | intNum_token                                     { $$ = new NumericConstant($1); }
-    | true_token                                       { $$ = new NumericConstant(1.0); }
-    | false_token                                      { $$ = new NumericConstant(0.0); }
-    | exponential_token '(' Expression ')'             { $$ = new ExponentialFunction($3); }
-    | exponential_token '[' Expression ']'             { $$ = new ExponentialFunction($3); }
+    | Expression '^' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Conjunction(exprs); }
+    | Expression '&' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Conjunction(exprs); }
+    | Expression '|' Expression                        { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back($1); exprs.push_back($3); $$ = new prost::parser::Disjunction(exprs); }
+    | '~' Expression    %prec NEGATIVE                 { $$ = new prost::parser::Negation($2); }
+    | Expression equivalent_token Expression           { std::vector<prost::parser::LogicalExpression*> posExprs, negExprs, exprs; posExprs.push_back($1); negExprs.push_back($3); exprs.push_back(new prost::parser::Conjunction(posExprs)); exprs.push_back(new prost::parser::Conjunction(posExprs)); $$ = new prost::parser::Disjunction(exprs); }
+    | Expression imply_token Expression                { std::vector<prost::parser::LogicalExpression*> exprs; exprs.push_back(new prost::parser::Negation($1)); exprs.push_back($3); $$ = new prost::parser::Disjunction(exprs); }
+    | doubleNum_token                                  { $$ = new prost::parser::NumericConstant($1); }
+    | intNum_token                                     { $$ = new prost::parser::NumericConstant($1); }
+    | true_token                                       { $$ = new prost::parser::NumericConstant(1.0); }
+    | false_token                                      { $$ = new prost::parser::NumericConstant(0.0); }
+    | exponential_token '(' Expression ')'             { $$ = new prost::parser::ExponentialFunction($3); }
+    | exponential_token '[' Expression ']'             { $$ = new prost::parser::ExponentialFunction($3); }
 
     // Probability Distributions
-    | bernoulli_token '(' Expression ')'                                    { $$ = new BernoulliDistribution($3); }
-    | kronDelta_token '(' Expression ')'                                    { $$ = new KronDeltaDistribution($3); }
+    | bernoulli_token '(' Expression ')'                                    { $$ = new prost::parser::BernoulliDistribution($3); }
+    | kronDelta_token '(' Expression ')'                                    { $$ = new prost::parser::KronDeltaDistribution($3); }
     | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = $5; } // TODO: The return value (id_token) is optional in RDDL2.0
-    | diracDelta_token '(' Expression ')'                                   { SystemUtils::abort("DiracDelta not implemtend."); }
-    | uniform_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Uniform not implemtend."); }
-    | normal_token '(' Expression ',' Expression ')'                        { SystemUtils::abort("Normal not implemtend."); }
-    | dirichlet_token '(' id_token ',' Expression ')'                       { SystemUtils::abort("Dirichelt not implemtend."); }
-    | poisson_token '(' Expression ')'                                      { SystemUtils::abort("Poisson not implemtend."); }
-    | weibull_token '(' Expression ',' Expression ')'                       { SystemUtils::abort("Weibull not implemtend."); }
-    | gama_token '(' Expression ',' Expression ')'                          { SystemUtils::abort("Gama not implemtend.");  }
-    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { SystemUtils::abort("Multinomial not implemtend."); }
+    | diracDelta_token '(' Expression ')'                                   { prost::parser::utils::SystemUtils::abort("DiracDelta not implemtend."); }
+    | uniform_token '(' Expression ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Uniform not implemtend."); }
+    | normal_token '(' Expression ',' Expression ')'                        { prost::parser::utils::SystemUtils::abort("Normal not implemtend."); }
+    | dirichlet_token '(' id_token ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Dirichelt not implemtend."); }
+    | poisson_token '(' Expression ')'                                      { prost::parser::utils::SystemUtils::abort("Poisson not implemtend."); }
+    | weibull_token '(' Expression ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Weibull not implemtend."); }
+    | gama_token '(' Expression ',' Expression ')'                          { prost::parser::utils::SystemUtils::abort("Gama not implemtend.");  }
+    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { prost::parser::utils::SystemUtils::abort("Multinomial not implemtend."); }
 ;
 
-StructExpressionList: LConst ':' Expression '>'                          { SystemUtils::abort("StructExpressionList not implemented yet."); }
-                    | LConst ':' Expression ',' StructExpressionList     { SystemUtils::abort("StructExpressionList not implemented yet."); }
+StructExpressionList: LConst ':' Expression '>'                          { prost::parser::utils::SystemUtils::abort("StructExpressionList not implemented yet."); }
+                    | LConst ':' Expression ',' StructExpressionList     { prost::parser::utils::SystemUtils::abort("StructExpressionList not implemented yet."); }
 ;
 
-ExpressionList: Expression                    { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+ExpressionList: Expression                    { $$ = new std::vector<prost::parser::LogicalExpression*>(); $$->push_back($1); }
               | Expression ',' ExpressionList { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
-TypedVarList: TypedVariable                    { $$ = new ParameterList({}, {}); $$->params.push_back(new Parameter($1->name, $1->type)); $$->types.push_back($1->type); }
-            | TypedVariable ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
+TypedVarList: TypedVariable                    { $$ = new prost::parser::ParameterList({}, {}); $$->params.push_back(new prost::parser::Parameter($1->name, $1->type)); $$->types.push_back($1->type); }
+            | TypedVariable ',' TypedVarList   { $$ = $3; $$->params.insert($$->params.begin(), new prost::parser::Parameter($1->name, $1->type)); $$->types.insert($$->types.begin(), $1->type); }
 ;
 
 TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3)) {
-                                     $$ = new Parameter(*$1, rddlTask->getType(*$3));
+                                     $$ = new prost::parser::Parameter(*$1, rddlTask->getType(*$3));
                                    }
                                    else {
-                                        SystemUtils::abort("Type " + *$3 + " not defined");
+                                        prost::parser::utils::SystemUtils::abort("Type " + *$3 + " not defined");
                                    }
                                  }
 ;
 
-CaseList: CaseSchematic                 { $$ = new std::vector<ConditionEffectPair*>(); $$->push_back($1); }
+CaseList: CaseSchematic                 { $$ = new std::vector<prost::parser::ConditionEffectPair*>(); $$->push_back($1); }
         | CaseSchematic ',' CaseList    { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
-CaseSchematic: case_token Term ':' Expression      { LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new ConditionEffectPair(var, $4); }
-         | default_token ':' Expression            { $$ = new ConditionEffectPair(nullptr, $3); }
+CaseSchematic: case_token Term ':' Expression      { prost::parser::LogicalExpression* var = rddlTask->getParametrizedVariable($2->name); $$ = new prost::parser::ConditionEffectPair(var, $4); }
+         | default_token ':' Expression            { $$ = new prost::parser::ConditionEffectPair(nullptr, $3); }
 ;
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
-LConstCaseList: LConst ':' Expression                     { $$ = new DiscreteDistribution(); $$->values.push_back($1); $$->probabilities.push_back($3); }
-            | LConst ':' otherwise_token                  { SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
+LConstCaseList: LConst ':' Expression                     { $$ = new prost::parser::DiscreteDistribution(); $$->values.push_back($1); $$->probabilities.push_back($3); }
+            | LConst ':' otherwise_token                  { prost::parser::utils::SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
             | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->values.insert($$->values.begin(), $1); $$->probabilities.insert($$->probabilities.begin(), $3); }
 ;
 
@@ -518,8 +518,8 @@ ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
 
 ObjectsConstList: id_token                        { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
             | id_token ',' ObjectsConstList       { $$ = $3; $$->insert($$->begin(), *$1); }
-            | '$' id_token                        { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
-            | '$' id_token ',' ObjectsConstList   { SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token                        { prost::parser::utils::SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token ',' ObjectsConstList   { prost::parser::utils::SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
 ;
 
 ///////////////////////////////////////////////
@@ -534,8 +534,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        SystemUtils::abort("Unknown domain " + *$6 +
-                                           "  used in non-fluents section");
+                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
             | non_fluents_token id_token '{'
@@ -544,8 +543,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        SystemUtils::abort("Unknown domain " + *$6 +
-                                           "  used in non-fluents section");
+                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
             | non_fluents_token id_token '{'
@@ -554,8 +552,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        SystemUtils::abort("Unknown domain " + *$6 +
-                                           "  used in non-fluents section");
+                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
 ;
@@ -566,47 +563,47 @@ VariablesInstanceList: VariableInstanceSchematic                        { }
 
 // TODO: Refactor this piece of code once pasing LogicalExpressions to ParametrizedVariable is possbile
 VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
-                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
-                                                                                std::vector<Parameter*> params;
-                                                                                for (LogicalExpression* le : *$3) {
-                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
+                                                                                std::vector<prost::parser::Parameter*> params;
+                                                                                for (prost::parser::LogicalExpression* le : *$3) {
+                                                                                    prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
                                                                                 rddlTask->addParametrizedVariable(parent, params, 1);
                                                                               }
-                        | id_token ';'                                        { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, 1); }
+                        | id_token ';'                                        { prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, 1); }
                         | '~' id_token '(' LConstList ')' ';'                 {
-                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2);
-                                                                                std::vector<Parameter*> params;
-                                                                                for (LogicalExpression* le : *$4) {
-                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2);
+                                                                                std::vector<prost::parser::Parameter*> params;
+                                                                                for (prost::parser::LogicalExpression* le : *$4) {
+                                                                                    prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
                                                                                 rddlTask->addParametrizedVariable(parent, params, 0);
                                                                               }
-                        | '~' id_token                                        { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2); rddlTask->addParametrizedVariable(parent,  {}, 0); }
+                        | '~' id_token                                        { prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$2); rddlTask->addParametrizedVariable(parent,  {}, 0); }
                         | id_token '(' LConstList ')' '=' RangeConstant ';'   {
-                                                                                ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
-                                                                                std::vector<Parameter*> params;
-                                                                                for (LogicalExpression* le : *$3) {
-                                                                                    Parameter* param = dynamic_cast<Parameter*>(le);
+                                                                                prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1);
+                                                                                std::vector<prost::parser::Parameter*> params;
+                                                                                for (prost::parser::LogicalExpression* le : *$3) {
+                                                                                    prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
                                                                                 rddlTask->addParametrizedVariable(parent, params, $6);
                                                                               }
-                        | id_token '=' RangeConstant ';'                      { ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, $3);}
+                        | id_token '=' RangeConstant ';'                      { prost::parser::ParametrizedVariable* parent = rddlTask->getParametrizedVariable(*$1); rddlTask->addParametrizedVariable(parent,  {}, $3);}
 ;
 
-LConstList: LConst                  { $$ = new std::vector<LogicalExpression*>(); $$->push_back($1); }
+LConstList: LConst                  { $$ = new std::vector<prost::parser::LogicalExpression*>(); $$->push_back($1); }
           | LConst ',' LConstList   { $$ = $3; $$->insert($$->begin(), $1); }
 ;
 
@@ -759,7 +756,7 @@ InstanceBlock:
 
 
 HorizonSpecification: horizon_token '=' PositiveIntOrPositiveInfinity           { $$ = $3; }
-                    | horizon_token '=' terminate_when_token '(' Expression ')' { SystemUtils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
+                    | horizon_token '=' terminate_when_token '(' Expression ')' { prost::parser::utils::SystemUtils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
 ;
 
 PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
@@ -773,7 +770,7 @@ bool checkExtension(std::string s) {
 }
 
 int main (int argc, char** argv) {
-    Timer t;
+    prost::parser::utils::Timer t;
     std::cout << "Parsing..." << std::endl;
     if (argc < 3) {
         // Run unit tests
@@ -785,7 +782,7 @@ int main (int argc, char** argv) {
             return res;
         }
 
-        SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
+        prost::parser::utils::SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 
@@ -800,7 +797,7 @@ int main (int argc, char** argv) {
          index++;
     }
     if (index == 1 || index > 4 || index >= argc) {
-        SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
+        prost::parser::utils::SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 
@@ -840,7 +837,7 @@ int main (int argc, char** argv) {
     srand(seed);
 
     // Creating RDDLTask object
-    rddlTask = new RDDLTask();
+    rddlTask = new prost::parser::RDDLTask();
 
     yy_scan_string(combined.str().c_str());
     yyparse();
@@ -849,37 +846,37 @@ int main (int argc, char** argv) {
 
     t.reset();
     std::cout << "instantiating..." << std::endl;
-    Instantiator instantiator(rddlTask);
+    prost::parser::Instantiator instantiator(rddlTask);
     instantiator.instantiate();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "simplifying..." << std::endl;
-    Simplifier simplifier(rddlTask);
+    prost::parser::Simplifier simplifier(rddlTask);
     simplifier.simplify(generateFDRActionFluents);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "determinizing..." << std::endl;
-    Determinizer determinizer(rddlTask);
+    prost::parser::Determinizer determinizer(rddlTask);
     determinizer.determinize();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "generating hash keys..." << std::endl;
-    HashKeyGenerator hashKeyGen(rddlTask);
+    prost::parser::HashKeyGenerator hashKeyGen(rddlTask);
     hashKeyGen.generateHashKeys();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "precomputing evaluatable..." << std::endl;
-    Precomputer precomputer(rddlTask);
+    prost::parser::Precomputer precomputer(rddlTask);
     precomputer.precompute();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::cout << "analyzing task..." << std::endl;
-    TaskAnalyzer analyzer(rddlTask);
+    prost::parser::TaskAnalyzer analyzer(rddlTask);
     analyzer.analyzeTask(numStates, numSimulations, timeout);
     std::cout << "...finished (" << t << ")." << std::endl;
 

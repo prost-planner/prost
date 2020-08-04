@@ -9,36 +9,20 @@
 
 using namespace std;
 
-inline bool VarPartition::ActionFluentSort::operator()(ActionFluent const* lhs, ActionFluent const* rhs) const {
-    return lhs->index < rhs->index;
-}
+namespace prost {
+namespace parser {
+namespace fdr {
 
-void VarPartition::addVar(ActionFluent* var) {
+int FDRGenerator::numFDRActionVars = 0;
+
+void VarPartition::addVar(ActionFluent const* var) {
     assert(vars.find(var) == vars.end());
     vars.insert(var);
 }
 
-vector<ActionFluent*> FDRGenerator::generateFDRVars(
-    TaskMutexInfo const& mutexes, Simplifications& replacements) {
-    // Partition the variables with the given mutex information
-    VarPartitioning partitioning = partitionVars(mutexes);
-    CSP csp(task);
-    csp.addPreconditions();
-    vector<ActionFluent*> result;
-    for (VarPartition const& partition : partitioning) {
-        if (partition.size() == 1) {
-            // There is only one action variable in this partition, so we can
-            // keep that variable
-            result.push_back(*partition.begin());
-        } else {
-            result.push_back(generateFDRVar(partition, csp, replacements));
-        }
-    }
-    return result;
-}
-
-ActionFluent* FDRGenerator::generateFDRVar(
-    VarPartition const& partition, CSP& csp, Simplifications& replacements) {
+ActionFluent* FDRGenerator::generateFDRVar(VarPartition const& partition,
+                                           RDDLTaskCSP& csp,
+                                           Simplifications& replacements) {
     string name = "FDR-action-var-" + to_string(numFDRActionVars);
     string typeName = "FDR-action-var-type-" + to_string(numFDRActionVars);
     Type* fdrVarType = task->addType(typeName);
@@ -46,19 +30,21 @@ ActionFluent* FDRGenerator::generateFDRVar(
 
     // Check if at least one of these action fluents must be set to true
     int value = 0;
-    Z3Expressions& actionVars = csp.getActionVars();
+    Z3Expressions const& actionVars = csp.getActionVarSet();
     csp.push();
-    for (ActionFluent* var : partition) {
+    for (ActionFluent const* var : partition) {
         csp.addConstraint(actionVars[var->index] == 0);
     }
+    // If there is a valid assignment where all action fluents are 0 we add
+    // "none-of-those" as a domain value of this FDR variable
     if (csp.hasSolution()) {
-        task->addObject(
-            typeName, "none-of-those-"+ to_string(numFDRActionVars));
+        task->addObject(typeName,
+                        "none-of-those-" + to_string(numFDRActionVars));
         ++value;
     }
     csp.pop();
 
-    for (ActionFluent* var : partition) {
+    for (ActionFluent const* var : partition) {
         string name = var->fullName;
         replace(name.begin(), name.end(), ' ', '~');
         task->addObject(typeName, name);
@@ -73,24 +59,19 @@ ActionFluent* FDRGenerator::generateFDRVar(
     return fdrVar;
 }
 
-void addVarToPartition(
-    ActionFluent* var, VarPartition& partition, vector<bool>& served) {
+void addVarToPartition(ActionFluent const* var, VarPartition& partition,
+                       vector<bool>& served) {
     partition.addVar(var);
     served[var->index] = true;
 }
 
-VarPartitioning GreedyFDRGenerator::partitionVars(
-    TaskMutexInfo const& mutexInfo) {
+VarPartitioning GreedyPartitioning::operator()(
+    TaskMutexInfo const& mutexInfo) const {
     VarPartitioning result;
 
-    // std::includes below expects the sets it operates on to be sorted. Since
-    // we use a custom comparator to order elements in VarPartition and
-    // VarMutexInfo, we need to make sure we consider the same order here.
-    auto comp = [] (ActionFluent* lhs, ActionFluent* rhs) {return lhs->index < rhs->index;};
-
-    size_t numActionVars = task->actionFluents.size();
-    vector<bool> served(numActionVars, false);
-    for (ActionFluent* var : task->actionFluents) {
+    vector<ActionFluent*> const& vars = mutexInfo.getTask()->actionFluents;
+    vector<bool> served(vars.size(), false);
+    for (ActionFluent const* var : vars) {
         if (served[var->index]) {
             // This variable has already been added to a mutex group
             continue;
@@ -102,14 +83,16 @@ VarPartitioning GreedyFDRGenerator::partitionVars(
         // Greedily check variables that are mutex with the action variable
         // with index varIndex if they are mutex with all action variables
         // that have been added to the partition so far
-        for (ActionFluent* other : mutexes) {
+        for (ActionFluent const* other : mutexes) {
             if (served[other->index]) {
                 continue;
             }
             assert(var->index < other->index);
+
             VarMutexInfo const& otherMutexes = mutexInfo[other];
             if (includes(otherMutexes.begin(), otherMutexes.end(),
-                         partition.begin(), partition.end(), comp)) {
+                         partition.begin(), partition.end(),
+                         ActionFluentSort())) {
                 addVarToPartition(other, partition, served);
             }
         }
@@ -117,3 +100,6 @@ VarPartitioning GreedyFDRGenerator::partitionVars(
     }
     return result;
 }
+} // namespace fdr
+} // namespace parser
+} // namespace prost

@@ -6,9 +6,14 @@
 #include <string>
 #include <vector>
 
+namespace z3 {
+class expr;
+}
+
+namespace prost {
+namespace parser {
 class ActionFluent;
 class ActionState;
-class CSP;
 class DiscretePD;
 class Instantiator;
 class KleeneState;
@@ -17,19 +22,17 @@ class NumericConstant;
 class Object;
 class ParametrizedVariable;
 struct RDDLTask;
+class RDDLTaskCSP;
 class State;
 class StateFluent;
-
-namespace z3 {
-class expr;
-}
 
 using ActionFluentSet = std::set<ActionFluent*>;
 using Domains = std::vector<std::set<double>>;
 using Instantiations = std::map<std::string, Object*>;
-using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
+using Simplifications =
+    std::map<ParametrizedVariable const*, LogicalExpression*>;
 using StateFluentSet = std::set<StateFluent*>;
-using Z3Expressions = std::vector<z3::expr>;
+using Z3Expressions = std::vector<::z3::expr>;
 
 class LogicalExpression {
 public:
@@ -68,7 +71,7 @@ public:
     virtual void determineBounds(ActionState const& action, double& minRes,
                                  double& maxRes) const;
 
-    virtual z3::expr toZ3Formula(CSP& csp, int actionIndex) const;
+    virtual ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -109,10 +112,10 @@ public:
     std::string name;
     Type* type;
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst)  override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
 
     void print(std::ostream& out) const override;
 };
@@ -127,10 +130,10 @@ public:
     std::vector<Type*> types;
     double value;
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
 
     void print(std::ostream& out) const override;
 };
@@ -147,8 +150,7 @@ public:
 
     ParametrizedVariable(std::string _variableName,
                          std::vector<Parameter*> _params,
-                         VariableType _variableType,
-                         Type* _valueType,
+                         VariableType _variableType, Type* _valueType,
                          double _initialValue)
         : LogicalExpression(),
           variableName(_variableName),
@@ -160,8 +162,7 @@ public:
     ParametrizedVariable(ParametrizedVariable const& source,
                          std::vector<Parameter*> _params);
     ParametrizedVariable(ParametrizedVariable const& source,
-                         std::vector<Parameter*> _params,
-                         double _initialValue);
+                         std::vector<Parameter*> _params, double _initialValue);
 
     std::string variableName;
     std::string fullName;
@@ -170,10 +171,10 @@ public:
     Type* valueType;
     double initialValue;
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
     LogicalExpression* determinizeMostLikely(
         std::vector<ActionState> const& actionStates) override;
@@ -188,8 +189,8 @@ public:
 class StateFluent : public ParametrizedVariable {
 public:
     StateFluent(ParametrizedVariable const& source,
-                std::vector<Parameter*> _params,
-                double _initialValue, int _index = -1)
+                std::vector<Parameter*> _params, double _initialValue,
+                int _index = -1)
         : ParametrizedVariable(source, _params, _initialValue), index(_index) {
         domainSize = valueType->objects.size();
     }
@@ -222,7 +223,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -262,7 +263,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -283,10 +284,10 @@ public:
 
     double value;
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -313,7 +314,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -352,8 +353,8 @@ public:
     Sumation(ParameterList* _paramList, LogicalExpression* _expr)
         : Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
 
     void print(std::ostream& out) const override;
 };
@@ -363,8 +364,8 @@ public:
     Product(ParameterList* _paramList, LogicalExpression* _expr)
         : Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
 
     void print(std::ostream& out) const override;
 };
@@ -374,8 +375,8 @@ public:
     UniversalQuantification(ParameterList* _paramList, LogicalExpression* _expr)
         : Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
 
     void print(std::ostream& out) const override;
 };
@@ -386,8 +387,8 @@ public:
                               LogicalExpression* _expr)
         : Quantifier(_paramList, _expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
 
     void print(std::ostream& out) const override;
 };
@@ -409,10 +410,10 @@ class Conjunction : public Connective {
 public:
     Conjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -438,7 +439,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -447,10 +448,10 @@ class Disjunction : public Connective {
 public:
     Disjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -476,7 +477,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -486,10 +487,10 @@ public:
     EqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -515,7 +516,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -525,10 +526,10 @@ public:
     GreaterExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -554,7 +555,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -564,10 +565,10 @@ public:
     LowerExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -593,7 +594,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -603,10 +604,10 @@ public:
     GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -632,7 +633,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -642,10 +643,10 @@ public:
     LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -671,7 +672,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -680,10 +681,10 @@ class Addition : public Connective {
 public:
     Addition(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -709,7 +710,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -718,10 +719,10 @@ class Subtraction : public Connective {
 public:
     Subtraction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -747,7 +748,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -757,10 +758,10 @@ public:
     Multiplication(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -786,7 +787,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -795,10 +796,10 @@ class Division : public Connective {
 public:
     Division(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -824,7 +825,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -839,10 +840,10 @@ public:
 
     Negation(LogicalExpression* _expr) : expr(_expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -868,7 +869,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -879,10 +880,10 @@ public:
 
     LogicalExpression* expr;
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -920,10 +921,10 @@ public:
     KronDeltaDistribution(LogicalExpression* _expr)
         : LogicalExpression(), expr(_expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* expr;
@@ -936,10 +937,10 @@ public:
     BernoulliDistribution(LogicalExpression* _expr)
         : LogicalExpression(), expr(_expr) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -981,10 +982,10 @@ public:
                          std::vector<LogicalExpression*> _probabilities)
         : LogicalExpression(), values(_values), probabilities(_probabilities) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -1030,10 +1031,10 @@ public:
           valueIfTrue(_valueIfTrue),
           valueIfFalse(_valueIfFalse) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -1071,10 +1072,10 @@ public:
                           std::vector<LogicalExpression*> _effects)
         : conditions(_conditions), effects(_effects) {}
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     LogicalExpression* determinizeMostLikely(
@@ -1100,12 +1101,15 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 
 private:
-    z3::expr buildZ3Formula(CSP& csp, int actionIndex, int index) const;
+    ::z3::expr buildZ3Formula(
+        RDDLTaskCSP& csp, int actionIndex, int index) const;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

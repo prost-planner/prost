@@ -4,6 +4,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 inline int DiscretePD::getNumberOfOutcomes() const {
     assert(isWellDefined());
     return values.size();
@@ -22,16 +24,16 @@ bool DiscretePD::isWellDefined() const {
     double probSum = probabilities[0];
     double lastVal = values[0];
     for (unsigned int i = 1; i < probabilities.size(); ++i) {
-        if (MathUtils::doubleIsSmallerOrEqual(probabilities[i], 0.0)) {
+        if (utils::MathUtils::doubleIsSmallerOrEqual(probabilities[i], 0.0)) {
             return false;
         }
         probSum += probabilities[i];
-        if (!MathUtils::doubleIsGreater(values[i], lastVal)) {
+        if (!utils::MathUtils::doubleIsGreater(values[i], lastVal)) {
             return false;
         }
         lastVal = values[i];
     }
-    return MathUtils::doubleIsEqual(probSum, 1.0);
+    return utils::MathUtils::doubleIsEqual(probSum, 1.0);
 }
 
 void DiscretePD::print(ostream& out) const {
@@ -41,3 +43,5 @@ void DiscretePD::print(ostream& out) const {
     }
     out << "]" << endl;
 }
+} // namespace parser
+} // namespace prost

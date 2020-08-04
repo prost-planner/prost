@@ -17,6 +17,9 @@
 #include "sys/types.h"
 #include "sys/vtimes.h"
 
+namespace prost {
+namespace parser {
+namespace utils {
 clock_t SystemUtils::start = 0;
 clock_t SystemUtils::lastCPU = 0;
 clock_t SystemUtils::lastSysCPU = 0;
@@ -205,3 +208,6 @@ double SystemUtils::getCPUUsageOfThis() {
 
     return res;
 }
+} // namespace utils
+} // namespace parser
+} // namespace prost

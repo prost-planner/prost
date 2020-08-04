@@ -5,14 +5,18 @@
 #include <set>
 #include <vector>
 
+#include "mutex_detection.h"
+
+namespace prost::parser {
+class RDDLTaskCSP;
 class ActionFluent;
-class CSP;
 class LogicalExpression;
-struct TaskMutexInfo;
 class ParametrizedVariable;
 struct RDDLTask;
+namespace fdr {
 
-using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
+using Simplifications =
+    std::map<ParametrizedVariable const*, LogicalExpression*>;
 
 /*
   A VarPartition object is used to represent a subset of the action variables
@@ -20,11 +24,11 @@ using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 struct VarPartition {
     VarPartition() = default;
 
-    void addVar(ActionFluent* var);
-    std::set<ActionFluent*>::const_iterator begin() const {
+    void addVar(ActionFluent const* var);
+    std::set<ActionFluent const*>::const_iterator begin() const {
         return vars.begin();
     }
-    std::set<ActionFluent*>::const_iterator end() const {
+    std::set<ActionFluent const*>::const_iterator end() const {
         return vars.end();
     }
     size_t size() const {
@@ -32,10 +36,7 @@ struct VarPartition {
     }
 
 private:
-    struct ActionFluentSort {
-        bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
-    };
-    std::set<ActionFluent*, ActionFluentSort> vars;
+    std::set<ActionFluent const*, ActionFluentSort> vars;
 };
 
 /*
@@ -60,42 +61,41 @@ private:
 };
 
 /*
-  An FDRGenerator generates finite-domain variables. Implement the method
-
-  VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo)
-
-  that generates a partitioning of the variables given the provided mutex
-  information.
+  An FDRGenerator takes a generator that partitions variables according to mutex
+  information and generates finite-domain variables from that partitioning.
 */
 class FDRGenerator {
 public:
-    explicit FDRGenerator(RDDLTask* _task)
-        : task(_task) {}
+    explicit FDRGenerator(RDDLTask* _task) : task(_task) {}
 
-    std::vector<ActionFluent*> generateFDRVars(
-        TaskMutexInfo const& mutexes, Simplifications& replacements);
-    ActionFluent* generateFDRVar(
-        VarPartition const& partition, CSP& csp, Simplifications& replacements);
+    template <typename PartitionGen>
+    std::vector<ActionFluent*> generateFDRVars(TaskMutexInfo const& mutexes,
+                                               Simplifications& replacements,
+                                               PartitionGen generator);
 
-protected:
+private:
+    ActionFluent* generateFDRVar(VarPartition const& partition,
+                                 RDDLTaskCSP& csp,
+                                 Simplifications& replacements);
+
     RDDLTask* task;
-    int numFDRActionVars = 0;
 
-    virtual VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo) = 0;
+    // A counter on how many FDR variables have been generated yet
+    static int numFDRActionVars;
 };
 
 /*
-  The GreedyFDRGenerator builds a partition by starting with the first variable
+  GreedyPartitioning builds a partition by starting with the first variable
   that is mutex with some variable and by adding variables that are mutex with
   all variables that were already added. This process iterates until no
   variables are left.
 */
-class GreedyFDRGenerator : public FDRGenerator {
-public:
-    explicit GreedyFDRGenerator(RDDLTask* _task) : FDRGenerator(_task) {}
-
-protected:
-    VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo) override;
+struct GreedyPartitioning {
+    VarPartitioning operator()(TaskMutexInfo const& mutexes) const;
 };
+} // namespace fdr
+} // namespace prost::parser
+
+#include "fdr_generation.t"
 
 #endif

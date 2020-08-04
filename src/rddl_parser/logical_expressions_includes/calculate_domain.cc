@@ -46,7 +46,8 @@ void Conjunction::calculateDomain(Domains const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
         exprs[i]->calculateDomain(domains, action, res);
-        if ((res.size() == 1) && MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
+        if ((res.size() == 1) &&
+            utils::MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
             // This element and the whole conjunction must be false
             return;
         }
@@ -74,7 +75,8 @@ void Disjunction::calculateDomain(Domains const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
         exprs[i]->calculateDomain(domains, action, res);
-        if ((res.size() == 1) && !MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
+        if ((res.size() == 1) &&
+            !utils::MathUtils::doubleIsEqual(*res.begin(), 0.0)) {
             // This element and the whole conjunction must be true
             res.clear();
             res.insert(1.0);
@@ -136,12 +138,12 @@ void GreaterExpression::calculateDomain(Domains const& domains,
     exprs[1]->calculateDomain(domains, action, rhs);
 
     // If the largest lhs is bigger than the smallest rhs this can be true
-    if (MathUtils::doubleIsGreater(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::MathUtils::doubleIsGreater(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
     // If the smallest lhs is not bigger than the largest rhs this can be false
-    if (!MathUtils::doubleIsGreater(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::MathUtils::doubleIsGreater(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -158,11 +160,11 @@ void LowerExpression::calculateDomain(Domains const& domains,
     set<double> rhs;
     exprs[1]->calculateDomain(domains, action, rhs);
 
-    if (MathUtils::doubleIsSmaller(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::MathUtils::doubleIsSmaller(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
-    if (!MathUtils::doubleIsSmaller(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::MathUtils::doubleIsSmaller(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -179,11 +181,12 @@ void GreaterEqualsExpression::calculateDomain(Domains const& domains,
     set<double> rhs;
     exprs[1]->calculateDomain(domains, action, rhs);
 
-    if (MathUtils::doubleIsGreaterOrEqual(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::MathUtils::doubleIsGreaterOrEqual(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
-    if (!MathUtils::doubleIsGreaterOrEqual(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::MathUtils::doubleIsGreaterOrEqual(
+        *lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -200,11 +203,12 @@ void LowerEqualsExpression::calculateDomain(Domains const& domains,
     set<double> rhs;
     exprs[1]->calculateDomain(domains, action, rhs);
 
-    if (MathUtils::doubleIsSmallerOrEqual(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::MathUtils::doubleIsSmallerOrEqual(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
-    if (!MathUtils::doubleIsSmallerOrEqual(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::MathUtils::doubleIsSmallerOrEqual(
+        *lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -285,7 +289,7 @@ void Division::calculateDomain(Domains const& domains,
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
         for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             // Avoid division by 0
-            if (MathUtils::doubleIsEqual(*it2,0.0)) {
+            if (utils::MathUtils::doubleIsEqual(*it2,0.0)) {
                 continue;
             }
             res.insert(*it / *it2);
@@ -332,12 +336,12 @@ void BernoulliDistribution::calculateDomain(Domains const& domains,
     expr->calculateDomain(domains, action, tmp);
 
     for (set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        if (!MathUtils::doubleIsEqual(*it, 0.0)) {
+        if (!utils::MathUtils::doubleIsEqual(*it, 0.0)) {
             res.insert(1.0);
         }
 
-        if (MathUtils::doubleIsGreaterOrEqual(*it, 0.0) &&
-            MathUtils::doubleIsSmaller(*it, 1.0)) {
+        if (utils::MathUtils::doubleIsGreaterOrEqual(*it, 0.0) &&
+            utils::MathUtils::doubleIsSmaller(*it, 1.0)) {
             res.insert(0.0);
         }
 

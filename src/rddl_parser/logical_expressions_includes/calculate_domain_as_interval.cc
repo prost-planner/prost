@@ -60,12 +60,12 @@ void Conjunction::calculateDomainAsInterval(Domains const& domains,
         exprs[i]->calculateDomainAsInterval(domains, action, minRes, maxRes);
 
         // If one max value is false every max and min value is false
-        if (MathUtils::doubleIsEqual(maxRes, 0.0)) {
+        if (utils::MathUtils::doubleIsEqual(maxRes, 0.0)) {
             return;
         }
 
         // If one min value is false, every min value is false
-        if (!minIsFalse && MathUtils::doubleIsEqual(minRes, 0.0)) {
+        if (!minIsFalse && utils::MathUtils::doubleIsEqual(minRes, 0.0)) {
             minIsFalse = true;
         }
     }
@@ -92,12 +92,12 @@ void Disjunction::calculateDomainAsInterval(Domains const& domains,
         exprs[i]->calculateDomainAsInterval(domains, action, minRes, maxRes);
 
         // If one min value is true every max and min value is true
-        if (MathUtils::doubleIsEqual(minRes, 1.0)) {
+        if (utils::MathUtils::doubleIsEqual(minRes, 1.0)) {
             return;
         }
 
         // If one max value is true every max value is true
-        if (!maxIsTrue && MathUtils::doubleIsEqual(maxRes, 1.0)) {
+        if (!maxIsTrue && utils::MathUtils::doubleIsEqual(maxRes, 1.0)) {
             maxIsTrue = true;
         }
     }
@@ -127,17 +127,17 @@ void EqualsExpression::calculateDomainAsInterval(Domains const& domains,
     exprs[1]->calculateDomainAsInterval(domains, action, rhsMin, rhsMax);
 
     // If both intervals dont overlap they won't ever be equal
-    if (MathUtils::doubleIsGreater(lhsMin, rhsMax) ||
-        MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
+    if (utils::MathUtils::doubleIsGreater(lhsMin, rhsMax) ||
+        utils::MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
     }
 
     // If both intervals represent the same value, they are always equal
-    if (MathUtils::doubleIsEqual(lhsMin, rhsMin) &&
-        MathUtils::doubleIsEqual(lhsMin, lhsMax) &&
-        MathUtils::doubleIsEqual(rhsMin, rhsMax)) {
+    if (utils::MathUtils::doubleIsEqual(lhsMin, rhsMin) &&
+        utils::MathUtils::doubleIsEqual(lhsMin, lhsMax) &&
+        utils::MathUtils::doubleIsEqual(rhsMin, rhsMax)) {
         minRes = 1.0;
         maxRes = 1.0;
         return;
@@ -164,14 +164,14 @@ void GreaterExpression::calculateDomainAsInterval(Domains const& domains,
     exprs[1]->calculateDomainAsInterval(domains, action, rhsMin, rhsMax);
 
     // If left min is greater than right max everything is greater
-    if (MathUtils::doubleIsGreater(lhsMin, rhsMax)) {
+    if (utils::MathUtils::doubleIsGreater(lhsMin, rhsMax)) {
         minRes = 1.0;
         maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsGreaterOrEqual(rhsMin, lhsMax)) {
+    if (utils::MathUtils::doubleIsGreaterOrEqual(rhsMin, lhsMax)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -200,14 +200,14 @@ void LowerExpression::calculateDomainAsInterval(Domains const& domains,
     exprs[1]->calculateDomainAsInterval(domains, action, rhsMin, rhsMax);
 
     // If left max is lesser than right min everything is lesser
-    if (MathUtils::doubleIsSmaller(lhsMax, rhsMin)) {
+    if (utils::MathUtils::doubleIsSmaller(lhsMax, rhsMin)) {
         minRes = 1.0;
         maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsSmallerOrEqual(rhsMax, lhsMin)) {
+    if (utils::MathUtils::doubleIsSmallerOrEqual(rhsMax, lhsMin)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -236,14 +236,14 @@ void GreaterEqualsExpression::calculateDomainAsInterval(
 
     // If left min is greater or equal than right max everything is greater or
     // equal
-    if (MathUtils::doubleIsGreaterOrEqual(lhsMin, rhsMax)) {
+    if (utils::MathUtils::doubleIsGreaterOrEqual(lhsMin, rhsMax)) {
         minRes = 1.0;
         maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
+    if (utils::MathUtils::doubleIsGreater(rhsMin, lhsMax)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -271,14 +271,14 @@ void LowerEqualsExpression::calculateDomainAsInterval(Domains const& domains,
     double rhsMax = -numeric_limits<double>::max();
     exprs[1]->calculateDomainAsInterval(domains, action, rhsMin, rhsMax);
 
-    if (MathUtils::doubleIsSmallerOrEqual(lhsMax, rhsMin)) {
+    if (utils::MathUtils::doubleIsSmallerOrEqual(lhsMax, rhsMin)) {
         minRes = 1.0;
         maxRes = 1.0;
         return;
     }
 
     // The converse statement
-    if (MathUtils::doubleIsSmaller(rhsMax, lhsMin)) {
+    if (utils::MathUtils::doubleIsSmaller(rhsMax, lhsMin)) {
         minRes = 0.0;
         maxRes = 0.0;
         return;
@@ -375,19 +375,19 @@ void Division::calculateDomainAsInterval(Domains const& domains,
     // [x_1, x_2] / [y_1, y_2] = [x_1, x_2] * (1/[y_1,y_2], where
     // 1/[y_1,0] = [-infty, 1/y_1] and
     // 1/[0,y_2] = [1/y_2, infty]
-    if (MathUtils::doubleIsEqual(rhsMax, 0.0) &&
-        MathUtils::doubleIsEqual(rhsMin, 0.0)) {
+    if (utils::MathUtils::doubleIsEqual(rhsMax, 0.0) &&
+        utils::MathUtils::doubleIsEqual(rhsMin, 0.0)) {
         // Domain is ill-defined
         std::cout << "WARNING: DOMAIN ILL-DEFINED" << std::endl;
         minRes = -numeric_limits<double>::max();
         maxRes = numeric_limits<double>::max();
         return;
     }
-    if (MathUtils::doubleIsEqual(rhsMax, 0.0)) {
+    if (utils::MathUtils::doubleIsEqual(rhsMax, 0.0)) {
         rhsMax = 1.0 / rhsMin;
         rhsMin = -numeric_limits<double>::max();
     }
-    if (MathUtils::doubleIsEqual(rhsMin, 0.0)) {
+    if (utils::MathUtils::doubleIsEqual(rhsMin, 0.0)) {
         rhsMin = 1.0 / rhsMax;
         rhsMax = numeric_limits<double>::max();
     } else {
@@ -413,8 +413,8 @@ void Negation::calculateDomainAsInterval(Domains const& domains,
     double tmpMax = -numeric_limits<double>::max();
     expr->calculateDomainAsInterval(domains, action, tmpMin, tmpMax);
     // Both max and min are either 0 or 1
-    if (MathUtils::doubleIsEqual(tmpMin, tmpMax)) {
-        if (MathUtils::doubleIsEqual(tmpMin, 0.0)) {
+    if (utils::MathUtils::doubleIsEqual(tmpMin, tmpMax)) {
+        if (utils::MathUtils::doubleIsEqual(tmpMin, 0.0)) {
             minRes = 1.0;
             maxRes = 1.0;
             return;
@@ -451,12 +451,12 @@ void BernoulliDistribution::calculateDomainAsInterval(Domains const& domains,
     double tmpMax = -numeric_limits<double>::max();
     expr->calculateDomainAsInterval(domains, action, tmpMin, tmpMax);
 
-    if (MathUtils::doubleIsGreater(tmpMax, 0.0)) {
+    if (utils::MathUtils::doubleIsGreater(tmpMax, 0.0)) {
         maxRes = 1.0;
     } else {
         maxRes = 0.0;
     }
-    if (MathUtils::doubleIsSmaller(tmpMin, 1.0)) {
+    if (utils::MathUtils::doubleIsSmaller(tmpMin, 1.0)) {
         minRes = 0.0;
     } else {
         minRes = 1.0;
@@ -473,17 +473,17 @@ void DiscreteDistribution::calculateDomainAsInterval(Domains const& domains,
 
         probabilities[i]->calculateDomainAsInterval(domains, action, probMin,
                                                     probMax);
-        if (!MathUtils::doubleIsEqual(probMin, probMax) ||
-            !MathUtils::doubleIsEqual(0.0, probMax)) {
+        if (!utils::MathUtils::doubleIsEqual(probMin, probMax) ||
+            !utils::MathUtils::doubleIsEqual(0.0, probMax)) {
             double valMin = numeric_limits<double>::max();
             double valMax = -numeric_limits<double>::max();
 
             values[i]->calculateDomainAsInterval(domains, action, valMin,
                                                  valMax);
-            if (MathUtils::doubleIsSmaller(valMin, minRes)) {
+            if (utils::MathUtils::doubleIsSmaller(valMin, minRes)) {
                 minRes = valMin;
             }
-            if (MathUtils::doubleIsGreater(valMax, maxRes)) {
+            if (utils::MathUtils::doubleIsGreater(valMax, maxRes)) {
                 maxRes = valMax;
             }
         }
@@ -502,24 +502,24 @@ void IfThenElseExpression::calculateDomainAsInterval(Domains const& domains,
     double condMax = -numeric_limits<double>::max();
 
     condition->calculateDomainAsInterval(domains, action, condMin, condMax);
-    if (!MathUtils::doubleIsEqual(condMin, condMax)) {
+    if (!utils::MathUtils::doubleIsEqual(condMin, condMax)) {
         // cond has more than one value, one of which must represent 'true'
         valueIfTrue->calculateDomainAsInterval(domains, action, minRes, maxRes);
-        if (MathUtils::doubleIsEqual(0.0, minRes)) {
+        if (utils::MathUtils::doubleIsEqual(0.0, minRes)) {
             // and false is also possible
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
 
             valueIfFalse->calculateDomainAsInterval(domains, action, tmpMin,
                                                     tmpMax);
-            if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
+            if (utils::MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }
-            if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
+            if (utils::MathUtils::doubleIsGreater(tmpMax, maxRes)) {
                 maxRes = tmpMax;
             }
         }
-    } else if (MathUtils::doubleIsEqual(minRes, 0.0)) {
+    } else if (utils::MathUtils::doubleIsEqual(minRes, 0.0)) {
         // there is only one value in cond which is 'false'
         valueIfFalse->calculateDomainAsInterval(domains, action, minRes,
                                                 maxRes);
@@ -538,33 +538,33 @@ void MultiConditionChecker::calculateDomainAsInterval(Domains const& domains,
 
         conditions[i]->calculateDomainAsInterval(domains, action, condMin,
                                                  condMax);
-        if (!MathUtils::doubleIsEqual(condMin, condMax)) {
+        if (!utils::MathUtils::doubleIsEqual(condMin, condMax)) {
             // cond has more than one value, one of which must represent 'true'
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
 
             effects[i]->calculateDomainAsInterval(domains, action, tmpMin,
                                                   tmpMax);
-            if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
+            if (utils::MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }
-            if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
+            if (utils::MathUtils::doubleIsGreater(tmpMax, maxRes)) {
                 maxRes = tmpMax;
             }
-            if (!MathUtils::doubleIsEqual(condMin, 0.0)) {
+            if (!utils::MathUtils::doubleIsEqual(condMin, 0.0)) {
                 // all values in cond represent 'true'
                 return;
             }
-        } else if (!MathUtils::doubleIsEqual(condMin, 0.0)) {
+        } else if (!utils::MathUtils::doubleIsEqual(condMin, 0.0)) {
             // there is only one value in cond, and it is true
             double tmpMin = numeric_limits<double>::max();
             double tmpMax = -numeric_limits<double>::max();
             effects[i]->calculateDomainAsInterval(domains, action, tmpMin,
                                                   tmpMax);
-            if (MathUtils::doubleIsSmaller(tmpMin, minRes)) {
+            if (utils::MathUtils::doubleIsSmaller(tmpMin, minRes)) {
                 minRes = tmpMin;
             }
-            if (MathUtils::doubleIsGreater(tmpMax, maxRes)) {
+            if (utils::MathUtils::doubleIsGreater(tmpMax, maxRes)) {
                 maxRes = tmpMax;
             }
             return;

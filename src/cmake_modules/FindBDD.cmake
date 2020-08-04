@@ -37,6 +37,3 @@ find_package_handle_standard_args(
 )
 
 mark_as_advanced(BDD_INCLUDE_DIRS, BDD_LIBRARIES)
-
-
-

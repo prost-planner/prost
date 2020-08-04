@@ -3,6 +3,9 @@
 
 #include <string>
 
+namespace prost {
+namespace parser {
+namespace utils {
 class SystemUtils {
 public:
     static void abort(std::string msg);
@@ -41,5 +44,8 @@ protected:
 private:
     SystemUtils() {}
 };
+} // namespace utils
+} // namespace parser
+} // namespace prost
 
 #endif

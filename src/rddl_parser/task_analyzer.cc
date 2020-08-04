@@ -13,10 +13,10 @@
 
 using namespace std;
 
-TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {}
-
+namespace prost {
+namespace parser {
 void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
-    Timer t;
+    utils::Timer t;
     // Determine task properties
     if (output) {
         cout << "    Determining task properties..." << endl;
@@ -61,7 +61,7 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
             ++simCounter;
         }
 
-        if (MathUtils::doubleIsGreater(t(), timeout)) {
+        if (utils::MathUtils::doubleIsGreater(t(), timeout)) {
             cout << "Stopping analysis after " << t << " seconds and "
                  << numSimulations << " simulations." << endl;
             break;
@@ -84,12 +84,12 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
 }
 
 bool actionDominates(
-    ActionState const& action1, ActionState const& action2, CSP& csp) {
+    ActionState const& action1, ActionState const& action2, RDDLTaskCSP& csp) {
     // Check if there is a state where action1 yields a lower reward than
     // action2. If not, action1 dominates action2.
     csp.push();
-    csp.assignActionVariables(action1.state, 0);
-    csp.assignActionVariables(action2.state, 1);
+    csp.assignActionVarSet(action1.state, 0);
+    csp.assignActionVarSet(action2.state, 1);
 
     bool result = !csp.hasSolution();
     csp.pop();
@@ -121,8 +121,8 @@ void TaskAnalyzer::determineTaskProperties() {
         // The reward is affected by the applied action, so we have to compare
         // all actions that are not dominated by another action in the
         // computation of the final reward
-        CSP csp(task);
-        csp.addActionVariables();
+        RDDLTaskCSP csp(task);
+        csp.addActionVarSet();
 
         // We look for a solution (i.e., a state) where the reward under the
         // second action is larger than the reward under the first. The first
@@ -314,7 +314,7 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
         double res = 0.0;
         action.relevantSACs[precondIndex]->formula->evaluate(res, current,
                                                              action);
-        if (MathUtils::doubleIsEqual(res, 0.0)) {
+        if (utils::MathUtils::doubleIsEqual(res, 0.0)) {
             return false;
         }
     }
@@ -323,10 +323,10 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
 
 inline bool TaskAnalyzer::isARewardLock(State const& current,
                                         double const& reward) const {
-    if (MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+    if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if (MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -346,8 +346,8 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !MathUtils::doubleIsEqual(*reward.begin(),
-                                  task->rewardCPF->getMinVal())) {
+        !utils::MathUtils::doubleIsEqual(*reward.begin(),
+                                         task->rewardCPF->getMinVal())) {
         return false;
     }
 
@@ -366,8 +366,8 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !MathUtils::doubleIsEqual(*reward.begin(),
-                                      task->rewardCPF->getMinVal())) {
+            !utils::MathUtils::doubleIsEqual(*reward.begin(),
+                                             task->rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -399,8 +399,8 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
-                                  *reward.begin())) {
+        !utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
+                                         *reward.begin())) {
         return false;
     }
 
@@ -438,3 +438,5 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
         }
     }
 }
+} // namespace parser
+} // namespace prost

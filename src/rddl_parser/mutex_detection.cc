@@ -8,17 +8,21 @@
 
 using namespace std;
 
-inline bool VarMutexInfo::ActionFluentSort::operator()(ActionFluent const* lhs, ActionFluent const* rhs) const {
+namespace prost {
+namespace parser {
+namespace fdr {
+inline bool ActionFluentSort::operator()(ActionFluent const* lhs,
+                                         ActionFluent const* rhs) const {
     return lhs->index < rhs->index;
 }
 
 void VarMutexInfo::addAllVars() {
-    for (ActionFluent* af : task->actionFluents) {
+    for (ActionFluent const* af : task->actionFluents) {
         addVar(af);
     }
 }
 
-void VarMutexInfo::addVar(ActionFluent* other) {
+void VarMutexInfo::addVar(ActionFluent const* other) {
     if (other != var) {
         mutexVars.insert(other);
     }
@@ -28,36 +32,39 @@ bool VarMutexInfo::isMutexWithAllVars() const {
     return mutexVars.size() == (task->actionFluents.size() - 1);
 }
 
-TaskMutexInfo::TaskMutexInfo(RDDLTask* task) {
-    for (ActionFluent* af : task->actionFluents) {
+TaskMutexInfo::TaskMutexInfo(RDDLTask* _task) : task(_task) {
+    for (ActionFluent const* af : task->actionFluents) {
         mutexInfoOfVars.push_back(VarMutexInfo(task, af));
     }
 }
 
-void TaskMutexInfo::addMutexInfo(ActionFluent* lhs, ActionFluent* rhs) {
+void TaskMutexInfo::addMutexInfo(ActionFluent const* lhs,
+                                 ActionFluent const* rhs) {
     mutexInfoOfVars[lhs->index].addVar(rhs);
     mutexInfoOfVars[rhs->index].addVar(lhs);
 }
 
 bool TaskMutexInfo::hasMutexVarPair() const {
-    auto isMutexWithSomeVar =
-        [](VarMutexInfo const& m) {return m.isMutexWithSomeVar();};
-    return any_of(
-        mutexInfoOfVars.begin(), mutexInfoOfVars.end(), isMutexWithSomeVar);
+    auto isMutexWithSomeVar = [](VarMutexInfo const& m) {
+        return m.isMutexWithSomeVar();
+    };
+    return any_of(mutexInfoOfVars.begin(), mutexInfoOfVars.end(),
+                  isMutexWithSomeVar);
 }
 
 bool TaskMutexInfo::allVarsArePairwiseMutex() const {
-    auto isMutexWithAllVars =
-        [](VarMutexInfo const& m) {return m.isMutexWithAllVars();};
-    return all_of(
-        mutexInfoOfVars.begin(), mutexInfoOfVars.end(), isMutexWithAllVars);
+    auto isMutexWithAllVars = [](VarMutexInfo const& m) {
+        return m.isMutexWithAllVars();
+    };
+    return all_of(mutexInfoOfVars.begin(), mutexInfoOfVars.end(),
+                  isMutexWithAllVars);
 }
 
-VarMutexInfo const& TaskMutexInfo::operator[](ActionFluent* var) const {
+VarMutexInfo const& TaskMutexInfo::operator[](ActionFluent const* var) const {
     return mutexInfoOfVars[var->index];
 }
 
-VarMutexInfo& TaskMutexInfo::operator[](ActionFluent* var) {
+VarMutexInfo& TaskMutexInfo::operator[](ActionFluent const* var) {
     return mutexInfoOfVars[var->index];
 }
 
@@ -73,11 +80,11 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     }
 
     if (concurrent) {
-        CSP csp(task);
+        RDDLTaskCSP csp(task);
         csp.addPreconditions();
-        Z3Expressions& actionVars = csp.getActionVars();
+        Z3Expressions const& actionVars = csp.getActionVarSet();
 
-        for (ActionFluent* var : task->actionFluents) {
+        for (ActionFluent const* var : task->actionFluents) {
             // Action variables that are already in FDR are not considered since
             // it can be expected that it will rarely be the case that FDR
             // variables are mutex with another variable in a later iteration
@@ -86,7 +93,7 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
             if (var->isFDR) {
                 continue;
             }
-            for (ActionFluent* other : task->actionFluents) {
+            for (ActionFluent const* other : task->actionFluents) {
                 if ((other->index <= var->index) || other->isFDR) {
                     continue;
                 }
@@ -104,9 +111,12 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     } else {
         // When there is no concurreny, all action variables are pairwise mutex
         // and they can be combined to a single FDR action variable
-        for (ActionFluent* var : task->actionFluents) {
+        for (ActionFluent const* var : task->actionFluents) {
             result[var].addAllVars();
         }
     }
     return result;
 }
+} // namespace fdr
+} // namespace parser
+} // namespace prost

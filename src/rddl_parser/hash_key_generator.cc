@@ -10,8 +10,10 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 void HashKeyGenerator::generateHashKeys(bool output) {
-    Timer t;
+    utils::Timer t;
     // Initialize state hash keys
     if (output) {
         cout << "    Preparing state hash keys..." << endl;
@@ -59,7 +61,8 @@ void HashKeyGenerator::prepareStateHashKeys() {
             stateHashKeys[value] = value * nextHashKeyBase;
         }
 
-        if (!MathUtils::multiplyWithOverflowCheck(nextHashKeyBase, numValues)) {
+        if (!utils::MathUtils::multiplyWithOverflowCheck(
+            nextHashKeyBase, numValues)) {
             stateHashingPossible = false;
             break;
         }
@@ -87,7 +90,7 @@ void HashKeyGenerator::prepareKleeneStateHashKeys() {
         // The Kleene domain size is 2^n-1, where n is the number of values of
         // this CPF
         cpf->kleeneDomainSize = 2;
-        if (MathUtils::toThePowerOfWithOverflowCheck(
+        if (utils::MathUtils::toThePowerOfWithOverflowCheck(
             cpf->kleeneDomainSize, numValues)) {
             --cpf->kleeneDomainSize;
         } else {
@@ -109,7 +112,7 @@ void HashKeyGenerator::prepareKleeneStateHashKeys() {
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
         task->kleeneStateHashKeyBases.push_back(nextHashKeyBase);
 
-        if (!MathUtils::multiplyWithOverflowCheck(
+        if (!utils::MathUtils::multiplyWithOverflowCheck(
             nextHashKeyBase, cpf->kleeneDomainSize)) {
             kleeneStateHashingPossible = false;
             break;
@@ -141,3 +144,5 @@ void HashKeyGenerator::prepareEvaluatableHashKeys() {
         precond->initializeHashKeys(task);
     }
 }
+} // namespace parser
+} // namespace prost

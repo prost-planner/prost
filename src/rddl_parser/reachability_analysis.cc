@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 MinkowskiReachabilityAnalyser::MinkowskiReachabilityAnalyser(RDDLTask* _task)
     : ReachabilityAnalyser(_task),
       step(0) {
@@ -93,3 +95,5 @@ set<double> MinkowskiReachabilityAnalyser::applyRepresentativeActions(
     }
     return result;
 }
+} // namespace parser
+} // namespace prost

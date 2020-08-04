@@ -36,5 +36,3 @@ find_package_handle_standard_args(
 )
 
 mark_as_advanced(Z3_INCLUDE_DIRS, Z3_LIBRARIES)
-  
-  

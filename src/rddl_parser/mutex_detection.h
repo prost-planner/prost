@@ -4,8 +4,14 @@
 #include <set>
 #include <vector>
 
+namespace prost::parser {
 class ActionFluent;
 struct RDDLTask;
+namespace fdr {
+
+struct ActionFluentSort {
+    bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
+};
 
 /*
   A VariableMutexInformation is associated with a (binary) action variable and
@@ -15,33 +21,30 @@ struct RDDLTask;
 */
 class VarMutexInfo {
 public:
-    explicit VarMutexInfo(RDDLTask* _task, ActionFluent* _var)
+    explicit VarMutexInfo(RDDLTask* _task, ActionFluent const* _var)
         : task(_task), var(_var) {}
 
     void addAllVars();
-    void addVar(ActionFluent* other);
+    void addVar(ActionFluent const* other);
     bool isMutexWithSomeVar() const {
         return !mutexVars.empty();
     }
     bool isMutexWithAllVars() const;
-    bool isMutexWith(ActionFluent* other) const {
+    bool isMutexWith(ActionFluent const* other) const {
         return mutexVars.find(other) != mutexVars.end();
     }
-    std::set<ActionFluent*>::const_iterator begin() const {
+    std::set<ActionFluent const*>::const_iterator begin() const {
         return mutexVars.begin();
     }
-    std::set<ActionFluent*>::const_iterator end() const {
+    std::set<ActionFluent const*>::const_iterator end() const {
         return mutexVars.end();
     }
 
 private:
     RDDLTask* const task;
-    ActionFluent* const var;
+    ActionFluent const* var;
 
-    struct ActionFluentSort {
-        bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
-    };
-    std::set<ActionFluent*, ActionFluentSort> mutexVars;
+    std::set<ActionFluent const*, ActionFluentSort> mutexVars;
 };
 
 /*
@@ -52,11 +55,11 @@ class TaskMutexInfo {
 public:
     explicit TaskMutexInfo(RDDLTask* task);
 
-    void addMutexInfo(ActionFluent* lhs, ActionFluent* rhs);
+    void addMutexInfo(ActionFluent const* lhs, ActionFluent const* rhs);
     bool hasMutexVarPair() const;
     bool allVarsArePairwiseMutex() const;
-    VarMutexInfo const& operator[](ActionFluent* var) const;
-    VarMutexInfo& operator[](ActionFluent* var);
+    VarMutexInfo const& operator[](ActionFluent const* var) const;
+    VarMutexInfo& operator[](ActionFluent const* var);
     std::vector<VarMutexInfo>::const_iterator begin() const {
         return mutexInfoOfVars.begin();
     }
@@ -67,8 +70,13 @@ public:
         return mutexInfoOfVars.size();
     }
 
+    RDDLTask const* getTask() const {
+        return task;
+    }
+
 private:
     std::vector<VarMutexInfo> mutexInfoOfVars;
+    RDDLTask* task;
 };
 
 /*
@@ -76,5 +84,7 @@ private:
   information in a TaskMutexInfo object.
 */
 TaskMutexInfo computeActionVarMutexes(RDDLTask* task);
+} // namespace fdr
+} // namespace prost::parser
 
 #endif

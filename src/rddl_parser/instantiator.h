@@ -3,6 +3,8 @@
 
 #include <vector>
 
+namespace prost {
+namespace parser {
 class Parameter;
 class ParametrizedVariable;
 class LogicalExpression;
@@ -27,5 +29,7 @@ private:
     void instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula);
     void instantiatePreconds();
 };
+} // namespace parser
+} // namespace prost
 
 #endif

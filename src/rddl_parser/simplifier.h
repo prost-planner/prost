@@ -6,16 +6,6 @@
 #include <set>
 #include <vector>
 
-class ActionState;
-class ActionPrecondition;
-class ConditionalProbabilityFunction;
-class FDRGenerator;
-class LogicalExpression;
-class ParametrizedVariable;
-struct RDDLTask;
-
-using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
-
 /*
   The Simplifier class takes a fully instantiated RDDLTask as input (i.e., all
   state and action fluents, CPFs, action preconditions and the reward function
@@ -45,18 +35,28 @@ using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
   irrelevant preconditions have been removed.
 */
 
+namespace prost {
+namespace parser {
+class ActionState;
+class ActionPrecondition;
+class ConditionalProbabilityFunction;
+class LogicalExpression;
+class ParametrizedVariable;
+struct RDDLTask;
+
+using Simplifications =
+    std::map<ParametrizedVariable const*, LogicalExpression*>;
+
 class Simplifier {
 public:
-    Simplifier()  = delete;
-    explicit Simplifier(RDDLTask* _task);
+    Simplifier() = delete;
+    explicit Simplifier(RDDLTask* _task) : task(_task) {}
 
     void simplify(bool generateFDRActionFluents, bool output = true);
 
 private:
     RDDLTask* task;
-    // TODO: This should be a unique_ptr, which requires c++14
-    std::shared_ptr<FDRGenerator> fdrGen;
-    int numGeneratedFDRActionFluents;
+    int numGeneratedFDRActionFluents = 0;
 
     /*
       Simplify all CPFs, preconditions and the reward function by replacing all
@@ -117,8 +117,9 @@ private:
       Determines which state fluents are constant based on the domains, adds
       those to the replacements and returns the non-constant ones.
     */
-    bool removeConstantStateFluents(std::vector<std::set<double>> const& domains,
-                                    Simplifications& replacements);
+    bool removeConstantStateFluents(
+        std::vector<std::set<double>> const& domains,
+        Simplifications& replacements);
 
     /*
       Determine which preconditions are relevant during search and associate
@@ -131,8 +132,10 @@ private:
       indices to those that are kept, update replacements and return true if at
       least one action fluent was filtered
     */
-    bool filterActionFluents(
-        std::vector<bool> const& filter, Simplifications& replacements);
+    bool filterActionFluents(std::vector<bool> const& filter,
+                             Simplifications& replacements);
 };
+} // namespace parser
+} // namespace prost
 
 #endif
