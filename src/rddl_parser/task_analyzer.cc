@@ -84,12 +84,12 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
 }
 
 bool actionDominates(
-    ActionState const& action1, ActionState const& action2, CSP& csp) {
+    ActionState const& action1, ActionState const& action2, RDDLTaskCSP& csp) {
     // Check if there is a state where action1 yields a lower reward than
     // action2. If not, action1 dominates action2.
     csp.push();
-    csp.assignActionVariables(action1.state, 0);
-    csp.assignActionVariables(action2.state, 1);
+    csp.assignActionVarSet(action1.state, 0);
+    csp.assignActionVarSet(action2.state, 1);
 
     bool result = !csp.hasSolution();
     csp.pop();
@@ -121,8 +121,8 @@ void TaskAnalyzer::determineTaskProperties() {
         // The reward is affected by the applied action, so we have to compare
         // all actions that are not dominated by another action in the
         // computation of the final reward
-        CSP csp(task);
-        csp.addActionVariables();
+        RDDLTaskCSP csp(task);
+        csp.addActionVarSet();
 
         // We look for a solution (i.e., a state) where the reward under the
         // second action is larger than the reward under the first. The first

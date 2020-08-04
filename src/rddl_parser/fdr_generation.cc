@@ -22,7 +22,7 @@ vector<ActionFluent*> FDRGenerator::generateFDRVars(
     TaskMutexInfo const& mutexes, Simplifications& replacements) {
     // Partition the variables with the given mutex information
     VarPartitioning partitioning = partitionVars(mutexes);
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     csp.addPreconditions();
     vector<ActionFluent*> result;
     for (VarPartition const& partition : partitioning) {
@@ -37,8 +37,9 @@ vector<ActionFluent*> FDRGenerator::generateFDRVars(
     return result;
 }
 
-ActionFluent* FDRGenerator::generateFDRVar(
-    VarPartition const& partition, CSP& csp, Simplifications& replacements) {
+ActionFluent* FDRGenerator::generateFDRVar(VarPartition const& partition,
+                                           RDDLTaskCSP& csp,
+                                           Simplifications& replacements) {
     string name = "FDR-action-var-" + to_string(numFDRActionVars);
     string typeName = "FDR-action-var-type-" + to_string(numFDRActionVars);
     Type* fdrVarType = task->addType(typeName);
@@ -46,7 +47,7 @@ ActionFluent* FDRGenerator::generateFDRVar(
 
     // Check if at least one of these action fluents must be set to true
     int value = 0;
-    Z3Expressions& actionVars = csp.getActionVars();
+    Z3Expressions const& actionVars = csp.getActionVarSet();
     csp.push();
     for (ActionFluent* var : partition) {
         csp.addConstraint(actionVars[var->index] == 0);

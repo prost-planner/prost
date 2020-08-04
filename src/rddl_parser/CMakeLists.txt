@@ -63,6 +63,7 @@ set(RDDL_PARSER_TEST_SOURCES
     tests/logical_expressions_test
     tests/mutex_detection_test
     tests/probability_distribution_test
+    tests/csp_test
     tests/reachability_analysis_test
 )
 

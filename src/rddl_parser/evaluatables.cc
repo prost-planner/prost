@@ -14,7 +14,6 @@ void Evaluatable::initialize() {
     hasArithmeticFunction = false;
     dependentStateFluents.clear();
     dependentActionFluents.clear();
-
     formula->collectInitialInfo(isProb, hasArithmeticFunction,
                                 dependentStateFluents, dependentActionFluents);
 }
@@ -26,7 +25,6 @@ void Evaluatable::simplify(Simplifications& replace) {
 
 void Evaluatable::initializeHashKeys(RDDLTask* task) {
     assert(hashIndex >= 0);
-
     long baseKey = initializeActionHashKeys(task);
     initializeStateFluentHashKeys(task, baseKey);
     initializeKleeneStateFluentHashKeys(task, baseKey);

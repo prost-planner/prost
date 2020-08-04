@@ -6,11 +6,11 @@
 #include <vector>
 
 class ActionFluent;
-class CSP;
 class LogicalExpression;
 struct TaskMutexInfo;
 class ParametrizedVariable;
 struct RDDLTask;
+class RDDLTaskCSP;
 
 using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 
@@ -74,8 +74,9 @@ public:
 
     std::vector<ActionFluent*> generateFDRVars(
         TaskMutexInfo const& mutexes, Simplifications& replacements);
-    ActionFluent* generateFDRVar(
-        VarPartition const& partition, CSP& csp, Simplifications& replacements);
+    ActionFluent* generateFDRVar(VarPartition const& partition,
+                                 RDDLTaskCSP& csp,
+                                 Simplifications& replacements);
 
 protected:
     RDDLTask* task;

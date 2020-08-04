@@ -177,9 +177,9 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
 
 bool Simplifier::computeInapplicableActionFluents(
     Simplifications& replacements) {
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     csp.addPreconditions();
-    Z3Expressions& actionVars = csp.getActionVars();
+    Z3Expressions const& actionVars = csp.getActionVarSet();
     vector<bool> fluentIsApplicable(task->actionFluents.size(), true);
     for (ActionFluent* af : task->actionFluents) {
         if (af->isFDR) {
@@ -277,7 +277,7 @@ vector<ActionState> Simplifier::computeApplicableActions() const {
     // the assignment is legal) and invalidate the action assignment for the
     // next iteration. Terminates when there are no more models.
     vector<ActionState> result;
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     csp.addPreconditions();
     while (csp.hasSolution()) {
         result.emplace_back(csp.getActionModel());
@@ -325,7 +325,7 @@ void Simplifier::determineRelevantPreconditions() {
     }
 
     // Determine relevant preconditions for each action
-    CSP csp(task);
+    RDDLTaskCSP csp(task);
     int numActions = task->actionStates.size();
     int numPreconds = task->preconds.size();
     vector<bool> precondIsRelevant(numPreconds, false);
@@ -334,7 +334,7 @@ void Simplifier::determineRelevantPreconditions() {
         action.index = i;
 
         csp.push();
-        csp.assignActionVariables(action.state);
+        csp.assignActionVarSet(action.state);
 
         for (ActionPrecondition* precond : task->preconds) {
             csp.push();

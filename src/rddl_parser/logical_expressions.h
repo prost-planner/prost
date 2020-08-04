@@ -8,7 +8,6 @@
 
 class ActionFluent;
 class ActionState;
-class CSP;
 class DiscretePD;
 class Instantiator;
 class KleeneState;
@@ -17,6 +16,7 @@ class NumericConstant;
 class Object;
 class ParametrizedVariable;
 struct RDDLTask;
+class RDDLTaskCSP;
 class State;
 class StateFluent;
 
@@ -68,7 +68,7 @@ public:
     virtual void determineBounds(ActionState const& action, double& minRes,
                                  double& maxRes) const;
 
-    virtual z3::expr toZ3Formula(CSP& csp, int actionIndex) const;
+    virtual z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const;
 
     virtual void print(std::ostream& out) const;
 };
@@ -222,7 +222,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -262,7 +262,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -313,7 +313,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -438,7 +438,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -476,7 +476,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -515,7 +515,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -554,7 +554,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -593,7 +593,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -632,7 +632,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -671,7 +671,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -709,7 +709,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -747,7 +747,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -786,7 +786,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -824,7 +824,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -868,7 +868,7 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -1100,12 +1100,12 @@ public:
     void determineBounds(ActionState const& action, double& minRes,
                          double& maxRes) const override;
 
-    z3::expr toZ3Formula(CSP& csp, int actionIndex) const override;
+    z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 
 private:
-    z3::expr buildZ3Formula(CSP& csp, int actionIndex, int index) const;
+    z3::expr buildZ3Formula(RDDLTaskCSP& csp, int actionIndex, int index) const;
 };
 
 #endif

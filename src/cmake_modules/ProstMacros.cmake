@@ -1,7 +1,7 @@
 macro(prost_set_compiler_flags)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -W -Wno-sign-compare")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -ansi -fmax-errors=2")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Werror") #-Wconversion -Wsuggest-override
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Werror")
 
     include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag( "-std=c++11" CXX11_FOUND )

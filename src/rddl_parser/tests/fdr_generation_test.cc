@@ -8,12 +8,12 @@
 using namespace std;
 
 TEST_CASE("Greedy FDR generation") {
-    RDDLTask* task = new RDDLTask();
-    ActionFluent* a0 = new ActionFluent("a0", task->getType("bool"), 0);
-    ActionFluent* a1 = new ActionFluent("a1", task->getType("bool"), 1);
-    ActionFluent* a2 = new ActionFluent("a2", task->getType("bool"), 2);
-    ActionFluent* a3 = new ActionFluent("a3", task->getType("bool"), 3);
-    ActionFluent* a4 = new ActionFluent("a4", task->getType("bool"), 4);
+    auto task = new RDDLTask();
+    auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
+    auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
+    auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
+    auto a3 = new ActionFluent("a3", task->getType("bool"), 3);
+    auto a4 = new ActionFluent("a4", task->getType("bool"), 4);
     Simplifications dummy;
     GreedyFDRGenerator fdrGen(task);
 

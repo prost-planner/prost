@@ -73,9 +73,9 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     }
 
     if (concurrent) {
-        CSP csp(task);
+        RDDLTaskCSP csp(task);
         csp.addPreconditions();
-        Z3Expressions& actionVars = csp.getActionVars();
+        Z3Expressions const& actionVars = csp.getActionVarSet();
 
         for (ActionFluent* var : task->actionFluents) {
             // Action variables that are already in FDR are not considered since
