@@ -6,16 +6,6 @@
 #include <set>
 #include <vector>
 
-class ActionState;
-class ActionPrecondition;
-class ConditionalProbabilityFunction;
-class FDRGenerator;
-class LogicalExpression;
-class ParametrizedVariable;
-struct RDDLTask;
-
-using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
-
 /*
   The Simplifier class takes a fully instantiated RDDLTask as input (i.e., all
   state and action fluents, CPFs, action preconditions and the reward function
@@ -44,6 +34,18 @@ using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
   constant state fluents and their associated CPFs, action fluents and
   irrelevant preconditions have been removed.
 */
+
+namespace prost {
+namespace parser {
+class ActionState;
+class ActionPrecondition;
+class ConditionalProbabilityFunction;
+class FDRGenerator;
+class LogicalExpression;
+class ParametrizedVariable;
+struct RDDLTask;
+
+using Simplifications = std::map<ParametrizedVariable*, LogicalExpression*>;
 
 class Simplifier {
 public:
@@ -134,5 +136,7 @@ private:
     bool filterActionFluents(
         std::vector<bool> const& filter, Simplifications& replacements);
 };
+} // namespace parser
+} // namespace prost
 
 #endif

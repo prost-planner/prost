@@ -1,8 +1,8 @@
 z3::expr LogicalExpression::toZ3Formula(
     RDDLTaskCSP& csp, int /*actionIndex*/) const {
-    SystemUtils::abort("toZ3Formula not impemented!");
+    utils::SystemUtils::abort("toZ3Formula not impemented!");
     // Just to make compiler happy
-    return csp.getConstant("0");
+    return csp.createConstant("0");
 }
 
 /*****************************************************************
@@ -19,7 +19,7 @@ z3::expr ActionFluent::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
 
 z3::expr NumericConstant::toZ3Formula(
     RDDLTaskCSP& csp, int /*actionIndex*/) const {
-    return csp.getConstant(to_string(value).c_str());
+    return csp.createConstant(to_string(value).c_str());
 }
 
 z3::expr Conjunction::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
@@ -27,7 +27,7 @@ z3::expr Conjunction::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
     for (size_t i = 1; i < exprs.size(); ++i) {
         res = res && (exprs[i]->toZ3Formula(csp, actionIndex) != 0);
     }
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr Disjunction::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
@@ -35,7 +35,7 @@ z3::expr Disjunction::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
     for (size_t i = 1; i < exprs.size(); ++i) {
         res = res || (exprs[i]->toZ3Formula(csp, actionIndex) != 0);
     }
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 
@@ -45,7 +45,7 @@ z3::expr EqualsExpression::toZ3Formula(
     z3::expr res =
         exprs[0]->toZ3Formula(csp, actionIndex) ==
         exprs[1]->toZ3Formula(csp, actionIndex);
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr GreaterExpression::toZ3Formula(
@@ -54,7 +54,7 @@ z3::expr GreaterExpression::toZ3Formula(
     z3::expr res =
             exprs[0]->toZ3Formula(csp, actionIndex) >
             exprs[1]->toZ3Formula(csp, actionIndex);
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr LowerExpression::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
@@ -62,7 +62,7 @@ z3::expr LowerExpression::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
     z3::expr res =
             exprs[0]->toZ3Formula(csp, actionIndex) <
             exprs[1]->toZ3Formula(csp, actionIndex);
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr GreaterEqualsExpression::toZ3Formula(
@@ -71,7 +71,7 @@ z3::expr GreaterEqualsExpression::toZ3Formula(
     z3::expr res =
             exprs[0]->toZ3Formula(csp, actionIndex) >=
             exprs[1]->toZ3Formula(csp, actionIndex);
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr LowerEqualsExpression::toZ3Formula(
@@ -80,7 +80,7 @@ z3::expr LowerEqualsExpression::toZ3Formula(
     z3::expr res =
             exprs[0]->toZ3Formula(csp, actionIndex) <=
             exprs[1]->toZ3Formula(csp, actionIndex);
-    return z3::ite(res, csp.getConstant("1"), csp.getConstant("0"));
+    return z3::ite(res, csp.createConstant("1"), csp.createConstant("0"));
 }
 
 z3::expr Addition::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
@@ -117,7 +117,7 @@ z3::expr Division::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
 
 z3::expr Negation::toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const {
     z3::expr res = (expr->toZ3Formula(csp, actionIndex) != 0);
-    return z3::ite(res, csp.getConstant("0"), csp.getConstant("1"));
+    return z3::ite(res, csp.createConstant("0"), csp.createConstant("1"));
 }
 
 z3::expr MultiConditionChecker::toZ3Formula(

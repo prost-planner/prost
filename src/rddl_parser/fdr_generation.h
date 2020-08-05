@@ -5,6 +5,8 @@
 #include <set>
 #include <vector>
 
+namespace prost {
+namespace parser {
 class ActionFluent;
 class LogicalExpression;
 struct TaskMutexInfo;
@@ -98,5 +100,7 @@ public:
 protected:
     VarPartitioning partitionVars(TaskMutexInfo const& mutexInfo) override;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

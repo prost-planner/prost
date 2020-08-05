@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 State::State(vector<ConditionalProbabilityFunction*> const& cpfs) {
     for (unsigned int i = 0; i < cpfs.size(); ++i) {
         state.push_back(cpfs[i]->getInitialValue());
@@ -39,3 +41,5 @@ void ActionState::print(ostream& out) const {
     }
     out << endl;
 }
+} // namespace parser
+} // namespace prost

@@ -7,6 +7,9 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
+namespace tests {
 TEST_CASE("RDDL Task CSP") {
     RDDLTask* task = new RDDLTask();
     auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
@@ -100,3 +103,6 @@ TEST_CASE("RDDL Task CSP") {
         CHECK(!csp.hasSolution());
     }
 }
+} // namespace tests
+} // namespace parser
+} // namespace prost

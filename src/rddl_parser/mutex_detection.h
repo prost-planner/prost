@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 
+namespace prost {
+namespace parser {
 class ActionFluent;
 struct RDDLTask;
 
@@ -76,5 +78,7 @@ private:
   information in a TaskMutexInfo object.
 */
 TaskMutexInfo computeActionVarMutexes(RDDLTask* task);
+} // namespace parser
+} // namespace prost
 
 #endif

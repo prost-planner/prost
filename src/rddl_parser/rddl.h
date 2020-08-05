@@ -6,6 +6,8 @@
 
 #include "states.h"
 
+namespace prost {
+namespace parser {
 class LogicalExpression;
 class NonFluent;
 class Object;
@@ -134,5 +136,7 @@ struct RDDLTask {
     std::string domainName;
     std::string nonFluentsName;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

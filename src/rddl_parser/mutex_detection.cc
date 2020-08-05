@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 inline bool VarMutexInfo::ActionFluentSort::operator()(ActionFluent const* lhs, ActionFluent const* rhs) const {
     return lhs->index < rhs->index;
 }
@@ -110,3 +112,5 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     }
     return result;
 }
+} // namespace parser
+} // namespace prost

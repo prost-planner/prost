@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 void Precomputer::precompute() {
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
         if (cpf->cachingType == "VECTOR") {
@@ -53,7 +55,7 @@ void Precomputer::precomputeEvaluatable(Evaluatable* eval) {
                 if (eval->isProbabilistic()) {
                     double& res =
                         eval->precomputedResults[hashKey + actionHashKey];
-                    assert(MathUtils::doubleIsMinusInfinity(res));
+                    assert(utils::MathUtils::doubleIsMinusInfinity(res));
                     eval->determinization->evaluate(res, state, action);
 
                     DiscretePD& pdRes =
@@ -63,7 +65,7 @@ void Precomputer::precomputeEvaluatable(Evaluatable* eval) {
                 } else {
                     double& res =
                         eval->precomputedResults[hashKey + actionHashKey];
-                    assert(MathUtils::doubleIsMinusInfinity(res));
+                    assert(utils::MathUtils::doubleIsMinusInfinity(res));
                     eval->formula->evaluate(res, state, action);
                 }
             }
@@ -115,3 +117,5 @@ long Precomputer::calculateStateFluentHashKey(Evaluatable* eval,
     }
     return res;
 }
+} // namespace parser
+} // namespace prost

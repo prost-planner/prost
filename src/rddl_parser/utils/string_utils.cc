@@ -4,6 +4,9 @@
 #include <cassert>
 #include <sstream>
 
+namespace prost {
+namespace parser {
+namespace utils {
 void StringUtils::replaceAll(std::string& s, char const& searchFor,
                              char const& replaceBy) {
     std::replace(s.begin(), s.end(), searchFor, replaceBy);
@@ -269,3 +272,6 @@ bool StringUtils::startsWith(std::string const& s, std::string const& prefix) {
     std::string tmp = s.substr(0, prefix.length());
     return prefix == tmp;
 }
+} // namespace utils
+} // namespace parser
+} // namespace prost

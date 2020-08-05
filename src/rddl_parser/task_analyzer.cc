@@ -13,10 +13,10 @@
 
 using namespace std;
 
-TaskAnalyzer::TaskAnalyzer(RDDLTask* _task) : task(_task) {}
-
+namespace prost {
+namespace parser {
 void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
-    Timer t;
+    utils::Timer t;
     // Determine task properties
     if (output) {
         cout << "    Determining task properties..." << endl;
@@ -61,7 +61,7 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
             ++simCounter;
         }
 
-        if (MathUtils::doubleIsGreater(t(), timeout)) {
+        if (utils::MathUtils::doubleIsGreater(t(), timeout)) {
             cout << "Stopping analysis after " << t << " seconds and "
                  << numSimulations << " simulations." << endl;
             break;
@@ -314,7 +314,7 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
         double res = 0.0;
         action.relevantSACs[precondIndex]->formula->evaluate(res, current,
                                                              action);
-        if (MathUtils::doubleIsEqual(res, 0.0)) {
+        if (utils::MathUtils::doubleIsEqual(res, 0.0)) {
             return false;
         }
     }
@@ -323,10 +323,10 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
 
 inline bool TaskAnalyzer::isARewardLock(State const& current,
                                         double const& reward) const {
-    if (MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+    if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if (MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -346,8 +346,8 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !MathUtils::doubleIsEqual(*reward.begin(),
-                                  task->rewardCPF->getMinVal())) {
+        !utils::MathUtils::doubleIsEqual(*reward.begin(),
+                                         task->rewardCPF->getMinVal())) {
         return false;
     }
 
@@ -366,8 +366,8 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !MathUtils::doubleIsEqual(*reward.begin(),
-                                      task->rewardCPF->getMinVal())) {
+            !utils::MathUtils::doubleIsEqual(*reward.begin(),
+                                             task->rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -399,8 +399,8 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
-                                  *reward.begin())) {
+        !utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
+                                         *reward.begin())) {
         return false;
     }
 
@@ -438,3 +438,5 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
         }
     }
 }
+} // namespace parser
+} // namespace prost

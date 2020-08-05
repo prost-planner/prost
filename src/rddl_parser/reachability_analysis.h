@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 
+namespace prost {
+namespace parser {
 class ConditionalProbabilityFunction;
 struct RDDLTask;
 
@@ -72,5 +74,7 @@ private:
         ConditionalProbabilityFunction* cpf,
         std::vector<std::set<double>> const& values) const;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

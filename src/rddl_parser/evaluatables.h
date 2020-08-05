@@ -6,6 +6,8 @@
 #include "logical_expressions.h"
 #include "probability_distribution.h"
 
+namespace prost {
+namespace parser {
 struct ConditionalProbabilityFunction;
 
 struct Evaluatable {
@@ -148,5 +150,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     // Hashing of KleeneStates
     long kleeneDomainSize;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

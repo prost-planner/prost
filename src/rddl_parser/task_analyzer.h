@@ -6,11 +6,13 @@
 #include <set>
 #include <vector>
 
+namespace prost {
+namespace parser {
 struct RDDLTask;
 
 class TaskAnalyzer {
 public:
-    TaskAnalyzer(RDDLTask* _task);
+    explicit TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
     void analyzeTask(
         int numStates, int numSimulations, double timeout, bool output = true);
@@ -39,5 +41,7 @@ protected:
 
     void createTrainingSet(int const& numberOfStates);
 };
+} // namespace parser
+} // namespace prost
 
 #endif

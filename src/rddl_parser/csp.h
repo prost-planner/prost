@@ -5,11 +5,6 @@
 
 #include <vector>
 
-class LogicalExpression;
-struct RDDLTask;
-
-using Z3Expressions = std::vector<z3::expr>;
-
 /*
   A RDDLTaskCSP allows to reason over a RDDL task via a CSP. It creates a set
   of z3 state variables for each state variable of the RDDL task, and a set of
@@ -28,6 +23,14 @@ using Z3Expressions = std::vector<z3::expr>;
   csp.addConstraint(actionVars[0] == 1 && actionVars[1] == 1);
   bool result = csp.hasSolution();
 */
+
+namespace prost {
+namespace parser {
+using Z3Expressions = std::vector<::z3::expr>;
+
+class LogicalExpression;
+struct RDDLTask;
+
 class RDDLTaskCSP {
 public:
     explicit RDDLTaskCSP(RDDLTask* _task);
@@ -59,7 +62,7 @@ public:
     /*
       Add a constraint to the CSP
     */
-    void addConstraint(z3::expr const& expr) {
+    void addConstraint(::z3::expr const& expr) {
         solver.add(expr);
     }
 
@@ -83,7 +86,7 @@ public:
       Checks if the current CSP has a solution
     */
     bool hasSolution() {
-        return (solver.check() == z3::sat);
+        return (solver.check() == ::z3::sat);
     }
 
     /*
@@ -116,14 +119,14 @@ public:
     /*
       Returns a z3 constant with the given value
     */
-    z3::expr getConstant(char const* value) {
+    ::z3::expr createConstant(char const* value) {
         return context.real_val(value);
     }
 
 private:
     RDDLTask* task;
-    z3::context context;
-    z3::solver solver;
+    ::z3::context context;
+    ::z3::solver solver;
     std::vector<Z3Expressions> stateVarSets;
     std::vector<Z3Expressions> actionVarSets;
 
@@ -134,5 +137,7 @@ private:
     */
     void addConcurrencyConstraint(int actionSetIndex);
 };
+} // namespace parser
+} // namespace prost
 
 #endif

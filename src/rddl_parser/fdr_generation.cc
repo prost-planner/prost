@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 inline bool VarPartition::ActionFluentSort::operator()(ActionFluent const* lhs, ActionFluent const* rhs) const {
     return lhs->index < rhs->index;
 }
@@ -118,3 +120,5 @@ VarPartitioning GreedyFDRGenerator::partitionVars(
     }
     return result;
 }
+} // namespace parser
+} // namespace prost

@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+namespace prost {
+namespace parser {
+namespace utils {
 class StringUtils {
 public:
     static void replaceAll(std::string& s, char const& searchFor,
@@ -63,5 +66,8 @@ public:
         res = s.str();
     }
 };
+} // namespace utils
+} // namespace parser
+} // namespace prost
 
 #endif

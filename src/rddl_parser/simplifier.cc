@@ -15,13 +15,15 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 Simplifier::Simplifier(RDDLTask* _task)
     : task(_task), numGeneratedFDRActionFluents(0) {
     fdrGen = make_shared<GreedyFDRGenerator>(task);
 }
 
 void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
-    Timer t;
+    utils::Timer t;
     Simplifications replacements;
     bool continueSimplification = true;
     int iteration = 0;
@@ -129,7 +131,8 @@ void Simplifier::simplifyCPFs(Simplifications& replacements) {
             // Check if this CPF now also simplifies to its initial value
             auto nc = dynamic_cast<NumericConstant*>(cpf->formula);
             double initialValue = cpf->head->initialValue;
-            if (nc && MathUtils::doubleIsEqual(initialValue, nc->value)) {
+            if (nc &&
+                utils::MathUtils::doubleIsEqual(initialValue, nc->value)) {
                 assert(replacements.find(cpf->head) == replacements.end());
                 replacements[cpf->head] = nc;
                 task->CPFs.erase(it);
@@ -164,8 +167,9 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
         }
     } else if (auto nc = dynamic_cast<NumericConstant*>(simplified)) {
         // This precond is either never satisfied or always
-        if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
-            SystemUtils::abort("Found a precond that is never satisified!");
+        if (utils::MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            utils::SystemUtils::abort(
+                "Found a precond that is never satisified!");
         }
     } else {
         ActionPrecondition* sPrec = new ActionPrecondition(simplified);
@@ -377,3 +381,5 @@ bool Simplifier::filterActionFluents(
     task->sortActionFluents();
     return result;
 }
+} // namespace parser
+} // namespace prost

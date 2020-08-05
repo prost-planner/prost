@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 void Evaluatable::initialize() {
     isProb = false;
     hasArithmeticFunction = false;
@@ -30,24 +32,22 @@ void Evaluatable::initializeHashKeys(RDDLTask* task) {
     initializeKleeneStateFluentHashKeys(task, baseKey);
 }
 
-// Assign a hash key to every action such that all actions that influence
-// this in the same way (i.e., that have the same value for all action fluents
-// that affect this) are mapped to the same key
+// Assign a hash key to every action such that actions which have the same value
+// for all action fluents affected by this evalutable are mapped to the same key
 long Evaluatable::initializeActionHashKeys(RDDLTask* task) {
-    vector<ActionState> const& actionStates = task->actionStates;
-    int numActions = actionStates.size();
-    long baseKey = 0;
+    int numActions = static_cast<int>(task->actionStates.size());
+    long nextKey = 0;
     actionHashKeyMap = vector<long>(numActions, 0);
-    for (size_t actionIndex = 0; actionIndex < numActions; ++actionIndex) {
-        long key = getActionHashKey(actionStates, actionIndex);
-        if (key != -1) {
-            actionHashKeyMap[actionIndex] = key;
+    for (int i = 0; i < numActions; ++i) {
+        long existingKey = getActionHashKey(task->actionStates, i);
+        if (existingKey == -1) {
+            actionHashKeyMap[i] = nextKey;
+            ++nextKey;
         } else {
-            actionHashKeyMap[actionIndex] = baseKey;
-            ++baseKey;
+            actionHashKeyMap[i] = existingKey;
         }
     }
-    return baseKey;
+    return nextKey;
 }
 
 // Determine if all relevant action fluents of one of the already assigned
@@ -60,9 +60,9 @@ long Evaluatable::getActionHashKey(
         ActionState const& otherAction = actionStates[i];
         bool actionIsEquivalent = true;
         for (ActionFluent* af : dependentActionFluents) {
-            int fluentIndex = af->index;
-            if (action[fluentIndex] != otherAction[fluentIndex]) {
+            if (action[af->index] != otherAction[af->index]) {
                 actionIsEquivalent = false;
+                break;
             }
         }
         if (actionIsEquivalent) {
@@ -89,7 +89,7 @@ void Evaluatable::initializeStateFluentHashKeys(
             tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if (!task->CPFs[index]->hasFiniteDomain() ||
-                !MathUtils::multiplyWithOverflowCheck(
+                !utils::MathUtils::multiplyWithOverflowCheck(
                     nextHashKeyBase, task->CPFs[index]->getDomainSize())) {
                 cachingType = "NONE";
                 return;
@@ -136,7 +136,7 @@ void Evaluatable::initializeKleeneStateFluentHashKeys(
             tmpHashMap.push_back(make_pair(index, nextHashKeyBase));
 
             if ((task->CPFs[index]->kleeneDomainSize == 0) ||
-                !MathUtils::multiplyWithOverflowCheck(
+                !utils::MathUtils::multiplyWithOverflowCheck(
                     nextHashKeyBase, task->CPFs[index]->kleeneDomainSize)) {
                 kleeneCachingType = "NONE";
                 return;
@@ -166,3 +166,5 @@ void ConditionalProbabilityFunction::setDomain(int maxVal) {
     iota(domain.begin(), domain.end(), 0);
     head->domainSize = maxVal + 1;
 }
+} // namespace parser
+} // namespace prost

@@ -7,16 +7,13 @@
 #include <vector>
 
 #include "probability_distribution.h"
-#include "utils/math_utils.h"
 
+namespace prost {
+namespace parser {
 class ActionFluent;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
 struct RDDLTask;
-
-/*****************************************************************
-                               State
-*****************************************************************/
 
 struct State {
     State(std::vector<ConditionalProbabilityFunction*> const& cpfs);
@@ -49,10 +46,11 @@ struct State {
             assert(lhs.state.size() == rhs.state.size());
 
             for (int i = lhs.state.size() - 1; i >= 0; --i) {
-                if (MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
+                if (utils::MathUtils::doubleIsSmaller(lhs.state[i],
+                                                      rhs.state[i])) {
                     return true;
-                } else if (MathUtils::doubleIsSmaller(rhs.state[i],
-                                                      lhs.state[i])) {
+                } else if (utils::MathUtils::doubleIsSmaller(rhs.state[i],
+                                                             lhs.state[i])) {
                     return false;
                 }
             }
@@ -62,10 +60,6 @@ struct State {
 
     std::vector<double> state;
 };
-
-/*****************************************************************
-                            PDState
-*****************************************************************/
 
 struct PDState {
     PDState(int stateSize) : state(stateSize, DiscretePD()) {}
@@ -95,10 +89,6 @@ struct PDState {
 
     std::vector<DiscretePD> state;
 };
-
-/*****************************************************************
-                          KleeneState
-*****************************************************************/
 
 class KleeneState {
 public:
@@ -156,10 +146,6 @@ private:
     KleeneState(KleeneState const& other) : state(other.state) {}
 };
 
-/*****************************************************************
-                            ActionState
-*****************************************************************/
-
 class ActionState {
 public:
     ActionState(int size) : state(size, 0), index(-1) {}
@@ -209,5 +195,7 @@ public:
     std::vector<ActionPrecondition*> relevantSACs;
     int index;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

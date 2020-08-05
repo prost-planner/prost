@@ -11,6 +11,8 @@
 
 #include "utils/math_utils.h"
 
+namespace prost {
+namespace parser {
 class DiscretePD {
 public:
     DiscretePD() {}
@@ -21,9 +23,9 @@ public:
         }
 
         for (unsigned int i = 0; i < values.size(); ++i) {
-            if (!MathUtils::doubleIsEqual(probabilities[i],
+            if (!utils::MathUtils::doubleIsEqual(probabilities[i],
                                           rhs.probabilities[i]) ||
-                !MathUtils::doubleIsEqual(values[i], rhs.values[i])) {
+                !utils::MathUtils::doubleIsEqual(values[i], rhs.values[i])) {
                 return false;
             }
         }
@@ -38,16 +40,17 @@ public:
         }
 
         for (unsigned int i = 0; i < values.size(); ++i) {
-            if (MathUtils::doubleIsSmaller(values[i], rhs.values[i])) {
+            if (utils::MathUtils::doubleIsSmaller(values[i], rhs.values[i])) {
                 return true;
-            } else if (MathUtils::doubleIsSmaller(rhs.values[i], values[i])) {
+            } else if (utils::MathUtils::doubleIsSmaller(
+                rhs.values[i], values[i])) {
                 return false;
             }
 
-            if (MathUtils::doubleIsSmaller(probabilities[i],
+            if (utils::MathUtils::doubleIsSmaller(probabilities[i],
                                            rhs.probabilities[i])) {
                 return true;
-            } else if (MathUtils::doubleIsSmaller(rhs.probabilities[i],
+            } else if (utils::MathUtils::doubleIsSmaller(rhs.probabilities[i],
                                                   probabilities[i])) {
                 return false;
             }
@@ -64,14 +67,14 @@ public:
 
     // Places truthProb on 1.0 and the rest on 0.0
     void assignBernoulli(double const& truthProb) {
-        assert(MathUtils::doubleIsGreaterOrEqual(truthProb, 0));
-        assert(MathUtils::doubleIsSmallerOrEqual(truthProb, 1));
+        assert(utils::MathUtils::doubleIsGreaterOrEqual(truthProb, 0));
+        assert(utils::MathUtils::doubleIsSmallerOrEqual(truthProb, 1));
         reset();
-        if (!MathUtils::doubleIsEqual(truthProb, 1.0)) {
+        if (!utils::MathUtils::doubleIsEqual(truthProb, 1.0)) {
             values.push_back(0.0);
             probabilities.push_back(1.0 - truthProb);
         }
-        if (!MathUtils::doubleIsEqual(truthProb, 0.0)) {
+        if (!utils::MathUtils::doubleIsEqual(truthProb, 0.0)) {
             values.push_back(1.0);
             probabilities.push_back(truthProb);
         }
@@ -94,9 +97,9 @@ public:
 
     double probabilityOf(double const& val) const {
         for (unsigned int i = 0; i < values.size(); ++i) {
-            if (MathUtils::doubleIsEqual(values[i], val)) {
+            if (utils::MathUtils::doubleIsEqual(values[i], val)) {
                 return probabilities[i];
-            } else if (MathUtils::doubleIsGreater(values[i], val)) {
+            } else if (utils::MathUtils::doubleIsGreater(values[i], val)) {
                 // As
                 return 0.0;
             }
@@ -109,7 +112,8 @@ public:
     }
 
     bool isFalsity() const {
-        return isDeterministic() && MathUtils::doubleIsEqual(values[0], 0.0);
+        return isDeterministic() &&
+               utils::MathUtils::doubleIsEqual(values[0], 0.0);
     }
 
     double truthProbability() const {
@@ -118,8 +122,8 @@ public:
 
     bool isTruth() const {
         return isDeterministic() &&
-               (MathUtils::doubleIsGreaterOrEqual(values[0], 1.0) ||
-                MathUtils::doubleIsSmaller(values[0], 0.0));
+               (utils::MathUtils::doubleIsGreaterOrEqual(values[0], 1.0) ||
+                   utils::MathUtils::doubleIsSmaller(values[0], 0.0));
     }
 
     bool isDeterministic() const {
@@ -142,5 +146,7 @@ public:
     std::vector<double> values;
     std::vector<double> probabilities;
 };
+} // namespace parser
+} // namespace prost
 
 #endif

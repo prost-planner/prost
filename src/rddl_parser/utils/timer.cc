@@ -6,6 +6,9 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
+namespace utils {
 Timer::Timer() {
     currentTime = getCurrentTime();
 }
@@ -33,3 +36,6 @@ ostream& operator<<(ostream& os, const Timer& timer) {
     os << value << "s";
     return os;
 }
+} // namespace utils
+} // namespace parser
+} // namespace prost

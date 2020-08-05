@@ -7,6 +7,9 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
+namespace tests {
 TEST_CASE("Greedy FDR generation") {
     auto task = new RDDLTask();
     auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
@@ -63,3 +66,6 @@ TEST_CASE("Greedy FDR generation") {
         CHECK(fdrVars[1]->domainSize() == 3);
     }
 }
+} // namespace tests
+} // namespace parser
+} // namespace prost

@@ -1,6 +1,8 @@
 #ifndef HASH_KEY_GENERATOR_H
 #define HASH_KEY_GENERATOR_H
 
+namespace prost {
+namespace parser {
 struct RDDLTask;
 
 class HashKeyGenerator {
@@ -17,5 +19,6 @@ private:
     void prepareKleeneStateHashKeys();
     void prepareEvaluatableHashKeys();
 };
-
+} // namespace parser
+} // namespace prost
 #endif

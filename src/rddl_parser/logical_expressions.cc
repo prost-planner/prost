@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 Object::Object(std::string _name, Type* _type)
     : Parameter(_name, _type), types() {
     Type* tmpType = type;
@@ -70,7 +72,7 @@ ActionFluent::ActionFluent(ParametrizedVariable const& source,
       isFDR(source.valueType->name != "bool") {
     // To support action fluent with a different initial value than 0, we have
     // to adapt the simplification
-    assert(MathUtils::doubleIsEqual(initialValue, 0.0));
+    assert(utils::MathUtils::doubleIsEqual(initialValue, 0.0));
 }
 
 ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
@@ -79,7 +81,7 @@ ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
       isFDR(_valueType->name != "bool") {
     // To support action fluent with a different initial value than 0, we have
     // to adapt the simplification
-    assert(MathUtils::doubleIsEqual(initialValue, 0.0));
+    assert(utils::MathUtils::doubleIsEqual(initialValue, 0.0));
 }
 
 bool Type::isSubtypeOf(Type* const& other) const {
@@ -106,3 +108,5 @@ bool Type::isSubtypeOf(Type* const& other) const {
 #include "logical_expressions_includes/replace_quantifier.cc"
 #include "logical_expressions_includes/simplify.cc"
 #include "logical_expressions_includes/to_z3_formula.cc"
+} // namespace parser
+} // namespace prost

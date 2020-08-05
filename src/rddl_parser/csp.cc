@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace prost {
+namespace parser {
 RDDLTaskCSP::RDDLTaskCSP(RDDLTask* _task)
     : task(_task), context(), solver(context) {
     addStateVarSet();
@@ -12,7 +14,7 @@ RDDLTaskCSP::RDDLTaskCSP(RDDLTask* _task)
 }
 
 template <typename T>
-z3::expr createZ3Var(z3::context& context, T const* var, int setIndex) {
+::z3::expr createZ3Var(::z3::context& context, T const* var, int setIndex) {
     string name(to_string(var->index) + "_" + var->fullName + "_" +
                 to_string(setIndex));
     return context.int_const(name.c_str());
@@ -54,12 +56,11 @@ void RDDLTaskCSP::addConcurrencyConstraint(int actionSetIndex) {
     int numActionFluents = task->actionFluents.size();
     int numConcurrentActions = task->numberOfConcurrentActions;
     if (numConcurrentActions < numActionFluents) {
-        vector<LogicalExpression*> afs;
-        for (ActionFluent* af : task->actionFluents) {
-            afs.push_back(af);
-        }
+        vector<LogicalExpression*> vars(numActionFluents);
+        copy(task->actionFluents.begin(), task->actionFluents.end(),
+             vars.begin());
         vector<LogicalExpression*> maxConcurrent =
-            {new Addition(afs), new NumericConstant(numConcurrentActions)};
+            {new Addition(vars), new NumericConstant(numConcurrentActions)};
         auto* constraint = new LowerEqualsExpression(maxConcurrent);
         solver.add(constraint->toZ3Formula(*this, actionSetIndex) != 0);
     }
@@ -80,9 +81,9 @@ vector<int> RDDLTaskCSP::getActionModel(int actionSetIndex) const {
     Z3Expressions const& action = actionVarSets[actionSetIndex];
     int numActionFluents = task->actionFluents.size();
     vector<int> result(numActionFluents);
-    z3::model model = solver.get_model();
+    ::z3::model model = solver.get_model();
     for (size_t index = 0; index < numActionFluents; ++index) {
-        z3::expr const& actionFluent = action[index];
+        ::z3::expr const& actionFluent = action[index];
         // The internal representation of numbers in z3 does not use ints, so
         // the conversion is non-trivial. A recommended way is to convert to a
         // string and from there to an int.
@@ -95,11 +96,13 @@ vector<int> RDDLTaskCSP::getActionModel(int actionSetIndex) const {
 void RDDLTaskCSP::invalidateActionModel(int actionSetIndex) {
     assert(static_cast<size_t>(actionSetIndex) < actionVarSets.size());
     Z3Expressions const& action = actionVarSets[actionSetIndex];
-    z3::model model = solver.get_model();
-    z3::expr block = context.bool_val(false);
-    for (z3::expr const& actionFluent : action) {
+    ::z3::model model = solver.get_model();
+    ::z3::expr block = context.bool_val(false);
+    for (::z3::expr const& actionFluent : action) {
         int value = atoi(model.eval(actionFluent).to_string().c_str());
         block = block || (actionFluent != value);
     }
     solver.add(block);
 }
+} // namespace parser
+} // namespace prost
