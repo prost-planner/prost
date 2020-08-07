@@ -21,7 +21,7 @@ protected:
     RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
-    bool rewardFormulaAllowsRewardLockDetection;
+    int finalActionIndex = -1;
 
     void determineTaskProperties();
 

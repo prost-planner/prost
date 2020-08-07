@@ -64,6 +64,8 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     if (finalReward == "CONSTANT") {
         SearchEngine::candidatesForOptimalFinalAction.resize(1);
         desc >> SearchEngine::candidatesForOptimalFinalAction[0];
+        SearchEngine::goalTestActionIndex =
+            SearchEngine::candidatesForOptimalFinalAction[0];
     } else if (finalReward == "CANDIDATE_SET") {
         int sizeOfCandidateSet;
         desc >> sizeOfCandidateSet;
@@ -77,9 +79,7 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     }
 
     desc >> SearchEngine::rewardLockDetected;
-    if (SearchEngine::rewardLockDetected) {
-        SearchEngine::goalTestActionIndex = 0;
-    } else {
+    if (!SearchEngine::rewardLockDetected) {
         SearchEngine::goalTestActionIndex = -1;
     }
 

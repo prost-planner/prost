@@ -22,19 +22,6 @@ void State::print(ostream& out) const {
     out << endl;
 }
 
-bool ActionState::isNOOP(RDDLTask* task) const {
-    for (ActionFluent* af : task->actionFluents) {
-        if (state[af->index] != 0) {
-            return false;
-        }
-        vector<Object*>& values = af->valueType->objects;
-        if (af->isFDR && values[0]->name.find("none-of-those") != 0) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void ActionState::print(ostream& out) const {
     for (unsigned int index = 0; index < state.size(); ++index) {
         out << state[index] << " ";

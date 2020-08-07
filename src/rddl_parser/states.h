@@ -185,8 +185,6 @@ struct ActionState {
         return false;
     }
 
-    bool isNOOP(RDDLTask* task) const;
-
     void print(std::ostream& out) const;
 
     std::vector<int> state;

@@ -70,10 +70,6 @@ bool actionDominates(
 }
 
 void TaskAnalyzer::determineTaskProperties() {
-    rewardFormulaAllowsRewardLockDetection =
-        task->rewardCPF->isActionIndependent() &&
-        task->actionStates[0].isNOOP(task);
-
     if (task->rewardCPF->isActionIndependent()) {
         // The reward is not affected by the applied action, so we check if
         // there is an action that is always applicable (i.e., does not have any
@@ -145,6 +141,15 @@ void TaskAnalyzer::determineTaskProperties() {
         }
         task->candidatesForOptimalFinalAction.assign(
             candidates.begin(), candidates.end());
+    }
+
+    // To determine if a state is a goal, we have to check if applying the
+    // candidate for the optimal final action that yields the highest reward
+    // leads to a state that is still in the goal zone. As it is expensive if
+    // there is more than just one such candidate, we disable reward lock
+    // detection if there is more than one candidate.
+    if (task->candidatesForOptimalFinalAction.size() == 1) {
+        finalActionIndex = task->candidatesForOptimalFinalAction[0];
     }
 }
 
@@ -272,7 +277,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
     // Check if this is a reward lock
-    if (rewardFormulaAllowsRewardLockDetection &&
+    if ((finalActionIndex >= 0) &&
         !task->rewardLockDetected &&
         (encounteredStates.find(current) == encounteredStates.end()) &&
         isARewardLock(current, reward)) {
@@ -395,11 +400,11 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
     set<double> reward;
 
     for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluateToKleene(succ[i], state,
-                                                 task->actionStates[0]);
+        task->CPFs[i]->formula->evaluateToKleene(
+            succ[i], state, task->actionStates[finalActionIndex]);
     }
-    task->rewardCPF->formula->evaluateToKleene(reward, state,
-                                               task->actionStates[0]);
+    task->rewardCPF->formula->evaluateToKleene(
+        reward, state, task->actionStates[finalActionIndex]);
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
