@@ -22,7 +22,7 @@ struct State {
 
     // Create a copy of other except that the value of variable var is
     // set to val
-    State(State const& other, int var, int val)
+    State(State const& other, int var, double val)
         : state(other.state) {
         assert(var < state.size());
         state[var] = val;
@@ -146,10 +146,8 @@ private:
     KleeneState(KleeneState const& other) : state(other.state) {}
 };
 
-class ActionState {
-public:
-    ActionState(int size) : state(size, 0), index(-1) {}
-    ActionState(std::vector<int> _state) : state(_state), index(-1) {}
+struct ActionState {
+    ActionState(std::vector<int> const& _state) : state(_state), index(-1) {}
 
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}

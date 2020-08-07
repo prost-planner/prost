@@ -15,9 +15,9 @@ using namespace std;
 
 namespace prost {
 namespace parser {
-void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout, bool output) {
+void TaskAnalyzer::analyzeTask(
+    int numStates, int numSimulations, double timeout, bool output) {
     utils::Timer t;
-    // Determine task properties
     if (output) {
         cout << "    Determining task properties..." << endl;
     }
@@ -27,7 +27,6 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
     }
     t.reset();
 
-    // Approximate or calculate the min and max reward
     if (output) {
         cout << "    Calculating min and max reward..." << endl;
     }
@@ -40,33 +39,7 @@ void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout
     if (output) {
         cout << "    Performing random walks..." << endl;
     }
-    State currentState(task->CPFs);
-    int remainingSteps = task->horizon;
-
-    for (int simCounter = 0; simCounter < numSimulations;) {
-        State nextState(task->CPFs.size());
-        double reward = 0.0;
-        analyzeStateAndApplyAction(currentState, nextState, reward);
-
-        encounteredStates.insert(currentState);
-        ++task->numberOfEncounteredStates;
-
-        --remainingSteps;
-
-        if (remainingSteps > 0) {
-            currentState = State(nextState);
-        } else {
-            currentState = State(task->CPFs);
-            remainingSteps = task->horizon;
-            ++simCounter;
-        }
-
-        if (utils::MathUtils::doubleIsGreater(t(), timeout)) {
-            cout << "Stopping analysis after " << t << " seconds and "
-                 << numSimulations << " simulations." << endl;
-            break;
-        }
-    }
+    performRandomWalks(numSimulations, timeout);
     if (output) {
         cout << "    ...finished (" << t() << ")" << endl;
     }
@@ -97,11 +70,11 @@ bool actionDominates(
 }
 
 void TaskAnalyzer::determineTaskProperties() {
-    RewardFunction* reward = task->rewardCPF;
     rewardFormulaAllowsRewardLockDetection =
-        reward->isActionIndependent() && task->actionStates[0].isNOOP(task);
+        task->rewardCPF->isActionIndependent() &&
+        task->actionStates[0].isNOOP(task);
 
-    if (reward->isActionIndependent()) {
+    if (task->rewardCPF->isActionIndependent()) {
         // The reward is not affected by the applied action, so we check if
         // there is an action that is always applicable (i.e., does not have any
         // precondition). If not, the first applicable action gives the final
@@ -213,6 +186,37 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
     }
     reward->domain.insert(minVal);
     reward->domain.insert(maxVal);
+}
+
+void TaskAnalyzer::performRandomWalks(int numSimulations, double timeout) {
+    utils::Timer t;
+    State currentState(task->CPFs);
+    int remainingSteps = task->horizon;
+
+    for (int simCounter = 0; simCounter < numSimulations;) {
+        State nextState(task->CPFs.size());
+        double reward = 0.0;
+        analyzeStateAndApplyAction(currentState, nextState, reward);
+
+        encounteredStates.insert(currentState);
+        ++task->numberOfEncounteredStates;
+
+        --remainingSteps;
+
+        if (remainingSteps > 0) {
+            currentState = State(nextState);
+        } else {
+            currentState = State(task->CPFs);
+            remainingSteps = task->horizon;
+            ++simCounter;
+        }
+
+        if (utils::MathUtils::doubleIsGreater(t(), timeout)) {
+            cout << "Stopping analysis after " << t << " seconds and "
+                 << numSimulations << " simulations." << endl;
+            break;
+        }
+    }
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,

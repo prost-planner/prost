@@ -74,19 +74,6 @@ struct Evaluatable {
     // The stateFluentHashKeyMap contains the state fluent hash key (base) of
     // each of the dependent state fluents
     std::vector<std::pair<int, long>> stateFluentHashKeyBases;
-
-    // These function are used to calculate the two parts of state fluent hash
-    // keys: the action part (that is stored in the actionHashKeyMap of
-    // Evaluatable), and the state fluent part (that is stored in RDDLTask
-    // and computed within states).
-    void initializeHashKeys(RDDLTask* task);
-    long initializeActionHashKeys(RDDLTask* task);
-    long getActionHashKey(
-        std::vector<ActionState> const& actionStates, int actionIndex);
-
-    void initializeStateFluentHashKeys(RDDLTask* task, long nextHashKeyBase);
-    void initializeKleeneStateFluentHashKeys(
-        RDDLTask* task, long nextHashKeyBase);
 };
 
 struct ActionPrecondition : public Evaluatable {
@@ -126,10 +113,6 @@ struct ConditionalProbabilityFunction : public Evaluatable {
 
     int getDomainSize() const {
         return domain.size();
-    }
-
-    bool hasFiniteDomain() const {
-        return !domain.empty();
     }
 
     void setDomain(int numVals);

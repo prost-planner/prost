@@ -39,7 +39,7 @@ set(RDDL_PARSER_SOURCES
     determinizer
     evaluatables
     fdr_generation
-    hash_key_generator
+    hashing/hash_keys
     instantiator
     logical_expressions
     mutex_detection
@@ -60,6 +60,7 @@ set(RDDL_PARSER_SOURCES
 set(RDDL_PARSER_TEST_SOURCES
     ../doctest/doctest
     tests/fdr_generation_test
+    tests/hash_keys_test
     tests/logical_expressions_test
     tests/mutex_detection_test
     tests/probability_distribution_test

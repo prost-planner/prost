@@ -35,7 +35,6 @@ bool allValuesAreReachable(vector<set<double>> const& domains,
 
 TEST_CASE("Reachability analysis where every fact is directly reachable") {
     RDDLTask* task = new RDDLTask();
-
     vector<Parameter*> params;
     string typeName = "fdr";
     Type* t = task->addType(typeName);

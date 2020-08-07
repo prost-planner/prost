@@ -19,7 +19,7 @@ TEST_CASE("Mutex detection with binary variables") {
     auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
     auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
 
-    SUBCASE("Mutex detection with a single action variables") {
+    SUBCASE("Mutex detection with a single action variable") {
         // If there is only one action variable, that action variable is not
         // mutex with another action variable
         task->actionFluents = {a0};

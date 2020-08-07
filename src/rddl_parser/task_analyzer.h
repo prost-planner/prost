@@ -27,6 +27,8 @@ protected:
 
     void calculateMinAndMaxReward() const;
 
+    void performRandomWalks(int numSimulations, double timeout);
+
     void analyzeStateAndApplyAction(State const& current, State& next,
                                     double& reward) const;
 

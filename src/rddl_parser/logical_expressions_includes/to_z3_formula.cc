@@ -130,8 +130,8 @@ z3::expr MultiConditionChecker::buildZ3Formula(
     if (index == conditions.size() - 1) {
         return effects[index]->toZ3Formula(csp, actionIndex);
     }
-    z3::expr cond = (conditions[index]->toZ3Formula(csp, actionIndex) != 0);
-    z3::expr ifEff = effects[index]->toZ3Formula(csp, actionIndex);
+    z3::expr ifCond = (conditions[index]->toZ3Formula(csp, actionIndex) != 0);
+    z3::expr thenEff = effects[index]->toZ3Formula(csp, actionIndex);
     z3::expr elseEff = buildZ3Formula(csp, actionIndex, index + 1);
-    return z3::ite(cond, ifEff, elseEff);
+    return z3::ite(ifCond, thenEff, elseEff);
 }
