@@ -25,10 +25,10 @@ void Evaluatable::simplify(Simplifications& replace) {
     initialize();
 }
 
-void ConditionalProbabilityFunction::setDomain(int maxVal) {
-    domain.resize(maxVal + 1);
+void ConditionalProbabilityFunction::setDomainSize(int numVals) {
+    domain.resize(numVals);
     iota(domain.begin(), domain.end(), 0);
-    head->domainSize = maxVal + 1;
+    head->domainSize = numVals;
 }
 } // namespace parser
 } // namespace prost

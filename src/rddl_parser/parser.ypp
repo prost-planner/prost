@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "determinizer.h"
+#include "determinize/determinize.h"
 #include "hashing/hash_keys.h"
 #include "instantiator.h"
 #include "logical_expressions.h"
@@ -858,7 +858,7 @@ int main (int argc, char** argv) {
 
     t.reset();
     std::cout << "Determinizing..." << std::endl;
-    prost::parser::Determinizer determinizer(rddlTask);
+    prost::parser::determinize::MostLikelyDeterminizer determinizer(rddlTask);
     determinizer.determinize();
     std::cout << "...finished (" << t << ")." << std::endl;
 

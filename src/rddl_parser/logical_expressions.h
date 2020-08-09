@@ -43,9 +43,6 @@ public:
                                            Instantiations& replace);
     virtual LogicalExpression* simplify(Simplifications& replace);
 
-    virtual LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates);
-
     virtual void collectInitialInfo(bool& isProbabilistic,
                                     bool& containsArithmeticFunction,
                                     StateFluentSet& dependentStateFluents,
@@ -64,11 +61,6 @@ public:
     virtual void evaluateToKleene(std::set<double>& res,
                                   KleeneState const& current,
                                   ActionState const& action) const;
-
-    void determineBounds(std::vector<ActionState> const& actionStates,
-                         double& minRes, double& maxRes) const;
-    virtual void determineBounds(ActionState const& action, double& minRes,
-                                 double& maxRes) const;
 
     virtual ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const;
 
@@ -177,8 +169,6 @@ public:
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void print(std::ostream& out) const override;
 };
@@ -221,9 +211,6 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
-
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
@@ -261,9 +248,6 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
-
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
@@ -291,9 +275,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -311,9 +292,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -404,6 +382,8 @@ public:
 
     Connective(std::vector<LogicalExpression*>& _exprs) : exprs(_exprs) {}
 
+    virtual Connective* create(std::vector<LogicalExpression*> _exprs) = 0;
+
     void print(std::ostream& out) const override;
 };
 
@@ -411,14 +391,15 @@ class Conjunction : public Connective {
 public:
     Conjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
+    Conjunction* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Conjunction(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -436,9 +417,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -449,14 +427,15 @@ class Disjunction : public Connective {
 public:
     Disjunction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
+    Disjunction* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Disjunction(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -474,9 +453,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -488,14 +464,15 @@ public:
     EqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    EqualsExpression* create(std::vector<LogicalExpression*> _exprs) override {
+        return new EqualsExpression(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -513,9 +490,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -527,14 +501,15 @@ public:
     GreaterExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    GreaterExpression* create(std::vector<LogicalExpression*> _exprs) override {
+        return new GreaterExpression(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -552,9 +527,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -566,14 +538,15 @@ public:
     LowerExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    LowerExpression* create(std::vector<LogicalExpression*> _exprs) override {
+        return new LowerExpression(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -591,9 +564,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -605,14 +575,15 @@ public:
     GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    GreaterEqualsExpression* create(std::vector<LogicalExpression*> _exprs) override {
+        return new GreaterEqualsExpression(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -630,9 +601,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -644,14 +612,15 @@ public:
     LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    LowerEqualsExpression* create(std::vector<LogicalExpression*> _exprs) override {
+        return new LowerEqualsExpression(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -669,9 +638,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -682,14 +648,15 @@ class Addition : public Connective {
 public:
     Addition(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
+    Addition* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Addition(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -707,9 +674,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -720,14 +684,15 @@ class Subtraction : public Connective {
 public:
     Subtraction(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
+    Subtraction* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Subtraction(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -745,9 +710,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -759,14 +721,15 @@ public:
     Multiplication(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
+    Multiplication* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Multiplication(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -784,9 +747,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -797,14 +757,15 @@ class Division : public Connective {
 public:
     Division(std::vector<LogicalExpression*>& _exprs) : Connective(_exprs) {}
 
+    Division* create(std::vector<LogicalExpression*> _exprs) override {
+        return new Division(_exprs);
+    }
+
     LogicalExpression* replaceQuantifier(
         Instantiations& replace, Instantiator* inst) override;
     LogicalExpression* instantiate(
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
-
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
 
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
@@ -822,9 +783,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -847,9 +805,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -866,9 +821,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
@@ -887,9 +839,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -906,9 +855,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -944,9 +890,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -964,9 +907,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     void print(std::ostream& out) const override;
 
@@ -989,9 +929,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -1008,9 +945,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -1038,9 +972,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -1057,9 +988,6 @@ public:
                       ActionState const& action) const override;
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
-
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
 
     void print(std::ostream& out) const override;
 };
@@ -1079,9 +1007,6 @@ public:
         RDDLTask* task, Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
-    LogicalExpression* determinizeMostLikely(
-        std::vector<ActionState> const& actionStates) override;
-
     void collectInitialInfo(bool& isProbabilistic,
                             bool& containsArithmeticFunction,
                             StateFluentSet& dependentStateFluents,
@@ -1099,14 +1024,13 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
-    void determineBounds(ActionState const& action, double& minRes,
-                         double& maxRes) const override;
-
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
 
 private:
+    // To encode a MultiConditionChecker as a CSP formula, we nest if-then-else
+    // (z3::ite) expressions, which are built by recursively calling this
     ::z3::expr buildZ3Formula(
         RDDLTaskCSP& csp, int actionIndex, int index) const;
 };

@@ -3,6 +3,7 @@
 #include "../evaluatables.h"
 #include "../logical_expressions.h"
 #include "../rddl.h"
+
 #include "../hashing/hash_keys.h"
 
 using namespace std;
@@ -10,7 +11,7 @@ using namespace std;
 namespace prost {
 namespace parser {
 namespace hashing {
-TEST_CASE("Hash keys with binary variables") {
+TEST_CASE("Hash key generation") {
     auto task = new RDDLTask();
     vector<Parameter*> params;
     string typeName = "fdr";
@@ -34,17 +35,17 @@ TEST_CASE("Hash keys with binary variables") {
     auto s5 = new StateFluent(*fdrPVar, params, 0.0, 5);
 
     auto c0 = new ConditionalProbabilityFunction(s0, nullptr);
-    c0->setDomain(1);
+    c0->setDomainSize(2);
     auto c1 = new ConditionalProbabilityFunction(s1, nullptr);
-    c1->setDomain(1);
+    c1->setDomainSize(2);
     auto c2 = new ConditionalProbabilityFunction(s2, nullptr);
-    c2->setDomain(1);
+    c2->setDomainSize(2);
     auto c3 = new ConditionalProbabilityFunction(s3, nullptr);
-    c3->setDomain(2);
+    c3->setDomainSize(3);
     auto c4 = new ConditionalProbabilityFunction(s4, nullptr);
-    c4->setDomain(1);
+    c4->setDomainSize(2);
     auto c5 = new ConditionalProbabilityFunction(s5, nullptr);
-    c5->setDomain(2);
+    c5->setDomainSize(3);
 
     task->rewardCPF = new RewardFunction(nullptr);
 
@@ -122,7 +123,7 @@ TEST_CASE("Hash keys with binary variables") {
         for (int i = 0; i < numVars; ++i) {
             auto var = new StateFluent(*pVar, params, 0.0, i);
             auto cpf = new ConditionalProbabilityFunction(var, nullptr);
-            cpf->setDomain(1);
+            cpf->setDomainSize(2);
             task->stateFluents.push_back(var);
             task->CPFs.push_back(cpf);
         }

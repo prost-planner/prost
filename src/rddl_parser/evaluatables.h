@@ -115,7 +115,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
         return domain.size();
     }
 
-    void setDomain(int numVals);
+    void setDomainSize(int numVals);
 
     void setIndex(int _index) {
         head->index = _index;

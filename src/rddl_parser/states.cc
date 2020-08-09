@@ -10,8 +10,8 @@ using namespace std;
 namespace prost {
 namespace parser {
 State::State(vector<ConditionalProbabilityFunction*> const& cpfs) {
-    for (unsigned int i = 0; i < cpfs.size(); ++i) {
-        state.push_back(cpfs[i]->getInitialValue());
+    for (ConditionalProbabilityFunction const* cpf : cpfs) {
+        state.push_back(cpf->getInitialValue());
     }
 }
 
