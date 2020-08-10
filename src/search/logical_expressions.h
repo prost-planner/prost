@@ -78,12 +78,13 @@ public:
 
 class ActionFluent : public LogicalExpression {
 public:
-    ActionFluent(int _index, std::string _name,
+    ActionFluent(int _index, std::string _name, bool _isFDR,
                  std::vector<std::string> _values)
-        : index(_index), name(_name), values(_values) {}
+        : index(_index), name(_name), isFDR(_isFDR), values(_values) {}
 
     int index;
     std::string name;
+    bool isFDR;
     std::vector<std::string> values;
 
     void evaluate(double& res, State const& current,

@@ -1,6 +1,14 @@
 #ifndef INSTANTIATOR_H
 #define INSTANTIATOR_H
 
+/*
+  The Instantiator class receives the lifted planning task as modelled in RDDL
+  as input and naively grounds (i.e., instantiates all parameters with concrete
+  objects) all state and action variables, CPFs action preconditions. In the
+  process, all quantifiers that occur in formulas are replaced by corresponding
+  expressions over the set of objets.
+*/
+
 #include <vector>
 
 namespace prost {

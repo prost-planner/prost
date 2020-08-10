@@ -24,6 +24,7 @@ protected:
     int finalActionIndex = -1;
 
     void determineTaskProperties();
+    std::vector<int> determineDominantActions() const;
 
     void calculateMinAndMaxReward() const;
 

@@ -405,6 +405,8 @@ void RDDLTask::print(ostream& out) {
         out << af->index << endl;
         out << "## name" << endl;
         out << af->fullName << endl;
+        out << "## 1 if this is an FDR action fluent" << endl;
+        out << af->isFDR << endl;
         out << "## number of values" << endl;
         out << af->valueType->objects.size() << endl;
         out << "## values" << endl;
