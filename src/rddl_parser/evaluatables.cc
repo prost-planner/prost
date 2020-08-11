@@ -2,9 +2,6 @@
 
 #include "rddl.h"
 
-#include "utils/system_utils.h"
-
-#include <iostream>
 #include <numeric>
 
 using namespace std;

@@ -2,7 +2,7 @@
 #include "../evaluatables.h"
 #include "../rddl.h"
 
-#include "../utils/math_utils.h"
+#include "../utils/math.h"
 #include "../utils/timer.h"
 
 #include <algorithm>
@@ -48,8 +48,7 @@ void HashKeyGenerator::prepareHashKeysForStates() {
         for (size_t val = 0; val < numVals; ++val) {
             stateHashKeysOfCPF[val] = val * hashKeyBase;
         }
-        if (!utils::MathUtils::multiplyWithOverflowCheck(
-            hashKeyBase, numVals)) {
+        if (!utils::multiplyWithOverflowCheck(hashKeyBase, numVals)) {
             task->stateHashKeys.clear();
             return;
         }
@@ -76,7 +75,7 @@ void HashKeyGenerator::prepareHashKeysForKleeneStates() {
     long hashKeyBase = 1;
     for (ConditionalProbabilityFunction const* cpf : task->CPFs) {
         task->kleeneStateHashKeyBases.push_back(hashKeyBase);
-        if (!utils::MathUtils::multiplyWithOverflowCheck(
+        if (!utils::multiplyWithOverflowCheck(
             hashKeyBase, cpf->kleeneDomainSize)) {
             task->kleeneStateHashKeyBases.clear();
             return;
@@ -147,7 +146,7 @@ void HashKeyGenerator::prepareStateFluentHashKeys(Evaluatable* eval,
         if (eval->dependentStateFluents.find(cpf->head) !=
             eval->dependentStateFluents.end()) {
             tmpHashMap.push_back(make_pair(cpf->head->index, hashKeyBase));
-            if (!utils::MathUtils::multiplyWithOverflowCheck(
+            if (!utils::multiplyWithOverflowCheck(
                 hashKeyBase, cpf->getDomainSize())) {
                 eval->cachingType = "NONE";
                 return;
@@ -190,7 +189,7 @@ void HashKeyGenerator::prepareKleeneStateFluentHashKeys(Evaluatable* eval,
             eval->dependentStateFluents.end()) {
             tmpHashMap.push_back(make_pair(cpf->head->index, hashKeyBase));
             if ((cpf->kleeneDomainSize == 0) ||
-                !utils::MathUtils::multiplyWithOverflowCheck(
+                !utils::multiplyWithOverflowCheck(
                     hashKeyBase, cpf->kleeneDomainSize)) {
                 eval->kleeneCachingType = "NONE";
                 return;

@@ -50,9 +50,8 @@ set(RDDL_PARSER_SOURCES
     simplifier
     states
     task_analyzer
-    utils/math_utils
-    utils/string_utils
-    utils/system_utils
+    utils/math
+    utils/system
     utils/timer
 )
 

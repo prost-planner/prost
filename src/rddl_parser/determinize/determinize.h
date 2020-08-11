@@ -1,5 +1,5 @@
-#ifndef DETERMINIZE_H
-#define DETERMINIZE_H
+#ifndef PARSER_DETERMINIZE_DETERMINIZE_H
+#define PARSER_DETERMINIZE_DETERMINIZE_H
 
 /*
   The purpose of a Determinizer is to compute a determinization for all
@@ -42,4 +42,4 @@ protected:
 } // namespace determinize
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_DETERMINIZE_DETERMINIZE_H

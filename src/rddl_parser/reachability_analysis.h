@@ -1,5 +1,5 @@
-#ifndef REACHABILITY_ANALYSIS_H
-#define REACHABILITY_ANALYSIS_H
+#ifndef PARSER_REACHABILITY_ANALYSIS_H
+#define PARSER_REACHABILITY_ANALYSIS_H
 
 #include <set>
 #include <vector>
@@ -75,4 +75,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_REACHABILITY_ANALYSIS_H

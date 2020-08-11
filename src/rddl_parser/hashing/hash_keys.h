@@ -1,5 +1,5 @@
-#ifndef HASHING_HASH_KEYS_H
-#define HASHING_HASH_KEYS_H
+#ifndef PARSER_HASHING_HASH_KEYS_H
+#define PARSER_HASHING_HASH_KEYS_H
 
 /*
   Prost uses perfect hash keys to speed up access to information that was
@@ -115,4 +115,4 @@ private:
 } // namespace hashing
 } // namespace prost::parser
 
-#endif // HASHING_HASH_KEYS_H
+#endif // PARSER_HASHING_HASH_KEYS_H

@@ -1,5 +1,5 @@
-#ifndef EVALUATABLES_H
-#define EVALUATABLES_H
+#ifndef PARSER_EVALUATABLES_H
+#define PARSER_EVALUATABLES_H
 
 #include <cassert>
 
@@ -134,4 +134,4 @@ struct ConditionalProbabilityFunction : public Evaluatable {
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_EVALUATABLES_H

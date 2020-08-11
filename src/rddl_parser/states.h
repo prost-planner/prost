@@ -1,5 +1,5 @@
-#ifndef STATES_H
-#define STATES_H
+#ifndef PARSER_STATES_H
+#define PARSER_STATES_H
 
 #include <cassert>
 #include <set>
@@ -41,20 +41,7 @@ struct State {
     void print(std::ostream& out) const;
 
     struct StateSort {
-        bool operator()(State const& lhs, State const& rhs) const {
-            assert(lhs.state.size() == rhs.state.size());
-
-            for (int i = lhs.state.size() - 1; i >= 0; --i) {
-                if (utils::MathUtils::doubleIsSmaller(lhs.state[i],
-                                                      rhs.state[i])) {
-                    return true;
-                } else if (utils::MathUtils::doubleIsSmaller(rhs.state[i],
-                                                             lhs.state[i])) {
-                    return false;
-                }
-            }
-            return false;
-        }
+        bool operator()(State const& lhs, State const& rhs) const;
     };
 
     std::vector<double> state;
@@ -158,12 +145,12 @@ struct ActionState {
         state[var] = val;
     }
 
-    int& operator[](int const& index) {
-        return state[index];
+    int& operator[](int const& i) {
+        return state[i];
     }
 
-    const int& operator[](int const& index) const {
-        return state[index];
+    const int& operator[](int const& i) const {
+        return state[i];
     }
 
     bool operator<(ActionState const& other) const {
@@ -192,4 +179,4 @@ struct ActionState {
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_STATES_H

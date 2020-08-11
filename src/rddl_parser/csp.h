@@ -1,5 +1,5 @@
-#ifndef CSP_H
-#define CSP_H
+#ifndef PARSER_CSP_H
+#define PARSER_CSP_H
 
 #include "z3++.h"
 
@@ -138,4 +138,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_CSP_H

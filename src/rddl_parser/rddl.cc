@@ -3,9 +3,7 @@
 #include "evaluatables.h"
 #include "logical_expressions.h"
 
-#include "utils/math_utils.h"
-#include "utils/string_utils.h"
-#include "utils/system_utils.h"
+#include "utils/system.h"
 #include "utils/timer.h"
 
 #include <algorithm>
@@ -48,15 +46,14 @@ void RDDLTask::addCPF(ParametrizedVariable variable,
     }
 
     if (variableDefinitions.find(name) == variableDefinitions.end()) {
-        utils::SystemUtils::abort("No according variable to CPF " + name + ".");
+        utils::abort("No according variable to CPF " + name + ".");
     }
 
     ParametrizedVariable* head = variableDefinitions[name];
 
     if (variable.params.size() != head->params.size()) {
-        utils::SystemUtils::abort(
-            "Wrong number of parameters for parametrized variable " + name +
-            ".");
+        utils::abort("Wrong number of parameters for parametrized variable " +
+                     name + ".");
     }
 
     for (int i = 0; i < variable.params.size(); ++i) {
@@ -64,8 +61,7 @@ void RDDLTask::addCPF(ParametrizedVariable variable,
     }
 
     if (CPFDefinitions.find(head) != CPFDefinitions.end()) {
-        utils::SystemUtils::abort(
-            "Error: Multiple definition of CPF " + name + ".");
+        utils::abort("Error: Multiple definition of CPF " + name + ".");
     }
     // Expression
     CPFDefinitions[head] = logicalExpression;
@@ -82,14 +78,14 @@ void RDDLTask::setInstance(string name, string domainName,
 
     // Check domain name
     if (this->domainName != domainName) {
-        utils::SystemUtils::abort("Unknown domain " + domainName +
-                                  " defined in Instance section");
+        utils::abort("Unknown domain " + domainName +
+                     " defined in Instance section");
     }
 
     // Check Non fluents name
     if (this->nonFluentsName != nonFluentsName) {
-        utils::SystemUtils::abort("Unknown non fluents " + nonFluentsName +
-                                  "defined in Non fluent section");
+        utils::abort("Unknown non fluents " + nonFluentsName +
+                     "defined in Non fluent section");
     }
 
     // Set Max nondef actions
@@ -104,13 +100,13 @@ void RDDLTask::setInstance(string name, string domainName,
 
 Type* RDDLTask::addType(string const& name, string const& superType) {
     if (types.find(name) != types.end()) {
-        utils::SystemUtils::abort("Error: Type " + name + " is ambiguous.");
+        utils::abort("Error: Type " + name + " is ambiguous.");
     }
 
     if (superType.empty()) {
         types[name] = new Type(name);
     } else if (types.find(superType) == types.end()) {
-        utils::SystemUtils::abort("Error: Supertype not found: " + superType);
+        utils::abort("Error: Supertype not found: " + superType);
     } else {
         types[name] = new Type(name, types[superType]);
     }
@@ -127,12 +123,11 @@ Type* RDDLTask::getType(string typeName) {
 void RDDLTask::addObject(string const& typeName,
                          string const& objectName) {
     if (types.find(typeName) == types.end()) {
-        utils::SystemUtils::abort("Error: Type " + typeName + " not defined.");
+        utils::abort("Error: Type " + typeName + " not defined.");
     }
 
     if (objects.find(objectName) != objects.end()) {
-        utils::SystemUtils::abort("Error: Object name " + objectName +
-                                  " is ambiguous.");
+        utils::abort("Error: Object name " + objectName + " is ambiguous.");
     }
 
     objects[objectName] = new Object(objectName, types[typeName]);
@@ -148,8 +143,7 @@ Object* RDDLTask::getObject(string objName) {
 void RDDLTask::addVariableSchematic(ParametrizedVariable* varDef) {
     if (variableDefinitions.find(varDef->fullName) !=
         variableDefinitions.end()) {
-        utils::SystemUtils::abort("Error: Ambiguous variable name: " +
-                                  varDef->fullName);
+        utils::abort("Error: Ambiguous variable name: " + varDef->fullName);
     }
     variableDefinitions[varDef->fullName] = varDef;
 }
@@ -164,8 +158,8 @@ void RDDLTask::addParametrizedVariable(ParametrizedVariable* parent,
                                        double initialValue) {
     if (variableDefinitions.find(parent->variableName) ==
         variableDefinitions.end()) {
-        utils::SystemUtils::abort("Error: Parametrized variable " +
-                                  parent->variableName + " not defined.");
+        utils::abort("Error: Parametrized variable " + parent->variableName +
+                     " not defined.");
     }
 
     switch (parent->variableType) {
@@ -218,15 +212,14 @@ ParametrizedVariable* RDDLTask::getParametrizedVariable(string varName) {
     if (variableDefinitions.find(varName) != variableDefinitions.end()) {
         return variableDefinitions[varName];
     } else {
-        utils::SystemUtils::abort("Unknown variable: " + varName + ".");
+        utils::abort("Unknown variable: " + varName + ".");
     }
     return nullptr;
 }
 
 StateFluent* RDDLTask::getStateFluent(string const& name) {
     if (stateFluentMap.find(name) == stateFluentMap.end()) {
-        utils::SystemUtils::abort("Error: state-fluent " + name +
-                                  " used but not defined.");
+        utils::abort("Error: state-fluent " + name + " used but not defined.");
         return nullptr;
     }
     return stateFluentMap[name];
@@ -234,8 +227,7 @@ StateFluent* RDDLTask::getStateFluent(string const& name) {
 
 ActionFluent* RDDLTask::getActionFluent(string const& name) {
     if (actionFluentMap.find(name) == actionFluentMap.end()) {
-        utils::SystemUtils::abort("Error: action-fluent " + name +
-                                  " used but not defined.");
+        utils::abort("Error: action-fluent " + name + " used but not defined.");
         return nullptr;
     }
     return actionFluentMap[name];
@@ -243,8 +235,7 @@ ActionFluent* RDDLTask::getActionFluent(string const& name) {
 
 NonFluent* RDDLTask::getNonFluent(string const& name) {
     if (nonFluentMap.find(name) == nonFluentMap.end()) {
-        utils::SystemUtils::abort("Error: non-fluent " + name +
-                                  " used but not defined.");
+        utils::abort("Error: non-fluent " + name + " used but not defined.");
         return nullptr;
     }
     return nonFluentMap[name];
@@ -259,7 +250,7 @@ vector<StateFluent*> RDDLTask::getStateFluentsOfSchema(
 
 void RDDLTask::setRewardCPF(LogicalExpression* const& rewardFormula) {
     if (rewardCPF) {
-        utils::SystemUtils::abort("Error: RewardCPF exists already.");
+        utils::abort("Error: RewardCPF exists already.");
     }
     rewardCPF = new RewardFunction(rewardFormula);
 }

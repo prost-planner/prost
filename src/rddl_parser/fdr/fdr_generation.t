@@ -1,5 +1,5 @@
-#ifndef FDR_GENERATION_T
-#define FDR_GENERATION_T
+#ifndef PARSER_FDR_FDR_GENERATION_T
+#define PARSER_FDR_FDR_GENERATION_T
 
 #include "csp.h"
 #include "logical_expressions.h"
@@ -32,4 +32,4 @@ std::vector<ActionFluent*> FDRGenerator::generateFDRVars(
 
 } // namespace prost::parser::fdr
 
-#endif
+#endif // PARSER_FDR_FDR_GENERATION_T

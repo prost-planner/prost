@@ -1,5 +1,5 @@
-#ifndef RDDL_H
-#define RDDL_H
+#ifndef PARSER_RDDL_H
+#define PARSER_RDDL_H
 
 #include <map>
 #include <string>
@@ -137,4 +137,4 @@ struct RDDLTask {
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_RDDL_H

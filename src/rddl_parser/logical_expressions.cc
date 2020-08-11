@@ -5,10 +5,10 @@
 #include "probability_distribution.h"
 #include "rddl.h"
 
-#include "utils/math_utils.h"
-#include "utils/string_utils.h"
-#include "utils/system_utils.h"
+#include "utils/math.h"
+#include "utils/system.h"
 
+#include <cmath>
 #include <iostream>
 
 using namespace std;
@@ -71,7 +71,7 @@ ActionFluent::ActionFluent(ParametrizedVariable const& source,
       isFDR(source.valueType->name != "bool") {
     // To support action fluent with a different initial value than 0, we have
     // to adapt the simplification
-    assert(utils::MathUtils::doubleIsEqual(initialValue, 0.0));
+    assert(utils::doubleIsEqual(initialValue, 0.0));
 }
 
 ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
@@ -81,7 +81,7 @@ ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
       isFDR(_valueType->name != "bool") {
     // To support action fluent with a different initial value than 0, we have
     // to adapt the simplification
-    assert(utils::MathUtils::doubleIsEqual(initialValue, 0.0));
+    assert(utils::doubleIsEqual(initialValue, 0.0));
 }
 
 bool Type::isSubtypeOf(Type* const& other) const {

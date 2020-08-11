@@ -4,7 +4,7 @@
 #include "evaluatables.h"
 #include "rddl.h"
 
-#include "utils/system_utils.h"
+#include "utils/math.h"
 #include "utils/timer.h"
 
 #include <algorithm>
@@ -199,7 +199,7 @@ void TaskAnalyzer::performRandomWalks(int numSimulations, double timeout) {
             ++simCounter;
         }
 
-        if (utils::MathUtils::doubleIsGreater(t(), timeout)) {
+        if (utils::doubleIsGreater(t(), timeout)) {
             cout << "Stopping analysis after " << t << " seconds and "
                  << numSimulations << " simulations." << endl;
             break;
@@ -306,7 +306,7 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
         double res = 0.0;
         action.relevantSACs[precondIndex]->formula->evaluate(res, current,
                                                              action);
-        if (utils::MathUtils::doubleIsEqual(res, 0.0)) {
+        if (utils::doubleIsEqual(res, 0.0)) {
             return false;
         }
     }
@@ -315,10 +315,10 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
 
 inline bool TaskAnalyzer::isARewardLock(State const& current,
                                         double const& reward) const {
-    if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+    if (utils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if (utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (utils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -338,8 +338,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !utils::MathUtils::doubleIsEqual(*reward.begin(),
-                                         task->rewardCPF->getMinVal())) {
+        !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->getMinVal())) {
         return false;
     }
 
@@ -358,8 +357,8 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !utils::MathUtils::doubleIsEqual(*reward.begin(),
-                                             task->rewardCPF->getMinVal())) {
+            !utils::doubleIsEqual(*reward.begin(),
+                                  task->rewardCPF->getMinVal())) {
             return false;
         }
 
@@ -391,8 +390,7 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !utils::MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
-                                         *reward.begin())) {
+        !utils::doubleIsEqual(task->rewardCPF->getMaxVal(), *reward.begin())) {
         return false;
     }
 

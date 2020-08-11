@@ -3,7 +3,7 @@
 #include "../evaluatables.h"
 #include "../rddl.h"
 
-#include "../utils/system_utils.h"
+#include "../utils/system.h"
 
 #include <algorithm>
 
@@ -91,7 +91,7 @@ LogicalExpression* MostLikelyDeterminizer::_determinize(
         }
         return new MultiConditionChecker(newConds, newEffs);
     } else {
-        utils::SystemUtils::abort("NOT IMPLEMENTED!");
+        utils::abort("Determinization of expression not implemented!");
     }
     return nullptr;
 }

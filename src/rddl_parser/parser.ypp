@@ -17,7 +17,7 @@
 #include "simplifier.h"
 #include "task_analyzer.h"
 
-#include "utils/system_utils.h"
+#include "utils/system.h"
 #include "utils/timer.h"
 
 #define DOCTEST_CONFIG_IMPLEMENT
@@ -175,9 +175,9 @@ SchematicType: id_token ':' object_token ';'                                    
                                                                                   for (const std::string& s : *$4) {
                                                                                       rddlTask->addObject(*$1, s);
                                                                                   }}
-          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { prost::parser::utils::SystemUtils::abort("Defining types using Enum range error. Not implemented yet.") ; }
-          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { prost::parser::utils::SystemUtils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
-          | id_token ':' '<' StructMemberList '>' ';'                           { prost::parser::utils::SystemUtils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
+          | id_token ':' '{' enum_token '.' '.' enum_token '}' ';'              { prost::parser::utils::abort("Defining types using Enum range error. Not implemented yet.") ; }
+          | id_token ':' '[' id_token ']' '<' '?' ':' TypeSpecification '>' ';' { prost::parser::utils::abort("Defining types using TypeSpecification error. Not implemented yet.") ;}
+          | id_token ':' '<' StructMemberList '>' ';'                           { prost::parser::utils::abort("Defining types using StructMemberList error. Not implemented yet.") ;}
 ;
 
 EnumList: enum_token                { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
@@ -190,8 +190,8 @@ TypeSpecification: id_token      { $$ = rddlTask->getType(*$1); }
                 | bool_token     { $$ = rddlTask->getType(*$1); }
 ;
 
-StructMemberList: LConst ':' TypeSpecification                      { prost::parser::utils::SystemUtils::abort("StructMemberList not implemented yet."); }
-                | LConst ':' TypeSpecification ',' StructMemberList { prost::parser::utils::SystemUtils::abort("StructMemberList not implemented yet."); }
+StructMemberList: LConst ':' TypeSpecification                      { prost::parser::utils::abort("StructMemberList not implemented yet."); }
+                | LConst ':' TypeSpecification ',' StructMemberList { prost::parser::utils::abort("StructMemberList not implemented yet."); }
 ;
 
 LConst: doubleNum_token { $$ = new prost::parser::NumericConstant($1);  }
@@ -215,11 +215,11 @@ VarList: VariableSchematic             { $$ = new std::vector<prost::parser::Par
 VariableSchematic: id_token ParametarList '{' state_fluent_token   ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'  { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::STATE_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
             | id_token ParametarList '{' non_fluent_token       ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::NON_FLUENT, $6, $10); rddlTask->addVariableSchematic($$); }
             | id_token ParametarList '{' action_fluent_token    ',' TypeSpecification ',' default_token '=' RangeConstant  '}' ';'     { $$ = new prost::parser::ParametrizedVariable(*$1, *$2, prost::parser::ParametrizedVariable::ACTION_FLUENT, $6,  $10); rddlTask->addVariableSchematic($$); }
-            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("interm-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("derived-fluent parametrized variables definition not implemented. "); }
-            | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                          { prost::parser::utils::SystemUtils::abort("observ-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification ',' level_token '=' RangeConstant    '}' ';'     { prost::parser::utils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' intermediate_token     ',' TypeSpecification '}' ';'                                          { prost::parser::utils::abort("interm-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' derived_fluent_token   ',' TypeSpecification '}' ';'                                          { prost::parser::utils::abort("derived-fluent parametrized variables definition not implemented. "); }
+            | id_token ParametarList '{' observ_fluent_token    ',' TypeSpecification '}' ';'                                          { prost::parser::utils::abort("observ-fluent parametrized variables definition not implemented. "); }
 ;
 
 ParametarList: ':'                                { $$ = new std::vector<prost::parser::Parameter*>(); }
@@ -234,20 +234,20 @@ RangeConstant: BoolType                              { $$ = (*$1 == "true") ? 1 
              | DoubleType                            { $$ = $1; }
              | IntType                               { $$ = $1; }
              | id_token                              { prost::parser::Object* obj = rddlTask->getObject(*$1); $$ = obj->value; }
-             | '$' id_token                          { prost::parser::utils::SystemUtils::abort("Range constant variable with tag '$' definition implemented yet."); }
+             | '$' id_token                          { prost::parser::utils::abort("Range constant variable with tag '$' definition implemented yet."); }
              | enum_token                            { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]->value; }
-             | '<' StructRangeConsant '>'            { prost::parser::utils::SystemUtils::abort("< Structured ranged constatnts > not implemented yet."); }
-             | '(' '<' StructRangeConsant '>' ')'    { prost::parser::utils::SystemUtils::abort("(< Structured ranged constatnts >) not implemented yet."); }
-             | '[' '<' StructRangeConsant '>' ']'    { prost::parser::utils::SystemUtils::abort("[< Structured ranged constatnts >] not implemented yet."); }
+             | '<' StructRangeConsant '>'            { prost::parser::utils::abort("< Structured ranged constatnts > not implemented yet."); }
+             | '(' '<' StructRangeConsant '>' ')'    { prost::parser::utils::abort("(< Structured ranged constatnts >) not implemented yet."); }
+             | '[' '<' StructRangeConsant '>' ']'    { prost::parser::utils::abort("[< Structured ranged constatnts >] not implemented yet."); }
 ;
 
 
-StructRangeConsant: '?' ':' RangeConstant  { prost::parser::utils::SystemUtils::abort("StructRangeConsant not implemented yet."); }
-                | StructRangeConsantList   { prost::parser::utils::SystemUtils::abort("StructRangeConsant not implemented yet."); }
+StructRangeConsant: '?' ':' RangeConstant  { prost::parser::utils::abort("StructRangeConsant not implemented yet."); }
+                | StructRangeConsantList   { prost::parser::utils::abort("StructRangeConsant not implemented yet."); }
 ;
 
-StructRangeConsantList: LConst ':' RangeConstant                           { prost::parser::utils::SystemUtils::abort("StructRangeConsantList not implemented yet."); }
-                    | LConst ':' RangeConstant ',' StructRangeConsantList  { prost::parser::utils::SystemUtils::abort("StructRangeConsantList not implemented yet."); }
+StructRangeConsantList: LConst ':' RangeConstant                           { prost::parser::utils::abort("StructRangeConsantList not implemented yet."); }
+                    | LConst ':' RangeConstant ',' StructRangeConsantList  { prost::parser::utils::abort("StructRangeConsantList not implemented yet."); }
 ;
 
 BoolType: true_token  { $$ = $1; }
@@ -292,7 +292,7 @@ VariableExpression: id_token                        {
                                                       if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
                                                         $$ = rddlTask->variableDefinitions[varName];
                                                       } else {
-                                                        prost::parser::utils::SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                        prost::parser::utils::abort("Unknown parametrized variable " + varName + ".");
                                                       }
                                                       $$ = new prost::parser::ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), std::vector<prost::parser::Parameter*>());
                                                     }
@@ -305,13 +305,13 @@ VariableExpression: id_token                        {
                                                       if (rddlTask->variableDefinitions.find(varName) != rddlTask->variableDefinitions.end()) {
                                                         $$ = rddlTask->variableDefinitions[varName];
                                                       } else {
-                                                        prost::parser::utils::SystemUtils::abort("Unknown parametrized variable " + varName + ".");
+                                                        prost::parser::utils::abort("Unknown parametrized variable " + varName + ".");
                                                       }
                                                       $$ = new prost::parser::ParametrizedVariable(*(rddlTask->variableDefinitions[varName]), *$3);
                                                     }
-            | id_token MemberList                   { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
-            | id_token '(' TermList ')' MemberList  { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
-            | id_token '.' default_token            { prost::parser::utils::SystemUtils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token MemberList                   { prost::parser::utils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '(' TermList ')' MemberList  { prost::parser::utils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
+            | id_token '.' default_token            { prost::parser::utils::abort("Undefined variable: " + *$1 + ". Syntax not implemented yet.");     }
 ;
 
 TermList: Term                 { $$ = new std::vector<prost::parser::Parameter*>(); $$->push_back($1); }
@@ -319,20 +319,20 @@ TermList: Term                 { $$ = new std::vector<prost::parser::Parameter*>
 ;
 
 Term: variable_token         { $$ = new prost::parser::Parameter(*$1); }
-    | VariableExpression     { prost::parser::utils::SystemUtils::abort("Definition of Term using parametrized variable not implemented yet."); }
+    | VariableExpression     { prost::parser::utils::abort("Definition of Term using parametrized variable not implemented yet."); }
     | enum_token             { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
-    | '$' id_token           { prost::parser::utils::SystemUtils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
+    | '$' id_token           { prost::parser::utils::abort("Definition of Term using variable with '$' sign not implemented yet."); }
 ;
 
-MemberList: '.' Pterm          { prost::parser::utils::SystemUtils::abort("MemberList not implemented yet."); }
-        | '.' Pterm MemberList { prost::parser::utils::SystemUtils::abort("MemberList not implemented yet."); }
+MemberList: '.' Pterm          { prost::parser::utils::abort("MemberList not implemented yet."); }
+        | '.' Pterm MemberList { prost::parser::utils::abort("MemberList not implemented yet."); }
 ;
 
-Pterm: variable_token            { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
-    | '(' VariableExpression ')' { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
-    | '[' VariableExpression ']' { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
-    | enum_token                 { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
-    | '$' id_token               { prost::parser::utils::SystemUtils::abort("Pterm not implemented yet."); }
+Pterm: variable_token            { prost::parser::utils::abort("Pterm not implemented yet."); }
+    | '(' VariableExpression ')' { prost::parser::utils::abort("Pterm not implemented yet."); }
+    | '[' VariableExpression ']' { prost::parser::utils::abort("Pterm not implemented yet."); }
+    | enum_token                 { prost::parser::utils::abort("Pterm not implemented yet."); }
+    | '$' id_token               { prost::parser::utils::abort("Pterm not implemented yet."); }
 ;
 
 ////////////////////////
@@ -343,10 +343,10 @@ Expression:
       variable_token                                                                            { $$ = new prost::parser::Parameter(*$1); }
     | VariableExpression                                                                        { $$ = $1; }
     | enum_token                                                                                { assert(rddlTask->objects.find(*$1) != rddlTask->objects.end()); $$ = rddlTask->objects[*$1]; }
-    | '$' id_token                                                                              { prost::parser::utils::SystemUtils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
-    | '<' StructExpressionList                                                                  { prost::parser::utils::SystemUtils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
+    | '$' id_token                                                                              { prost::parser::utils::abort("'$<variable_name>' not implemented yet."); } /* '$' required here to disambiguate from parameterless VariableExpression. */
+    | '<' StructExpressionList                                                                  { prost::parser::utils::abort("Structured expression list not implemented yet."); } // (Nested) Vector expressions
         // TODO: for now there are only sum, exists, product and forall. All of those are implemted and this part is left for purposes of further development of RDDL (definition of special functions)
-    | id_token '[' ExpressionList ']'                                                           { prost::parser::utils::SystemUtils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
+    | id_token '[' ExpressionList ']'                                                           { prost::parser::utils::abort("Unknow special function " + *$1 + " defined as expression. Special functions not implemented yet."); }
     | forall_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new prost::parser::UniversalQuantification($4, $6); }
     | exists_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                   { $$ = new prost::parser::ExistentialQuantification($4, $6);}
     | sum_token '_' '{' TypedVarList '}' Expression %prec AgregateOperator                      { $$ = new prost::parser::Sumation($4, $6); }
@@ -404,18 +404,18 @@ Expression:
     | bernoulli_token '(' Expression ')'                                    { $$ = new prost::parser::BernoulliDistribution($3); }
     | kronDelta_token '(' Expression ')'                                    { $$ = new prost::parser::KronDeltaDistribution($3); }
     | discrete_token '(' id_token ',' LConstCaseList ')'                    { $$ = $5; } // TODO: The return value (id_token) is optional in RDDL2.0
-    | diracDelta_token '(' Expression ')'                                   { prost::parser::utils::SystemUtils::abort("DiracDelta not implemtend."); }
-    | uniform_token '(' Expression ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Uniform not implemtend."); }
-    | normal_token '(' Expression ',' Expression ')'                        { prost::parser::utils::SystemUtils::abort("Normal not implemtend."); }
-    | dirichlet_token '(' id_token ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Dirichelt not implemtend."); }
-    | poisson_token '(' Expression ')'                                      { prost::parser::utils::SystemUtils::abort("Poisson not implemtend."); }
-    | weibull_token '(' Expression ',' Expression ')'                       { prost::parser::utils::SystemUtils::abort("Weibull not implemtend."); }
-    | gama_token '(' Expression ',' Expression ')'                          { prost::parser::utils::SystemUtils::abort("Gama not implemtend.");  }
-    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { prost::parser::utils::SystemUtils::abort("Multinomial not implemtend."); }
+    | diracDelta_token '(' Expression ')'                                   { prost::parser::utils::abort("DiracDelta not implemtend."); }
+    | uniform_token '(' Expression ',' Expression ')'                       { prost::parser::utils::abort("Uniform not implemtend."); }
+    | normal_token '(' Expression ',' Expression ')'                        { prost::parser::utils::abort("Normal not implemtend."); }
+    | dirichlet_token '(' id_token ',' Expression ')'                       { prost::parser::utils::abort("Dirichelt not implemtend."); }
+    | poisson_token '(' Expression ')'                                      { prost::parser::utils::abort("Poisson not implemtend."); }
+    | weibull_token '(' Expression ',' Expression ')'                       { prost::parser::utils::abort("Weibull not implemtend."); }
+    | gama_token '(' Expression ',' Expression ')'                          { prost::parser::utils::abort("Gama not implemtend.");  }
+    | multinomial_token '(' id_token ',' Expression ',' LConstCaseList ')'  { prost::parser::utils::abort("Multinomial not implemtend."); }
 ;
 
-StructExpressionList: LConst ':' Expression '>'                          { prost::parser::utils::SystemUtils::abort("StructExpressionList not implemented yet."); }
-                    | LConst ':' Expression ',' StructExpressionList     { prost::parser::utils::SystemUtils::abort("StructExpressionList not implemented yet."); }
+StructExpressionList: LConst ':' Expression '>'                          { prost::parser::utils::abort("StructExpressionList not implemented yet."); }
+                    | LConst ':' Expression ',' StructExpressionList     { prost::parser::utils::abort("StructExpressionList not implemented yet."); }
 ;
 
 ExpressionList: Expression                    { $$ = new std::vector<prost::parser::LogicalExpression*>(); $$->push_back($1); }
@@ -430,7 +430,7 @@ TypedVariable: variable_token ':' id_token { if (rddlTask->getType(*$3)) {
                                      $$ = new prost::parser::Parameter(*$1, rddlTask->getType(*$3));
                                    }
                                    else {
-                                        prost::parser::utils::SystemUtils::abort("Type " + *$3 + " not defined");
+                                        prost::parser::utils::abort("Type " + *$3 + " not defined");
                                    }
                                  }
 ;
@@ -445,7 +445,7 @@ CaseSchematic: case_token Term ':' Expression      { prost::parser::LogicalExpre
 
 // TODO: for this class, there should be a check that all probabilites add to 1. And implement that key word 'otherwise', is used so that in addiotion with all other probabilites
 LConstCaseList: LConst ':' Expression                     { $$ = new prost::parser::DiscreteDistribution(); $$->values.push_back($1); $$->probabilities.push_back($3); }
-            | LConst ':' otherwise_token                  { prost::parser::utils::SystemUtils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
+            | LConst ':' otherwise_token                  { prost::parser::utils::abort("Key word 'otherwise' not supported yet"); } // TODO: check if otherwise is supported in PROST
             | LConst ':' Expression ',' LConstCaseList    { $$ = $5; $$->values.insert($$->values.begin(), $1); $$->probabilities.insert($$->probabilities.begin(), $3); }
 ;
 
@@ -518,8 +518,8 @@ ObjectsSchematic: id_token ':' '{' ObjectsConstList '}' ';' {
 
 ObjectsConstList: id_token                        { $$ = new std::vector<std::string>(); $$->push_back(*$1); }
             | id_token ',' ObjectsConstList       { $$ = $3; $$->insert($$->begin(), *$1); }
-            | '$' id_token                        { prost::parser::utils::SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
-            | '$' id_token ',' ObjectsConstList   { prost::parser::utils::SystemUtils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token                        { prost::parser::utils::abort("Definition of an object using '$' not implemented yet."); }
+            | '$' id_token ',' ObjectsConstList   { prost::parser::utils::abort("Definition of an object using '$' not implemented yet."); }
 ;
 
 ///////////////////////////////////////////////
@@ -534,7 +534,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
+                        prost::parser::utils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
             | non_fluents_token id_token '{'
@@ -543,7 +543,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
+                        prost::parser::utils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
             | non_fluents_token id_token '{'
@@ -552,7 +552,7 @@ NonfluentBlock: non_fluents_token id_token '{'
             '}' {
                     rddlTask->nonFluentsName = *$2;
                     if (rddlTask->domainName != *$6) {
-                        prost::parser::utils::SystemUtils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
+                        prost::parser::utils::abort("Unknown domain " + *$6 + "  used in non-fluents section");
                     }
                 }
 ;
@@ -568,7 +568,7 @@ VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
                                                                                 for (prost::parser::LogicalExpression* le : *$3) {
                                                                                     prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
@@ -581,7 +581,7 @@ VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
                                                                                 for (prost::parser::LogicalExpression* le : *$4) {
                                                                                     prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
@@ -594,7 +594,7 @@ VariableInstanceSchematic: id_token '(' LConstList ')' ';'                    {
                                                                                 for (prost::parser::LogicalExpression* le : *$3) {
                                                                                     prost::parser::Parameter* param = dynamic_cast<prost::parser::Parameter*>(le);
                                                                                     if (!param) {
-                                                                                        prost::parser::utils::SystemUtils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
+                                                                                        prost::parser::utils::abort("Passing anything other than Parameter object to ParametrizedVariable is not allowed.");
                                                                                     }
                                                                                     params.push_back(rddlTask->getObject(param->name));
                                                                                 }
@@ -756,7 +756,7 @@ InstanceBlock:
 
 
 HorizonSpecification: horizon_token '=' PositiveIntOrPositiveInfinity           { $$ = $3; }
-                    | horizon_token '=' terminate_when_token '(' Expression ')' { prost::parser::utils::SystemUtils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
+                    | horizon_token '=' terminate_when_token '(' Expression ')' { prost::parser::utils::abort("Definition of horizon using 'terminate-when' token not implemented yet."); }
 ;
 
 PositiveIntOrPositiveInfinity: intNum_token                { $$ = $1; }
@@ -782,7 +782,7 @@ int main (int argc, char** argv) {
             return res;
         }
 
-        prost::parser::utils::SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
+        prost::parser::utils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 
@@ -797,7 +797,7 @@ int main (int argc, char** argv) {
          index++;
     }
     if (index == 1 || index > 4 || index >= argc) {
-        prost::parser::utils::SystemUtils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
+        prost::parser::utils::abort("Usage: ./rddl-parser <rddlDesc> <outFile> [options]\n"
                            "where rddlDesc consists of 1-3 individual files");
     }
 

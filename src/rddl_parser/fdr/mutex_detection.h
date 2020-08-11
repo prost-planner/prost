@@ -1,5 +1,5 @@
-#ifndef MUTEX_DETECTION_H
-#define MUTEX_DETECTION_H
+#ifndef PARSER_FDR_MUTEX_DETECTION_H
+#define PARSER_FDR_MUTEX_DETECTION_H
 
 #include "logical_expressions.h"
 
@@ -85,4 +85,4 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task);
 } // namespace fdr
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_FDR_MUTEX_DETECTION_H

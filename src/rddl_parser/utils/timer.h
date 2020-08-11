@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef PARSER_UTILS_TIMER_H
+#define PARSER_UTILS_TIMER_H
 
 #define USEC_PER_SEC (1000000)
 
@@ -21,4 +21,4 @@ private:
 std::ostream& operator<<(std::ostream& os, const Timer& timer);
 } // namespace prost::parser::utils
 
-#endif
+#endif // PARSER_UTILS_TIMER_H

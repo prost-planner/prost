@@ -39,7 +39,7 @@ void Conjunction::evaluateToKleene(set<double>& res, KleeneState const& current,
         set<double> tmp;
         exprs[i]->evaluateToKleene(tmp, current, actions);
         if (tmp.size() == 1) {
-            if (utils::MathUtils::doubleIsEqual(*tmp.begin(), 0.0)) {
+            if (utils::doubleIsEqual(*tmp.begin(), 0.0)) {
                 res.clear();
                 res.insert(0.0);
                 return;
@@ -63,7 +63,7 @@ void Disjunction::evaluateToKleene(set<double>& res, KleeneState const& current,
         set<double> tmp;
         exprs[i]->evaluateToKleene(tmp, current, actions);
         if (tmp.size() == 1) {
-            if (!utils::MathUtils::doubleIsEqual(*tmp.begin(), 0.0)) {
+            if (!utils::doubleIsEqual(*tmp.begin(), 0.0)) {
                 res.clear();
                 res.insert(1.0);
                 return;
@@ -93,7 +93,7 @@ void EqualsExpression::evaluateToKleene(set<double>& res,
 
     if (lhs.size() == 1 && rhs.size() == 1) {
         // If both evaluate to a single value we compare those values
-        if (utils::MathUtils::doubleIsEqual(*lhs.begin(), *rhs.begin())) {
+        if (utils::doubleIsEqual(*lhs.begin(), *rhs.begin())) {
             res.insert(1.0);
         } else {
             res.insert(0.0);
@@ -127,13 +127,13 @@ void GreaterExpression::evaluateToKleene(set<double>& res,
 
     // x can be greater than y if the biggest possible x is greater
     // than the smallest possible y
-    if (utils::MathUtils::doubleIsGreater(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::doubleIsGreater(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
     // x can be "not greater" than y if the smallest possible x is not
     // greater than  the biggest possible y
-    if (!utils::MathUtils::doubleIsGreater(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::doubleIsGreater(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 
@@ -151,11 +151,11 @@ void LowerExpression::evaluateToKleene(set<double>& res,
     set<double> rhs;
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
-    if (utils::MathUtils::doubleIsSmaller(*lhs.begin(), *rhs.rbegin())) {
+    if (utils::doubleIsSmaller(*lhs.begin(), *rhs.rbegin())) {
         res.insert(1.0);
     }
 
-    if (!utils::MathUtils::doubleIsSmaller(*lhs.rbegin(), *rhs.begin())) {
+    if (!utils::doubleIsSmaller(*lhs.rbegin(), *rhs.begin())) {
         res.insert(0.0);
     }
 
@@ -173,11 +173,11 @@ void GreaterEqualsExpression::evaluateToKleene(
     set<double> rhs;
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
-    if (utils::MathUtils::doubleIsGreaterOrEqual(*lhs.rbegin(), *rhs.begin())) {
+    if (utils::doubleIsGreaterOrEqual(*lhs.rbegin(), *rhs.begin())) {
         res.insert(1.0);
     }
 
-    if (!utils::MathUtils::doubleIsGreaterOrEqual(*lhs.begin(), *rhs.rbegin())) {
+    if (!utils::doubleIsGreaterOrEqual(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 
@@ -195,11 +195,11 @@ void LowerEqualsExpression::evaluateToKleene(set<double>& res,
     set<double> rhs;
     exprs[1]->evaluateToKleene(rhs, current, actions);
 
-    if (utils::MathUtils::doubleIsSmallerOrEqual(*lhs.begin(), *rhs.rbegin())) {
+    if (utils::doubleIsSmallerOrEqual(*lhs.begin(), *rhs.rbegin())) {
         res.insert(1.0);
     }
 
-    if (!utils::MathUtils::doubleIsSmallerOrEqual(*lhs.rbegin(), *rhs.begin())) {
+    if (!utils::doubleIsSmallerOrEqual(*lhs.rbegin(), *rhs.begin())) {
         res.insert(0.0);
     }
 
@@ -336,12 +336,12 @@ void BernoulliDistribution::evaluateToKleene(set<double>& res,
     expr->evaluateToKleene(tmp, current, actions);
 
     for (set<double>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-        if (utils::MathUtils::doubleIsGreater(*it, 0.0) &&
-            utils::MathUtils::doubleIsSmaller(*it, 1.0)) {
+        if (utils::doubleIsGreater(*it, 0.0) &&
+            utils::doubleIsSmaller(*it, 1.0)) {
             res.insert(0.0);
             res.insert(1.0);
             return;
-        } else if (utils::MathUtils::doubleIsEqual(*it, 0.0)) {
+        } else if (utils::doubleIsEqual(*it, 0.0)) {
             res.insert(0.0);
         } else {
             res.insert(1.0);
@@ -406,7 +406,7 @@ void MultiConditionChecker::evaluateToKleene(set<double>& res,
         conditions[i]->evaluateToKleene(tmp, current, actions);
 
         if (tmp.size() == 1) {
-            if (!utils::MathUtils::doubleIsEqual(*tmp.begin(), 0.0)) {
+            if (!utils::doubleIsEqual(*tmp.begin(), 0.0)) {
                 // This condition must fire, so all following cases
                 // are ignored
                 tmp.clear();

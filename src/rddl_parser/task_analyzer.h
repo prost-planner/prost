@@ -1,5 +1,5 @@
-#ifndef TASK_ANALYZER_H
-#define TASK_ANALYZER_H
+#ifndef PARSER_TASK_ANALYZER_H
+#define PARSER_TASK_ANALYZER_H
 
 #include "states.h"
 
@@ -45,4 +45,4 @@ protected:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_TASK_ANALYZER_H

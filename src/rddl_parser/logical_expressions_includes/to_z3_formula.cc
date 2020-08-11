@@ -1,6 +1,6 @@
 z3::expr LogicalExpression::toZ3Formula(
     RDDLTaskCSP& csp, int /*actionIndex*/) const {
-    utils::SystemUtils::abort("toZ3Formula not impemented!");
+    utils::abort("toZ3Formula of expression not impemented!");
     // Just to make compiler happy
     return csp.createConstant("0");
 }

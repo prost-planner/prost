@@ -3,7 +3,7 @@
 #include "evaluatables.h"
 #include "rddl.h"
 
-#include "utils/math_utils.h"
+#include "utils/math.h"
 
 #include <set>
 
@@ -49,7 +49,7 @@ void Precomputer::precomputeEvaluatable(Evaluatable* eval) {
                 usedActionHashKeys.insert(actionHashKey);
 
                 double& res = eval->precomputedResults[hashKey + actionHashKey];
-                assert(utils::MathUtils::doubleIsMinusInfinity(res));
+                assert(utils::doubleIsMinusInfinity(res));
                 if (eval->isProbabilistic()) {
                     eval->determinization->evaluate(res, state, action);
                     DiscretePD& pdRes =

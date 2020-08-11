@@ -1,5 +1,5 @@
-#ifndef SIMPLIFIER_H
-#define SIMPLIFIER_H
+#ifndef PARSER_SIMPLIFIER_H
+#define PARSER_SIMPLIFIER_H
 
 #include <map>
 #include <memory>
@@ -136,4 +136,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_SIMPLIFIER_H

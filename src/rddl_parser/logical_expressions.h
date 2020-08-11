@@ -1,5 +1,5 @@
-#ifndef LOGICAL_EXPRESSIONS_H
-#define LOGICAL_EXPRESSIONS_H
+#ifndef PARSER_LOGICAL_EXPRESSIONS_H
+#define PARSER_LOGICAL_EXPRESSIONS_H
 
 #include <map>
 #include <set>
@@ -1041,4 +1041,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_LOGICAL_EXPRESSIONS_H

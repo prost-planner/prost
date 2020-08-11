@@ -1,5 +1,5 @@
-#ifndef FDR_GENERATION_H
-#define FDR_GENERATION_H
+#ifndef PARSER_FDR_FDR_GENERATION_H
+#define PARSER_FDR_FDR_GENERATION_H
 
 #include "logical_expressions.h"
 
@@ -99,4 +99,4 @@ struct GreedyPartitioning {
 
 #include "fdr_generation.t"
 
-#endif
+#endif // PARSER_FDR_FDR_GENERATION_H

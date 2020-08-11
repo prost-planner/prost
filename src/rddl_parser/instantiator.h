@@ -1,5 +1,5 @@
-#ifndef INSTANTIATOR_H
-#define INSTANTIATOR_H
+#ifndef PARSER_INSTANTIATOR_H
+#define PARSER_INSTANTIATOR_H
 
 /*
   The Instantiator class receives the lifted planning task as modelled in RDDL
@@ -38,4 +38,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_INSTANTIATOR_H

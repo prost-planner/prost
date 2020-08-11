@@ -5,7 +5,7 @@
 #include "../rddl.h"
 
 #include "../determinize/determinize.h"
-#include "../utils/math_utils.h"
+#include "../utils/math.h"
 
 using namespace std;
 
@@ -50,9 +50,9 @@ TEST_CASE("Determinization with binary variables") {
             CHECK(nc0);
             CHECK(nc1);
             CHECK(nc2);
-            CHECK(utils::MathUtils::doubleIsEqual(nc0->value, 0.0));
-            CHECK(utils::MathUtils::doubleIsEqual(nc1->value, 1.0));
-            CHECK(utils::MathUtils::doubleIsEqual(nc2->value, 1.0));
+            CHECK(utils::doubleIsEqual(nc0->value, 0.0));
+            CHECK(utils::doubleIsEqual(nc1->value, 1.0));
+            CHECK(utils::doubleIsEqual(nc2->value, 1.0));
     }
 
     SUBCASE("Bernoulli distribution that depends on variable") {
@@ -71,7 +71,7 @@ TEST_CASE("Determinization with binary variables") {
             CHECK(leq);
         auto nc1 = dynamic_cast<NumericConstant*>(leq->exprs[0]);
             CHECK(nc1);
-            CHECK(utils::MathUtils::doubleIsEqual(nc1->value, 0.5));
+            CHECK(utils::doubleIsEqual(nc1->value, 0.5));
         auto mpl = dynamic_cast<Multiplication*>(leq->exprs[1]);
             CHECK(mpl);
         auto var = dynamic_cast<StateFluent*>(mpl->exprs[0]);
@@ -79,7 +79,7 @@ TEST_CASE("Determinization with binary variables") {
             CHECK(var == s0);
         auto nc2 = dynamic_cast<NumericConstant*>(mpl->exprs[1]);
             CHECK(nc2);
-            CHECK(utils::MathUtils::doubleIsEqual(nc2->value, 0.4));
+            CHECK(utils::doubleIsEqual(nc2->value, 0.4));
     }
 }
 
@@ -117,7 +117,7 @@ TEST_CASE("Determinization with FDR variables") {
         // The probability for value "1" is the highest
         auto nc = dynamic_cast<NumericConstant*>(c0->determinization);
         CHECK(nc);
-        CHECK(utils::MathUtils::doubleIsEqual(nc->value, 1.0));
+        CHECK(utils::doubleIsEqual(nc->value, 1.0));
     }
 
     SUBCASE("Static Discrete distribution with non-unique max") {
@@ -140,7 +140,7 @@ TEST_CASE("Determinization with FDR variables") {
         // occurs first in the values vector is selected
         auto nc = dynamic_cast<NumericConstant*>(c0->determinization);
         CHECK(nc);
-        CHECK(utils::MathUtils::doubleIsEqual(nc->value, 0.0));
+        CHECK(utils::doubleIsEqual(nc->value, 0.0));
     }
 
     SUBCASE("Discrete distribution with state-dependent probability") {
@@ -174,9 +174,9 @@ TEST_CASE("Determinization with FDR variables") {
         CHECK(nc1);
         CHECK(nc2);
         CHECK(nc3);
-        CHECK(utils::MathUtils::doubleIsEqual(nc1->value, 0.0));
-        CHECK(utils::MathUtils::doubleIsEqual(nc2->value, 1.0));
-        CHECK(utils::MathUtils::doubleIsEqual(nc3->value, 2.0));
+        CHECK(utils::doubleIsEqual(nc1->value, 0.0));
+        CHECK(utils::doubleIsEqual(nc2->value, 1.0));
+        CHECK(utils::doubleIsEqual(nc3->value, 2.0));
         CHECK(mcc->conditions.size() == 3);
         auto conj1 = dynamic_cast<Conjunction*>(mcc->conditions[0]);
         auto conj2 = dynamic_cast<Conjunction*>(mcc->conditions[1]);

@@ -1,5 +1,5 @@
-#ifndef PRECOMPUTER_H
-#define PRECOMPUTER_H
+#ifndef PARSER_PRECOMPUTER_H
+#define PARSER_PRECOMPUTER_H
 
 /*
   It can be observed that the (typically prohibitively large) set of states can
@@ -37,4 +37,4 @@ private:
 };
 } // namespace prost::parser
 
-#endif
+#endif // PARSER_PRECOMPUTER_H

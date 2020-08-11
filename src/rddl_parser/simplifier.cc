@@ -7,7 +7,8 @@
 #include "rddl.h"
 #include "reachability_analysis.h"
 
-#include "utils/system_utils.h"
+#include "utils/math.h"
+#include "utils/system.h"
 #include "utils/timer.h"
 
 #include <algorithm>
@@ -126,7 +127,7 @@ void Simplifier::simplifyCPFs(Simplifications& replacements) {
             auto nc = dynamic_cast<NumericConstant*>(cpf->formula);
             double initialValue = cpf->head->initialValue;
             if (nc &&
-                utils::MathUtils::doubleIsEqual(initialValue, nc->value)) {
+                utils::doubleIsEqual(initialValue, nc->value)) {
                 assert(replacements.find(cpf->head) == replacements.end());
                 replacements[cpf->head] = nc;
                 task->CPFs.erase(it);
@@ -161,9 +162,8 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
         }
     } else if (auto nc = dynamic_cast<NumericConstant*>(simplified)) {
         // This precond is either never satisfied or always
-        if (utils::MathUtils::doubleIsEqual(nc->value, 0.0)) {
-            utils::SystemUtils::abort(
-                "Found a precond that is never satisified!");
+        if (utils::doubleIsEqual(nc->value, 0.0)) {
+            utils::abort("Found a precond that is never satisified!");
         }
     } else {
         ActionPrecondition* sPrec = new ActionPrecondition(simplified);
