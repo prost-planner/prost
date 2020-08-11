@@ -2,8 +2,9 @@
 
 #include "../evaluatables.h"
 #include "../logical_expressions.h"
-#include "../mutex_detection.h"
 #include "../rddl.h"
+
+#include "../fdr/mutex_detection.h"
 
 #include <string>
 

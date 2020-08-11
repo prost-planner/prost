@@ -54,7 +54,7 @@ private:
       partitioned into equivalence classes for each CPF, and just one
       representative action from each equivalence class is used. Two actions are
       in the same equivalence class if the action variable assignment of all
-      action variable that are relevant for the CPF are equal.
+      action variables that are relevant for the CPF are equal.
     */
     void prepareActionEquivalence();
 

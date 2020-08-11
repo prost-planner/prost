@@ -42,22 +42,19 @@ void HashKeyGenerator::generateHashKeys(bool output) {
 
 void HashKeyGenerator::prepareHashKeysForStates() {
     long hashKeyBase = 1;
-    vector<vector<long>> stateHashKeys;
-
     for (ConditionalProbabilityFunction const* cpf : task->CPFs) {
         int numVals = cpf->getDomainSize();
         vector<long> stateHashKeysOfCPF(numVals);
         for (size_t val = 0; val < numVals; ++val) {
             stateHashKeysOfCPF[val] = val * hashKeyBase;
         }
-
         if (!utils::MathUtils::multiplyWithOverflowCheck(
             hashKeyBase, numVals)) {
+            task->stateHashKeys.clear();
             return;
         }
-        stateHashKeys.push_back(move(stateHashKeysOfCPF));
+        task->stateHashKeys.push_back(stateHashKeysOfCPF);
     }
-    task->stateHashKeys = move(stateHashKeys);
 }
 
 void HashKeyGenerator::prepareHashKeysForKleeneStates() {
@@ -76,17 +73,15 @@ void HashKeyGenerator::prepareHashKeysForKleeneStates() {
     if (!kleeneStateHashingPossible) {
         return;
     }
-
-    vector<long> hashKeyBases;
     long hashKeyBase = 1;
     for (ConditionalProbabilityFunction const* cpf : task->CPFs) {
-        hashKeyBases.push_back(hashKeyBase);
+        task->kleeneStateHashKeyBases.push_back(hashKeyBase);
         if (!utils::MathUtils::multiplyWithOverflowCheck(
             hashKeyBase, cpf->kleeneDomainSize)) {
+            task->kleeneStateHashKeyBases.clear();
             return;
         }
     }
-    task->kleeneStateHashKeyBases = move(hashKeyBases);
 }
 
 void HashKeyGenerator::prepareHashKeysForEvaluatables() {
@@ -114,10 +109,9 @@ void HashKeyGenerator::prepareHashKeysForEvaluatable(Evaluatable* eval,
 }
 
 long HashKeyGenerator::determineActionHashKeys(Evaluatable* eval) {
-    int numActions = static_cast<int>(task->actionStates.size());
     long nextKey = 0;
-    eval->actionHashKeyMap = vector<long>(numActions, 0);
-    for (int i = 0; i < numActions; ++i) {
+    eval->actionHashKeyMap = vector<long>(task->actionStates.size(), 0);
+    for (int i = 0; i < static_cast<int>(task->actionStates.size()); ++i) {
         long existingKey = getActionHashKey(eval, i);
         if (existingKey == -1) {
             eval->actionHashKeyMap[i] = nextKey;

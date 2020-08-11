@@ -12,11 +12,13 @@ RDDLTaskCSP::RDDLTaskCSP(RDDLTask* _task)
     addActionVarSet();
 }
 
+namespace {
 template <typename T>
 ::z3::expr createZ3Var(::z3::context& context, T const* var, int setIndex) {
     string name(to_string(var->index) + "_" + var->fullName + "_" +
                 to_string(setIndex));
     return context.int_const(name.c_str());
+}
 }
 
 void RDDLTaskCSP::addStateVarSet() {

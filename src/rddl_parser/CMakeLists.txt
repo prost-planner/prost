@@ -38,11 +38,11 @@ set(RDDL_PARSER_SOURCES
     csp
     determinize/determinize
     evaluatables
-    fdr_generation
+    fdr/fdr_generation
+    fdr/mutex_detection
     hashing/hash_keys
     instantiator
     logical_expressions
-    mutex_detection
     precomputer
     probability_distribution
     rddl

@@ -5,9 +5,7 @@
 
 #include <iosfwd>
 
-namespace prost {
-namespace parser {
-namespace utils {
+namespace prost::parser::utils {
 class Timer {
 public:
     Timer();
@@ -21,8 +19,6 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& os, const Timer& timer);
-} // namespace utils
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::utils
 
 #endif

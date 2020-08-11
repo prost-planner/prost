@@ -8,10 +8,11 @@
 using namespace std;
 
 namespace prost::parser {
+namespace {
 bool initStateValuesAreReachable(vector<set<double>> const& domains) {
     // All state values are 0 initially
-    for (set<double> const& domain : domains)  {
-        if(domain.find(0.0) == domain.end()) {
+    for (set<double> const& domain : domains) {
+        if (domain.find(0.0) == domain.end()) {
             return false;
         }
     }
@@ -29,6 +30,7 @@ bool allValuesAreReachable(vector<set<double>> const& domains,
         }
     }
     return true;
+}
 }
 
 TEST_CASE("Reachability analysis where every fact is directly reachable") {

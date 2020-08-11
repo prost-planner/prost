@@ -97,8 +97,8 @@ private:
     long determineActionHashKeys(Evaluatable* eval);
 
     /*
-      Checks for the given action with if it is in the same equivalence class
-      for eval as a previously considered action
+      Checks for the action given by actionIndex if it is in the same
+      equivalence class for eval as a previously considered action
     */
     long getActionHashKey(Evaluatable* eval, int actionIndex);
 

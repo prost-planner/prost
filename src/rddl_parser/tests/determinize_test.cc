@@ -98,29 +98,99 @@ TEST_CASE("Determinization with FDR variables") {
     auto s0 = new StateFluent(*fdrPVar, params, 0.0, 0);
     auto c0 = new ConditionalProbabilityFunction(s0, nullptr);
     c0->setDomainSize(3);
-    SUBCASE("Static Discrete distribution") {
+    SUBCASE("Static Discrete distribution with unique max") {
         task->stateFluents = {s0};
         task->CPFs = {c0};
 
-        vector<LogicalExpression*> conditions = {new NumericConstant(0.2),
-                                                 new NumericConstant(0.6),
-                                                 new NumericConstant(1.0)};
-        vector<LogicalExpression*> effects = {new NumericConstant(0.0),
-                                              new NumericConstant(1.0),
-                                              new NumericConstant(2.0)};
-        c0->formula = new DiscreteDistribution(conditions, effects);
+        vector<LogicalExpression*> values = {new NumericConstant(0.0),
+                                             new NumericConstant(1.0),
+                                             new NumericConstant(2.0)};
+        vector<LogicalExpression*> probs = {new NumericConstant(0.2),
+                                            new NumericConstant(0.6),
+                                            new NumericConstant(0.2)};
+        c0->formula = new DiscreteDistribution(values, probs);
         c0->initialize();
 
         MostLikelyDeterminizer det(task);
         det.determinize();
 
-        // The probability for the first effect (0.0) is 0.2; the probability
-        // for the second effect (1.0) is 0.8 * 0.6 = 0.48; and the probability
-        // for the third effect is 0.32. Therefore, the result of the
-        // determinization must be "1.0"
+        // The probability for value "1" is the highest
         auto nc = dynamic_cast<NumericConstant*>(c0->determinization);
         CHECK(nc);
         CHECK(utils::MathUtils::doubleIsEqual(nc->value, 1.0));
+    }
+
+    SUBCASE("Static Discrete distribution with non-unique max") {
+        task->stateFluents = {s0};
+        task->CPFs = {c0};
+
+        vector<LogicalExpression*> values = {new NumericConstant(0.0),
+                                             new NumericConstant(1.0),
+                                             new NumericConstant(2.0)};
+        vector<LogicalExpression*> probs = {new NumericConstant(0.4),
+                                            new NumericConstant(0.2),
+                                            new NumericConstant(0.4)};
+        c0->formula = new DiscreteDistribution(values, probs);
+        c0->initialize();
+
+        MostLikelyDeterminizer det(task);
+        det.determinize();
+
+        // The probability for values "0" and "2" are equal, so the one that
+        // occurs first in the values vector is selected
+        auto nc = dynamic_cast<NumericConstant*>(c0->determinization);
+        CHECK(nc);
+        CHECK(utils::MathUtils::doubleIsEqual(nc->value, 0.0));
+    }
+
+    SUBCASE("Discrete distribution with state-dependent probability") {
+        // If the probabilities depend on the state, the discrete distribution
+        // is determinized into a MultiConditionChecker.
+        task->stateFluents = {s0};
+        task->CPFs = {c0};
+
+        vector<LogicalExpression*> values = {new NumericConstant(0.0),
+                                             new NumericConstant(1.0),
+                                             new NumericConstant(2.0)};
+        vector<LogicalExpression*> p1 = {new NumericConstant(0.3), s0};
+        auto m1 = new Multiplication(p1);
+        vector<LogicalExpression*> p2 = {new NumericConstant(1), m1};
+        auto s1 = new Subtraction(p2);
+        vector<LogicalExpression*> probs = {m1, s1, new NumericConstant(0)};
+        c0->formula = new DiscreteDistribution(values, probs);
+        c0->initialize();
+
+        MostLikelyDeterminizer det(task);
+        det.determinize();
+
+        // The probability for values "0" and "2" are equal, so the one that
+        // occurs first in the values vector is selected
+        auto mcc = dynamic_cast<MultiConditionChecker*>(c0->determinization);
+        CHECK(mcc);
+        CHECK(mcc->effects.size() == 3);
+        auto nc1 = dynamic_cast<NumericConstant*>(mcc->effects[0]);
+        auto nc2 = dynamic_cast<NumericConstant*>(mcc->effects[1]);
+        auto nc3 = dynamic_cast<NumericConstant*>(mcc->effects[2]);
+        CHECK(nc1);
+        CHECK(nc2);
+        CHECK(nc3);
+        CHECK(utils::MathUtils::doubleIsEqual(nc1->value, 0.0));
+        CHECK(utils::MathUtils::doubleIsEqual(nc2->value, 1.0));
+        CHECK(utils::MathUtils::doubleIsEqual(nc3->value, 2.0));
+        CHECK(mcc->conditions.size() == 3);
+        auto conj1 = dynamic_cast<Conjunction*>(mcc->conditions[0]);
+        auto conj2 = dynamic_cast<Conjunction*>(mcc->conditions[1]);
+        auto conj3 = dynamic_cast<Conjunction*>(mcc->conditions[2]);
+        CHECK(conj1);
+        CHECK(conj2);
+        CHECK(conj3);
+        CHECK(conj1->exprs.size() == 2);
+        CHECK(conj2->exprs.size() == 2);
+        CHECK(conj3->exprs.size() == 2);
+        auto geq0 = dynamic_cast<GreaterEqualsExpression*>(conj1->exprs[0]);
+        auto geq1 = dynamic_cast<GreaterEqualsExpression*>(conj1->exprs[1]);
+        CHECK(geq0);
+        CHECK(geq1);
     }
 }
 } // namespace prost::parser::determinize

@@ -2,8 +2,8 @@
 
 #include "csp.h"
 #include "evaluatables.h"
-#include "fdr_generation.h"
-#include "mutex_detection.h"
+#include "fdr/fdr_generation.h"
+#include "fdr/mutex_detection.h"
 #include "rddl.h"
 #include "reachability_analysis.h"
 

@@ -197,10 +197,10 @@ TEST_CASE("Hash key generation") {
         // s0 affects s0 and the hash key base is 1 (no actions affect s0)
         CHECK(task->indexToStateFluentHashKeyMap[0][0].first == 0);
         CHECK(task->indexToStateFluentHashKeyMap[0][0].second == 1);
-        // s0 affects s1 and the hash key base is 1 (no actions affect s0)
+        // s0 affects s1 and the hash key base is 1 (no actions affect s1)
         CHECK(task->indexToStateFluentHashKeyMap[0][1].first == 1);
         CHECK(task->indexToStateFluentHashKeyMap[0][1].second == 1);
-        // s0 affects s2 and the hash key base is 8 (all actions affect s0)
+        // s0 affects s2 and the hash key base is 8 (all actions affect s2)
         CHECK(task->indexToStateFluentHashKeyMap[0][2].first == 2);
         CHECK(task->indexToStateFluentHashKeyMap[0][2].second == 8);
         // s1 affects s1 and hash key base is 2 (s0 also affects s1)

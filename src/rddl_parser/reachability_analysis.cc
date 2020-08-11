@@ -32,8 +32,8 @@ void MinkowskiReachabilityAnalyser::prepareActionEquivalence() {
         if (cpf->isActionIndependent()) {
             representatives.insert(0);
         } else {
-            for (ActionState const& state : task->actionStates) {
-                representatives.insert(state.index);
+            for (ActionState const& action : task->actionStates) {
+                representatives.insert(action.index);
             }
         }
         actionIndicesByCPF.emplace_back(

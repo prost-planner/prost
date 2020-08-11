@@ -40,16 +40,17 @@ LogicalExpression* MostLikelyDeterminizer::_determinize(
             {new NumericConstant(0.5), _determinize(bd->expr)};
         return new LowerEqualsExpression(newExprs);
     } else if (auto disc = dynamic_cast<DiscreteDistribution*>(formula)) {
-        // The most likely determinization of a discrete distribution returns
+        // The most-likely determinization of a discrete distribution returns
         // the value with the highest probability. To do so, we generate a
-        // multi condition checker with one condition / effect pair per value,
-        // and where each condition checks if the probability is higher than
-        // all other probabilities.
+        // multi condition checker with one condition / effect pair per value of
+        // the discrete distribution, and the associated condition checks if the
+        // probability of the value in the discrete distribution is higher than
+        // the probabilities of all other values.
         //
-        // Assume the discrete distribution c1 : e1; c2 : e2; c3 : e3,
+        // Assume the discrete distribution p1 : e1; p2 : e2; p3 : e3,
         // this is turned in the multi condition checker:
-        // if (c1 >= c2 && c1 >= c3) then e1
-        // elif (c2 >= c1 && c2 >= c3) then e2
+        // if (p1 >= p2 && p1 >= p3) then e1
+        // elif (p2 >= p1 && p2 >= p3) then e2
         // else e3
         vector<LogicalExpression*> detProbs;
         for (LogicalExpression* expr : disc->probabilities) {

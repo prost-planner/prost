@@ -1,9 +1,10 @@
 #include "../../doctest/doctest.h"
 
-#include "../fdr_generation.h"
 #include "../logical_expressions.h"
-#include "../mutex_detection.h"
 #include "../rddl.h"
+
+#include "../fdr/fdr_generation.h"
+#include "../fdr/mutex_detection.h"
 
 using namespace std;
 
