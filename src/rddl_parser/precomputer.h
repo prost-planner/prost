@@ -12,8 +12,7 @@
 
 #include <vector>
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class Evaluatable;
 struct RDDLTask;
 class State;
@@ -36,7 +35,6 @@ private:
     long calculateStateFluentHashKey(Evaluatable* eval,
                                      State const& state) const;
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

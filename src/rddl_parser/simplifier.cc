@@ -15,8 +15,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
     utils::Timer t;
     Simplifications replacements;
@@ -381,5 +380,4 @@ bool Simplifier::filterActionFluents(vector<bool> const& filter,
     task->sortActionFluents();
     return result;
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

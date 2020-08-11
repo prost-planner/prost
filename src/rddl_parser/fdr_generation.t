@@ -6,7 +6,6 @@
 #include "rddl.h"
 
 namespace prost::parser::fdr {
-
 template <typename PartitionGen>
 std::vector<ActionFluent*> FDRGenerator::generateFDRVars(
     TaskMutexInfo const& mutexes, Simplifications& replacements,

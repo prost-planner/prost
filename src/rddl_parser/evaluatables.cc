@@ -9,8 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 void Evaluatable::initialize() {
     isProb = false;
     hasArithmeticFunction = false;
@@ -30,5 +29,4 @@ void ConditionalProbabilityFunction::setDomainSize(int numVals) {
     iota(domain.begin(), domain.end(), 0);
     head->domainSize = numVals;
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

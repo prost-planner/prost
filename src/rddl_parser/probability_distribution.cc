@@ -4,8 +4,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 inline int DiscretePD::getNumberOfOutcomes() const {
     assert(isWellDefined());
     return values.size();
@@ -43,5 +42,4 @@ void DiscretePD::print(ostream& out) const {
     }
     out << "]" << endl;
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

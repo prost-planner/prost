@@ -8,8 +8,7 @@
 
 #include "probability_distribution.h"
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class ActionFluent;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
@@ -191,7 +190,6 @@ struct ActionState {
     std::vector<ActionPrecondition*> relevantSACs;
     int index;
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

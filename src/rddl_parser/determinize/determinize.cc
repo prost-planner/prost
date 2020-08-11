@@ -9,9 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace determinize {
+namespace prost::parser::determinize {
 void Determinizer::determinize() {
     map<ParametrizedVariable const*, LogicalExpression*> dummy;
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
@@ -96,6 +94,4 @@ LogicalExpression* MostLikelyDeterminizer::_determinize(
     }
     return nullptr;
 }
-} // namespace determinize
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::determinize

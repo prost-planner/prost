@@ -1,7 +1,6 @@
 #include "fdr_generation.h"
 
 #include "csp.h"
-#include "logical_expressions.h"
 #include "mutex_detection.h"
 #include "rddl.h"
 
@@ -10,7 +9,6 @@
 using namespace std;
 
 namespace prost::parser::fdr {
-
 int FDRGenerator::numFDRActionVars = 0;
 
 void VarPartition::addVar(ActionFluent const* var) {
@@ -90,7 +88,7 @@ VarPartitioning GreedyPartitioning::operator()(
             VarMutexInfo const& otherMutexes = mutexInfo[other];
             if (includes(otherMutexes.begin(), otherMutexes.end(),
                          partition.begin(), partition.end(),
-                         ActionFluentSort())) {
+                         ActionFluent::ActionFluentSort())) {
                 addVarToPartition(other, partition, served);
             }
         }

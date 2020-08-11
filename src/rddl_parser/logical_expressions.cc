@@ -13,8 +13,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 Object::Object(std::string _name, Type* _type)
     : Parameter(_name, _type), types() {
     Type* tmpType = type;
@@ -107,5 +106,4 @@ bool Type::isSubtypeOf(Type* const& other) const {
 #include "logical_expressions_includes/replace_quantifier.cc"
 #include "logical_expressions_includes/simplify.cc"
 #include "logical_expressions_includes/to_z3_formula.cc"
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

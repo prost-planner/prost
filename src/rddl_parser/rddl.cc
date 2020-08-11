@@ -13,8 +13,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 RDDLTask::RDDLTask()
     : numberOfConcurrentActions(numeric_limits<int>::max()),
       horizon(1),
@@ -752,5 +751,4 @@ void RDDLTask::print(ostream& out) {
         out << endl;
     }
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

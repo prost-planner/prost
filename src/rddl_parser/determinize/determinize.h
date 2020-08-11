@@ -10,8 +10,7 @@
   such that it returns the determinization of formula.
 */
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class LogicalExpression;
 struct RDDLTask;
 
@@ -41,7 +40,6 @@ protected:
     LogicalExpression* _determinize(LogicalExpression* formula) override;
 };
 } // namespace determinize
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

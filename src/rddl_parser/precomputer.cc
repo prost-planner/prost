@@ -9,8 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 void Precomputer::precompute() {
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
         if (cpf->cachingType == "VECTOR") {
@@ -106,5 +105,4 @@ long Precomputer::calculateStateFluentHashKey(Evaluatable* eval,
     }
     return res;
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

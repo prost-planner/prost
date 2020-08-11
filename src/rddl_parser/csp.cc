@@ -5,8 +5,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 RDDLTaskCSP::RDDLTaskCSP(RDDLTask* _task)
     : task(_task), context(), solver(context) {
     addStateVarSet();
@@ -104,5 +103,4 @@ void RDDLTaskCSP::invalidateActionModel(int actionSetIndex) {
     }
     solver.add(block);
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

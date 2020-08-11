@@ -1,6 +1,8 @@
 #ifndef MUTEX_DETECTION_H
 #define MUTEX_DETECTION_H
 
+#include "logical_expressions.h"
+
 #include <set>
 #include <vector>
 
@@ -8,10 +10,6 @@ namespace prost::parser {
 class ActionFluent;
 struct RDDLTask;
 namespace fdr {
-
-struct ActionFluentSort {
-    bool operator()(ActionFluent const* lhs, ActionFluent const* rhs) const;
-};
 
 /*
   A VariableMutexInformation is associated with a (binary) action variable and
@@ -44,7 +42,7 @@ private:
     RDDLTask* const task;
     ActionFluent const* var;
 
-    std::set<ActionFluent const*, ActionFluentSort> mutexVars;
+    std::set<ActionFluent const*, ActionFluent::ActionFluentSort> mutexVars;
 };
 
 /*

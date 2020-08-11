@@ -10,9 +10,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace hashing {
+namespace prost::parser::hashing {
 void HashKeyGenerator::generateHashKeys(bool output) {
     utils::Timer t;
     if (output) {
@@ -225,6 +223,4 @@ void HashKeyGenerator::prepareKleeneStateFluentHashKeys(Evaluatable* eval,
         eval->kleeneCachingVectorSize = hashKeyBase;
     }
 }
-} // namespace hashing
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::hashing

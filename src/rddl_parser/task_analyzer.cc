@@ -13,8 +13,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 void TaskAnalyzer::analyzeTask(
     int numStates, int numSimulations, double timeout, bool output) {
     utils::Timer t;
@@ -431,5 +430,4 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
         }
     }
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

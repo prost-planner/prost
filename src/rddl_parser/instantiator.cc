@@ -7,8 +7,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 void Instantiator::instantiate(bool const& output) {
     utils::Timer t;
     if (output)
@@ -178,5 +177,4 @@ void Instantiator::instantiateParams(vector<Parameter*> params,
         }
     }
 }
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

@@ -4,9 +4,7 @@
 #include "../logical_expressions.h"
 #include "../rddl.h"
 
-namespace prost {
-namespace parser {
-namespace tests {
+namespace prost::parser {
 TEST_CASE("Generation of boolen and FDR action variables") {
     auto task = new RDDLTask();
     Type* varType = task->addType("dummy");
@@ -23,6 +21,4 @@ TEST_CASE("Generation of boolen and FDR action variables") {
     CHECK(a0->valueType->objects.size() == 4);
     CHECK(a1->valueType->objects.size() == 2);
 }
-} // namespace tests
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

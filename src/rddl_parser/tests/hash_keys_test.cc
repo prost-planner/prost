@@ -8,9 +8,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace hashing {
+namespace prost::parser::hashing {
 TEST_CASE("Hash key generation") {
     auto task = new RDDLTask();
     vector<Parameter*> params;
@@ -218,6 +216,4 @@ TEST_CASE("Hash key generation") {
         CHECK(task->indexToStateFluentHashKeyMap[2][0].second == 32);
     }
 }
-} // namespace hashing
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::hashing

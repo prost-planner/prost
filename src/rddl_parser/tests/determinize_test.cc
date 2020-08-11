@@ -9,9 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace determinize {
+namespace prost::parser::determinize {
 TEST_CASE("Determinization with binary variables") {
     auto task = new RDDLTask();
     vector<Parameter*> params;
@@ -125,6 +123,4 @@ TEST_CASE("Determinization with FDR variables") {
         CHECK(utils::MathUtils::doubleIsEqual(nc->value, 1.0));
     }
 }
-} // namespace determinize
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::determinize

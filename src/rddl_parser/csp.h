@@ -24,8 +24,7 @@
   bool result = csp.hasSolution();
 */
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 using Z3Expressions = std::vector<::z3::expr>;
 
 class LogicalExpression;
@@ -137,7 +136,6 @@ private:
     */
     void addConcurrencyConstraint(int actionSetIndex);
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

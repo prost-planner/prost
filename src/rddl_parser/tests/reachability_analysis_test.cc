@@ -7,9 +7,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace tests {
+namespace prost::parser {
 bool initStateValuesAreReachable(vector<set<double>> const& domains) {
     // All state values are 0 initially
     for (set<double> const& domain : domains)  {
@@ -168,6 +166,4 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
         CHECK(r.getNumberOfSimulationSteps() == task->horizon);
     }
 }
-} // namespace tests
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

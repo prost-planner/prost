@@ -6,8 +6,7 @@
 #include <set>
 #include <vector>
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 struct RDDLTask;
 
 class TaskAnalyzer {
@@ -44,7 +43,6 @@ protected:
 
     void createTrainingSet(int const& numberOfStates);
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

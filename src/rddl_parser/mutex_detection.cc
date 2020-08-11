@@ -1,7 +1,6 @@
 #include "mutex_detection.h"
 
 #include "csp.h"
-#include "logical_expressions.h"
 #include "rddl.h"
 
 #include <algorithm>
@@ -9,11 +8,6 @@
 using namespace std;
 
 namespace prost::parser::fdr {
-inline bool ActionFluentSort::operator()(ActionFluent const* lhs,
-                                         ActionFluent const* rhs) const {
-    return lhs->index < rhs->index;
-}
-
 void VarMutexInfo::addAllVars() {
     for (ActionFluent const* af : task->actionFluents) {
         addVar(af);

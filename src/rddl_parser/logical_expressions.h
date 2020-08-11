@@ -10,8 +10,7 @@ namespace z3 {
 class expr;
 }
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class ActionFluent;
 class ActionState;
 class DiscretePD;
@@ -250,6 +249,13 @@ public:
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
     void print(std::ostream& out) const override;
+
+    struct ActionFluentSort {
+        bool operator()(ActionFluent const* lhs,
+                        ActionFluent const* rhs) const {
+            return lhs->index < rhs->index;
+        }
+    };
 };
 
 class NonFluent : public ParametrizedVariable {
@@ -1033,7 +1039,6 @@ private:
     ::z3::expr buildZ3Formula(
         RDDLTaskCSP& csp, int actionIndex, int index) const;
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

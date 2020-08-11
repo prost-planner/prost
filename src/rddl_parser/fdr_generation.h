@@ -1,11 +1,11 @@
 #ifndef FDR_GENERATION_H
 #define FDR_GENERATION_H
 
+#include "logical_expressions.h"
+
 #include <map>
 #include <set>
 #include <vector>
-
-#include "mutex_detection.h"
 
 namespace prost::parser {
 class RDDLTaskCSP;
@@ -14,6 +14,7 @@ class LogicalExpression;
 class ParametrizedVariable;
 struct RDDLTask;
 namespace fdr {
+class TaskMutexInfo;
 
 using Simplifications =
     std::map<ParametrizedVariable const*, LogicalExpression*>;
@@ -36,7 +37,7 @@ struct VarPartition {
     }
 
 private:
-    std::set<ActionFluent const*, ActionFluentSort> vars;
+    std::set<ActionFluent const*, ActionFluent::ActionFluentSort> vars;
 };
 
 /*

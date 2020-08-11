@@ -4,9 +4,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace tests {
+namespace prost::parser {
 TEST_CASE("Testing equality of distributions") {
     DiscretePD pd1;
     DiscretePD pd2;
@@ -169,6 +167,4 @@ TEST_CASE("Testing well-definedness of probabilities") {
         CHECK(!pd1.isWellDefined());
     }
 }
-} // namespace tests
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser

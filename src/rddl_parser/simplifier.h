@@ -35,8 +35,7 @@
   irrelevant preconditions have been removed.
 */
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class ActionState;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
@@ -135,7 +134,6 @@ private:
     bool filterActionFluents(std::vector<bool> const& filter,
                              Simplifications& replacements);
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

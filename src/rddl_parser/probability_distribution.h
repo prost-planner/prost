@@ -11,8 +11,7 @@
 
 #include "utils/math_utils.h"
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class DiscretePD {
 public:
     DiscretePD() {}
@@ -146,7 +145,6 @@ public:
     std::vector<double> values;
     std::vector<double> probabilities;
 };
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
 
 #endif

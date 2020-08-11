@@ -49,8 +49,7 @@
 
 #include <vector>
 
-namespace prost {
-namespace parser {
+namespace prost::parser {
 class ActionState;
 struct Evaluatable;
 struct RDDLTask;
@@ -114,6 +113,6 @@ private:
     void prepareKleeneStateFluentHashKeys(Evaluatable* eval, long hashKeyBase);
 };
 } // namespace hashing
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser
+
 #endif // HASHING_HASH_KEYS_H
