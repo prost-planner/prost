@@ -79,7 +79,7 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
         for (unsigned int j = 0; j < head->params.size(); ++j) {
             assert(replacements.find(head->params[j]->name) ==
                    replacements.end());
-            Object* obj = dynamic_cast<Object*>(instantiatedVars[i]->params[j]);
+            auto obj = dynamic_cast<Object*>(instantiatedVars[i]->params[j]);
             assert(obj);
             replacements[head->params[j]->name] = obj;
         }
@@ -91,13 +91,13 @@ void Instantiator::instantiateCPF(ParametrizedVariable* head,
     }
 }
 
-bool isSumOverAllActionFluents(Addition* add, int numActionFluents) {
+bool isSumOverAllActionFluents(Addition const* add, size_t numActionFluents) {
     if (!add || (add->exprs.size() != numActionFluents)) {
         return false;
     }
     vector<bool> afIsUsed(numActionFluents, false);
     for (LogicalExpression* expr : add->exprs) {
-        ActionFluent* af = dynamic_cast<ActionFluent*>(expr);
+        auto af = dynamic_cast<ActionFluent*>(expr);
         if (expr && !afIsUsed[af->index]) {
             afIsUsed[af->index] = true;
         } else {
@@ -125,32 +125,32 @@ void Instantiator::instantiatePreconds() {
 
         if (lee && lee->exprs.size() == 2) {
             add = dynamic_cast<Addition*>(lee->exprs[0]);
-            NumericConstant* nc = dynamic_cast<NumericConstant*>(lee->exprs[1]);
+            auto nc = dynamic_cast<NumericConstant*>(lee->exprs[1]);
             if (nc) {
                 value = static_cast<int>(nc->value);
             }
         } else if(gee && gee->exprs.size() == 2) {
             add = dynamic_cast<Addition *>(gee->exprs[1]);
-            NumericConstant* nc = dynamic_cast<NumericConstant*>(gee->exprs[0]);
+            auto nc = dynamic_cast<NumericConstant*>(gee->exprs[0]);
             if (nc) {
                 value = static_cast<int>(nc->value);
             }
         } else if(le && le->exprs.size() == 2) {
             add = dynamic_cast<Addition*>(le->exprs[0]);
-            NumericConstant* nc = dynamic_cast<NumericConstant*>(le->exprs[1]);
+            auto nc = dynamic_cast<NumericConstant*>(le->exprs[1]);
             if (nc) {
                 value = static_cast<int>(nc->value) + 1;
             }
         } else if(ge && ge->exprs.size() == 2) {
             add = dynamic_cast<Addition*>(ge->exprs[1]);
-            NumericConstant* nc = dynamic_cast<NumericConstant*>(ge->exprs[0]);
+            auto nc = dynamic_cast<NumericConstant*>(ge->exprs[0]);
             if (nc) {
                 value = static_cast<int>(nc->value) - 1;
             }
         }
 
-        int numActionFluents = task->actionFluents.size();
-        if ((value >= 1) && isSumOverAllActionFluents(add, numActionFluents)) {
+        if ((value >= 1) &&
+            isSumOverAllActionFluents(add, task->actionFluents.size())) {
             task->numberOfConcurrentActions = value;
             it = task->preconds.erase(it) - 1;
         }

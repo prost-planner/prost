@@ -9,9 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace fdr {
+namespace prost::parser::fdr {
 
 int FDRGenerator::numFDRActionVars = 0;
 
@@ -100,6 +98,4 @@ VarPartitioning GreedyPartitioning::operator()(
     }
     return result;
 }
-} // namespace fdr
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::fdr

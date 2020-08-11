@@ -21,11 +21,14 @@ protected:
     RDDLTask* task;
 
     std::set<State, State::StateSort> encounteredStates;
-    bool rewardFormulaAllowsRewardLockDetection;
+    int finalActionIndex = -1;
 
     void determineTaskProperties();
+    std::vector<int> determineDominantActions() const;
 
     void calculateMinAndMaxReward() const;
+
+    void performRandomWalks(int numSimulations, double timeout);
 
     void analyzeStateAndApplyAction(State const& current, State& next,
                                     double& reward) const;

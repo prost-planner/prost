@@ -307,7 +307,7 @@ bool Simplifier::removeConstantStateFluents(vector<set<double>> const& domains,
         } else {
             // We currently do not support removal of values, so we add all
             // values up to maxVal to the domain (see issue 115)
-            cpf->setDomain(static_cast<int>(*domain.rbegin()));
+            cpf->setDomainSize(static_cast<int>(*domain.rbegin() + 1));
             cpfs.push_back(cpf);
         }
     }

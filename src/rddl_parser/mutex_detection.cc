@@ -8,9 +8,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace fdr {
+namespace prost::parser::fdr {
 inline bool ActionFluentSort::operator()(ActionFluent const* lhs,
                                          ActionFluent const* rhs) const {
     return lhs->index < rhs->index;
@@ -117,6 +115,4 @@ TaskMutexInfo computeActionVarMutexes(RDDLTask* task) {
     }
     return result;
 }
-} // namespace fdr
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::fdr

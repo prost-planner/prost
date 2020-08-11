@@ -30,17 +30,14 @@ void Precomputer::precompute() {
 }
 
 void Precomputer::precomputeEvaluatable(Evaluatable* eval) {
-    int numCPFs = task->CPFs.size();
-    vector<StateFluent*> dependentStateFluents;
-    for (StateFluent* sf : eval->dependentStateFluents) {
-        dependentStateFluents.push_back(sf);
-    }
+    vector<StateFluent*> dependentStateFluents(
+        eval->dependentStateFluents.begin(), eval->dependentStateFluents.end());
 
     vector<State> relevantStates;
     if (!dependentStateFluents.empty()) {
         createRelevantStates(dependentStateFluents, relevantStates);
     } else {
-        relevantStates.emplace_back(numCPFs);
+        relevantStates.emplace_back(task->CPFs.size());
     }
 
     for (State const& state : relevantStates) {
@@ -52,20 +49,15 @@ void Precomputer::precomputeEvaluatable(Evaluatable* eval) {
                 usedActionHashKeys.end()) {
                 usedActionHashKeys.insert(actionHashKey);
 
+                double& res = eval->precomputedResults[hashKey + actionHashKey];
+                assert(utils::MathUtils::doubleIsMinusInfinity(res));
                 if (eval->isProbabilistic()) {
-                    double& res =
-                        eval->precomputedResults[hashKey + actionHashKey];
-                    assert(utils::MathUtils::doubleIsMinusInfinity(res));
                     eval->determinization->evaluate(res, state, action);
-
                     DiscretePD& pdRes =
                         eval->precomputedPDResults[hashKey + actionHashKey];
                     assert(pdRes.isUndefined());
                     eval->formula->evaluateToPD(pdRes, state, action);
                 } else {
-                    double& res =
-                        eval->precomputedResults[hashKey + actionHashKey];
-                    assert(utils::MathUtils::doubleIsMinusInfinity(res));
                     eval->formula->evaluate(res, state, action);
                 }
             }
@@ -78,25 +70,22 @@ void Precomputer::createRelevantStates(
     StateFluent* fluent = dependentStateFluents.back();
     dependentStateFluents.pop_back();
 
-    int fluentIndex = fluent->index;
-    int domainSize = task->CPFs[fluentIndex]->domain.size();
-
+    size_t domainSize = task->CPFs[fluent->index]->domain.size();
     if (result.empty()) {
-        int numCPFs = task->CPFs.size();
         for (int value = 0; value < domainSize; ++value) {
-            State base(numCPFs);
-            base[fluentIndex] = value;
+            State base(task->CPFs.size());
+            base[fluent->index] = value;
             result.push_back(base);
         }
     } else {
         int size = result.size();
         for (int stateIndex = 0; stateIndex < size; ++stateIndex) {
-            // The state with value '0' is already in the set, so we generate
-            // only all other states
+            // result already contains a state where the fluent has value '0',
+            // so we only have to generate states for the remaining values
             for (unsigned int value = 1; value < domainSize; ++value) {
                 State const& state = result[stateIndex];
-                assert(state[fluentIndex] == 0);
-                result.emplace_back(state, fluentIndex, value);
+                assert(state[fluent->index] == 0);
+                result.emplace_back(state, fluent->index, value);
             }
         }
     }
@@ -112,7 +101,7 @@ long Precomputer::calculateStateFluentHashKey(Evaluatable* eval,
     vector<pair<int, long>> const& hashKeyBases = eval->stateFluentHashKeyBases;
     for (pair<int, long> const& hashKeyBasePair : hashKeyBases) {
         int value = state[hashKeyBasePair.first];
-        int hashKeyBase = hashKeyBasePair.second;
+        long hashKeyBase = hashKeyBasePair.second;
         res += value * hashKeyBase;
     }
     return res;

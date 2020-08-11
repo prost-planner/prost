@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "determinizer.h"
-#include "hash_key_generator.h"
+#include "determinize/determinize.h"
+#include "hashing/hash_keys.h"
 #include "instantiator.h"
 #include "logical_expressions.h"
 #include "precomputer.h"
@@ -845,44 +845,44 @@ int main (int argc, char** argv) {
 
 
     t.reset();
-    std::cout << "instantiating..." << std::endl;
+    std::cout << "Instantiating..." << std::endl;
     prost::parser::Instantiator instantiator(rddlTask);
     instantiator.instantiate();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "simplifying..." << std::endl;
+    std::cout << "Simplifying..." << std::endl;
     prost::parser::Simplifier simplifier(rddlTask);
     simplifier.simplify(generateFDRActionFluents);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "determinizing..." << std::endl;
-    prost::parser::Determinizer determinizer(rddlTask);
+    std::cout << "Determinizing..." << std::endl;
+    prost::parser::determinize::MostLikelyDeterminizer determinizer(rddlTask);
     determinizer.determinize();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "generating hash keys..." << std::endl;
-    prost::parser::HashKeyGenerator hashKeyGen(rddlTask);
+    std::cout << "Generating hash keys..." << std::endl;
+    prost::parser::hashing::HashKeyGenerator hashKeyGen(rddlTask);
     hashKeyGen.generateHashKeys();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "precomputing evaluatable..." << std::endl;
+    std::cout << "Precomputing evaluatables..." << std::endl;
     prost::parser::Precomputer precomputer(rddlTask);
     precomputer.precompute();
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
-    std::cout << "analyzing task..." << std::endl;
+    std::cout << "Analyzing task..." << std::endl;
     prost::parser::TaskAnalyzer analyzer(rddlTask);
     analyzer.analyzeTask(numStates, numSimulations, timeout);
     std::cout << "...finished (" << t << ")." << std::endl;
 
     t.reset();
     std::ofstream resultFile;
-    std::cout << "writing output for instance " << rddlTask->name << " to "
+    std::cout << "Writing output for instance " << rddlTask->name << " to "
               << outFile << " ..." << std::endl;
     resultFile.open(outFile.c_str());
     rddlTask->print(resultFile);

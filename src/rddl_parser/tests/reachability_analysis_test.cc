@@ -35,7 +35,6 @@ bool allValuesAreReachable(vector<set<double>> const& domains,
 
 TEST_CASE("Reachability analysis where every fact is directly reachable") {
     RDDLTask* task = new RDDLTask();
-
     vector<Parameter*> params;
     string typeName = "fdr";
     Type* t = task->addType(typeName);
@@ -58,15 +57,15 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
 
 
     auto c0 = new ConditionalProbabilityFunction(s0, nullptr);
-    c0->setDomain(2);
+    c0->setDomainSize(3);
     auto c1 = new ConditionalProbabilityFunction(s1, nullptr);
-    c1->setDomain(1);
+    c1->setDomainSize(2);
     auto c2 = new ConditionalProbabilityFunction(s2, nullptr);
-    c2->setDomain(1);
+    c2->setDomainSize(2);
     auto c3 = new ConditionalProbabilityFunction(s3, nullptr);
-    c3->setDomain(1);
+    c3->setDomainSize(2);
     auto c4 = new ConditionalProbabilityFunction(s4, nullptr);
-    c4->setDomain(1);
+    c4->setDomainSize(2);
 
     auto a0 = new ActionFluent(*pVar, params, 0);
     auto a1 = new ActionFluent(*pVar, params, 1);

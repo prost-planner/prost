@@ -498,23 +498,24 @@ inline bool ProbabilisticSearchEngine::BDDIncludes(
                Calculation of Final Reward and Action
 ******************************************************************/
 
-void SearchEngine::calcOptimalFinalReward(State const& current, double& reward) const {
-    int numCandidates = candidatesForOptimalFinalAction.size();
-    if (numCandidates == 1) {
+void SearchEngine::calcOptimalFinalReward(
+    State const& current, double& reward) const {
+    if (candidatesForOptimalFinalAction.size() == 1) {
         // Since there is only one candidate action, it must always be
         // applicable and optimal
         return calcReward(current, candidatesForOptimalFinalAction[0], reward);
     }
 
     vector<int> applicableActions = getApplicableActions(current);
-    if (numCandidates == 0) {
+    if (candidatesForOptimalFinalAction.empty()) {
         // The first applicable action is guaranteed to be optimal
         for (size_t index = 0; index < numberOfActions; ++index) {
             if (applicableActions[index] == index) {
                 return calcReward(current, index, reward);
             }
         }
-        assert(false);
+        SystemUtils::abort(
+            "Error: no applicable action to calculate final reward");
     }
 
     // Check all applicable candidates and return the best
@@ -529,15 +530,14 @@ void SearchEngine::calcOptimalFinalReward(State const& current, double& reward) 
 }
 
 int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
-    int numCandidates = candidatesForOptimalFinalAction.size();
-    if (numCandidates == 1) {
+    if (candidatesForOptimalFinalAction.size() == 1) {
         // Since there is only one candidate action, it must always be
         // applicable and optimal
         return candidatesForOptimalFinalAction[0];
     }
 
     vector<int> applicableActions = getApplicableActions(current);
-    if (numCandidates == 0) {
+    if (candidatesForOptimalFinalAction.empty()) {
         // The first applicable action is guaranteed to be optimal
         for (size_t index = 0; index < numberOfActions; ++index) {
             if (applicableActions[index] == index) {
@@ -554,7 +554,7 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
     for (int index : candidatesForOptimalFinalAction) {
         if (applicableActions[index] == index) {
             calcReward(current, index, tmpReward);
-            if (MathUtils::doubleIsGreater(tmpReward, reward)) {
+            if (tmpReward > reward) {
                 reward = tmpReward;
                 result = index;
             }

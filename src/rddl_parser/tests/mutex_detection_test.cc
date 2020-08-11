@@ -9,10 +9,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace fdr {
-namespace tests {
+namespace prost::parser::fdr {
 TEST_CASE("Mutex detection with binary variables") {
     auto task = new RDDLTask();
     task->numberOfConcurrentActions = 1;
@@ -20,7 +17,7 @@ TEST_CASE("Mutex detection with binary variables") {
     auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
     auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
 
-    SUBCASE("Mutex detection with a single action variables") {
+    SUBCASE("Mutex detection with a single action variable") {
         // If there is only one action variable, that action variable is not
         // mutex with another action variable
         task->actionFluents = {a0};
@@ -118,7 +115,4 @@ TEST_CASE("Mutex detection with FDR variables") {
     CHECK(!mutexInfo[a0].isMutexWithSomeVar());
     CHECK(!mutexInfo[a1].isMutexWithSomeVar());
 }
-} // namespace tests
-} // namespace fdr
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::fdr

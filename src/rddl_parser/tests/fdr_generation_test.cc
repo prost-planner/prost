@@ -7,10 +7,7 @@
 
 using namespace std;
 
-namespace prost {
-namespace parser {
-namespace fdr {
-namespace tests {
+namespace prost::parser::fdr {
 TEST_CASE("Greedy Partitioning and FDR generation") {
     auto task = new RDDLTask();
     auto a0 = new ActionFluent("a0", task->getType("bool"), 0);
@@ -109,7 +106,4 @@ TEST_CASE("Greedy Partitioning and FDR generation") {
         CHECK(fdrVars[1]->domainSize() == 3);
     }
 }
-} // namespace tests
-} // namespace fdr
-} // namespace parser
-} // namespace prost
+} // namespace prost::parser::fdr

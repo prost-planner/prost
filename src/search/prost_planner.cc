@@ -225,7 +225,7 @@ vector<string> ProstPlanner::plan() {
 
     // PROST's communication with the environment works with strings, so we
     // collect the names of all true action fluents of the chosen action
-    return executedAction.getScheduledActionFluents();
+    return executedAction.getScheduledActionFluentNames();
 }
 
 void ProstPlanner::monitorRAMUsage() {

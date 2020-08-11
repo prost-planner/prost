@@ -382,8 +382,7 @@ bool IDS::moreIterations(int const& stepsToGo,
 
     // 2. Check if the result is already significant (if noop is applicable, we
     // check if there is an action that yields a higher reward than noop)
-    if (terminateWithReasonableAction &&
-        actionStates[0].scheduledActionFluents.empty() &&
+    if (terminateWithReasonableAction && actionStates[0].isNoop &&
         (actionsToExpand[0] == 0)) {
         for (size_t index = 1; index < qValues.size(); ++index) {
             if ((actionsToExpand[index] == index) &&

@@ -64,6 +64,8 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     if (finalReward == "CONSTANT") {
         SearchEngine::candidatesForOptimalFinalAction.resize(1);
         desc >> SearchEngine::candidatesForOptimalFinalAction[0];
+        SearchEngine::goalTestActionIndex =
+            SearchEngine::candidatesForOptimalFinalAction[0];
     } else if (finalReward == "CANDIDATE_SET") {
         int sizeOfCandidateSet;
         desc >> sizeOfCandidateSet;
@@ -77,9 +79,7 @@ void Parser::parseTask(map<string, int>& stateVariableIndices,
     }
 
     desc >> SearchEngine::rewardLockDetected;
-    if (SearchEngine::rewardLockDetected) {
-        SearchEngine::goalTestActionIndex = 0;
-    } else {
+    if (!SearchEngine::rewardLockDetected) {
         SearchEngine::goalTestActionIndex = -1;
     }
 
@@ -216,6 +216,10 @@ void Parser::parseActionFluent(stringstream& desc) const {
     desc.ignore(1, '\n');
     getline(desc, name, '\n');
 
+    bool isFDR;
+    desc >> isFDR;
+    cout << "af " << name << " is fdr: " << isFDR << endl;
+
     int numberOfValues;
     desc >> numberOfValues;
 
@@ -227,11 +231,13 @@ void Parser::parseActionFluent(stringstream& desc) const {
         desc >> val;
         desc >> value;
         assert(val == j);
+        // We replaced blank spaces with ~ in the rddl-parser and change it back
+        // here to be able to communicate with rddlsim
         replace(value.begin(), value.end(), '~', ' ');
         values.push_back(value);
     }
     SearchEngine::actionFluents.push_back(
-        new ActionFluent(index, name, values));
+        new ActionFluent(index, name, isFDR, values));
 }
 
 void Parser::parseCPF(stringstream& desc, vector<string>& deterministicFormulas,
@@ -468,13 +474,8 @@ void Parser::parseActionState(stringstream& desc) const {
     desc >> index;
 
     vector<int> values(SearchEngine::actionFluents.size());
-    vector<ActionFluent*> scheduledActionFluents;
-
     for (size_t j = 0; j < SearchEngine::actionFluents.size(); ++j) {
         desc >> values[j];
-        if (values[j] == 1) {
-            scheduledActionFluents.push_back(SearchEngine::actionFluents[j]);
-        }
     }
 
     int numberOfRelevantPreconditions;
@@ -490,7 +491,7 @@ void Parser::parseActionState(stringstream& desc) const {
     }
 
     SearchEngine::actionStates.push_back(ActionState(
-        index, values, scheduledActionFluents, relevantPreconditions));
+        index, values, relevantPreconditions));
 }
 
 void Parser::parseHashKeys(stringstream& desc) const {

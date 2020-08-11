@@ -76,7 +76,8 @@ ActionFluent::ActionFluent(ParametrizedVariable const& source,
 }
 
 ActionFluent::ActionFluent(std::string name, Type* _valueType, int _index)
-    : ParametrizedVariable(name, {}, VariableType::ACTION_FLUENT, _valueType, 0.0),
+    : ParametrizedVariable(name, {}, VariableType::ACTION_FLUENT, _valueType,
+                           0.0),
       index(_index),
       isFDR(_valueType->name != "bool") {
     // To support action fluent with a different initial value than 0, we have
@@ -98,8 +99,6 @@ bool Type::isSubtypeOf(Type* const& other) const {
 #include "logical_expressions_includes/calculate_domain.cc"
 #include "logical_expressions_includes/calculate_domain_as_interval.cc"
 #include "logical_expressions_includes/collect_initial_info.cc"
-#include "logical_expressions_includes/determine_bounds.cc"
-#include "logical_expressions_includes/determinization.cc"
 #include "logical_expressions_includes/evaluate.cc"
 #include "logical_expressions_includes/evaluate_to_kleene.cc"
 #include "logical_expressions_includes/evaluate_to_pd.cc"

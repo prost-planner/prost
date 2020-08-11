@@ -400,17 +400,17 @@ void RDDLTask::print(ostream& out) {
     out << uniqueNonTerminalStatesWithUniqueAction << endl;
 
     out << endl << endl << "#####ACTION FLUENTS#####" << endl;
-    for (ActionFluent* af : actionFluents) {
+    for (ActionFluent const* af : actionFluents) {
         out << "## index" << endl;
         out << af->index << endl;
         out << "## name" << endl;
         out << af->fullName << endl;
+        out << "## 1 if this is an FDR action fluent" << endl;
+        out << af->isFDR << endl;
         out << "## number of values" << endl;
-        vector<Object*>& values = af->valueType->objects;
-        int numValues = values.size();
-        out << numValues << endl;
+        out << af->valueType->objects.size() << endl;
         out << "## values" << endl;
-        for (Object* value : values) {
+        for (Object const* value : af->valueType->objects) {
             out << value->value << " ";
             if (value->name.find("none-of-those") == 0) {
                 // strip the index of the none-of-those objects, they are no
