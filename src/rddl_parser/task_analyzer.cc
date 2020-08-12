@@ -146,21 +146,23 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
     // need upper and lower bounds, but we use the same function here). If the
     // cachingType is vector, we can use the non-approximated values from the
     // precomputation further below.
-    double minVal = numeric_limits<double>::max();
-    double maxVal = -numeric_limits<double>::max();
+    //double minVal = numeric_limits<double>::max();
+    //double maxVal = -numeric_limits<double>::max();
     if (task->rewardCPF->cachingType == "VECTOR") {
         // The reward has been precomputed, so we use the precomputed values
         vector<double> const& values = task->rewardCPF->precomputedResults;
-        minVal = *min_element(values.begin(), values.end());
-        maxVal = *max_element(values.begin(), values.end());
+        task->rewardCPF->minValue = *min_element(values.begin(), values.end());
+        task->rewardCPF->maxValue = *max_element(values.begin(), values.end());
     } else {
+        task->rewardCPF->minValue = numeric_limits<double>::max();
+        task->rewardCPF->maxValue = -numeric_limits<double>::max();
         // The reward  is not cached in vectors, so it has not been precomputed.
         // We therefore approximate the minimum and maximum by using interval
         // arithmetic.
         vector<set<double>> domains(task->CPFs.size());
-        for (size_t index = 0; index < task->CPFs.size(); ++index) {
-            vector<int> const& domain = task->CPFs[index]->domain;
-            domains[index].insert(domain.begin(), domain.end());
+        for (size_t i = 0; i < task->CPFs.size(); ++i) {
+            vector<int> const& domain = task->CPFs[i]->domain;
+            domains[i].insert(domain.begin(), domain.end());
         }
 
         for (ActionState const& action : task->actionStates) {
@@ -168,33 +170,31 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
             double maxRew = -numeric_limits<double>::max();
             task->rewardCPF->formula->calculateDomainAsInterval(
                 domains, action, minRew, maxRew);
-            minVal = min(minVal, minRew);
-            maxVal = max(maxVal, maxRew);
+            task->rewardCPF->minValue = min(task->rewardCPF->minValue, minRew);
+            task->rewardCPF->maxValue = max(task->rewardCPF->maxValue, maxRew);
         }
     }
-    task->rewardCPF->domain.insert(minVal);
-    task->rewardCPF->domain.insert(maxVal);
 }
 
 void TaskAnalyzer::performRandomWalks(int numSimulations, double timeout) {
     utils::Timer t;
-    State currentState(task->CPFs);
+    State current(task->CPFs);
     int remainingSteps = task->horizon;
 
     for (int simCounter = 0; simCounter < numSimulations;) {
-        State nextState(task->CPFs.size());
+        State next(task->CPFs.size());
         double reward = 0.0;
-        analyzeStateAndApplyAction(currentState, nextState, reward);
+        analyzeStateAndApplyAction(current, next, reward);
 
-        encounteredStates.insert(currentState);
+        encounteredStates.insert(current);
         ++task->numberOfEncounteredStates;
 
         --remainingSteps;
 
         if (remainingSteps > 0) {
-            currentState = State(nextState);
+            current = State(next);
         } else {
-            currentState = State(task->CPFs);
+            current = State(task->CPFs);
             remainingSteps = task->horizon;
             ++simCounter;
         }
@@ -241,7 +241,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
 
     assert(!applicableActions.empty());
 
-    // Check if this is a state with only one reasnoable applicable action
+    // Check if this is a state with only one reasonable applicable action
     if (applicableActions.size() == 1) {
         ++task->nonTerminalStatesWithUniqueAction;
         if (encounteredStates.find(current) == encounteredStates.end()) {
@@ -249,8 +249,6 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
         }
     }
 
-    // TODO: We could also simply sample the successor state that was calculated
-    // in the reasonable action check above
     ActionState& randomAction =
         task->actionStates[applicableActions[std::rand() %
                                              applicableActions.size()]];
@@ -315,10 +313,10 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
 
 inline bool TaskAnalyzer::isARewardLock(State const& current,
                                         double const& reward) const {
-    if (utils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+    if (utils::doubleIsEqual(task->rewardCPF->minValue, reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if (utils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (utils::doubleIsEqual(task->rewardCPF->maxValue, reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -338,7 +336,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->getMinVal())) {
+        !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->minValue)) {
         return false;
     }
 
@@ -358,7 +356,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
             !utils::doubleIsEqual(*reward.begin(),
-                                  task->rewardCPF->getMinVal())) {
+                                  task->rewardCPF->minValue)) {
             return false;
         }
 
@@ -390,7 +388,7 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !utils::doubleIsEqual(task->rewardCPF->getMaxVal(), *reward.begin())) {
+        !utils::doubleIsEqual(task->rewardCPF->maxValue, *reward.begin())) {
         return false;
     }
 

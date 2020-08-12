@@ -38,7 +38,7 @@ void Simplifier::simplify(bool generateFDRActionFluents, bool output) {
             cout << "    Compute inapplicable action fluents (" << iteration
                  << ")..." << endl;
         }
-        continueSimplification = computeInapplicableActionFluents(replacements);
+        continueSimplification = filterInapplicableActionFluents(replacements);
         if (output) {
             cout << "    ...finished (" << t() << ")" << endl;
         }
@@ -146,7 +146,7 @@ void Simplifier::simplifyPreconditions(Simplifications& replacements) {
             simplifyPrecondition(precond, replacements);
         sPreconds.insert(sPreconds.end(), sPrecond.begin(), sPrecond.end());
     }
-    task->preconds = move(sPreconds);
+    swap(task->preconds, sPreconds);
 }
 
 vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
@@ -158,7 +158,7 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
         for (LogicalExpression* expr : conj->exprs) {
             ActionPrecondition* sPrec = new ActionPrecondition(expr);
             sPrec->initialize();
-            result.push_back(move(sPrec));
+            result.push_back(sPrec);
         }
     } else if (auto nc = dynamic_cast<NumericConstant*>(simplified)) {
         // This precond is either never satisfied or always
@@ -168,12 +168,12 @@ vector<ActionPrecondition*> Simplifier::simplifyPrecondition(
     } else {
         ActionPrecondition* sPrec = new ActionPrecondition(simplified);
         sPrec->initialize();
-        result.push_back(move(sPrec));
+        result.push_back(sPrec);
     }
     return result;
 }
 
-bool Simplifier::computeInapplicableActionFluents(
+bool Simplifier::filterInapplicableActionFluents(
     Simplifications& replacements) {
     RDDLTaskCSP csp(task);
     csp.addPreconditions();
@@ -181,7 +181,6 @@ bool Simplifier::computeInapplicableActionFluents(
     vector<bool> fluentIsApplicable(task->actionFluents.size(), true);
     for (ActionFluent* af : task->actionFluents) {
         if (af->isFDR) {
-            // TODO: We should also minimize the domains of FDR action variables
             continue;
         }
 
@@ -196,13 +195,6 @@ bool Simplifier::computeInapplicableActionFluents(
 }
 
 bool Simplifier::computeRelevantActionFluents(Simplifications& replacements) {
-    // TODO: If an action fluent is only used in preconditions, it has no direct
-    //  influence on states and rewards, but could be necessary to apply other
-    //  action fluents. It might be possible to compile the action fluent into
-    //  other action fluents in this case. (e.g., if a1 isn't part of any CPF
-    //  but a2 is, and there is an SAC a2 => a1, we can compile a1 and a2 into a
-    //  new action fluent a' where a'=1 means a1=1 and a2=1, and a'=0 means
-    //  a1=0 and a2=0 (or a1=1 and a2=0, this is irrelevant in this example).
     vector<bool> fluentIsUsed(task->actionFluents.size(), false);
     for (ActionPrecondition* precond : task->preconds) {
         for (ActionFluent* af : precond->dependentActionFluents) {
@@ -316,16 +308,7 @@ bool Simplifier::removeConstantStateFluents(vector<set<double>> const& domains,
 }
 
 void Simplifier::determineRelevantPreconditions() {
-    // Remove static preconditions
-    auto keep = [](ActionPrecondition* precond) {
-        return precond->containsStateFluent();
-    };
-    auto partIt =
-        stable_partition(task->preconds.begin(), task->preconds.end(), keep);
-    task->preconds.erase(partIt, task->preconds.end());
-    for (size_t i = 0; i < task->preconds.size(); ++i) {
-        task->preconds[i]->index = i;
-    }
+    removeStaticPreconditions();
 
     // Determine relevant preconditions for each action
     RDDLTaskCSP csp(task);
@@ -360,6 +343,18 @@ void Simplifier::determineRelevantPreconditions() {
         }
     }
     task->preconds = move(finalPreconds);
+}
+
+void Simplifier::removeStaticPreconditions() {
+    auto keep = [](ActionPrecondition* precond) {
+      return precond->containsStateFluent();
+    };
+    auto partIt =
+        stable_partition(task->preconds.begin(), task->preconds.end(), keep);
+    task->preconds.erase(partIt, task->preconds.end());
+    for (size_t i = 0; i < task->preconds.size(); ++i) {
+        task->preconds[i]->index = i;
+    }
 }
 
 bool Simplifier::filterActionFluents(vector<bool> const& filter,

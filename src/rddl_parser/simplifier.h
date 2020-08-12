@@ -1,11 +1,6 @@
 #ifndef PARSER_SIMPLIFIER_H
 #define PARSER_SIMPLIFIER_H
 
-#include <map>
-#include <memory>
-#include <set>
-#include <vector>
-
 /*
   The Simplifier class takes a fully instantiated RDDLTask as input (i.e., all
   state and action fluents, CPFs, action preconditions and the reward function
@@ -13,8 +8,9 @@
   performs the following steps until nothing changes anymore:
 
   1. Simplify all CPFs, preconditions and the reward function by replacing all
-     state and action fluents that are shown to simplify to their initial value
-     in any of the methods the fixed point iteration with their initial value.
+     state and action fluents with their initial value iff they are shown to
+     simplify to their initial value in any of the methods of the fixed point
+     iteration.
   2. Check if a precondition forbids the application of an action fluent
      trivially, i.e. if it is of the form "not a" for some action fluent a.
   3. Determine which action fluents are relevant, i.e. if they occur at least
@@ -34,6 +30,11 @@
   constant state fluents and their associated CPFs, action fluents and
   irrelevant preconditions have been removed.
 */
+
+#include <map>
+#include <memory>
+#include <set>
+#include <vector>
 
 namespace prost::parser {
 class ActionState;
@@ -82,7 +83,7 @@ private:
       Check if a precondition forbids the application of an action fluent
       trivially, i.e. if it is of the form "not a" for some action fluent a
     */
-    bool computeInapplicableActionFluents(Simplifications& replacements);
+    bool filterInapplicableActionFluents(Simplifications& replacements);
 
     /*
       Determine which action fluents are relevant, i.e. those that occur in some
@@ -125,6 +126,12 @@ private:
       these preconditions with the actions they can possibly influence
     */
     void determineRelevantPreconditions();
+
+    /*
+      Remove all preconditions that are static (i.e., that do not depend on at
+      least one state variable)
+    */
+    void removeStaticPreconditions();
 
     /*
       Remove all action fluents af where filter[af->index] is false, assign new

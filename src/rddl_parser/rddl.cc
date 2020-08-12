@@ -546,9 +546,9 @@ void RDDLTask::print(ostream& out) {
     rewardCPF->formula->print(out);
     out << endl;
     out << "## min" << endl;
-    out << *rewardCPF->domain.begin() << endl;
+    out << rewardCPF->minValue << endl;
     out << "## max" << endl;
-    out << *rewardCPF->domain.rbegin() << endl;
+    out << rewardCPF->maxValue << endl;
     out << "## independent from actions" << endl;
     out << rewardCPF->dependentActionFluents.empty() << endl;
     out << "## hash index" << endl;

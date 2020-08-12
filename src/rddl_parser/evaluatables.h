@@ -90,17 +90,8 @@ struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula)
         : Evaluatable("Reward", _formula) {}
 
-    double const& getMinVal() const {
-        assert(!domain.empty());
-        return *domain.begin();
-    }
-
-    double const& getMaxVal() const {
-        assert(!domain.empty());
-        return *domain.rbegin();
-    }
-
-    std::set<double> domain;
+    double minValue;
+    double maxValue;
 };
 
 struct ConditionalProbabilityFunction : public Evaluatable {
