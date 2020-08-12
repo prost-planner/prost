@@ -146,8 +146,6 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
     // need upper and lower bounds, but we use the same function here). If the
     // cachingType is vector, we can use the non-approximated values from the
     // precomputation further below.
-    //double minVal = numeric_limits<double>::max();
-    //double maxVal = -numeric_limits<double>::max();
     if (task->rewardCPF->cachingType == "VECTOR") {
         // The reward has been precomputed, so we use the precomputed values
         vector<double> const& values = task->rewardCPF->precomputedResults;
