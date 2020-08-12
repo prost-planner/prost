@@ -17,8 +17,7 @@ public:
     virtual std::vector<std::set<double>> determineReachableFacts() = 0;
 
 protected:
-    ReachabilityAnalyser(RDDLTask* _task)
-        : task(_task) {}
+    ReachabilityAnalyser(RDDLTask* _task) : task(_task) {}
 
     RDDLTask* task;
 };

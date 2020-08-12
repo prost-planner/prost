@@ -249,8 +249,7 @@ LogicalExpression* Addition::simplify(Simplifications& replace) {
         return new NumericConstant(0.0);
     } else if (newExprs.empty() && !utils::doubleIsEqual(constSum, 0.0)) {
         return new NumericConstant(constSum);
-    } else if (newExprs.size() == 1 &&
-               utils::doubleIsEqual(constSum, 0.0)) {
+    } else if (newExprs.size() == 1 && utils::doubleIsEqual(constSum, 0.0)) {
         return newExprs[0];
     }
 

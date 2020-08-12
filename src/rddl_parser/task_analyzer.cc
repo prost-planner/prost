@@ -14,8 +14,8 @@
 using namespace std;
 
 namespace prost::parser {
-void TaskAnalyzer::analyzeTask(
-    int numStates, int numSimulations, double timeout, bool output) {
+void TaskAnalyzer::analyzeTask(int numStates, int numSimulations,
+                               double timeout, bool output) {
     utils::Timer t;
     if (output) {
         cout << "    Determining task properties..." << endl;
@@ -62,10 +62,10 @@ void TaskAnalyzer::determineTaskProperties() {
         // precondition). If not, the first applicable action gives the final
         // reward.
         auto noPreconds = [](ActionState const& action) {
-          return action.relevantSACs.empty();
+            return action.relevantSACs.empty();
         };
-        auto noPrecondIt = std::find_if(
-            task->actionStates.begin(), task->actionStates.end(), noPreconds);
+        auto noPrecondIt = std::find_if(task->actionStates.begin(),
+                                        task->actionStates.end(), noPreconds);
         if (noPrecondIt != task->actionStates.end()) {
             task->candidatesForOptimalFinalAction.push_back(noPrecondIt->index);
         }
@@ -103,7 +103,7 @@ bool actionDominates(ActionState const& action1, ActionState const& action2,
     csp.pop();
     return result;
 }
-}
+} // namespace
 
 vector<int> TaskAnalyzer::determineDominantActions() const {
     RDDLTaskCSP csp(task);
@@ -120,7 +120,7 @@ vector<int> TaskAnalyzer::determineDominantActions() const {
     for (ActionState const& action : task->actionStates) {
         // Add action if it is not dominated by a candidate
         auto dominatesAction = [&](int other) {
-          return actionDominates(task->actionStates[other], action, csp);
+            return actionDominates(task->actionStates[other], action, csp);
         };
         if (any_of(candidates.begin(), candidates.end(), dominatesAction)) {
             continue;
@@ -130,8 +130,7 @@ vector<int> TaskAnalyzer::determineDominantActions() const {
         set<int> remainingCandidates;
         remainingCandidates.insert(action.index);
         for (int candidateIndex : candidates) {
-            ActionState const& candidate =
-                task->actionStates[candidateIndex];
+            ActionState const& candidate = task->actionStates[candidateIndex];
             if (!actionDominates(action, candidate, csp)) {
                 remainingCandidates.insert(candidateIndex);
             }
@@ -166,8 +165,8 @@ void TaskAnalyzer::calculateMinAndMaxReward() const {
         for (ActionState const& action : task->actionStates) {
             double minRew = numeric_limits<double>::max();
             double maxRew = -numeric_limits<double>::max();
-            task->rewardCPF->formula->calculateDomainAsInterval(
-                domains, action, minRew, maxRew);
+            task->rewardCPF->formula->calculateDomainAsInterval(domains, action,
+                                                                minRew, maxRew);
             task->rewardCPF->minValue = min(task->rewardCPF->minValue, minRew);
             task->rewardCPF->maxValue = max(task->rewardCPF->maxValue, maxRew);
         }
@@ -256,8 +255,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
     // Check if this is a reward lock
-    if ((finalActionIndex >= 0) &&
-        !task->rewardLockDetected &&
+    if ((finalActionIndex >= 0) && !task->rewardLockDetected &&
         (encounteredStates.find(current) == encounteredStates.end()) &&
         isARewardLock(current, reward)) {
         task->rewardLockDetected = true;
@@ -353,8 +351,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !utils::doubleIsEqual(*reward.begin(),
-                                  task->rewardCPF->minValue)) {
+            !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->minValue)) {
             return false;
         }
 

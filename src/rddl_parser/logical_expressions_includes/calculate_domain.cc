@@ -46,8 +46,7 @@ void Conjunction::calculateDomain(Domains const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
         exprs[i]->calculateDomain(domains, action, res);
-        if ((res.size() == 1) &&
-            utils::doubleIsEqual(*res.begin(), 0.0)) {
+        if ((res.size() == 1) && utils::doubleIsEqual(*res.begin(), 0.0)) {
             // This element and the whole conjunction must be false
             return;
         }
@@ -75,8 +74,7 @@ void Disjunction::calculateDomain(Domains const& domains,
     for (unsigned int i = 0; i < exprs.size(); ++i) {
         res.clear();
         exprs[i]->calculateDomain(domains, action, res);
-        if ((res.size() == 1) &&
-            !utils::doubleIsEqual(*res.begin(), 0.0)) {
+        if ((res.size() == 1) && !utils::doubleIsEqual(*res.begin(), 0.0)) {
             // This element and the whole conjunction must be true
             res.clear();
             res.insert(1.0);
@@ -185,8 +183,7 @@ void GreaterEqualsExpression::calculateDomain(Domains const& domains,
         res.insert(1.0);
     }
 
-    if (!utils::doubleIsGreaterOrEqual(
-        *lhs.begin(), *rhs.rbegin())) {
+    if (!utils::doubleIsGreaterOrEqual(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -207,8 +204,7 @@ void LowerEqualsExpression::calculateDomain(Domains const& domains,
         res.insert(1.0);
     }
 
-    if (!utils::doubleIsSmallerOrEqual(
-        *lhs.begin(), *rhs.rbegin())) {
+    if (!utils::doubleIsSmallerOrEqual(*lhs.begin(), *rhs.rbegin())) {
         res.insert(0.0);
     }
 }
@@ -289,7 +285,7 @@ void Division::calculateDomain(Domains const& domains,
     for (set<double>::iterator it = lhs.begin(); it != lhs.end(); ++it) {
         for (set<double>::iterator it2 = rhs.begin(); it2 != rhs.end(); ++it2) {
             // Avoid division by 0
-            if (utils::doubleIsEqual(*it2,0.0)) {
+            if (utils::doubleIsEqual(*it2, 0.0)) {
                 continue;
             }
             res.insert(*it / *it2);

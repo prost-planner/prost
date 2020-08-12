@@ -9,14 +9,13 @@ using namespace std;
 
 namespace prost::parser {
 MinkowskiReachabilityAnalyser::MinkowskiReachabilityAnalyser(RDDLTask* _task)
-    : ReachabilityAnalyser(_task),
-      step(0) {
+    : ReachabilityAnalyser(_task), step(0) {
     prepareActionEquivalence();
 }
 
 void MinkowskiReachabilityAnalyser::prepareActionEquivalence() {
     for (ConditionalProbabilityFunction* cpf : task->CPFs) {
-        auto compFn = [&] (int i, int j) {
+        auto compFn = [&](int i, int j) {
             ActionState const& lhs = task->actionStates[i];
             ActionState const& rhs = task->actionStates[j];
             for (ActionFluent* af : cpf->dependentActionFluents) {
@@ -36,8 +35,8 @@ void MinkowskiReachabilityAnalyser::prepareActionEquivalence() {
                 representatives.insert(action.index);
             }
         }
-        actionIndicesByCPF.emplace_back(
-            representatives.begin(), representatives.end());
+        actionIndicesByCPF.emplace_back(representatives.begin(),
+                                        representatives.end());
     }
 }
 
@@ -87,8 +86,8 @@ set<double> MinkowskiReachabilityAnalyser::applyRepresentativeActions(
     set<double> result;
     for (int actionIndex : actionIndicesByCPF[cpf->head->index]) {
         set<double> reachedByAction;
-        cpf->formula->calculateDomain(
-            values, task->actionStates[actionIndex], reachedByAction);
+        cpf->formula->calculateDomain(values, task->actionStates[actionIndex],
+                                      reachedByAction);
         assert(!reachedByAction.empty());
         result.insert(reachedByAction.begin(), reachedByAction.end());
     }

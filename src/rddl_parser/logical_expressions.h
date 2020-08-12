@@ -400,10 +400,10 @@ public:
         return new Conjunction(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -436,10 +436,10 @@ public:
         return new Disjunction(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -473,10 +473,10 @@ public:
         return new EqualsExpression(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -510,10 +510,10 @@ public:
         return new GreaterExpression(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -547,10 +547,10 @@ public:
         return new LowerExpression(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -580,14 +580,15 @@ public:
     GreaterEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    GreaterEqualsExpression* create(std::vector<LogicalExpression*> _exprs) override {
+    GreaterEqualsExpression* create(
+        std::vector<LogicalExpression*> _exprs) override {
         return new GreaterEqualsExpression(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -617,14 +618,15 @@ public:
     LowerEqualsExpression(std::vector<LogicalExpression*>& _exprs)
         : Connective(_exprs) {}
 
-    LowerEqualsExpression* create(std::vector<LogicalExpression*> _exprs) override {
+    LowerEqualsExpression* create(
+        std::vector<LogicalExpression*> _exprs) override {
         return new LowerEqualsExpression(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -657,10 +659,10 @@ public:
         return new Addition(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -693,10 +695,10 @@ public:
         return new Subtraction(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -730,10 +732,10 @@ public:
         return new Multiplication(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -766,10 +768,10 @@ public:
         return new Division(_exprs);
     }
 
-    LogicalExpression* replaceQuantifier(
-        Instantiations& replace, Instantiator* inst) override;
-    LogicalExpression* instantiate(
-        RDDLTask* task, Instantiations& replace) override;
+    LogicalExpression* replaceQuantifier(Instantiations& replace,
+                                         Instantiator* inst) override;
+    LogicalExpression* instantiate(RDDLTask* task,
+                                   Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
     void collectInitialInfo(bool& isProbabilistic,
@@ -1036,8 +1038,8 @@ public:
 private:
     // To encode a MultiConditionChecker as a CSP formula, we nest if-then-else
     // (z3::ite) expressions, which are built by recursively calling this
-    ::z3::expr buildZ3Formula(
-        RDDLTaskCSP& csp, int actionIndex, int index) const;
+    ::z3::expr buildZ3Formula(RDDLTaskCSP& csp, int actionIndex,
+                              int index) const;
 };
 } // namespace prost::parser
 

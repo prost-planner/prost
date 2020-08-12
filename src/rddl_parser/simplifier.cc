@@ -126,8 +126,7 @@ void Simplifier::simplifyCPFs(Simplifications& replacements) {
             // Check if this CPF now also simplifies to its initial value
             auto nc = dynamic_cast<NumericConstant*>(cpf->formula);
             double initialValue = cpf->head->initialValue;
-            if (nc &&
-                utils::doubleIsEqual(initialValue, nc->value)) {
+            if (nc && utils::doubleIsEqual(initialValue, nc->value)) {
                 assert(replacements.find(cpf->head) == replacements.end());
                 replacements[cpf->head] = nc;
                 task->CPFs.erase(it);
@@ -347,7 +346,7 @@ void Simplifier::determineRelevantPreconditions() {
 
 void Simplifier::removeStaticPreconditions() {
     auto keep = [](ActionPrecondition* precond) {
-      return precond->containsStateFluent();
+        return precond->containsStateFluent();
     };
     auto partIt =
         stable_partition(task->preconds.begin(), task->preconds.end(), keep);

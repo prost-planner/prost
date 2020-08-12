@@ -128,19 +128,19 @@ void Instantiator::instantiatePreconds() {
             if (nc) {
                 value = static_cast<int>(nc->value);
             }
-        } else if(gee && gee->exprs.size() == 2) {
-            add = dynamic_cast<Addition *>(gee->exprs[1]);
+        } else if (gee && gee->exprs.size() == 2) {
+            add = dynamic_cast<Addition*>(gee->exprs[1]);
             auto nc = dynamic_cast<NumericConstant*>(gee->exprs[0]);
             if (nc) {
                 value = static_cast<int>(nc->value);
             }
-        } else if(le && le->exprs.size() == 2) {
+        } else if (le && le->exprs.size() == 2) {
             add = dynamic_cast<Addition*>(le->exprs[0]);
             auto nc = dynamic_cast<NumericConstant*>(le->exprs[1]);
             if (nc) {
                 value = static_cast<int>(nc->value) + 1;
             }
-        } else if(ge && ge->exprs.size() == 2) {
+        } else if (ge && ge->exprs.size() == 2) {
             add = dynamic_cast<Addition*>(ge->exprs[1]);
             auto nc = dynamic_cast<NumericConstant*>(ge->exprs[0]);
             if (nc) {

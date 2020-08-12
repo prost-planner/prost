@@ -33,8 +33,8 @@ class TaskAnalyzer {
 public:
     explicit TaskAnalyzer(RDDLTask* _task) : task(_task) {}
 
-    void analyzeTask(
-        int numStates, int numSimulations, double timeout, bool output = true);
+    void analyzeTask(int numStates, int numSimulations, double timeout,
+                     bool output = true);
 
 protected:
     RDDLTask* task;

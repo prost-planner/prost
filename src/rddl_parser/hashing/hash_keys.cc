@@ -75,8 +75,8 @@ void HashKeyGenerator::prepareHashKeysForKleeneStates() {
     long hashKeyBase = 1;
     for (ConditionalProbabilityFunction const* cpf : task->CPFs) {
         task->kleeneStateHashKeyBases.push_back(hashKeyBase);
-        if (!utils::multiplyWithOverflowCheck(
-            hashKeyBase, cpf->kleeneDomainSize)) {
+        if (!utils::multiplyWithOverflowCheck(hashKeyBase,
+                                              cpf->kleeneDomainSize)) {
             task->kleeneStateHashKeyBases.clear();
             return;
         }
@@ -127,8 +127,7 @@ long HashKeyGenerator::getActionHashKey(Evaluatable* eval, int actionIndex) {
     for (int i = 0; i < actionIndex; ++i) {
         ActionState const& otherAction = task->actionStates[i];
         if (all_of(eval->dependentActionFluents.begin(),
-                   eval->dependentActionFluents.end(),
-                   [&](ActionFluent* af) {
+                   eval->dependentActionFluents.end(), [&](ActionFluent* af) {
                        return action[af->index] == otherAction[af->index];
                    })) {
             return eval->actionHashKeyMap[i];
@@ -146,8 +145,8 @@ void HashKeyGenerator::prepareStateFluentHashKeys(Evaluatable* eval,
         if (eval->dependentStateFluents.find(cpf->head) !=
             eval->dependentStateFluents.end()) {
             tmpHashMap.push_back(make_pair(cpf->head->index, hashKeyBase));
-            if (!utils::multiplyWithOverflowCheck(
-                hashKeyBase, cpf->getDomainSize())) {
+            if (!utils::multiplyWithOverflowCheck(hashKeyBase,
+                                                  cpf->getDomainSize())) {
                 eval->cachingType = "NONE";
                 return;
             }
@@ -189,8 +188,8 @@ void HashKeyGenerator::prepareKleeneStateFluentHashKeys(Evaluatable* eval,
             eval->dependentStateFluents.end()) {
             tmpHashMap.push_back(make_pair(cpf->head->index, hashKeyBase));
             if ((cpf->kleeneDomainSize == 0) ||
-                !utils::multiplyWithOverflowCheck(
-                    hashKeyBase, cpf->kleeneDomainSize)) {
+                !utils::multiplyWithOverflowCheck(hashKeyBase,
+                                                  cpf->kleeneDomainSize)) {
                 eval->kleeneCachingType = "NONE";
                 return;
             }

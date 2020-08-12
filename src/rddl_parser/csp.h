@@ -55,8 +55,8 @@ public:
     /*
       Set the action variable set with index actionSetIndex to the given values
     */
-    void assignActionVarSet(
-        std::vector<int> const& values, int actionSetIndex = 0);
+    void assignActionVarSet(std::vector<int> const& values,
+                            int actionSetIndex = 0);
 
     /*
       Add a constraint to the CSP

@@ -36,8 +36,8 @@ LogicalExpression* MostLikelyDeterminizer::_determinize(
     } else if (auto exp = dynamic_cast<ExponentialFunction*>(formula)) {
         return new ExponentialFunction(_determinize(exp->expr));
     } else if (auto bd = dynamic_cast<BernoulliDistribution*>(formula)) {
-        vector<LogicalExpression*> newExprs =
-            {new NumericConstant(0.5), _determinize(bd->expr)};
+        vector<LogicalExpression*> newExprs = {new NumericConstant(0.5),
+                                               _determinize(bd->expr)};
         return new LowerEqualsExpression(newExprs);
     } else if (auto disc = dynamic_cast<DiscreteDistribution*>(formula)) {
         // The most-likely determinization of a discrete distribution returns

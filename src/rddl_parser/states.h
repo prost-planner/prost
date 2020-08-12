@@ -21,12 +21,10 @@ struct State {
 
     // Create a copy of other except that the value of variable var is
     // set to val
-    State(State const& other, int var, double val)
-        : state(other.state) {
+    State(State const& other, int var, double val) : state(other.state) {
         assert(var < state.size());
         state[var] = val;
     }
-
 
     double& operator[](int const& index) {
         assert(index < state.size());

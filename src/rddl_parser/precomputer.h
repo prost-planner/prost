@@ -18,11 +18,9 @@ struct RDDLTask;
 class State;
 class StateFluent;
 
-
 class Precomputer {
 public:
-    Precomputer(RDDLTask* task)
-        : task(task) {}
+    Precomputer(RDDLTask* task) : task(task) {}
 
     void precompute();
 

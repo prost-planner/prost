@@ -35,8 +35,7 @@ bool DiscretePD::operator<(DiscretePD const& rhs) const {
             return false;
         }
 
-        if (utils::doubleIsSmaller(probabilities[i],
-                                   rhs.probabilities[i])) {
+        if (utils::doubleIsSmaller(probabilities[i], rhs.probabilities[i])) {
             return true;
         } else if (utils::doubleIsSmaller(rhs.probabilities[i],
                                           probabilities[i])) {

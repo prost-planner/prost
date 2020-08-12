@@ -38,8 +38,9 @@ TEST_CASE("RDDL Task CSP") {
         CHECK(actionVars.size() == 3);
         CHECK(stateVars.size() == 2);
 
-        vector<vector<int>> actions = {{0,0,0}, {0,0,1}, {0,1,0}, {0,1,1},
-                                       {1,0,0}, {1,0,1}, {1,1,0}, {1,1,1}};
+        vector<vector<int>> actions = {{0, 0, 0}, {0, 0, 1}, {0, 1, 0},
+                                       {0, 1, 1}, {1, 0, 0}, {1, 0, 1},
+                                       {1, 1, 0}, {1, 1, 1}};
         for (vector<int> const& action : actions) {
             csp.push();
             csp.assignActionVarSet(action);
@@ -66,8 +67,8 @@ TEST_CASE("RDDL Task CSP") {
         RDDLTaskCSP csp(task);
         csp.addPreconditions();
 
-        vector<vector<int>> legalActions =
-            {{0,0,0}, {0,0,1}, {0,1,0},  {1,0,0}};
+        vector<vector<int>> legalActions = {
+            {0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {1, 0, 0}};
         for (vector<int> const& action : legalActions) {
             csp.push();
             csp.assignActionVarSet(action);
@@ -75,8 +76,8 @@ TEST_CASE("RDDL Task CSP") {
             csp.pop();
         }
 
-        vector<vector<int>> illegalActions =
-            {{0,1,1}, {1,0,1}, {1,1,0}, {1,1,1}};
+        vector<vector<int>> illegalActions = {
+            {0, 1, 1}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}};
         for (vector<int> const& action : illegalActions) {
             csp.push();
             csp.assignActionVarSet(action);

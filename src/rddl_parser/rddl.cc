@@ -120,8 +120,7 @@ Type* RDDLTask::getType(string typeName) {
     return nullptr;
 }
 
-void RDDLTask::addObject(string const& typeName,
-                         string const& objectName) {
+void RDDLTask::addObject(string const& typeName, string const& objectName) {
     if (types.find(typeName) == types.end()) {
         utils::abort("Error: Type " + typeName + " not defined.");
     }
@@ -280,7 +279,7 @@ void RDDLTask::sortActionFluents() {
 }
 
 void RDDLTask::sortActionStates() {
-    auto sortFn = [] (ActionState const& lhs, ActionState const& rhs) {
+    auto sortFn = [](ActionState const& lhs, ActionState const& rhs) {
         int lhsNum = 0;
         int rhsNum = 0;
         for (unsigned int i = 0; i < lhs.state.size(); ++i) {
@@ -413,9 +412,7 @@ void RDDLTask::print(ostream& out) {
         out << endl;
     }
 
-    out << endl
-        << endl
-        << "#####DET STATE FLUENTS AND CPFS#####" << endl;
+    out << endl << endl << "#####DET STATE FLUENTS AND CPFS#####" << endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         assert(!CPFs[index]->isProbabilistic());
@@ -427,8 +424,7 @@ void RDDLTask::print(ostream& out) {
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
         for (size_t i = 0; i < CPFs[index]->domain.size(); ++i) {
-            out << i << " "
-                << CPFs[index]->head->valueType->objects[i]->name
+            out << i << " " << CPFs[index]->head->valueType->objects[i]->name
                 << endl;
         }
 
@@ -466,9 +462,7 @@ void RDDLTask::print(ostream& out) {
         out << endl;
     }
 
-    out << endl
-        << endl
-        << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
+    out << endl << endl << "#####PROB STATE FLUENTS AND CPFS#####" << endl;
     for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
          ++index) {
         assert(CPFs[index]->head->index == index);
@@ -481,8 +475,7 @@ void RDDLTask::print(ostream& out) {
         out << CPFs[index]->domain.size() << endl;
         out << "## values" << endl;
         for (size_t i = 0; i < CPFs[index]->domain.size(); ++i) {
-            out << i << " "
-                << CPFs[index]->head->valueType->objects[i]->name
+            out << i << " " << CPFs[index]->head->valueType->objects[i]->name
                 << endl;
         }
 
@@ -560,8 +553,7 @@ void RDDLTask::print(ostream& out) {
         out << rewardCPF->precomputedResults.size() << endl;
         for (unsigned int res = 0; res < rewardCPF->precomputedResults.size();
              ++res) {
-            out << res << " " << rewardCPF->precomputedResults[res]
-                << endl;
+            out << res << " " << rewardCPF->precomputedResults[res] << endl;
         }
     }
     out << "## kleene caching type" << endl;
@@ -612,8 +604,7 @@ void RDDLTask::print(ostream& out) {
              actionIndex < preconds[index]->actionHashKeyMap.size();
              ++actionIndex) {
             out << actionIndex << " "
-                << preconds[index]->actionHashKeyMap[actionIndex]
-                << endl;
+                << preconds[index]->actionHashKeyMap[actionIndex] << endl;
         }
 
         out << endl;
@@ -640,15 +631,13 @@ void RDDLTask::print(ostream& out) {
         out << endl;
     }
 
-    out << endl
-        << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << endl;
+    out << endl << "#####HASH KEYS OF DETERMINISTIC STATE FLUENTS#####" << endl;
     for (unsigned int index = 0; index < firstProbabilisticVarIndex; ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << endl;
         out << index << endl;
         if (!stateHashKeys.empty()) {
-            out << "## state hash key (for each value in the domain)"
-                << endl;
+            out << "## state hash key (for each value in the domain)" << endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -680,22 +669,19 @@ void RDDLTask::print(ostream& out) {
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToKleeneStateFluentHashKeyMap[index][i].second
-                << endl;
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
         }
         out << endl;
     }
 
-    out << endl
-        << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << endl;
+    out << endl << "#####HASH KEYS OF PROBABILISTIC STATE FLUENTS#####" << endl;
     for (unsigned int index = firstProbabilisticVarIndex; index < CPFs.size();
          ++index) {
         assert(CPFs[index]->head->index == index);
         out << "## index" << endl;
         out << (index - firstProbabilisticVarIndex) << endl;
         if (!stateHashKeys.empty()) {
-            out << "## state hash key (for each value in the domain)"
-                << endl;
+            out << "## state hash key (for each value in the domain)" << endl;
             for (unsigned int valIndex = 0;
                  valIndex < stateHashKeys[index].size(); ++valIndex) {
                 out << stateHashKeys[index][valIndex];
@@ -727,8 +713,7 @@ void RDDLTask::print(ostream& out) {
         for (unsigned int i = 0;
              i < indexToKleeneStateFluentHashKeyMap[index].size(); ++i) {
             out << indexToKleeneStateFluentHashKeyMap[index][i].first << " ";
-            out << indexToKleeneStateFluentHashKeyMap[index][i].second
-                << endl;
+            out << indexToKleeneStateFluentHashKeyMap[index][i].second << endl;
         }
         out << endl;
     }

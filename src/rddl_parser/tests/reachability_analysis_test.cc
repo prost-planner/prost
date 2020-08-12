@@ -31,7 +31,7 @@ bool allValuesAreReachable(vector<set<double>> const& domains,
     }
     return true;
 }
-}
+} // namespace
 
 TEST_CASE("Reachability analysis where every fact is directly reachable") {
     RDDLTask* task = new RDDLTask();
@@ -44,9 +44,9 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
     auto fdrPVar = new ParametrizedVariable(
         "fdr", params, ParametrizedVariable::STATE_FLUENT, t, 0.0);
     task->addVariableSchematic(fdrPVar);
-    auto pVar = new ParametrizedVariable(
-        "pv", params, ParametrizedVariable::STATE_FLUENT,
-        task->getType("bool"), 0.0);
+    auto pVar = new ParametrizedVariable("pv", params,
+                                         ParametrizedVariable::STATE_FLUENT,
+                                         task->getType("bool"), 0.0);
     task->addVariableSchematic(pVar);
 
     auto s0 = new StateFluent(*fdrPVar, params, 0.0, 0);
@@ -54,7 +54,6 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
     auto s2 = new StateFluent(*pVar, params, 0.0, 2);
     auto s3 = new StateFluent(*pVar, params, 0.0, 3);
     auto s4 = new StateFluent(*pVar, params, 0.0, 4);
-
 
     auto c0 = new ConditionalProbabilityFunction(s0, nullptr);
     c0->setDomainSize(3);
@@ -70,7 +69,7 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
     auto a0 = new ActionFluent(*pVar, params, 0);
     auto a1 = new ActionFluent(*pVar, params, 1);
     task->actionFluents = {a0, a1};
-    task->actionStates.push_back(ActionState({0,0}));
+    task->actionStates.push_back(ActionState({0, 0}));
 
     SUBCASE("Reachability analysis where every fact is directly reachable") {
         task->horizon = 10;
@@ -95,7 +94,9 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
         CHECK(r.getNumberOfSimulationSteps() == 2);
     }
 
-    SUBCASE("Reachability analysis where all facts are reachable after some iterations") {
+    SUBCASE(
+        "Reachability analysis where all facts are reachable after some "
+        "iterations") {
         task->horizon = 10;
         task->stateFluents = {s0, s1, s2, s3, s4};
         task->CPFs = {c0, c1, c2, c3, c4};
@@ -105,15 +106,14 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
                                              new NumericConstant(2.0)};
         vector<LogicalExpression*> p1 = {s4, new NumericConstant(0.3)};
         vector<LogicalExpression*> p2 = {s4, new NumericConstant(0.4)};
-        vector<LogicalExpression*> p3 =
-            {new Multiplication(p2), new Negation(s4)};
-        vector<LogicalExpression*> probs = {new Multiplication(p1),
-                                            new Multiplication(p1),
-                                            new Addition(p3)};
+        vector<LogicalExpression*> p3 = {new Multiplication(p2),
+                                         new Negation(s4)};
+        vector<LogicalExpression*> probs = {
+            new Multiplication(p1), new Multiplication(p1), new Addition(p3)};
         c0->formula = new DiscreteDistribution(values, probs);
         c1->formula = new BernoulliDistribution(new NumericConstant(0.5));
-        vector<LogicalExpression*> expr1 =
-            {s1, new BernoulliDistribution(new NumericConstant(0.75))};
+        vector<LogicalExpression*> expr1 = {
+            s1, new BernoulliDistribution(new NumericConstant(0.75))};
         c2->formula = new Conjunction(expr1);
         vector<LogicalExpression*> expr2 = {
             s2, new BernoulliDistribution(new NumericConstant(0.25))};
@@ -130,7 +130,8 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
         CHECK(r.getNumberOfSimulationSteps() == 6);
     }
 
-    SUBCASE("Reachability analysis where facts are unreachable due to horizon") {
+    SUBCASE(
+        "Reachability analysis where facts are unreachable due to horizon") {
         task->horizon = 3;
         task->stateFluents = {s0, s1, s2, s3, s4};
         task->CPFs = {c0, c1, c2, c3, c4};
@@ -140,11 +141,10 @@ TEST_CASE("Reachability analysis where every fact is directly reachable") {
                                              new NumericConstant(2.0)};
         vector<LogicalExpression*> p1 = {s4, new NumericConstant(0.3)};
         vector<LogicalExpression*> p2 = {s4, new NumericConstant(0.4)};
-        vector<LogicalExpression*> p3 = {
-            new Multiplication(p2), new Negation(s4)};
-        vector<LogicalExpression*> probs = {new Multiplication(p1),
-                                            new Multiplication(p1),
-                                            new Addition(p3)};
+        vector<LogicalExpression*> p3 = {new Multiplication(p2),
+                                         new Negation(s4)};
+        vector<LogicalExpression*> probs = {
+            new Multiplication(p1), new Multiplication(p1), new Addition(p3)};
         c0->formula = new DiscreteDistribution(values, probs);
 
         c1->formula = new BernoulliDistribution(new NumericConstant(0.5));

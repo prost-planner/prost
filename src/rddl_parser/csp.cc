@@ -19,7 +19,7 @@ template <typename T>
                 to_string(setIndex));
     return context.int_const(name.c_str());
 }
-}
+} // namespace
 
 void RDDLTaskCSP::addStateVarSet() {
     Z3Expressions stateVars;
@@ -60,15 +60,15 @@ void RDDLTaskCSP::addConcurrencyConstraint(int actionSetIndex) {
         vector<LogicalExpression*> vars(numActionFluents);
         copy(task->actionFluents.begin(), task->actionFluents.end(),
              vars.begin());
-        vector<LogicalExpression*> maxConcurrent =
-            {new Addition(vars), new NumericConstant(numConcurrentActions)};
+        vector<LogicalExpression*> maxConcurrent = {
+            new Addition(vars), new NumericConstant(numConcurrentActions)};
         auto* constraint = new LowerEqualsExpression(maxConcurrent);
         solver.add(constraint->toZ3Formula(*this, actionSetIndex) != 0);
     }
 }
 
-void RDDLTaskCSP::assignActionVarSet(
-    vector<int> const& values, int actionSetIndex) {
+void RDDLTaskCSP::assignActionVarSet(vector<int> const& values,
+                                     int actionSetIndex) {
     assert(static_cast<size_t>(actionSetIndex) < actionVarSets.size());
     Z3Expressions const& actionVars = actionVarSets[actionSetIndex];
     assert(actionVars.size() == values.size());

@@ -20,9 +20,9 @@ TEST_CASE("Hash key generation") {
     auto fdrPVar = new ParametrizedVariable(
         "fdr", params, ParametrizedVariable::STATE_FLUENT, t, 0.0);
     task->addVariableSchematic(fdrPVar);
-    auto pVar = new ParametrizedVariable(
-        "pv", params, ParametrizedVariable::STATE_FLUENT,
-        task->getType("bool"), 0.0);
+    auto pVar = new ParametrizedVariable("pv", params,
+                                         ParametrizedVariable::STATE_FLUENT,
+                                         task->getType("bool"), 0.0);
     task->addVariableSchematic(pVar);
 
     auto s0 = new StateFluent(*pVar, params, 0.0, 0);
@@ -51,21 +51,21 @@ TEST_CASE("Hash key generation") {
     auto a1 = new ActionFluent("a1", task->getType("bool"), 1);
     auto a2 = new ActionFluent("a2", task->getType("bool"), 2);
 
-    ActionState a000({0,0,0});
+    ActionState a000({0, 0, 0});
     a000.index = 0;
-    ActionState a001({0,0,1});
+    ActionState a001({0, 0, 1});
     a001.index = 1;
-    ActionState a010({0,1,0});
+    ActionState a010({0, 1, 0});
     a010.index = 2;
-    ActionState a011({0,1,1});
+    ActionState a011({0, 1, 1});
     a011.index = 3;
-    ActionState a100({1,0,0});
+    ActionState a100({1, 0, 0});
     a100.index = 4;
-    ActionState a101({1,0,1});
+    ActionState a101({1, 0, 1});
     a101.index = 5;
-    ActionState a110({1,1,0});
+    ActionState a110({1, 1, 0});
     a110.index = 6;
-    ActionState a111({1,1,1});
+    ActionState a111({1, 1, 1});
     a111.index = 7;
     SUBCASE("State and Kleene state hashing are possible") {
         task->stateFluents = {s0, s1, s2, s3, s4, s5};

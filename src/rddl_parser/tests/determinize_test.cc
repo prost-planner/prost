@@ -13,9 +13,9 @@ namespace prost::parser::determinize {
 TEST_CASE("Determinization with binary variables") {
     auto task = new RDDLTask();
     vector<Parameter*> params;
-    auto pVar = new ParametrizedVariable(
-        "pv", params, ParametrizedVariable::STATE_FLUENT,
-        task->getType("bool"), 0.0);
+    auto pVar = new ParametrizedVariable("pv", params,
+                                         ParametrizedVariable::STATE_FLUENT,
+                                         task->getType("bool"), 0.0);
     task->addVariableSchematic(pVar);
 
     auto s0 = new StateFluent(*pVar, params, 0.0, 0);
@@ -47,12 +47,12 @@ TEST_CASE("Determinization with binary variables") {
         auto nc0 = dynamic_cast<NumericConstant*>(c0->determinization);
         auto nc1 = dynamic_cast<NumericConstant*>(c1->determinization);
         auto nc2 = dynamic_cast<NumericConstant*>(c2->determinization);
-            CHECK(nc0);
-            CHECK(nc1);
-            CHECK(nc2);
-            CHECK(utils::doubleIsEqual(nc0->value, 0.0));
-            CHECK(utils::doubleIsEqual(nc1->value, 1.0));
-            CHECK(utils::doubleIsEqual(nc2->value, 1.0));
+        CHECK(nc0);
+        CHECK(nc1);
+        CHECK(nc2);
+        CHECK(utils::doubleIsEqual(nc0->value, 0.0));
+        CHECK(utils::doubleIsEqual(nc1->value, 1.0));
+        CHECK(utils::doubleIsEqual(nc2->value, 1.0));
     }
 
     SUBCASE("Bernoulli distribution that depends on variable") {
@@ -68,18 +68,18 @@ TEST_CASE("Determinization with binary variables") {
         // The result of the determinization of the formula "s0 * 0.4" is the
         // expression "0.5 <= s0 * 0.4"
         auto leq = dynamic_cast<LowerEqualsExpression*>(c0->determinization);
-            CHECK(leq);
+        CHECK(leq);
         auto nc1 = dynamic_cast<NumericConstant*>(leq->exprs[0]);
-            CHECK(nc1);
-            CHECK(utils::doubleIsEqual(nc1->value, 0.5));
+        CHECK(nc1);
+        CHECK(utils::doubleIsEqual(nc1->value, 0.5));
         auto mpl = dynamic_cast<Multiplication*>(leq->exprs[1]);
-            CHECK(mpl);
+        CHECK(mpl);
         auto var = dynamic_cast<StateFluent*>(mpl->exprs[0]);
-            CHECK(var);
-            CHECK(var == s0);
+        CHECK(var);
+        CHECK(var == s0);
         auto nc2 = dynamic_cast<NumericConstant*>(mpl->exprs[1]);
-            CHECK(nc2);
-            CHECK(utils::doubleIsEqual(nc2->value, 0.4));
+        CHECK(nc2);
+        CHECK(utils::doubleIsEqual(nc2->value, 0.4));
     }
 }
 
