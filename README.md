@@ -12,17 +12,27 @@ Make sure you meet the following requirements before installing Prost:
 
  * Linux operating system
  * git is installed to clone the repository
- * flex and bison are installed to parse the input
+ * flex 2.6.4 or higher and bison 3.0.4 or higher are installed to parse the input
  * cmake and a c++ compiler (we recommend gcc) are installed to compile the planner
  * the BDD library [BuDDy](http://sourceforge.net/projects/buddy) is installed
+ * the theorem prover [z3](https://github.com/Z3Prover/z3) is installed
 
-On Linux, you can install all dependencies with the command
+On Linux, you can install all dependencies except for z3 with the command
 
 `sudo apt install git g++ cmake bison flex libbdd-dev`
 
-If BuDDy is not found automatically, you can additionally set an
-environment variable `$BDD_ROOT` which points to your BuDDY installation,
-or you can adapt the file `src/cmake_modules/FindBDD.cmake`.
+Installation information for z3 can be found [here](https://github.com/Z3Prover/z3).
+Without any guarantee for success, you can try the following steps to install z3:
+
+ * `git clone git@github.com:Z3Prover/z3.git /path/to/z3-repo` (clone z3 repo)
+ * `cd /path/to/z3-repo` (switch to directory)
+ * `./configure --prefix=/path/to/z3-install` (configure and pass installation location)
+ * `make` (build)
+ * `make install` (install)
+
+If BuDDy or z3 is not found automatically, you can set the environment variables
+`$BDD_ROOT` and `Z3_ROOT`, which point to your BuDDY and z3 installation, resprectively.
+
 
 PROST executes the policy it computes by interacting with the rddlsim
 server. We refer to the [github repository of
@@ -58,9 +68,9 @@ command with `./build.py --debug`.
 
 ## Running Prost
 
-Before you can run Prost, you have to start the rddlsim server by using
-the provided script that can be found in the testbed folder. For
-instance, running
+Before you can run Prost, you have to start the rddlsim server. One way to
+do so is by using the provided script that can be found in the testbed folder.
+For instance, running
 
 `./run-server.py -b benchmarks/elevators-2011/`
 
@@ -139,7 +149,7 @@ or
 
 ## Contributors
 
-If you have any questions, feel free to contact one of the currently
+If you have any questions, feel free to contact one or all of the currently
 actively core developers:
 
  * [Thomas Keller](mailto:tho.keller@unibas.ch?subject=[Prost])
@@ -153,6 +163,7 @@ are ordered alphabetically):
  * Augusto Blaas Correa
  * Dorde Relic
  * Florent Teichteil-Koenigsbuch
+ * Guillem Frances
  * Jendrik Seipp
  * Joris Scharpff
  * Max Grüner
