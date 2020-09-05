@@ -26,8 +26,8 @@ Without any guarantee for success, you can try the following steps to install z3
 
  * `git clone git@github.com:Z3Prover/z3.git /path/to/z3-repo` (clone z3 repo)
  * `cd /path/to/z3-repo` (switch to directory)
- * `./configure --prefix=/path/to/z3-install` (configure and pass installation location)
- * `make` (build)
+ * `python scripts/mk_make.py --prefix=/path/to/z3-install` (configure and pass installation location)
+ * `cd build && make` (build)
  * `make install` (install)
 
 If BuDDy or z3 is not found automatically, you can set the environment variables
