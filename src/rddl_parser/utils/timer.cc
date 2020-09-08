@@ -2,10 +2,10 @@
 
 #include <ostream>
 #include <sys/time.h>
-#include <unistd.h>
 
 using namespace std;
 
+namespace prost::parser::utils {
 Timer::Timer() {
     currentTime = getCurrentTime();
 }
@@ -33,3 +33,4 @@ ostream& operator<<(ostream& os, const Timer& timer) {
     os << value << "s";
     return os;
 }
+} // namespace prost::parser::utils

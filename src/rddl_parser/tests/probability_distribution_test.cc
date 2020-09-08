@@ -2,9 +2,9 @@
 
 #include "../probability_distribution.h"
 
-using std::map;
-using std::vector;
+using namespace std;
 
+namespace prost::parser {
 TEST_CASE("Testing equality of distributions") {
     DiscretePD pd1;
     DiscretePD pd2;
@@ -167,3 +167,4 @@ TEST_CASE("Testing well-definedness of probabilities") {
         CHECK(!pd1.isWellDefined());
     }
 }
+} // namespace prost::parser

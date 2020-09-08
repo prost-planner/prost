@@ -1,12 +1,21 @@
-#ifndef INSTANTIATOR_H
-#define INSTANTIATOR_H
+#ifndef PARSER_INSTANTIATOR_H
+#define PARSER_INSTANTIATOR_H
+
+/*
+  The Instantiator class receives the lifted planning task as modelled in RDDL
+  as input and naively grounds (i.e., instantiates all parameters with concrete
+  objects) all state and action variables, CPFs action preconditions. In the
+  process, all quantifiers that occur in formulas are replaced by corresponding
+  expressions over the set of objets.
+*/
 
 #include <vector>
 
+namespace prost::parser {
 class Parameter;
 class ParametrizedVariable;
 class LogicalExpression;
-class RDDLTask;
+struct RDDLTask;
 
 class Instantiator {
 public:
@@ -25,7 +34,8 @@ private:
     void instantiateVariables();
     void instantiateCPFs();
     void instantiateCPF(ParametrizedVariable* head, LogicalExpression* formula);
-    void instantiateSACs();
+    void instantiatePreconds();
 };
+} // namespace prost::parser
 
-#endif
+#endif // PARSER_INSTANTIATOR_H

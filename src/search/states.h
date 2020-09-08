@@ -378,28 +378,30 @@ private:
 
 struct ActionState {
     ActionState(int _index, std::vector<int> _state,
-                std::vector<ActionFluent*> _scheduledActionFluents,
                 std::vector<DeterministicEvaluatable*> _actionPreconditions)
         : index(_index),
           state(_state),
-          scheduledActionFluents(_scheduledActionFluents),
-          actionPreconditions(_actionPreconditions) {}
-
-    int& operator[](int const& index) {
-        return state[index];
+          actionPreconditions(_actionPreconditions) {
+        isNoop = getScheduledActionFluentNames().empty();
     }
 
-    const int& operator[](int const& index) const {
-        return state[index];
+    int& operator[](int const& i) {
+        return state[i];
     }
+
+    const int& operator[](int const& i) const {
+        return state[i];
+    }
+
+    std::vector<std::string> getScheduledActionFluentNames() const;
 
     std::string toString() const;
     std::string toCompactString() const;
 
     int index;
     std::vector<int> state;
-    std::vector<ActionFluent*> scheduledActionFluents;
     std::vector<DeterministicEvaluatable*> actionPreconditions;
+    bool isNoop;
 };
 
 /*****************************************************************

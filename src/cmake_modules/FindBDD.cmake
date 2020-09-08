@@ -1,30 +1,39 @@
-# Checking if BuDDy is installed with libbdd-dev 
-# Once done, this will define
+# - Find the BuDDY BDD library.
+# This code defines the following variables:
 #
-#  BDD_FOUND - system has bdd installed
+#  BDD_FOUND                - TRUE if BDD was found.
+#  BDD_INCLUDE_DIRS         - Full paths to all include dirs.
+#  BDD_LIBRARIES            - Full paths to all libraries.
+#
+# Usage:
+#  find_package(BDD)
+#
+# Hints to the location of BuDDy can be given with the cmake variable
+# BDD_ROOT or the environment variable BDD_ROOT. If BuDDy is installed
+# with apt, it should be found automatically without providing a hint.
 
-# TODO: Solve this with modules - that would enable user to install BuDDy where ever
-# TODO: Check if the OS is Windows - in that case, do not include BuDDy
-#if (NOT EXISTS "/usr/include/bdd.h")
-#  set(BDD_FOUND false)
-#else(EXISTS "/usr/include/bdd.h")
-#  set(BDD_FOUND true)
-#endif()
-
-# Include mModule, where the macro is declared.
-include(CheckIncludeFile)
-# Check that header file is accessible.
-CHECK_INCLUDE_FILE("bdd.h" # "Signature" header for the library libbdd.
-    BDD_FOUND # Variable to store result
+set(BDD_HINT_PATHS
+    ${BDD_ROOT}
+    $ENV{BDD_ROOT}
 )
-if(NOT BDD_FOUND)
-    # Remove FALSE value from the cache, so next run
-    # the include file will be rechecked.
-    #
-    # Without removing, CHECK_INCLUDE_FILE will check nothing at next run.
-    unset(BDD_FOUND CACHE)
 
-    message(SEND_ERROR "Unable to detect 'bdd' library. Install libbdd-dev and rerun cmake.")
-endif(NOT BDD_FOUND)
+find_path(BDD_INCLUDE_DIRS
+    NAMES "bdd.h"
+    HINTS ${BDD_HINT_PATHS}
+    PATH_SUFFIXES include
+)
 
-# Assume that libbdd is installed.
+find_library(BDD_LIBRARIES
+    NAMES bdd
+    HINTS ${BDD_HINT_PATHS}
+    PATH_SUFFIXES lib
+)
+
+# Check if everything was found and set BDD_FOUND.
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    BDD
+    REQUIRED_VARS BDD_INCLUDE_DIRS BDD_LIBRARIES
+)
+
+mark_as_advanced(BDD_INCLUDE_DIRS, BDD_LIBRARIES)

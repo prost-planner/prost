@@ -1,49 +1,207 @@
 #include "task_analyzer.h"
 
+#include "csp.h"
 #include "evaluatables.h"
 #include "rddl.h"
 
-#include "utils/system_utils.h"
+#include "utils/math.h"
 #include "utils/timer.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 
 using namespace std;
 
-void TaskAnalyzer::analyzeTask(int numStates, int numSimulations, double timeout) {
-    State currentState(task->CPFs);
+namespace prost::parser {
+void TaskAnalyzer::analyzeTask(int numStates, int numSimulations,
+                               double timeout, bool output) {
+    utils::Timer t;
+    if (output) {
+        cout << "    Determining task properties..." << endl;
+    }
+    determineTaskProperties();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
+    if (output) {
+        cout << "    Calculating min and max reward..." << endl;
+    }
+    calculateMinAndMaxReward();
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
+    if (output) {
+        cout << "    Performing random walks..." << endl;
+    }
+    performRandomWalks(numSimulations, timeout);
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+    t.reset();
+
+    task->numberOfUniqueEncounteredStates = encounteredStates.size();
+
+    if (output) {
+        cout << "    Creating training set..." << endl;
+    }
+    createTrainingSet(numStates);
+    if (output) {
+        cout << "    ...finished (" << t() << ")" << endl;
+    }
+}
+
+void TaskAnalyzer::determineTaskProperties() {
+    if (task->rewardCPF->isActionIndependent()) {
+        // The reward is not affected by the applied action, so we check if
+        // there is an action that is always applicable (i.e., does not have any
+        // precondition). If not, the first applicable action gives the final
+        // reward.
+        auto noPreconds = [](ActionState const& action) {
+            return action.relevantSACs.empty();
+        };
+        auto noPrecondIt = std::find_if(task->actionStates.begin(),
+                                        task->actionStates.end(), noPreconds);
+        if (noPrecondIt != task->actionStates.end()) {
+            task->candidatesForOptimalFinalAction.push_back(noPrecondIt->index);
+        }
+    } else {
+        // The reward is affected by the applied action, so we have to compare
+        // all actions that are not dominated by another action in the
+        // computation of the final reward
+        task->candidatesForOptimalFinalAction = determineDominantActions();
+    }
+
+    // To determine if a state is a goal, we have to check if applying the
+    // candidate for the optimal final action that yields the highest reward
+    // leads to a state that is still in the goal zone. As it is expensive if
+    // there is more than just one such candidate, we disable reward lock
+    // detection if there is more than one candidate.
+    if (task->candidatesForOptimalFinalAction.size() == 1) {
+        finalActionIndex = task->candidatesForOptimalFinalAction[0];
+    }
+}
+
+namespace {
+bool actionDominates(ActionState const& action1, ActionState const& action2,
+                     RDDLTaskCSP& csp) {
+    if (!action1.relevantSACs.empty()) {
+        // An action with preconditions cannot dominate another action
+        return false;
+    }
+    // Check if there is a state where action1 yields a lower reward than
+    // action2. If not, action1 dominates action2.
+    csp.push();
+    csp.assignActionVarSet(action1.state, 0);
+    csp.assignActionVarSet(action2.state, 1);
+
+    bool result = !csp.hasSolution();
+    csp.pop();
+    return result;
+}
+} // namespace
+
+vector<int> TaskAnalyzer::determineDominantActions() const {
+    RDDLTaskCSP csp(task);
+    csp.addActionVarSet();
+
+    // We look for a solution (i.e., a state) where the reward under the
+    // second action is larger than the reward under the first. The first
+    // action dominates the second if there is no such solution.
+    LogicalExpression* reward = task->rewardCPF->formula;
+    csp.addConstraint(
+        reward->toZ3Formula(csp, 0) - reward->toZ3Formula(csp, 1) < 0);
+
+    set<int> candidates;
+    for (ActionState const& action : task->actionStates) {
+        // Add action if it is not dominated by a candidate
+        auto dominatesAction = [&](int other) {
+            return actionDominates(task->actionStates[other], action, csp);
+        };
+        if (any_of(candidates.begin(), candidates.end(), dominatesAction)) {
+            continue;
+        }
+
+        // Remove candidates that are dominated by action
+        set<int> remainingCandidates;
+        remainingCandidates.insert(action.index);
+        for (int candidateIndex : candidates) {
+            ActionState const& candidate = task->actionStates[candidateIndex];
+            if (!actionDominates(action, candidate, csp)) {
+                remainingCandidates.insert(candidateIndex);
+            }
+        }
+        swap(candidates, remainingCandidates);
+    }
+    return vector<int>(candidates.begin(), candidates.end());
+}
+
+void TaskAnalyzer::calculateMinAndMaxReward() const {
+    // Compute the domain of the rewardCPF for deadend / goal detection (we only
+    // need upper and lower bounds, but we use the same function here). If the
+    // cachingType is vector, we can use the non-approximated values from the
+    // precomputation further below.
+    if (task->rewardCPF->cachingType == "VECTOR") {
+        // The reward has been precomputed, so we use the precomputed values
+        vector<double> const& values = task->rewardCPF->precomputedResults;
+        task->rewardCPF->minValue = *min_element(values.begin(), values.end());
+        task->rewardCPF->maxValue = *max_element(values.begin(), values.end());
+    } else {
+        task->rewardCPF->minValue = numeric_limits<double>::max();
+        task->rewardCPF->maxValue = -numeric_limits<double>::max();
+        // The reward  is not cached in vectors, so it has not been precomputed.
+        // We therefore approximate the minimum and maximum by using interval
+        // arithmetic.
+        vector<set<double>> domains(task->CPFs.size());
+        for (size_t i = 0; i < task->CPFs.size(); ++i) {
+            vector<int> const& domain = task->CPFs[i]->domain;
+            domains[i].insert(domain.begin(), domain.end());
+        }
+
+        for (ActionState const& action : task->actionStates) {
+            double minRew = numeric_limits<double>::max();
+            double maxRew = -numeric_limits<double>::max();
+            task->rewardCPF->formula->calculateDomainAsInterval(domains, action,
+                                                                minRew, maxRew);
+            task->rewardCPF->minValue = min(task->rewardCPF->minValue, minRew);
+            task->rewardCPF->maxValue = max(task->rewardCPF->maxValue, maxRew);
+        }
+    }
+}
+
+void TaskAnalyzer::performRandomWalks(int numSimulations, double timeout) {
+    utils::Timer t;
+    State current(task->CPFs);
     int remainingSteps = task->horizon;
-    Timer t;
 
     for (int simCounter = 0; simCounter < numSimulations;) {
-        State nextState(task->CPFs.size());
+        State next(task->CPFs.size());
         double reward = 0.0;
-        analyzeStateAndApplyAction(currentState, nextState, reward);
+        analyzeStateAndApplyAction(current, next, reward);
 
-        encounteredStates.insert(currentState);
+        encounteredStates.insert(current);
         ++task->numberOfEncounteredStates;
 
         --remainingSteps;
 
         if (remainingSteps > 0) {
-            currentState = State(nextState);
+            current = State(next);
         } else {
-            currentState = State(task->CPFs);
+            current = State(task->CPFs);
             remainingSteps = task->horizon;
             ++simCounter;
         }
 
-        if (MathUtils::doubleIsGreater(t(), timeout)) {
+        if (utils::doubleIsGreater(t(), timeout)) {
             cout << "Stopping analysis after " << t << " seconds and "
                  << numSimulations << " simulations." << endl;
             break;
         }
     }
-
-    task->numberOfUniqueEncounteredStates = encounteredStates.size();
-
-    createTrainingSet(numStates);
 }
 
 void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
@@ -80,7 +238,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
 
     assert(!applicableActions.empty());
 
-    // Check if this is a state with only one reasnoable applicable action
+    // Check if this is a state with only one reasonable applicable action
     if (applicableActions.size() == 1) {
         ++task->nonTerminalStatesWithUniqueAction;
         if (encounteredStates.find(current) == encounteredStates.end()) {
@@ -88,8 +246,6 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
         }
     }
 
-    // TODO: We could also simply sample the successor state that was calculated
-    // in the reasonable action check above
     ActionState& randomAction =
         task->actionStates[applicableActions[std::rand() %
                                              applicableActions.size()]];
@@ -99,8 +255,7 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
     task->rewardCPF->formula->evaluate(reward, current, randomAction);
 
     // Check if this is a reward lock
-    if (task->rewardFormulaAllowsRewardLockDetection &&
-        !task->rewardLockDetected &&
+    if ((finalActionIndex >= 0) && !task->rewardLockDetected &&
         (encounteredStates.find(current) == encounteredStates.end()) &&
         isARewardLock(current, reward)) {
         task->rewardLockDetected = true;
@@ -145,7 +300,7 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
         double res = 0.0;
         action.relevantSACs[precondIndex]->formula->evaluate(res, current,
                                                              action);
-        if (MathUtils::doubleIsEqual(res, 0.0)) {
+        if (utils::doubleIsEqual(res, 0.0)) {
             return false;
         }
     }
@@ -154,10 +309,10 @@ inline bool TaskAnalyzer::actionIsApplicable(ActionState const& action,
 
 inline bool TaskAnalyzer::isARewardLock(State const& current,
                                         double const& reward) const {
-    if (MathUtils::doubleIsEqual(task->rewardCPF->getMinVal(), reward)) {
+    if (utils::doubleIsEqual(task->rewardCPF->minValue, reward)) {
         KleeneState currentInKleene(current);
         return checkDeadEnd(currentInKleene);
-    } else if (MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(), reward)) {
+    } else if (utils::doubleIsEqual(task->rewardCPF->maxValue, reward)) {
         KleeneState currentInKleene(current);
         return checkGoal(currentInKleene);
     }
@@ -177,8 +332,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
     // If reward is not minimal with certainty this is not a dead end
     if ((reward.size() != 1) ||
-        !MathUtils::doubleIsEqual(*reward.begin(),
-                                  task->rewardCPF->getMinVal())) {
+        !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->minValue)) {
         return false;
     }
 
@@ -197,8 +351,7 @@ bool TaskAnalyzer::checkDeadEnd(KleeneState const& state) const {
 
         // If reward is not minimal this is not a dead end
         if ((reward.size() != 1) ||
-            !MathUtils::doubleIsEqual(*reward.begin(),
-                                      task->rewardCPF->getMinVal())) {
+            !utils::doubleIsEqual(*reward.begin(), task->rewardCPF->minValue)) {
             return false;
         }
 
@@ -222,16 +375,15 @@ bool TaskAnalyzer::checkGoal(KleeneState const& state) const {
     set<double> reward;
 
     for (unsigned int i = 0; i < task->CPFs.size(); ++i) {
-        task->CPFs[i]->formula->evaluateToKleene(succ[i], state,
-                                                 task->actionStates[0]);
+        task->CPFs[i]->formula->evaluateToKleene(
+            succ[i], state, task->actionStates[finalActionIndex]);
     }
-    task->rewardCPF->formula->evaluateToKleene(reward, state,
-                                               task->actionStates[0]);
+    task->rewardCPF->formula->evaluateToKleene(
+        reward, state, task->actionStates[finalActionIndex]);
 
     // If reward is not maximal with certainty this is not a goal
     if ((reward.size() > 1) ||
-        !MathUtils::doubleIsEqual(task->rewardCPF->getMaxVal(),
-                                  *reward.begin())) {
+        !utils::doubleIsEqual(task->rewardCPF->maxValue, *reward.begin())) {
         return false;
     }
 
@@ -269,3 +421,4 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
         }
     }
 }
+} // namespace prost::parser

@@ -1,47 +1,38 @@
-#ifndef RDDL_H
-#define RDDL_H
+#ifndef PARSER_RDDL_H
+#define PARSER_RDDL_H
 
 #include <map>
 #include <string>
 
 #include "states.h"
 
+namespace prost::parser {
 class LogicalExpression;
 class NonFluent;
 class Object;
 class Parameter;
 class ParametrizedVariable;
-class RDDLTask;
 class RewardFunction;
 class StateFluent;
 class Type;
 
 using ConditionEffectPair = std::pair<LogicalExpression*, LogicalExpression*>;
 
-/*****************************************************************
-                           RDDL Block
-*****************************************************************/
-
-class RDDLTask {
-public:
+struct RDDLTask {
     RDDLTask();
     ~RDDLTask() {}
-
-    std::string validateRequirement(std::string req);
 
     void setInstance(std::string name, std::string domainName,
                      std::string nonFluentsName, int maxNonDefActions,
                      int horizon, double discount);
     void addCPF(ParametrizedVariable variable,
                 LogicalExpression* logicalExpression);
-
-    void execute(std::string outFile, double seed, int numStates,
-                 int numSimulations, double timeout, bool useIPC2018Rules);
+    void addPrecondition(LogicalExpression* logicalExpression);
 
     // Following methods are PlanningTask methods
     void print(std::ostream& out);
 
-    void addType(std::string const& name, std::string const& superType = "");
+    Type* addType(std::string const& name, std::string const& superType = "");
     void addObject(std::string const& typeName, std::string const& objectName);
 
     void addVariableSchematic(ParametrizedVariable* varDef);
@@ -61,10 +52,15 @@ public:
 
     void setRewardCPF(LogicalExpression* const& rewardFormula);
 
+    // Sort CPFs / action fluents / action states to ensure deterministic
+    // behavior and assign corresponding indices
+    void sortCPFs();
+    void sortActionFluents();
+    void sortActionStates();
+
     // The following are PlanningTask variables
 
     // This instance's name
-    // TODO: move this to the private members??
     std::string name;
 
     // (Trivial) properties
@@ -94,11 +90,7 @@ public:
     std::vector<NonFluent*> nonFluents;
     std::map<std::string, NonFluent*> nonFluentMap;
 
-    // State action constraints
-    std::vector<LogicalExpression*> SACs;
-    std::vector<ActionPrecondition*> actionPreconds;
-    std::vector<ActionPrecondition*> staticSACs;
-    std::set<ActionFluent*> primitiveStaticSACs;
+    std::vector<ActionPrecondition*> preconds;
 
     // Instantiated CPFs
     std::vector<ConditionalProbabilityFunction*> CPFs;
@@ -108,9 +100,7 @@ public:
     std::vector<ActionState> actionStates;
 
     // (Non-trivial) properties
-    bool rewardFormulaAllowsRewardLockDetection;
     bool rewardLockDetected;
-    std::string finalRewardCalculationMethod;
     std::vector<int> candidatesForOptimalFinalAction;
     bool unreasonableActionDetected;
     bool unreasonableActionInDeterminizationDetected;
@@ -145,5 +135,6 @@ public:
     std::string domainName;
     std::string nonFluentsName;
 };
+} // namespace prost::parser
 
-#endif
+#endif // PARSER_RDDL_H

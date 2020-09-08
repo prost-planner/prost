@@ -9,42 +9,12 @@ if(NOT PROST_MAIN_CMAKELISTS_READ)
 endif()
 
 ## == Project ==
-
 project(rddl-parser)
 prost_set_compiler_flags()
-prost_set_linker_flags_rddl_parser()
-
-## == Includes ==
-
-include_directories("logical_expressions_includes")
-include_directories("utils")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-## == Source Files ==
-
-set(RDDL_PARSER_SOURCES
-  evaluatables
-  instantiator
-  logical_expressions
-  preprocessor
-  probability_distribution
-  rddl
-  states
-  task_analyzer
-  utils/math_utils
-  utils/string_utils
-  utils/system_utils
-  utils/timer
- )
-
-set(RDDL_PARSER_TESTS
-  ../doctest/doctest
-  tests/probability_distribution_test
-)
+prost_set_linker_flags()
 
 ## == Flex / Bison ==
-
-set(FlexInput "lexer.l") #${CMAKE_CURRENT_BINARY_DIR}/parser.tab.hh")
+set(FlexInput "lexer.l")
 set(BisonInput "parser.ypp")
 
 find_package(BISON)
@@ -54,18 +24,57 @@ BISON_TARGET(parser ${BisonInput} ${CMAKE_CURRENT_BINARY_DIR}/parser.tab.cc COMP
 FLEX_TARGET(scanner ${FlexInput} ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc)
 ADD_FLEX_BISON_DEPENDENCY(scanner parser)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GPP_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GPP_LINK_FLAGS}")
+## == Z3 ==
+find_package(Z3 REQUIRED)
 
-## == Add executable ==
+## == Includes ==
+include_directories("logical_expressions_includes")
+include_directories("utils")
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${Z3_INCLUDE_DIRS})
 
-# disable doctest in release build
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DDOCTEST_CONFIG_DISABLE")
+## == Source Files ==
+set(RDDL_PARSER_SOURCES
+    csp
+    determinize/determinize
+    evaluatables
+    fdr/fdr_generation
+    fdr/mutex_detection
+    hashing/hash_keys
+    instantiator
+    logical_expressions
+    precomputer
+    probability_distribution
+    rddl
+    reachability_analysis
+    simplifier
+    states
+    task_analyzer
+    utils/math
+    utils/system
+    utils/timer
+)
 
-# only enable unit tests in debug build
+## == Doctest ==
+set(RDDL_PARSER_TEST_SOURCES
+    ../doctest/doctest
+    tests/csp_test
+    tests/determinize_test
+    tests/fdr_generation_test
+    tests/hash_keys_test
+    tests/logical_expressions_test
+    tests/mutex_detection_test
+    tests/probability_distribution_test
+    tests/reachability_analysis_test
+)
+
+# add unit test files in debug build
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TESTS} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
-ELSE()
-    add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
+    set(RDDL_PARSER_SOURCES ${RDDL_PARSER_SOURCES} ${RDDL_PARSER_TEST_SOURCES})
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
+## == Add Executable ==
+add_executable(rddl-parser ${RDDL_PARSER_SOURCES} ${FLEX_scanner_OUTPUTS} ${BISON_parser_OUTPUTS})
+
+## == Link ==
+target_link_libraries(rddl-parser ${Z3_LIBRARIES})

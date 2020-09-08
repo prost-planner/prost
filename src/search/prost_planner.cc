@@ -225,11 +225,7 @@ vector<string> ProstPlanner::plan() {
 
     // PROST's communication with the environment works with strings, so we
     // collect the names of all true action fluents of the chosen action
-    vector<string> result;
-    for (ActionFluent const* af : executedAction.scheduledActionFluents) {
-        result.push_back(af->name);
-    }
-    return result;
+    return executedAction.getScheduledActionFluentNames();
 }
 
 void ProstPlanner::monitorRAMUsage() {
@@ -333,7 +329,6 @@ void ProstPlanner::resetStaticMembers() {
     SearchEngine::actionStates.clear();
     SearchEngine::trainingSet.clear();
     SearchEngine::actionPreconditions.clear();
-    SearchEngine::candidatesForOptimalFinalAction.clear();
     State::stateFluentHashKeysOfDeterministicStateFluents.clear();
     State::stateFluentHashKeysOfProbabilisticStateFluents.clear();
     State::stateHashKeysOfDeterministicStateFluents.clear();

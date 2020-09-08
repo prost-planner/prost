@@ -1,5 +1,5 @@
-#ifndef STATES_H
-#define STATES_H
+#ifndef PARSER_STATES_H
+#define PARSER_STATES_H
 
 #include <cassert>
 #include <set>
@@ -7,20 +7,24 @@
 #include <vector>
 
 #include "probability_distribution.h"
-#include "utils/math_utils.h"
 
+namespace prost::parser {
 class ActionFluent;
 class ActionPrecondition;
 class ConditionalProbabilityFunction;
-
-/*****************************************************************
-                               State
-*****************************************************************/
+struct RDDLTask;
 
 struct State {
     State(std::vector<ConditionalProbabilityFunction*> const& cpfs);
     State(State const& other) = default;
     State(int stateSize) : state(stateSize, 0.0) {}
+
+    // Create a copy of other except that the value of variable var is
+    // set to val
+    State(State const& other, int var, double val) : state(other.state) {
+        assert(var < state.size());
+        state[var] = val;
+    }
 
     double& operator[](int const& index) {
         assert(index < state.size());
@@ -35,27 +39,11 @@ struct State {
     void print(std::ostream& out) const;
 
     struct StateSort {
-        bool operator()(State const& lhs, State const& rhs) const {
-            assert(lhs.state.size() == rhs.state.size());
-
-            for (int i = lhs.state.size() - 1; i >= 0; --i) {
-                if (MathUtils::doubleIsSmaller(lhs.state[i], rhs.state[i])) {
-                    return true;
-                } else if (MathUtils::doubleIsSmaller(rhs.state[i],
-                                                      lhs.state[i])) {
-                    return false;
-                }
-            }
-            return false;
-        }
+        bool operator()(State const& lhs, State const& rhs) const;
     };
 
     std::vector<double> state;
 };
-
-/*****************************************************************
-                            PDState
-*****************************************************************/
 
 struct PDState {
     PDState(int stateSize) : state(stateSize, DiscretePD()) {}
@@ -85,10 +73,6 @@ struct PDState {
 
     std::vector<DiscretePD> state;
 };
-
-/*****************************************************************
-                          KleeneState
-*****************************************************************/
 
 class KleeneState {
 public:
@@ -146,44 +130,25 @@ private:
     KleeneState(KleeneState const& other) : state(other.state) {}
 };
 
-/*****************************************************************
-                            ActionState
-*****************************************************************/
-
-class ActionState {
-public:
-    ActionState(int size) : state(size, 0), index(-1) {}
+struct ActionState {
+    ActionState(std::vector<int> const& _state) : state(_state), index(-1) {}
 
     ActionState(ActionState const& other)
         : state(other.state), index(other.index) {}
 
-    // This is used to sort action states by the number of true fluents and the
-    // position of the true fluents to ensure deterministic behaviour
-    struct ActionStateSort {
-        bool operator()(ActionState const& lhs, ActionState const& rhs) const {
-            int lhsNum = 0;
-            int rhsNum = 0;
-            for (unsigned int i = 0; i < lhs.state.size(); ++i) {
-                lhsNum += lhs.state[i];
-                rhsNum += rhs.state[i];
-            }
-
-            if (lhsNum < rhsNum) {
-                return true;
-            } else if (rhsNum < lhsNum) {
-                return false;
-            }
-
-            return lhs.state < rhs.state;
-        }
-    };
-
-    int& operator[](int const& index) {
-        return state[index];
+    // Create a copy of other except that the value of variable var is
+    // set to val
+    ActionState(ActionState const& other, int var, int val)
+        : state(other.state), index(other.index) {
+        state[var] = val;
     }
 
-    const int& operator[](int const& index) const {
-        return state[index];
+    int& operator[](int const& i) {
+        return state[i];
+    }
+
+    const int& operator[](int const& i) const {
+        return state[i];
     }
 
     bool operator<(ActionState const& other) const {
@@ -206,12 +171,10 @@ public:
 
     void print(std::ostream& out) const;
 
-    std::string getName() const;
-
     std::vector<int> state;
-    std::vector<ActionFluent*> scheduledActionFluents;
     std::vector<ActionPrecondition*> relevantSACs;
     int index;
 };
+} // namespace prost::parser
 
-#endif
+#endif // PARSER_STATES_H

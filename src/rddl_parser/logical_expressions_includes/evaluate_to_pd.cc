@@ -103,7 +103,7 @@ void GreaterExpression::evaluateToPD(DiscretePD& res, State const& current,
     double greaterProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (unsigned int j = 0; j < rhs.values.size(); ++j) {
-            if (MathUtils::doubleIsGreater(lhs.values[i], rhs.values[j])) {
+            if (utils::doubleIsGreater(lhs.values[i], rhs.values[j])) {
                 greaterProb += (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
                 break;
@@ -129,7 +129,7 @@ void LowerExpression::evaluateToPD(DiscretePD& res, State const& current,
     double lowerProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (int j = rhs.values.size() - 1; j >= 0; --j) {
-            if (MathUtils::doubleIsSmaller(lhs.values[i], rhs.values[j])) {
+            if (utils::doubleIsSmaller(lhs.values[i], rhs.values[j])) {
                 lowerProb += (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
                 break;
@@ -156,8 +156,7 @@ void GreaterEqualsExpression::evaluateToPD(DiscretePD& res,
     double greaterEqualProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (unsigned int j = 0; j < rhs.values.size(); ++j) {
-            if (MathUtils::doubleIsGreaterOrEqual(lhs.values[i],
-                                                  rhs.values[j])) {
+            if (utils::doubleIsGreaterOrEqual(lhs.values[i], rhs.values[j])) {
                 greaterEqualProb +=
                     (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
@@ -184,8 +183,7 @@ void LowerEqualsExpression::evaluateToPD(DiscretePD& res, State const& current,
     double lowerEqualProb = 0.0;
     for (unsigned int i = 0; i < lhs.values.size(); ++i) {
         for (int j = rhs.values.size() - 1; j >= 0; --j) {
-            if (MathUtils::doubleIsSmallerOrEqual(lhs.values[i],
-                                                  rhs.values[j])) {
+            if (utils::doubleIsSmallerOrEqual(lhs.values[i], rhs.values[j])) {
                 lowerEqualProb += (rhs.probabilities[j] * lhs.probabilities[i]);
             } else {
                 break;
@@ -291,7 +289,7 @@ void Division::evaluateToPD(DiscretePD& res, State const& current,
         std::map<double, double> valProbPairs;
         for (unsigned int i = 0; i < res.values.size(); ++i) {
             for (unsigned int j = 0; j < exprRes.values.size(); ++j) {
-                assert(!MathUtils::doubleIsEqual(exprRes.values[j], 0.0));
+                assert(!utils::doubleIsEqual(exprRes.values[j], 0.0));
                 double val = res.values[i] / exprRes.values[j];
                 if (valProbPairs.find(val) == valProbPairs.end()) {
                     valProbPairs[val] = 0.0;
@@ -361,7 +359,7 @@ void DiscreteDistribution::evaluateToPD(DiscretePD& res, State const& current,
         double& value = val.values[0];
         double& probability = prob.values[0];
 
-        if (MathUtils::doubleIsGreater(probability, 0.0)) {
+        if (utils::doubleIsGreater(probability, 0.0)) {
             if (valProbPairs.find(value) == valProbPairs.end()) {
                 valProbPairs[value] = 0.0;
             }
@@ -440,7 +438,7 @@ void MultiConditionChecker::evaluateToPD(DiscretePD& res, State const& current,
         }
 
         remainingProb *= prob.falsityProbability();
-        if (MathUtils::doubleIsEqual(remainingProb, 0.0)) {
+        if (utils::doubleIsEqual(remainingProb, 0.0)) {
             break;
         }
     }

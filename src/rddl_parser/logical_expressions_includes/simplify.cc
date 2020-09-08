@@ -41,7 +41,7 @@ LogicalExpression* Conjunction::simplify(Simplifications& replace) {
         LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
-            if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            if (utils::doubleIsEqual(nc->value, 0.0)) {
                 // False constant element -> conjunction is always false
                 return new NumericConstant(0.0);
             }
@@ -73,7 +73,7 @@ LogicalExpression* Disjunction::simplify(Simplifications& replace) {
         LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
-            if (!MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            if (!utils::doubleIsEqual(nc->value, 0.0)) {
                 // True constant element -> disjunction is always true
                 return new NumericConstant(1.0);
             }
@@ -111,7 +111,7 @@ LogicalExpression* EqualsExpression::simplify(Simplifications& replace) {
             // This element is a numeric constant
             if (constComp) {
                 // ...and there is already another constant one
-                if (!MathUtils::doubleIsEqual(nc->value, constComp->value)) {
+                if (!utils::doubleIsEqual(nc->value, constComp->value)) {
                     // ...which is inequal -> this is always false
                     return new NumericConstant(0.0);
                 }
@@ -147,7 +147,7 @@ LogicalExpression* GreaterExpression::simplify(Simplifications& replace) {
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if (nc0 && nc1) {
-        if (MathUtils::doubleIsGreater(nc0->value, nc1->value)) {
+        if (utils::doubleIsGreater(nc0->value, nc1->value)) {
             return new NumericConstant(1.0);
         } else {
             return new NumericConstant(0.0);
@@ -170,7 +170,7 @@ LogicalExpression* LowerExpression::simplify(Simplifications& replace) {
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if (nc0 && nc1) {
-        if (MathUtils::doubleIsSmaller(nc0->value, nc1->value)) {
+        if (utils::doubleIsSmaller(nc0->value, nc1->value)) {
             return new NumericConstant(1.0);
         } else {
             return new NumericConstant(0.0);
@@ -193,7 +193,7 @@ LogicalExpression* GreaterEqualsExpression::simplify(Simplifications& replace) {
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if (nc0 && nc1) {
-        if (MathUtils::doubleIsGreaterOrEqual(nc0->value, nc1->value)) {
+        if (utils::doubleIsGreaterOrEqual(nc0->value, nc1->value)) {
             return new NumericConstant(1.0);
         } else {
             return new NumericConstant(0.0);
@@ -216,7 +216,7 @@ LogicalExpression* LowerEqualsExpression::simplify(Simplifications& replace) {
     NumericConstant* nc1 = dynamic_cast<NumericConstant*>(expr1);
 
     if (nc0 && nc1) {
-        if (MathUtils::doubleIsSmallerOrEqual(nc0->value, nc1->value)) {
+        if (utils::doubleIsSmallerOrEqual(nc0->value, nc1->value)) {
             return new NumericConstant(1.0);
         } else {
             return new NumericConstant(0.0);
@@ -245,12 +245,11 @@ LogicalExpression* Addition::simplify(Simplifications& replace) {
         }
     }
 
-    if (newExprs.empty() && MathUtils::doubleIsEqual(constSum, 0.0)) {
+    if (newExprs.empty() && utils::doubleIsEqual(constSum, 0.0)) {
         return new NumericConstant(0.0);
-    } else if (newExprs.empty() && !MathUtils::doubleIsEqual(constSum, 0.0)) {
+    } else if (newExprs.empty() && !utils::doubleIsEqual(constSum, 0.0)) {
         return new NumericConstant(constSum);
-    } else if (newExprs.size() == 1 &&
-               MathUtils::doubleIsEqual(constSum, 0.0)) {
+    } else if (newExprs.size() == 1 && utils::doubleIsEqual(constSum, 0.0)) {
         return newExprs[0];
     }
 
@@ -276,7 +275,7 @@ LogicalExpression* Addition::simplify(Simplifications& replace) {
     // TODO: Collect all Subtractions and merge
 
     // Add the constant part of the addition
-    if (!MathUtils::doubleIsEqual(constSum, 0.0)) {
+    if (!utils::doubleIsEqual(constSum, 0.0)) {
         finalExprs.push_back(new NumericConstant(constSum));
     }
 
@@ -325,7 +324,7 @@ LogicalExpression* Subtraction::simplify(Simplifications& replace) {
     } else {
         // The minuend is not a constant, so the const part is a subtrahend
         assert(!newExprs.empty());
-        if (!MathUtils::doubleIsEqual(constPart, 0.0)) {
+        if (!utils::doubleIsEqual(constPart, 0.0)) {
             newExprs.push_back(new NumericConstant(constPart * -1.0));
         }
     }
@@ -346,7 +345,7 @@ LogicalExpression* Multiplication::simplify(Simplifications& replace) {
         LogicalExpression* newExpr = exprs[i]->simplify(replace);
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
         if (nc) {
-            if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
+            if (utils::doubleIsEqual(nc->value, 0.0)) {
                 return new NumericConstant(0.0);
             }
             constMult *= nc->value;
@@ -355,7 +354,7 @@ LogicalExpression* Multiplication::simplify(Simplifications& replace) {
         }
     }
 
-    if (!MathUtils::doubleIsEqual(constMult, 1.0)) {
+    if (!utils::doubleIsEqual(constMult, 1.0)) {
         newExprs.push_back(new NumericConstant(constMult));
     }
 
@@ -398,7 +397,7 @@ LogicalExpression* Negation::simplify(Simplifications& replace) {
 
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if (nc) {
-        if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
+        if (utils::doubleIsEqual(nc->value, 0.0)) {
             return new NumericConstant(1.0);
         }
         return new NumericConstant(0.0);
@@ -435,10 +434,10 @@ LogicalExpression* BernoulliDistribution::simplify(Simplifications& replace) {
     LogicalExpression* newExpr = expr->simplify(replace);
     NumericConstant* nc = dynamic_cast<NumericConstant*>(newExpr);
     if (nc) {
-        if (MathUtils::doubleIsEqual(nc->value, 0.0)) {
+        if (utils::doubleIsEqual(nc->value, 0.0)) {
             return new NumericConstant(0.0);
-        } else if (MathUtils::doubleIsGreaterOrEqual(nc->value, 1.0) ||
-                   MathUtils::doubleIsSmaller(nc->value, 0.0)) {
+        } else if (utils::doubleIsGreaterOrEqual(nc->value, 1.0) ||
+                   utils::doubleIsSmaller(nc->value, 0.0)) {
             return new NumericConstant(1.0);
         }
     }
@@ -461,7 +460,7 @@ LogicalExpression* DiscreteDistribution::simplify(Simplifications& replace) {
     // Remove all values with constant probability 0
     for (unsigned int i = 0; i < newProbs.size(); ++i) {
         NumericConstant* nc = dynamic_cast<NumericConstant*>(newProbs[i]);
-        if (nc && MathUtils::doubleIsEqual(nc->value, 0.0)) {
+        if (nc && utils::doubleIsEqual(nc->value, 0.0)) {
             swap(newValues[i], newValues[newValues.size() - 1]);
             newValues.pop_back();
             swap(newProbs[i], newProbs[newProbs.size() - 1]);
@@ -493,7 +492,7 @@ LogicalExpression* IfThenElseExpression::simplify(Simplifications& replace) {
     // Check if the condition is a constant
     NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCondition);
     if (ncCond) {
-        if (MathUtils::doubleIsEqual(ncCond->value, 0.0)) {
+        if (utils::doubleIsEqual(ncCond->value, 0.0)) {
             return newValueIfFalse;
         } else {
             return newValueIfTrue;
@@ -509,14 +508,14 @@ LogicalExpression* IfThenElseExpression::simplify(Simplifications& replace) {
     NumericConstant* ncFalse = dynamic_cast<NumericConstant*>(newValueIfFalse);
 
     if (ncTrue && ncFalse) {
-        if (MathUtils::doubleIsEqual(ncTrue->value, 1.0) &&
-            MathUtils::doubleIsEqual(ncFalse->value, 0.0)) {
+        if (utils::doubleIsEqual(ncTrue->value, 1.0) &&
+            utils::doubleIsEqual(ncFalse->value, 0.0)) {
             return newCondition;
-        } else if (MathUtils::doubleIsEqual(ncTrue->value, 0.0) &&
-                   MathUtils::doubleIsEqual(ncFalse->value, 1.0)) {
+        } else if (utils::doubleIsEqual(ncTrue->value, 0.0) &&
+                   utils::doubleIsEqual(ncFalse->value, 1.0)) {
             Negation* res = new Negation(newCondition);
             return res->simplify(replace);
-        } else if (MathUtils::doubleIsEqual(ncTrue->value, ncFalse->value)) {
+        } else if (utils::doubleIsEqual(ncTrue->value, ncFalse->value)) {
             return ncTrue;
         }
     }
@@ -596,7 +595,7 @@ LogicalExpression* MultiConditionChecker::simplify(Simplifications& replace) {
         // Check if the condition is a constant
         NumericConstant* ncCond = dynamic_cast<NumericConstant*>(newCond);
         if (ncCond) {
-            if (MathUtils::doubleIsEqual(ncCond->value, 0.0)) {
+            if (utils::doubleIsEqual(ncCond->value, 0.0)) {
                 continue;
             } else {
                 newConditions.push_back(new NumericConstant(1.0));

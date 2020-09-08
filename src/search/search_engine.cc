@@ -61,8 +61,6 @@ State SearchEngine::initialState;
 int SearchEngine::horizon = numeric_limits<int>::max();
 double SearchEngine::discountFactor = 1.0;
 int SearchEngine::numberOfActions = -1;
-SearchEngine::FinalRewardCalculationMethod
-    SearchEngine::finalRewardCalculationMethod = NOOP;
 vector<int> SearchEngine::candidatesForOptimalFinalAction;
 
 bool SearchEngine::cacheApplicableActions = true;
@@ -500,29 +498,29 @@ inline bool ProbabilisticSearchEngine::BDDIncludes(
                Calculation of Final Reward and Action
 ******************************************************************/
 
-void SearchEngine::calcOptimalFinalRewardWithFirstApplicableAction(
+void SearchEngine::calcOptimalFinalReward(
     State const& current, double& reward) const {
-    // Get applicable actions
-    vector<int> applicableActions = getApplicableActions(current);
-
-    // If no action fluent occurs in the reward, the reward is the same for all
-    // applicable actions, so we only need to find an applicable action
-    for (size_t index = 0; index < applicableActions.size(); ++index) {
-        if (applicableActions[index] == index) {
-            return calcReward(current, index, reward);
-        }
+    if (candidatesForOptimalFinalAction.size() == 1) {
+        // Since there is only one candidate action, it must always be
+        // applicable and optimal
+        return calcReward(current, candidatesForOptimalFinalAction[0], reward);
     }
-    assert(false);
-}
 
-void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(
-    State const& current, double& reward) const {
-    // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
+    if (candidatesForOptimalFinalAction.empty()) {
+        // The first applicable action is guaranteed to be optimal
+        for (size_t index = 0; index < numberOfActions; ++index) {
+            if (applicableActions[index] == index) {
+                return calcReward(current, index, reward);
+            }
+        }
+        SystemUtils::abort(
+            "Error: no applicable action to calculate final reward");
+    }
 
+    // Check all applicable candidates and return the best
     reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
-
     for (int index : candidatesForOptimalFinalAction) {
         if (applicableActions[index] == index) {
             calcReward(current, index, tmpReward);
@@ -532,44 +530,37 @@ void SearchEngine::calcOptimalFinalRewardAsBestOfCandidateSet(
 }
 
 int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
-    if (finalRewardCalculationMethod == NOOP) {
-        return 0;
+    if (candidatesForOptimalFinalAction.size() == 1) {
+        // Since there is only one candidate action, it must always be
+        // applicable and optimal
+        return candidatesForOptimalFinalAction[0];
     }
 
-    // Get applicable actions
     vector<int> applicableActions = getApplicableActions(current);
-
-    if (finalRewardCalculationMethod == FIRST_APPLICABLE) {
-        // If no action fluent occurs in the reward, all rewards are the
-        // same and we only need to find an applicable action
-        for (size_t index = 0; index < applicableActions.size(); ++index) {
+    if (candidatesForOptimalFinalAction.empty()) {
+        // The first applicable action is guaranteed to be optimal
+        for (size_t index = 0; index < numberOfActions; ++index) {
             if (applicableActions[index] == index) {
                 return index;
             }
         }
         assert(false);
-        return -1;
     }
 
-    // Otherwise we compute which action in the candidate set yields the highest
-    // reward
-    assert(finalRewardCalculationMethod == BEST_OF_CANDIDATE_SET);
+    // Check all applicable candidates and return the best
     double reward = -numeric_limits<double>::max();
     double tmpReward = 0.0;
-    int optimalFinalActionIndex = -1;
-
+    int result = -1;
     for (int index : candidatesForOptimalFinalAction) {
         if (applicableActions[index] == index) {
             calcReward(current, index, tmpReward);
-
-            if (MathUtils::doubleIsGreater(tmpReward, reward)) {
+            if (tmpReward > reward) {
                 reward = tmpReward;
-                optimalFinalActionIndex = index;
+                result = index;
             }
         }
     }
-
-    return optimalFinalActionIndex;
+    return result;
 }
 
 /******************************************************************
@@ -708,22 +699,6 @@ void SearchEngine::printTask() {
             "Only the determinization contains unreasonable actions.");
     } else {
         Logger::logLine("This task does not contain unreasonable actions.");
-    }
-
-    Logger::log("The final reward is determined ");
-    switch (finalRewardCalculationMethod) {
-    case NOOP:
-        Logger::logLine("by applying NOOP.");
-        break;
-    case FIRST_APPLICABLE:
-        Logger::logLine("by applying the first applicable action.");
-        break;
-    case BEST_OF_CANDIDATE_SET:
-        Logger::logLine("as the maximum over the candidate set: ");
-        for (int candidate : candidatesForOptimalFinalAction) {
-            Logger::logLine("  " + actionStates[candidate].toCompactString());
-        }
-        break;
     }
     Logger::logLine();
 }

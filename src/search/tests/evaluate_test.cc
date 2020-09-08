@@ -1,4 +1,5 @@
 #include "test_utils.cc"
+
 #include "../logical_expressions.h"
 
 #include <sstream>
@@ -8,7 +9,7 @@ using std::string;
 
 TEST_CASE_FIXTURE(ProstUnitTest, "Testing function evaluation") {
     State const dummyState;
-    ActionState const dummyAction(0, {}, {}, {});
+    ActionState const dummyAction(0, {}, {});
     string s;
     double result = 0;
     SUBCASE("Testing the evaluation of a constant") {

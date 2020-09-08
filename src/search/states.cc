@@ -61,16 +61,33 @@ string KleeneState::toString() const {
     return ss.str();
 }
 
-string ActionState::toCompactString() const {
-    if (scheduledActionFluents.empty()) {
-        return "noop()";
-    } else {
-        stringstream ss;
-        for (ActionFluent const *af : scheduledActionFluents) {
-            ss << af->name << " ";
+vector<string> ActionState::getScheduledActionFluentNames() const {
+    vector<string> varNames;
+    for (size_t i = 0; i < state.size(); ++i) {
+        int valueIndex = state[i];
+        if (!SearchEngine::actionFluents[i]->isFDR) {
+            if (valueIndex) {
+                varNames.push_back(SearchEngine::actionFluents[i]->name);
+            }
+        } else if (SearchEngine::actionFluents[i]->values[valueIndex] !=
+                   "none-of-those") {
+            varNames.push_back(
+                SearchEngine::actionFluents[i]->values[valueIndex]);
         }
-        return ss.str();
     }
+    return varNames;
+}
+
+string ActionState::toCompactString() const {
+    vector<string> varNames = getScheduledActionFluentNames();
+    if (varNames.empty()) {
+        return "noop()";
+    }
+    stringstream ss;
+    for (string const& varName : varNames) {
+        ss << varName << " ";
+    }
+    return ss.str();
 }
 
 string ActionState::toString() const {

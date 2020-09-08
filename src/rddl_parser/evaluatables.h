@@ -1,11 +1,12 @@
-#ifndef EVALUATABLES_H
-#define EVALUATABLES_H
+#ifndef PARSER_EVALUATABLES_H
+#define PARSER_EVALUATABLES_H
 
 #include <cassert>
 
 #include "logical_expressions.h"
 #include "probability_distribution.h"
 
+namespace prost::parser {
 struct ConditionalProbabilityFunction;
 
 struct Evaluatable {
@@ -72,78 +73,28 @@ struct Evaluatable {
     // The stateFluentHashKeyMap contains the state fluent hash key (base) of
     // each of the dependent state fluents
     std::vector<std::pair<int, long>> stateFluentHashKeyBases;
-
-    // These function are used to calculate the two parts of state fluent hash
-    // keys: the action part (that is stored in the actionHashKeyMap of
-    // Evaluatable), and the state fluent part (that is stored in RDDLTask
-    // and computed within states).
-    void initializeHashKeys(RDDLTask* task);
-    long initializeActionHashKeys(std::vector<ActionState> const& actionStates);
-    bool calculateActionHashKey(std::vector<ActionState> const& actionStates,
-                                ActionState const& action, long& nextKey);
-    long getActionHashKey(std::vector<ActionState> const& actionStates,
-                          std::vector<ActionFluent*>& scheduledActions);
-
-    void initializeStateFluentHashKeys(RDDLTask* task, long const& baseKey);
-    void initializeKleeneStateFluentHashKeys(RDDLTask* task,
-                                             long const& baseKey);
 };
 
 struct ActionPrecondition : public Evaluatable {
-    ActionPrecondition(std::string _name, LogicalExpression* _formula)
-        : Evaluatable(_name, _formula) {}
-
-    void initialize() override;
-
-    bool containsArithmeticFunction() const {
-        return hasArithmeticFunction;
-    }
+    ActionPrecondition(LogicalExpression* _formula)
+        : Evaluatable("precond", _formula) {}
 
     bool containsStateFluent() const {
         return !dependentStateFluents.empty();
     }
 
     int index;
-
-    std::set<ActionFluent*> positiveActionDependencies;
-    std::set<ActionFluent*> negativeActionDependencies;
 };
 
 struct RewardFunction : public Evaluatable {
     RewardFunction(LogicalExpression* _formula)
         : Evaluatable("Reward", _formula) {}
 
-    void initialize() override;
-
-    double const& getMinVal() const {
-        assert(!domain.empty());
-        return *domain.begin();
-    }
-
-    double const& getMaxVal() const {
-        assert(!domain.empty());
-        return *domain.rbegin();
-    }
-
-    std::set<ActionFluent*> positiveActionDependencies;
-    std::set<ActionFluent*> negativeActionDependencies;
-
-    std::set<double> domain;
+    double minValue;
+    double maxValue;
 };
 
 struct ConditionalProbabilityFunction : public Evaluatable {
-    // This is used to sort transition functions by their name to ensure
-    // deterministic behaviour
-    struct TransitionFunctionSort {
-        bool operator()(ConditionalProbabilityFunction* const& lhs,
-                        ConditionalProbabilityFunction* const& rhs) const {
-            if (lhs->isProb == rhs->isProb) {
-                return lhs->name < rhs->name;
-            }
-            return rhs->isProb;
-        }
-    };
-
     ConditionalProbabilityFunction(StateFluent* _head,
                                    LogicalExpression* _formula)
         : Evaluatable(_head->fullName, _formula),
@@ -154,14 +105,7 @@ struct ConditionalProbabilityFunction : public Evaluatable {
         return domain.size();
     }
 
-    bool hasFiniteDomain() const {
-        return !domain.empty();
-    }
-
-    void setDomain(std::set<double> _domain) {
-        domain = _domain;
-        head->domainSize = domain.size();
-    }
+    void setDomainSize(int numVals);
 
     void setIndex(int _index) {
         head->index = _index;
@@ -174,10 +118,11 @@ struct ConditionalProbabilityFunction : public Evaluatable {
     StateFluent* head;
 
     // The values this CPF can take
-    std::set<double> domain;
+    std::vector<int> domain;
 
     // Hashing of KleeneStates
     long kleeneDomainSize;
 };
+} // namespace prost::parser
 
-#endif
+#endif // PARSER_EVALUATABLES_H

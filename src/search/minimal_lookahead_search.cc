@@ -30,7 +30,7 @@ void MinimalLookaheadSearch::estimateQValue(State const& state, int actionIndex,
         calcReward(state, actionIndex, qValue);
 
         if (rewardCPF->isActionIndependent() ||
-            (actionStates[0].scheduledActionFluents.empty() &&
+            (actionStates[0].isNoop &&
              actionStates[0].actionPreconditions.empty())) {
             // Caculate the successor state if the action with index actionIndex
             // is applied, and use noop to calculate the reward in the next
@@ -96,7 +96,7 @@ void MinimalLookaheadSearch::estimateQValues(State const& state,
                     qValues[index] = (reward + reward2) / 2.0;
                 }
             }
-        } else if (actionStates[0].scheduledActionFluents.empty() &&
+        } else if (actionStates[0].isNoop &&
                    actionStates[0].actionPreconditions.empty()) {
             // There is an action fluent in the reward (and the reward in state
             // hence depends on the applied action), but it is often the case

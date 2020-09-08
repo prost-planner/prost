@@ -19,16 +19,6 @@
 
 class SearchEngine {
 public:
-    enum FinalRewardCalculationMethod {
-        NOOP,
-        FIRST_APPLICABLE,
-        BEST_OF_CANDIDATE_SET
-    };
-
-    /*****************************************************************
-                           Search engine creation
-    *****************************************************************/
-
     virtual ~SearchEngine() {}
 
     // Create a SearchEngine
@@ -143,29 +133,10 @@ protected:
     // As we are currently assuming that the reward is independent of the
     // successor state the (optimal) last reward can be calculated by applying
     // all applicable actions and returning the highest reward
-    void calcOptimalFinalReward(State const& current, double& reward) const {
-        switch (finalRewardCalculationMethod) {
-        case NOOP:
-            calcReward(current, 0, reward);
-            break;
-        case FIRST_APPLICABLE:
-            calcOptimalFinalRewardWithFirstApplicableAction(current, reward);
-            break;
-        case BEST_OF_CANDIDATE_SET:
-            calcOptimalFinalRewardAsBestOfCandidateSet(current, reward);
-            break;
-        }
-    }
+    void calcOptimalFinalReward(State const& current, double& reward) const;
 
     // Return the index of the optimal last action
     int getOptimalFinalActionIndex(State const& current) const;
-
-private:
-    // Methods to calculate the final reward
-    void calcOptimalFinalRewardWithFirstApplicableAction(State const& current,
-                                                         double& reward) const;
-    void calcOptimalFinalRewardAsBestOfCandidateSet(State const& current,
-                                                    double& reward) const;
 
     /*****************************************************************
                  Calculation of applicable actions
@@ -261,7 +232,6 @@ public:
     // current state. Since the set of actions that could maximize the final
     // reward can be a subset of all actions, we distinguish between several
     // different methods to speed up this calculation.
-    static FinalRewardCalculationMethod finalRewardCalculationMethod;
     static std::vector<int> candidatesForOptimalFinalAction;
 
     // Is true if applicable actions should be cached
