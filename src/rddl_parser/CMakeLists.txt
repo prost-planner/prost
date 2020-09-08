@@ -8,9 +8,6 @@ if(NOT PROST_MAIN_CMAKELISTS_READ)
     "and CMakeFiles/ from the current directory and restart cmake.")
 endif()
 
-# Enable <PackageName>_ROOT environment variables
-cmake_policy(SET CMP0074 NEW)
-
 ## == Project ==
 project(rddl-parser)
 prost_set_compiler_flags()

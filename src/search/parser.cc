@@ -218,7 +218,6 @@ void Parser::parseActionFluent(stringstream& desc) const {
 
     bool isFDR;
     desc >> isFDR;
-    cout << "af " << name << " is fdr: " << isFDR << endl;
 
     int numberOfValues;
     desc >> numberOfValues;
