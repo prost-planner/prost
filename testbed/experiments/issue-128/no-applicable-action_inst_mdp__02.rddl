@@ -7,10 +7,16 @@ instance no-applicable-action_inst_mdp__02 {
     
 	non-fluents {
         concurrent = 1;
+        prob(d9) = 0.1;
+        prob(d10) = 0.1;
 	};
 
 	init-state {
 		statevar(d1);
+        statevar(d2);
+        statevar(d3);
+        statevar(d4);
+        statevar(d5);
 	};
     
 	horizon = 10;

@@ -26,7 +26,7 @@ domain no-applicable-action_mdp {
 	};
 	
 	cpfs {
-        statevar'(?d) = Bernoulli( prob(?d) );			
+        statevar'(?d) = Bernoulli( ~actvar(?d) * prob(?d) );			
 	};
 	
 	reward = 0; 

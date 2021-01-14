@@ -177,7 +177,7 @@ void Division::prettyPrint(ostream& out) const {
 *****************************************************************/
 
 void Negation::prettyPrint(ostream& out) const {
-    out << "~(";
+    out << "not(";
     expr->prettyPrint(out);
     out << ")";
 }

@@ -426,7 +426,7 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
 }
 
 void TaskAnalyzer::stateWithoutApplicableActionsDetected(
-    State const& state) const{
+    State const& state) const {
     cout << endl;
     stringstream out;
     out << "Prost cannot deal with planning tasks where a state without "
