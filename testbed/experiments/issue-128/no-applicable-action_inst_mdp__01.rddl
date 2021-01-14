@@ -1,0 +1,16 @@
+instance no-applicable-action_inst_mdp__01 {
+	domain = no-applicable-action_mdp;
+    
+	objects {
+		dummy : {d1, d2};
+	};
+
+	init-state {
+		statevar(d1);
+	};
+    
+	horizon = 10;
+    
+	discount = 1.0;
+}
+

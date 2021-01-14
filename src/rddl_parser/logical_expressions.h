@@ -64,6 +64,7 @@ public:
 
     virtual ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const;
 
+    virtual void prettyPrint(std::ostream& out) const;
     virtual void print(std::ostream& out) const;
 };
 
@@ -108,6 +109,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -126,6 +128,7 @@ public:
     LogicalExpression* instantiate(RDDLTask* task,
                                    Instantiations& replace) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -168,6 +171,7 @@ public:
                                    Instantiations& replace) override;
     LogicalExpression* simplify(Simplifications& replace) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -211,6 +215,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -248,6 +253,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 
     struct ActionFluentSort {
@@ -300,6 +306,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -316,6 +323,7 @@ public:
     std::vector<Parameter*> params;
     std::vector<Type*> types;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -340,6 +348,7 @@ public:
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -351,6 +360,7 @@ public:
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -362,6 +372,7 @@ public:
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -374,6 +385,7 @@ public:
     LogicalExpression* replaceQuantifier(Instantiations& replace,
                                          Instantiator* inst) override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -389,6 +401,7 @@ public:
 
     virtual Connective* create(std::vector<LogicalExpression*> _exprs) = 0;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -425,6 +438,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -461,6 +475,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -498,6 +513,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -535,6 +551,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -572,6 +589,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -610,6 +628,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -648,6 +667,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -684,6 +704,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -720,6 +741,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -757,6 +779,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -793,6 +816,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -831,6 +855,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -863,6 +888,7 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -883,6 +909,7 @@ public:
 
     LogicalExpression* expr;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -915,6 +942,7 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 
     LogicalExpression* expr;
@@ -953,6 +981,7 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -996,6 +1025,7 @@ public:
     void evaluateToKleene(std::set<double>& res, KleeneState const& current,
                           ActionState const& action) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 };
 
@@ -1033,6 +1063,7 @@ public:
 
     ::z3::expr toZ3Formula(RDDLTaskCSP& csp, int actionIndex) const override;
 
+    void prettyPrint(std::ostream& out) const override;
     void print(std::ostream& out) const override;
 
 private:

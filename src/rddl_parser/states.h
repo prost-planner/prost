@@ -36,7 +36,7 @@ struct State {
         return state[index];
     }
 
-    void print(std::ostream& out) const;
+    std::string toString(RDDLTask* task) const;
 
     struct StateSort {
         bool operator()(State const& lhs, State const& rhs) const;
@@ -169,7 +169,10 @@ struct ActionState {
         return false;
     }
 
-    void print(std::ostream& out) const;
+
+    std::vector<std::string> getScheduledActionFluentNames(
+        RDDLTask* task) const;
+    std::string toString(RDDLTask* task) const;
 
     std::vector<int> state;
     std::vector<ActionPrecondition*> relevantSACs;

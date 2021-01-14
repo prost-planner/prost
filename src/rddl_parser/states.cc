@@ -29,17 +29,41 @@ bool State::StateSort::operator()(State const& lhs, State const& rhs) const {
     return false;
 }
 
-void State::print(ostream& out) const {
-    for (unsigned int index = 0; index < state.size(); ++index) {
-        out << state[index] << " ";
+string State::toString(RDDLTask* task) const {
+    stringstream ss;
+    for (size_t i = 0; i < state.size(); ++i) {
+        ss << task->stateFluents[i]->fullName << ": " << state[i] << endl;
     }
-    out << endl;
+    return ss.str();
 }
 
-void ActionState::print(ostream& out) const {
-    for (unsigned int index = 0; index < state.size(); ++index) {
-        out << state[index] << " ";
+vector<string> ActionState::getScheduledActionFluentNames(
+    RDDLTask* task) const {
+    vector<string> varNames;
+    for (size_t i = 0; i < state.size(); ++i) {
+        int valueIndex = state[i];
+        if (!task->actionFluents[i]->isFDR) {
+            if (valueIndex) {
+                varNames.push_back(task->actionFluents[i]->fullName);
+            }
+        } else if (task->actionFluents[i]->valueType->objects[valueIndex]->name
+                   != "none-of-those") {
+            varNames.push_back(
+                task->actionFluents[i]->valueType->objects[valueIndex]->name);
+        }
     }
-    out << endl;
+    return varNames;
+}
+
+string ActionState::toString(RDDLTask* task) const {
+    vector<string> varNames = getScheduledActionFluentNames(task);
+    if (varNames.empty()) {
+        return "noop()";
+    }
+    stringstream ss;
+    for (string const& varName : varNames) {
+        ss << varName << " ";
+    }
+    return ss.str();
 }
 } // namespace prost::parser

@@ -1,0 +1,20 @@
+instance no-applicable-action_inst_mdp__02 {
+	domain = no-applicable-action_mdp;
+    
+	objects {
+		dummy : {d1, d2, d3, d4, d5, d6, d7, d8, d9, d10};
+	};
+    
+	non-fluents {
+        concurrent = 1;
+	};
+
+	init-state {
+		statevar(d1);
+	};
+    
+	horizon = 10;
+    
+	discount = 1.0;
+}
+

@@ -62,6 +62,8 @@ protected:
     bool checkGoal(KleeneState const& state) const;
 
     void createTrainingSet(int const& numberOfStates);
+
+    void stateWithoutApplicableActionsDetected(State const& state) const;
 };
 } // namespace prost::parser
 
