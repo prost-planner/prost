@@ -1,0 +1,42 @@
+////////////////////////////////////////////////////////////////////
+//
+// Domain with reachable state where no action is applicable
+// 
+////////////////////////////////////////////////////////////////////
+
+domain no-applicable-action_mdp {
+	requirements = {
+		reward-deterministic
+	};
+	
+	types {
+		dummy : object;
+	};
+	
+	pvariables {
+        // Constants
+        prob(dummy)     : {non-fluent, real, default = 0.5};
+        concurrent      : {non-fluent, int, default = 2};
+        
+        // State fluent
+		statevar(dummy) : {state-fluent, bool, default = false};
+		
+		// Actions
+		actvar(dummy)   : {action-fluent, bool, default = false};
+	};
+	
+	cpfs {
+        statevar'(?d) = Bernoulli( ~actvar(?d) * prob(?d) );			
+	};
+	
+	reward = 0; 
+
+    action-preconditions {
+        // Only take an action if the corresponding state fluent is true
+        ( forall_{ ?d : dummy } [ actvar(?d) => statevar(?d) ] );
+
+        // Restrict the number of action fluents that may be true at the same time
+        ( sum_{ ?d : dummy } [ actvar(?d) ] ) >= 1;
+        ( sum_{ ?d : dummy } [ actvar(?d) ] ) <= concurrent;
+	};
+}

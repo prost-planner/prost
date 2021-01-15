@@ -565,22 +565,13 @@ int THTS::getUniquePolicy() {
         return getOptimalFinalActionIndex(states[1]);
     }
 
-    std::vector<int> actionsToExpand =
-        getApplicableActions(states[stepsToGoInCurrentState]);
+    std::vector<int> applicableActionIndices =
+        getIndicesOfApplicableActions(states[stepsToGoInCurrentState]);
 
     if (isARewardLock(states[stepsToGoInCurrentState])) {
         uniquePolicyDueToRewardLock = true;
-        for (unsigned int i = 0; i < actionsToExpand.size(); ++i) {
-            if (actionsToExpand[i] == i) {
-                return i;
-            }
-        }
-        assert(false);
+        return applicableActionIndices[0];
     }
-
-    std::vector<int> applicableActionIndices =
-        getIndicesOfApplicableActions(states[stepsToGoInCurrentState]);
-    assert(!applicableActionIndices.empty());
 
     if (applicableActionIndices.size() == 1) {
         uniquePolicyDueToPreconds = true;

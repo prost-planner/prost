@@ -6,6 +6,7 @@
 
 #include "utils/math.h"
 #include "utils/timer.h"
+#include "utils/system.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -236,7 +237,9 @@ void TaskAnalyzer::analyzeStateAndApplyAction(State const& current, State& next,
         }
     }
 
-    assert(!applicableActions.empty());
+    if (applicableActions.empty()) {
+        stateWithoutApplicableActionsDetected(current);
+    }
 
     // Check if this is a state with only one reasonable applicable action
     if (applicableActions.size() == 1) {
@@ -421,4 +424,28 @@ void TaskAnalyzer::createTrainingSet(int const& numberOfStates) {
         }
     }
 }
+
+void TaskAnalyzer::stateWithoutApplicableActionsDetected(
+    State const& state) const {
+    cout << endl;
+    stringstream out;
+    out << "Prost cannot deal with planning tasks where a state without "
+           "applicable actions can be reached." << endl << "The following such "
+           "state was encountered: " << endl << state.toString(task) << endl
+        << "The following preconditions of each action are violated:" << endl;
+    for (ActionState const& action : task->actionStates) {
+        out << action.toString(task) << ": " << endl;
+        for (ActionPrecondition* precond : action.relevantSACs) {
+            double res = 0.0;
+            precond->formula->evaluate(res, state, action);
+            if (utils::doubleIsEqual(res, 0.0)) {
+                out << "  ";
+                precond->formula->prettyPrint(out);
+                out << endl;
+            }
+        }
+    }
+    utils::abort(out.str());
+}
+
 } // namespace prost::parser

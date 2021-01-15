@@ -544,7 +544,6 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
                 return index;
             }
         }
-        assert(false);
     }
 
     // Check all applicable candidates and return the best
@@ -561,6 +560,29 @@ int SearchEngine::getOptimalFinalActionIndex(State const& current) const {
         }
     }
     return result;
+}
+
+void SearchEngine::stateWithoutApplicableActionsDetected(
+    State const& state) const {
+    cout << endl;
+    stringstream out;
+    out << "Prost cannot deal with planning tasks where a state without "
+           "applicable actions can be reached." << endl << "The following such "
+           "state was encountered: " << endl << state.toString() << endl
+        << "The following preconditions of each action are violated:" << endl;
+    for (ActionState const& action : SearchEngine::actionStates) {
+        out << action.toCompactString() << ": " << endl;
+        for (DeterministicEvaluatable* precond : action.actionPreconditions) {
+            double res = 0.0;
+            precond->formula->evaluate(res, state, action);
+            if (MathUtils::doubleIsEqual(res, 0.0)) {
+                out << "  ";
+                precond->formula->print(out);
+                out << endl;
+            }
+        }
+    }
+    SystemUtils::abort(out.str());
 }
 
 /******************************************************************
