@@ -25,6 +25,10 @@ bool doubleIsGreaterOrEqual(double const& d1, double const& d2) {
     return !doubleIsSmaller(d1, d2);
 }
 
+bool doubleIsInfinity(double const& d1) {
+    return doubleIsEqual(d1, std::numeric_limits<double>::max());
+}
+
 bool doubleIsMinusInfinity(double const& d1) {
     return doubleIsEqual(d1, -std::numeric_limits<double>::max());
 }

@@ -12,6 +12,7 @@ bool doubleIsSmaller(double const& d1, double const& d2);
 bool doubleIsGreater(double const& d1, double const& d2);
 bool doubleIsSmallerOrEqual(double const& d1, double const& d2);
 bool doubleIsGreaterOrEqual(double const& d1, double const& d2);
+bool doubleIsInfinity(double const& d1);
 bool doubleIsMinusInfinity(double const& d1);
 
 /*
