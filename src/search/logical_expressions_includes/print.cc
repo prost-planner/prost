@@ -38,8 +38,8 @@ void Disjunction::print(ostream& out) const {
 
 void EqualsExpression::print(ostream& out) const {
     if ((exprs.size() == 2)) {
-        ActionFluent* af = static_cast<ActionFluent*>(exprs[0]);
-        NumericConstant* val = static_cast<NumericConstant*>(exprs[1]);
+        ActionFluent* af = dynamic_cast<ActionFluent*>(exprs[0]);
+        NumericConstant* val = dynamic_cast<NumericConstant*>(exprs[1]);
         if (af && val) {
             out << af->values[val->value];
             return;
