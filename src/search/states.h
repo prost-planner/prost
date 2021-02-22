@@ -235,8 +235,7 @@ public:
     };
 
     struct HashWithRemSteps {
-        // Hash function adapted from Python's hash function for tuples (and
-        // found in the FastDownward code from http://www.fast-downward.org/)
+        // Hash function adapted from Python's hash function for tuples
         unsigned int operator()(State const& s) const {
             unsigned int hashValue = 0x345678;
             unsigned int mult = 1000003;
@@ -288,8 +287,7 @@ public:
     };
 
     struct HashWithoutRemSteps {
-        // Hash function adapted from Python's hash function for tuples (and
-        // found in the FastDownward code from http://www.fast-downward.org/)
+        // Hash function adapted from Python's hash function for tuples
         unsigned int operator()(State const& s) const {
             unsigned int hashValue = 0x345678;
             unsigned int mult = 1000003;
