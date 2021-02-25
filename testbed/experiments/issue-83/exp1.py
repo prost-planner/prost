@@ -10,9 +10,11 @@ from prostlab.reports.absolute import AbsoluteReport
 
 from ipc_benchmarks import *
 
+
 def is_running_on_cluster():
     node = platform.node()
     return node.endswith(".scicore.unibas.ch") or node.endswith(".cluster.bc2.ch")
+
 
 PARTITION = "infai_2"
 EMAIL = "tho.keller@unibas.ch"
@@ -24,14 +26,16 @@ if is_running_on_cluster():
     ENV = BaselSlurmEnvironment(partition=PARTITION, email=EMAIL)
     SUITES = IPC_ALL
     NUM_RUNS = 30
-    
+
 else:
     ENV = LocalEnvironment(processes=4)
     SUITES = [ELEVATORS_2011[0], NAVIGATION_2011[0]]
     NUM_RUNS = 2
 
 # Generate the experiment
-exp = ProstExperiment(suites=SUITES, environment=ENV, num_runs=NUM_RUNS, time_per_step=TIME_PER_STEP)
+exp = ProstExperiment(
+    suites=SUITES, environment=ENV, num_runs=NUM_RUNS, time_per_step=TIME_PER_STEP
+)
 
 # Add algorithm configurations to the experiment
 exp.add_algorithm("ipc11", REPO, REV, "IPC2011", build_options=["-j6"])
