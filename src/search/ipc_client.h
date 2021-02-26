@@ -1,5 +1,12 @@
-#ifndef RDDL_CLIENT_H
-#define RDDL_CLIENT_H
+#ifndef IPC_CLIENT_H
+#define IPC_CLIENT_H
+
+/*
+  The IPC client implementation is based on the GPL3 licensed C++ rddlsim client
+  implementation of Sungwook Yoon and Scott Sanner which has been created for
+  the International Planning Competition (IPC) 2011. The code was modified
+  substantially.
+*/
 
 #include <map>
 #include <memory>
@@ -56,4 +63,4 @@ private:
     std::vector<std::vector<std::string>> stateVariableValues;
 };
 
-#endif
+#endif // IPC_CLIENT_H

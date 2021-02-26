@@ -1,6 +1,12 @@
 #ifndef STRXML_H
 #define STRXML_H
 
+/*
+  This is based on the GPL3 licensed C++ rddlism client implementation of
+  Sungwook Yoon and Scott Sanner which has been created for the International
+  Planning Competition (IPC) 2011. The code was modified substantially.
+*/
+
 #include <iostream>
 #include <map>
 #include <string>

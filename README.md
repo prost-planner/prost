@@ -1,4 +1,6 @@
-# Prost
+# Welcome to the Prost Planner
+
+## What is Prost?
 
 Prost is a probabilistic planning system that repeatedly computes which
 action to take in the current state, executes that action by interacting
@@ -34,7 +36,7 @@ If BuDDy or z3 is not found automatically, you can set the environment variables
 `$BDD_ROOT` and `Z3_ROOT`, which point to your BuDDY and z3 installation, resprectively.
 
 
-PROST executes the policy it computes by interacting with the rddlsim
+Prost executes the policy it computes by interacting with the rddlsim
 server. We refer to the [github repository of
 rddlsim](https://github.com/ssanner/rddlsim) for the latest installation
 information. Without any guarantee for success, you can try the
@@ -80,12 +82,12 @@ of available options).
 
 Now you can start Prost with the `prost.py` script that can be found in
 the root directory of the repo. For instance, to start planning for the
-first elevators instance of IPC 2011 with the PROST version from IPC
+first elevators instance of IPC 2011 with the Prost version from IPC
 2014, run
 
 `./prost.py elevators_inst_mdp__1 "[Prost -s 1 -se [IPC2014]]"`
 
-Note that there are many PROST configuration implemented. Run `prost.py`
+Note that there are many Prost configuration implemented. Run `prost.py`
 without additional parameters for an overview of all available solvers
 and their options.
 
@@ -150,15 +152,15 @@ or
 ## Contributors
 
 If you have any questions, feel free to contact one or all of the currently
-actively core developers:
+active code maintainers:
 
  * [Thomas Keller](mailto:tho.keller@unibas.ch?subject=[Prost])
  * [Florian Geißer](mailto:florian.geisser@anu.edu.au?subject=[Prost])
- * [David Speck](mailto:speckd@informatik.uni-freiburg.de?subject=[Prost)
+ * [David Speck](mailto:speckd@informatik.uni-freiburg.de?subject=[Prost])
 
-There are quite a few additional people who have contributed to PROST
-since the planner's development was started around December 2010 (these
-are ordered alphabetically):
+There are quite a few additional people who have contributed to Prost
+since the planner's development was started in 2010 (these are ordered
+alphabetically):
 
  * Augusto Blaas Correa
  * Dorde Relic
@@ -170,9 +172,26 @@ are ordered alphabetically):
  * Patrick Eyerich
  * Scott Sanner
 
-In addition to these, the developers of [Fast
-Downward](http://fast-downward.org) deserve to be mentioned. Many
-decisions have been based on discussion with the Fast Downward
-developers, and there are even some code fragments that have been
-borrowed from the Fast Downward code.
+There are also some code snippets from others that have found their way
+into the code base, which we'd like to give credit for:
 
+ * Sungwook Yoon (ipc client)
+ * René Nyffenegger (base64 encoding and decoding)
+ * Python Software Foundation (code to hash states)
+
+## License
+
+The Prost planner is released under the [MIT
+license](https://opensource.org/licenses/MIT) with the exception of the
+following files:
+
+ * src/search/ipc_client.{h,cc}
+ * src/search/utils/strxml.{h,cc}
+ * src/search/utils/base64.{h,cc}
+ * src/search/utils/hash.{h,cc}
+
+All of these files contain code from other sources that has been
+released under different licenses. The changes we made to the source
+code are provided 'as-is', without any express or implied warranty. In
+no event will the Prost contributors be held liable for any damages
+arising from the use of this software.

@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "probability_distribution.h"
+
+#include "utils/hash.h"
 #include "utils/math_utils.h"
 
 class ActionFluent;
@@ -235,24 +237,9 @@ public:
     };
 
     struct HashWithRemSteps {
-        // Hash function adapted from Python's hash function for tuples (and
-        // found in the FastDownward code from http://www.fast-downward.org/)
         unsigned int operator()(State const& s) const {
-            unsigned int hashValue = 0x345678;
-            unsigned int mult = 1000003;
-            for (int i = numberOfProbabilisticStateFluents - 1; i >= 0; --i) {
-                hashValue =
-                    (hashValue ^ ((int)s.probabilisticStateFluent(i))) * mult;
-                mult += 82520 + i + i;
-            }
-            for (int i = numberOfDeterministicStateFluents - 1; i >= 0; --i) {
-                hashValue =
-                    (hashValue ^ ((int)s.deterministicStateFluent(i))) * mult;
-                mult += 82520 + i + i;
-            }
-            hashValue = (hashValue ^ ((int)s.stepsToGo())) * mult;
-            hashValue += 97531;
-            return hashValue;
+            return utils::hash(s.probabilisticStateFluents,
+                               s.deterministicStateFluents, s.stepsToGo());
         }
     };
 
@@ -288,23 +275,9 @@ public:
     };
 
     struct HashWithoutRemSteps {
-        // Hash function adapted from Python's hash function for tuples (and
-        // found in the FastDownward code from http://www.fast-downward.org/)
         unsigned int operator()(State const& s) const {
-            unsigned int hashValue = 0x345678;
-            unsigned int mult = 1000003;
-            for (int i = numberOfProbabilisticStateFluents - 1; i >= 0; --i) {
-                hashValue =
-                    (hashValue ^ ((int)s.probabilisticStateFluent(i))) * mult;
-                mult += 82520 + i + i;
-            }
-            for (int i = numberOfDeterministicStateFluents - 1; i >= 0; --i) {
-                hashValue =
-                    (hashValue ^ ((int)s.deterministicStateFluent(i))) * mult;
-                mult += 82520 + i + i;
-            }
-            hashValue += 97531;
-            return hashValue;
+            return utils::hash(s.probabilisticStateFluents,
+                               s.deterministicStateFluents);
         }
     };
 

@@ -18,19 +18,22 @@ def is_running_on_cluster():
 
 PARTITION = "infai_2"
 EMAIL = "tho.keller@unibas.ch"
-REPO = "/infai/kellert/prost/prost-dev/"
-REV = "HEAD"
+
+REVS = ["issue-106-base", "issue-106-v1"]
 
 TIME_PER_STEP = 1.0
 if is_running_on_cluster():
     ENV = BaselSlurmEnvironment(partition=PARTITION, email=EMAIL)
     SUITES = IPC_ALL
     NUM_RUNS = 30
+    REPO = "/infai/kellert/prost/prost-dev/"
 
 else:
     ENV = LocalEnvironment(processes=4)
     SUITES = [ELEVATORS_2011[0], NAVIGATION_2011[0]]
     NUM_RUNS = 2
+    REPO = "/home/kellert/workspace/planner/prost/prost-dev/"
+
 
 # Generate the experiment
 exp = ProstExperiment(
@@ -38,8 +41,9 @@ exp = ProstExperiment(
 )
 
 # Add algorithm configurations to the experiment
-exp.add_algorithm("ipc11", REPO, REV, "IPC2011", build_options=["-j6"])
-exp.add_algorithm("ipc14", REPO, REV, "IPC2014", build_options=["-j6"])
+for rev in REVS:
+    exp.add_algorithm(f"{rev}-ipc11", REPO, rev, "IPC2011", build_options=["-j6"])
+    exp.add_algorithm(f"{rev}-ipc14", REPO, rev, "IPC2014", build_options=["-j6"])
 
 # Add the default parsers to the experiment
 exp.add_parser(ProstExperiment.PROST_PARSER)
