@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.0)
+cmake_minimum_required(VERSION 2.8.12)
 
 if(NOT PROST_MAIN_CMAKELISTS_READ)
   message(
@@ -25,6 +25,7 @@ FLEX_TARGET(scanner ${FlexInput} ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc)
 ADD_FLEX_BISON_DEPENDENCY(scanner parser)
 
 ## == Z3 ==
+cmake_policy(SET CMP0074 NEW)
 find_package(Z3 REQUIRED)
 
 ## == Includes ==
@@ -35,37 +36,37 @@ include_directories(${Z3_INCLUDE_DIRS})
 
 ## == Source Files ==
 set(RDDL_PARSER_SOURCES
-    csp
-    determinize/determinize
-    evaluatables
-    fdr/fdr_generation
-    fdr/mutex_detection
-    hashing/hash_keys
-    instantiator
-    logical_expressions
-    precomputer
-    probability_distribution
-    rddl
-    reachability_analysis
-    simplifier
-    states
-    task_analyzer
-    utils/math
-    utils/system
-    utils/timer
+    csp.cc
+    determinize/determinize.cc
+    evaluatables.cc
+    fdr/fdr_generation.cc
+    fdr/mutex_detection.cc
+    hashing/hash_keys.cc
+    instantiator.cc
+    logical_expressions.cc
+    precomputer.cc
+    probability_distribution.cc
+    rddl.cc
+    reachability_analysis.cc
+    simplifier.cc
+    states.cc
+    task_analyzer.cc
+    utils/math.cc
+    utils/system.cc
+    utils/timer.cc
 )
 
 ## == Doctest ==
 set(RDDL_PARSER_TEST_SOURCES
-    ../doctest/doctest
-    tests/csp_test
-    tests/determinize_test
-    tests/fdr_generation_test
-    tests/hash_keys_test
-    tests/logical_expressions_test
-    tests/mutex_detection_test
-    tests/probability_distribution_test
-    tests/reachability_analysis_test
+    ../doctest/doctest.h
+    tests/csp_test.cc
+    tests/determinize_test.cc
+    tests/fdr_generation_test.cc
+    tests/hash_keys_test.cc
+    tests/logical_expressions_test.cc
+    tests/mutex_detection_test.cc
+    tests/probability_distribution_test.cc
+    tests/reachability_analysis_test.cc
 )
 
 # add unit test files in debug build
