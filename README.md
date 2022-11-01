@@ -28,12 +28,13 @@ Without any guarantee for success, you can try the following steps to install z3
 
  * `git clone git@github.com:Z3Prover/z3.git /path/to/z3-repo` (clone z3 repo)
  * `cd /path/to/z3-repo` (switch to directory)
- * `python scripts/mk_make.py --prefix=/path/to/z3-install` (configure and pass installation location)
- * `cd build && make` (build)
+ * `python3 scripts/mk_make.py --prefix=/path/to/z3-install` (configure and pass installation location)
+ * `cd build` (switch to build directory)
+ * `make` (build)
  * `make install` (install)
 
 If BuDDy or z3 is not found automatically, you can set the environment variables
-`$BDD_ROOT` and `Z3_ROOT`, which point to your BuDDY and z3 installation, resprectively.
+`$BDD_ROOT` and `Z3_ROOT`, which point to your BuDDY and z3 installation, respectively.
 
 
 Prost executes the policy it computes by interacting with the rddlsim
@@ -102,7 +103,7 @@ Prost Lab can be found
 [here](https://github.com/prost-planner/prost/wiki/Evaluation).
 
 If you want to compare your planner to Prost, please make sure to
-compile Prost in release mode and to use an appopriate search engine for
+compile Prost in release mode and to use an appropriate search engine for
 Prost. If in doubt, run both the Prost-2011 and Prost-2014 planners by
 using `-se [IPC2011]` and `-se [IPC2014]` in the call to `prost.py`. If
 you don't have the time to use both configurations, we recommend to go
