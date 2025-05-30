@@ -152,8 +152,8 @@ or
 
 ## Contributors
 
-If you have any questions, feel free to contact one or all of the currently
-active code maintainers:
+If you have any questions, feel free to contact one or all of the ~currently
+active~ code maintainers:
 
  * [Thomas Keller](mailto:tho.keller@unibas.ch?subject=[Prost])
  * [Florian Geißer](mailto:florian.geisser@anu.edu.au?subject=[Prost])
